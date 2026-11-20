@@ -5,6 +5,7 @@ import { imageRenderers } from './images'
 import { inlineRenderers } from './inline'
 import { linkRenderers } from './links'
 import { listRenderers } from './lists'
+import { mermaidRenderers } from './mermaid'
 import type { Renderer } from './preview'
 import { quoteRenderers } from './quotes'
 import { tableRenderers } from './tables'
@@ -22,5 +23,7 @@ export const renderers: Record<string, Renderer> = {
   // Takes Blockquote from quoteRenderers and hands it plain quotes.
   ...calloutRenderers,
   ...tableRenderers,
-  ...taskRenderers
+  ...taskRenderers,
+  // Takes FencedCode from codeRenderers and hands it every block that is not a diagram.
+  ...mermaidRenderers
 }
