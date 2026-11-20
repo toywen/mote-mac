@@ -1,9 +1,21 @@
-import { parser as commonmark, type BlockParser, type InlineParser } from '@lezer/markdown'
+import {
+  Autolink,
+  parser as commonmark,
+  Strikethrough,
+  Table,
+  TaskList,
+  type BlockParser,
+  type DelimiterType,
+  type InlineContext,
+  type InlineParser
+} from '@lezer/markdown'
 import type { SyntaxNode } from '@lezer/common'
 import { parse as parseYaml } from 'yaml'
 import type { LinkRef } from './model.ts'
 
 const BANG = 33
+const HASH = 35
+const EQUALS = 61
 const BRACKET = 91
 
 const wikiLink: InlineParser = {
@@ -18,6 +30,60 @@ const wikiLink: InlineParser = {
     const end = open + 2 + close + 2
     if (cx.slice(open + 2, end - 2).includes('\n')) return -1
     return cx.addElement(cx.elt(embed ? 'WikiEmbed' : 'WikiLink', pos, end))
+  }
+}
+
+const highlightDelimiter: DelimiterType = { resolve: 'Highlight', mark: 'HighlightMark' }
+
+// Ported from Obsidian 1.15.1 worker.js go: a highlight opened at `open` closes at the first
+// later `==` with no whitespace before it. Returns that position, or -1.
+function highlightClose(cx: InlineContext, open: number): number {
+  let at = cx.text.indexOf('==', open - cx.offset + 3)
+  while (at >= 0 && /\s/.test(cx.text[at - 1])) at = cx.text.indexOf('==', at + 1)
+  return at < 0 ? -1 : at + cx.offset
+}
+
+// `==` opens unless whitespace or `==` follows it or nothing closes it. Highlights never nest:
+// an open one ends only at its own close.
+const highlight: InlineParser = {
+  name: 'Highlight',
+  parse(cx, next, pos) {
+    if (next !== EQUALS || cx.char(pos + 1) !== EQUALS) return -1
+    const last = cx.findOpeningDelimiter(highlightDelimiter)
+    const opener = last === null ? null : cx.getDelimiterAt(last)
+    if (opener) {
+      const close = highlightClose(cx, opener.from)
+      if (close === pos) return cx.addDelimiter(highlightDelimiter, pos, pos + 2, false, true)
+      if (close > pos) return -1
+    }
+    const after = cx.slice(pos + 2, pos + 4)
+    if (/^\s/.test(after) || after === '==' || highlightClose(cx, pos) < 0) return -1
+    return cx.addDelimiter(highlightDelimiter, pos, pos + 2, true, false)
+  }
+}
+
+// Ported from Obsidian 1.15.1 worker.js: the tag tokenizer yo with its pattern ei and its
+// all-digits check bo, and the inline locator Mo, which tries `#` only after whitespace or
+// where the previous token ended, as in `[[a]]#b`.
+const tagBody = /[^\u2000-\u206F\u2E00-\u2E7F'!"#$%&()*+,.:;<=>?@^`{|}~[\]\\\s]+/y
+
+// lezer keeps the elements and delimiters before `pos` in `parts`, which its typings leave out.
+function afterToken(cx: InlineContext, pos: number): boolean {
+  const parts = (cx as unknown as { parts?: readonly ({ to: number } | null)[] }).parts ?? []
+  for (let i = parts.length - 1; i >= 0; i--) if (parts[i]) return parts[i]?.to === pos
+  return false
+}
+
+const tag: InlineParser = {
+  name: 'Tag',
+  parse(cx, next, pos) {
+    if (next !== HASH) return -1
+    const at = pos - cx.offset
+    if (at > 0 && !/\s/.test(cx.text[at - 1]) && !afterToken(cx, pos)) return -1
+    tagBody.lastIndex = at + 1
+    const body = tagBody.exec(cx.text)?.[0]
+    if (!body || /^\d+$/.test(body)) return -1
+    return cx.addElement(cx.elt('Tag', pos, pos + 1 + body.length))
   }
 }
 
@@ -40,17 +106,31 @@ const frontmatter: BlockParser = {
 }
 
 export const markdownParser = commonmark.configure([
+  Table,
+  TaskList,
+  Strikethrough,
+  Autolink,
   {
-    defineNodes: ['WikiLink', 'WikiEmbed', { name: 'Frontmatter', block: true }],
-    parseInline: [wikiLink],
+    defineNodes: [
+      'WikiLink',
+      'WikiEmbed',
+      'Highlight',
+      'HighlightMark',
+      'Tag',
+      { name: 'Frontmatter', block: true }
+    ],
+    parseInline: [wikiLink, highlight, tag],
     parseBlock: [frontmatter]
   }
 ])
 
+// Obsidian 1.15.1 worker.js It drops one `\` at the end of the link path, so the
+// `[[note\|alias]]` that Obsidian writes inside a table links to `note`.
 function wikiRef(inner: string, embed: boolean, from: number, to: number): LinkRef {
   const bar = inner.indexOf('|')
   const alias = bar < 0 ? null : inner.slice(bar + 1)
-  const body = bar < 0 ? inner : inner.slice(0, bar)
+  const path = bar < 0 ? inner : inner.slice(0, bar)
+  const body = path.endsWith('\\') ? path.slice(0, -1) : path
   const hash = body.indexOf('#')
   return {
     syntax: 'wiki',
