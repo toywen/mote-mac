@@ -1,3 +1,4 @@
+import { calloutRenderers } from './callouts'
 import { codeRenderers } from './code'
 import { headingRenderers } from './headings'
 import { imageRenderers } from './images'
@@ -15,5 +16,7 @@ export const renderers: Record<string, Renderer> = {
   ...listRenderers,
   ...quoteRenderers,
   ...codeRenderers,
-  ...imageRenderers
+  ...imageRenderers,
+  // Takes Blockquote from quoteRenderers and hands it plain quotes.
+  ...calloutRenderers
 }
