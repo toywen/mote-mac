@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { extractLinks, markdownParser } from './markdown.ts'
+import { extractLinks, linkTarget, markdownParser, type LinkTarget } from './markdown.ts'
 import { sourceText } from './text.ts'
 
 const slice = (text: string, link: { range: { from: number; to: number } }): string =>
@@ -131,6 +131,85 @@ describe('agreement with Obsidian on edge cases', () => {
       extractLinks(text).flatMap((l) => (l.alias === null ? [] : [l.alias]))
     expect(aliases(boundary)).toEqual(['别名', '节', 'x'])
     expect(aliases(escapes)).toEqual(['别名', '双'])
+  })
+})
+
+// linkTarget of the first node with this name.
+function targetOf(text: string, name: string): LinkTarget | null {
+  let found: LinkTarget | null = null
+  markdownParser.parse(text).iterate({
+    enter(node) {
+      if (node.name !== name) return undefined
+      found = linkTarget(node.node, (from, to) => text.slice(from, to))
+      return false
+    }
+  })
+  return found
+}
+
+describe('linkTarget', () => {
+  it('reads a wikilink and an embed as vault links', () => {
+    expect(targetOf('看 [[欢迎#标题|别名]]', 'WikiLink')).toEqual({
+      kind: 'vault',
+      ref: {
+        syntax: 'wiki',
+        embed: false,
+        target: '欢迎',
+        subpath: '#标题',
+        alias: '别名',
+        range: { from: 2, to: 14 }
+      }
+    })
+    expect(targetOf('![[图片.png|300]]', 'WikiEmbed')).toMatchObject({
+      kind: 'vault',
+      ref: { embed: true, target: '图片.png', alias: '300' }
+    })
+  })
+
+  it('reads a Markdown link and image as vault links, with the label as alias', () => {
+    expect(targetOf('[计划](项目/计划.md#目标)', 'Link')).toMatchObject({
+      kind: 'vault',
+      ref: {
+        syntax: 'markdown',
+        embed: false,
+        target: '项目/计划.md',
+        subpath: '#目标',
+        alias: '计划'
+      }
+    })
+    expect(targetOf('![图|300](附件/图片.png)', 'Image')).toMatchObject({
+      kind: 'vault',
+      ref: { embed: true, target: '附件/图片.png', alias: '图|300' }
+    })
+  })
+
+  it('reads addresses outside the vault as external', () => {
+    expect(targetOf('[c](https://e.com/#x)', 'Link')).toEqual({
+      kind: 'external',
+      url: 'https://e.com/#x'
+    })
+    expect(targetOf('![d](https://e.com/p.png)', 'Image')).toEqual({
+      kind: 'external',
+      url: 'https://e.com/p.png'
+    })
+    expect(targetOf('<https://e.com/y>', 'Autolink')).toEqual({
+      kind: 'external',
+      url: 'https://e.com/y'
+    })
+    expect(targetOf('<a@example.com>', 'Autolink')).toEqual({
+      kind: 'external',
+      url: 'mailto:a@example.com'
+    })
+    expect(targetOf('看 https://example.com/a 吧', 'URL')).toEqual({
+      kind: 'external',
+      url: 'https://example.com/a'
+    })
+  })
+
+  it('gives null for a URL inside another link, a reference link and other nodes', () => {
+    expect(targetOf('[c](https://e.com)', 'URL')).toBeNull()
+    expect(targetOf('[引用][r]\n\n[r]: https://e.com', 'Link')).toBeNull()
+    expect(targetOf('**粗**', 'StrongEmphasis')).toBeNull()
   })
 })
 
