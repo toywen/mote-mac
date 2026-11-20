@@ -51,3 +51,4 @@ Which features are implemented, and which recipe proves each, is tracked in `doc
 - [Link completion](./link-complete.md): step 3, type `[[` in the editor.
 - [Images](./images.md): step 3, `![](path)`, `![[image]]` and the `mote-file://` protocol. Uses the `tests/fixtures/vaults/preview` vault.
 - [Follow links](./follow-links.md): step 3, clicks, `#heading`, missing notes, `Cmd+Option+Left` and `Cmd+Option+Right`, the `walk-links` command.
+- [Mermaid diagrams and note embeds](./reading-mode.md): step 3, PR F. `mermaid` code blocks and `![[note]]`. Uses the `tests/fixtures/vaults/preview` vault.
