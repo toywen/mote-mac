@@ -113,6 +113,9 @@ test('reading mode renders mermaid diagrams and embedded notes', async () => {
     await expect(lineOf(editor, '![[计划]]')).toBeVisible()
     await lineOf(editor, '嵌入下面一行').click()
     await expect(lineOf(editor, '![[计划]]')).toHaveCount(0)
+    // A press on the embed's text leaves the focus in the note.
+    await whole.getByText('计划的正文', { exact: false }).click()
+    await expect(editor).toBeFocused()
     expect(await readFile(host, 'utf8')).toBe(hostText)
 
     // A click on a link inside the embed follows it; a click on the name opens the note.

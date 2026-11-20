@@ -96,7 +96,8 @@ class Embed {
     })
   }
 
-  // Read only, with no history and no keys: the nested view never takes focus or saves.
+  // Read only, with no history and no keys. A press inside never moves focus or the selection,
+  // so the note around the embed keeps both; a link still follows on the click.
   private extensions(): Extension {
     const { shown, chain } = this.widget
     return [
@@ -107,7 +108,13 @@ class Embed {
       editorLocked.of(true),
       EditorView.editable.of(false),
       EditorState.readOnly.of(true),
-      EditorView.contentAttributes.of({ 'aria-label': noteName(shown.path) })
+      EditorView.contentAttributes.of({ 'aria-label': noteName(shown.path) }),
+      EditorView.domEventHandlers({
+        mousedown: (event) => {
+          event.preventDefault()
+          return true
+        }
+      })
     ]
   }
 
