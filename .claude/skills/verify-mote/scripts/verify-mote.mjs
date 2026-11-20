@@ -298,6 +298,9 @@ const MAIN_THREAD_METRICS = {
 async function benchTyping(page, { chars, gap, where }) {
   const editor = page.getByRole('textbox', { name: '编辑器' })
   const note = await editor.getAttribute('data-note-path')
+  // A hidden page skips layout and paint, so its numbers would leave out work a user waits on.
+  if ((await page.evaluate(() => document.visibilityState)) !== 'visible')
+    throw new Error('the mote window is hidden; it must draw frames while it is measured')
   await editor.click()
   await page.keyboard.press(where === 'start' ? 'Meta+ArrowUp' : 'Meta+ArrowDown')
   const before = await readEditor(page)
@@ -439,9 +442,18 @@ async function launch(opts, extra) {
   delete env.ELECTRON_RENDERER_URL
   delete env.ELECTRON_RUN_AS_NODE
   const appArgs = extra.map((arg) => arg.replaceAll('{vault}', vault))
+  // A window that macOS reports as covered stops drawing frames, so clicks and benchmarks stall.
+  // This switch keeps the run drawing while the user works in other windows.
   const child = spawn(
     ELECTRON,
-    [REPO, '--inspect=0', '--remote-debugging-port=0', `--user-data-dir=${userData}`, ...appArgs],
+    [
+      REPO,
+      '--inspect=0',
+      '--remote-debugging-port=0',
+      `--user-data-dir=${userData}`,
+      '--disable-backgrounding-occluded-windows',
+      ...appArgs
+    ],
     { cwd: REPO, detached: true, stdio: ['ignore', logFd, logFd], env }
   )
   child.unref()

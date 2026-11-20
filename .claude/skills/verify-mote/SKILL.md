@@ -29,7 +29,7 @@ $V launch -- {vault}            # pass extra args to the app; {vault} becomes th
 1. Builds with `npx electron-vite build`.
 2. Clones the vault to `$TMPDIR/mote-verify/<run>/vault`, skipping `.git`. A 1.5 GB vault takes about 4 s.
 3. Hashes the copy into `verify-artifacts/<run>/vault-before.txt`.
-4. Starts Electron with `--user-data-dir=<scratch>/user-data`, so mote never touches `~/Library/Application Support/mote`.
+4. Starts Electron with `--user-data-dir=<scratch>/user-data`, so mote never touches `~/Library/Application Support/mote`, and with `--disable-backgrounding-occluded-windows` (see Gotchas).
 5. Waits until the window is usable: React has mounted and `window.mote` exists.
 
 It prints `{"run", "vault", "evidence"}` and exits 0. On failure it kills what it started and prints the app log.
@@ -129,6 +129,7 @@ Run `stop` after every run, including failed ones. It never kills by process nam
 ## Gotchas
 
 - The window appears on screen and may take focus. That is expected.
+- `launch` passes `--disable-backgrounding-occluded-windows`. Without it, a window that other windows cover reports `document.visibilityState` as `hidden` and draws no frames. Then a click waits forever for the element to be stable, and `bench-typing` would leave out layout and paint. `bench-typing` fails when the window is hidden.
 - Native dialogs and menus cannot be clicked over CDP. Use `dialog-answer` for open dialogs. A menu accelerator may not fire from `press`. If a shortcut does nothing, find out whether it is a menu accelerator before you call it a bug.
 - If mote adds `app.requestSingleInstanceLock()`, runs still start side by side, because the lock lives in the settings dir.
 - The fixture vault holds exact bytes on purpose: a CRLF note, a BOM note, and a note with no final newline. `.gitattributes` and `.editorconfig` protect them. Never reformat these files.
