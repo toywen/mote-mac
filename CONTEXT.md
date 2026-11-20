@@ -36,6 +36,8 @@
 | 显示源码 | reveal | 实时预览里，一个元素露出自己的 Markdown 符号。选区碰到它时发生，阅读模式下从不发生 |
 | 阅读模式 | reading mode | 只读，完整渲染整篇笔记。它是关掉编辑的同一个 CodeMirror 视图 |
 | 编辑器模式 | `EditorMode` | 实时预览或阅读模式。按 `Cmd+E` 切换 |
+| 装饰 | decoration | CodeMirror 加在文字上的样式或组件，不改文字。实时预览靠它隐藏符号、加样式 |
+| 渲染函数 | `Renderer` | 把一种语法节点画成装饰的函数。注册表按节点名找到它 |
 | 属性 | properties | 笔记开头 `---` 之间的 YAML，也叫 frontmatter |
 | 规范化文本 | normalized text | 编辑器里的文本。去掉 BOM，所有换行统一成 `\n`。保存时还原原来的 BOM 和换行符 |
 | 基准哈希 | `baseHash` | 打开或上次保存笔记时磁盘内容的哈希。保存前和磁盘哈希比较 |

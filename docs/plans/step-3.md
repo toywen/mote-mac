@@ -279,10 +279,10 @@ rebase 到 `f4aa01d` 之前，在 `ab712d1` 的应用代码上也跑过 3 次。
 
 ## PR B：实时预览的骨架和行内元素
 
-- [ ] 依赖：PR A。
-- [ ] 改动文件：`package.json`、`src/renderer/src/NoteEditor.tsx`、`src/renderer/src/editor/`（新）、`workspace.ts`、`App.tsx`、`main.css`、`src/main/index.ts`、`tests/fixtures/vaults/preview/`（新）、`tests/e2e/preview.spec.ts`（新）、`verify-mote.mjs`、`features/live-preview.md`、`features/dark-mode.md`、`CONTEXT.md`、`ARCHITECTURE.md`、`docs/features.md`。
-- [ ] 做的一件事：编辑器按语法树渲染行内元素。`Cmd+E` 切换编辑器模式。颜色跟随 macOS。
-- [ ] 你会看到：标题变大。`**粗体**` 两边的星号消失，光标移进去时星号出现。`[[笔记|别名]]` 只显示别名，目标不存在的双链是另一种颜色。属性显示为一个 YAML 代码块。按 `Cmd+E` 后不能输入，再按一次恢复。
+- [x] 依赖：PR A。
+- [x] 改动文件：`package.json`（加 `@codemirror/lang-markdown`、`@codemirror/language`）、`src/renderer/src/NoteEditor.tsx`、`src/renderer/src/editor/`（新）、`workspace.ts`、`App.tsx`、`main.css`、`src/main/index.ts`、`tests/fixtures/vaults/preview/`（新）、`tests/e2e/preview.spec.ts`（新）、`tests/e2e/app.ts`（新，`smoke.spec.ts` 改用它）、`verify-mote.mjs` 和 `SKILL.md`（`ime --no-enter`）、`features/live-preview.md`、`features/dark-mode.md`、`CONTEXT.md`、`ARCHITECTURE.md`、`docs/features.md`。
+- [x] 做的一件事：编辑器按语法树渲染行内元素。`Cmd+E` 切换编辑器模式。颜色跟随 macOS。
+- [x] 你会看到：标题变大。`**粗体**` 两边的星号消失，光标移进去时星号出现。`[[笔记|别名]]` 只显示别名，目标不存在的双链是另一种颜色。属性显示为一个 YAML 代码块。按 `Cmd+E` 后不能输入，再按一次恢复。
 
 渲染的元素：标题、粗体、斜体、删除线、高亮、行内代码、标签、双链、Markdown 链接、列表、引用、分隔线、代码块、属性块。链接在这个 PR 里只有样式，点击在 PR C。
 
@@ -290,13 +290,13 @@ rebase 到 `f4aa01d` 之前，在 `ab712d1` 的应用代码上也跑过 3 次。
 
 验证：
 
-- [ ] 单元：e2e 测试 `live preview hides syntax away from the selection and shows it at the selection`、`Cmd+E switches to reading mode and back`、`the window follows the system color scheme`。
-- [ ] 真实窗口，`preview`：打开 `行内.md`，编辑器的可见文字里没有 `**` 和 `[[`。点击粗体所在的词，可见文字里出现 `**`。按 `Cmd+E`，输入一个字，文档不变。
-- [ ] 真实窗口，输入法：在含粗体和链接的行尾用 `ime` 输入“测试”。上屏后 `vault-diff` 只列出这篇笔记，文件只多出这两个字。
-- [ ] 真实窗口，配色：`verify-mote` 加 `theme --scheme dark|light` 命令。两种配色下各截一张图，各读一次编辑器背景和文字的计算颜色。两组颜色不同，对比度都不低于 4.5。
-- [ ] 真实窗口，5 个副本：两种编辑器模式下各跑一次 `walk-notes`，`errorCount` 是 0，`vault-diff` 输出 `unchanged`。
-- [ ] 性能，输入：在最大的笔记（`Pesemic-copy`，63.4 KB）中间连续输入 200 个字符，量每个字符从按键到画面更新的时间。先在 main 上量基线。中位数超过 16 毫秒算失败。
-- [ ] 性能，打开：`workspace-copy` 上 `walk-notes` 的总耗时。先在 main 上量基线。超过基线的 1.5 倍算失败。
+- [x] 单元：e2e 测试 `live preview hides syntax away from the selection and shows it at the selection`、`Cmd+E switches to reading mode and back`、`the window follows the system color scheme`。
+- [x] 真实窗口，`preview`：打开 `行内.md`，编辑器的可见文字里没有 `**` 和 `[[`。点击粗体所在的词，可见文字里出现 `**`。按 `Cmd+E`，输入一个字，文档不变。
+- [x] 真实窗口，输入法：在含粗体和链接的行尾用 `ime --no-enter` 输入“测试”。上屏后 `vault-diff` 只列出这篇笔记，文件只多出这两个字。不带 `--no-enter` 时命令会按一次真的回车，原因见结果。
+- [x] 真实窗口，配色：用 `theme --scheme dark|light`。两种配色下各截一张图，各读一次编辑器背景和文字的计算颜色。两组颜色不同，对比度都不低于 4.5。
+- [x] 真实窗口，5 个副本：两种编辑器模式下各跑一次 `walk-notes`，`errorCount` 是 0，`vault-diff` 输出 `unchanged`。
+- [x] 性能，输入：`$V launch --vault ~/mote-link-check/Pesemic-copy`，打开 `compute/compute_mvp_spec.md`。在实时预览下交替跑 `bench-typing --chars 200 --where end` 和 `--where start`，各 3 次。任一位置的每键 `taskMs` 中位数超过 16 毫秒算失败。基线是 `end` 4.94 毫秒、`start` 5.18 毫秒，见上面的基线一节。
+- [x] 性能，打开：`$V launch --vault ~/mote-link-check/workspace-copy`，跑 3 次 `walk-notes`。`medianNoteMs` 超过 117 毫秒算失败，这是基线 78.2 毫秒的 1.5 倍。`durationMs` 3 次之间差 22%，只记录，不判断。
 
 ## PR C：点击链接、新建笔记、后退和前进
 
