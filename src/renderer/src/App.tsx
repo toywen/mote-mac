@@ -2,13 +2,25 @@ import { FolderOpen, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { FileTree } from './FileTree'
 import { NoteEditor } from './NoteEditor'
+import { QuickOpen } from './QuickOpen'
 import { workspace } from './workspace'
 
 function App(): React.JSX.Element {
   const { vault, doc, busy, error } = useSyncExternalStore(workspace.subscribe, workspace.snapshot)
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const sidebarAction = sidebarOpen ? '收起文件树' : '展开文件树'
+  const [quickOpen, setQuickOpen] = useState(false)
   useEffect(() => workspace.connect(), [])
+  useEffect(() => {
+    function keyDown(event: KeyboardEvent): void {
+      if (event.metaKey && !event.shiftKey && !event.altKey && event.code === 'KeyO') {
+        event.preventDefault()
+        setQuickOpen(true)
+      }
+    }
+    window.addEventListener('keydown', keyDown, true)
+    return () => window.removeEventListener('keydown', keyDown, true)
+  }, [])
 
   return (
     <div className={sidebarOpen ? 'layout' : 'layout sidebar-hidden'}>
@@ -117,6 +129,9 @@ function App(): React.JSX.Element {
           <h2>反向链接</h2>
         </header>
       </aside>
+      {quickOpen && vault && (
+        <QuickOpen entries={vault.entries} onClose={() => setQuickOpen(false)} />
+      )}
     </div>
   )
 }

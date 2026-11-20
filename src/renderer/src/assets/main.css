@@ -291,3 +291,68 @@ button:focus-visible {
     display: none;
   }
 }
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding-top: 12vh;
+  background: rgb(0 0 0 / 0.25);
+  z-index: 10;
+}
+
+.quick-open {
+  width: min(600px, calc(100vw - 48px));
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 12px 40px rgb(0 0 0 / 0.25);
+  overflow: hidden;
+}
+
+.quick-open input {
+  width: 100%;
+  box-sizing: border-box;
+  padding: 12px 14px;
+  border: 0;
+  border-bottom: 1px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-size: 15px;
+  outline: none;
+}
+
+.quick-open ul {
+  max-height: 50vh;
+  margin: 0;
+  padding: 4px;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.quick-open li {
+  padding: 6px 10px;
+  border-radius: 4px;
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+  cursor: pointer;
+}
+
+.quick-open li[aria-selected='true'] {
+  background: var(--selected);
+}
+
+.quick-open mark {
+  background: transparent;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.quick-open-empty {
+  padding: 10px 14px;
+  color: var(--muted);
+}

@@ -162,3 +162,50 @@ test('external saves refresh clean notes and keep both sides of a conflict', asy
     await app.close()
   }
 })
+
+test('quick open ranks notes like Obsidian and lists recent notes for an empty query', async () => {
+  const info = test.info()
+  const vault = info.outputPath('vault')
+  await cp('tests/fixtures/vaults/basic', vault, { recursive: true })
+  const app = await launch(info.outputPath('settings'))
+  try {
+    const window = await app.firstWindow()
+    await app.evaluate(({ dialog }, path) => {
+      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
+    }, vault)
+    await window.getByRole('button', { name: '打开笔记库' }).click()
+    await expect(window.getByRole('tree', { name: '文件树' })).toBeVisible()
+    const dialog = window.getByRole('dialog', { name: '快速打开' })
+    const options = dialog.getByRole('option')
+    const editor = window.getByRole('textbox', { name: '编辑器' })
+
+    await window.keyboard.press('Meta+O')
+    await expect(dialog).toBeVisible()
+    await expect(dialog).toContainText('没有最近打开的笔记')
+    await window.keyboard.insertText('笔记')
+    await expect(options).toHaveText(['CRLF笔记'])
+    await window.keyboard.press('Escape')
+    await expect(dialog).toBeHidden()
+
+    await window.keyboard.press('Meta+O')
+    await window.keyboard.insertText('计划')
+    await expect(options).toHaveText(['项目/计划'])
+    await window.keyboard.press('Enter')
+    await expect(dialog).toBeHidden()
+    await expect(editor).toHaveAttribute('data-note-path', '项目/计划.md')
+    await expect(editor).toBeFocused()
+
+    await window.keyboard.press('Meta+O')
+    await window.keyboard.insertText('欢迎')
+    await window.keyboard.press('Enter')
+    await expect(editor).toHaveAttribute('data-note-path', '欢迎.md')
+
+    await window.keyboard.press('Meta+O')
+    await expect(options).toHaveText(['欢迎', '项目/计划'])
+    await window.keyboard.press('ArrowDown')
+    await window.keyboard.press('Enter')
+    await expect(editor).toHaveAttribute('data-note-path', '项目/计划.md')
+  } finally {
+    await app.close()
+  }
+})

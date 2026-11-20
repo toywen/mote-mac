@@ -33,7 +33,7 @@ This directory is the maintained source for verifying mote's user-facing behavio
 
 ## Status and handle contract
 
-The app shell and step 1 of `docs/tech-stack.md` are implemented. The roles and names in these recipes match the desktop window.
+The app shell, step 1, and the quick open part of step 2 of `docs/tech-stack.md` are implemented. The roles and names in these recipes match the desktop window.
 
 ## Features
 
@@ -41,3 +41,4 @@ The app shell and step 1 of `docs/tech-stack.md` are implemented. The roles and 
 - [Open a vault and browse the tree](./open-vault.md): step 1.
 - [Edit and save a note](./edit-and-save.md): step 1, acceptance item 1.
 - [External changes](./external-change.md): step 1, acceptance item 4.
+- [Quick open](./quick-open.md): step 2, `Cmd+O`.

@@ -470,6 +470,36 @@ async function main() {
     case 'read':
       result = await act((page) => locate(page, opts).innerText())
       break
+    case 'ime': {
+      const composing = String(opts.text ?? '')
+      const commit = String(opts.commit ?? '')
+      result = await act(async (page) => {
+        await page.evaluate(() => {
+          window.__moteImeKeys = []
+          window.addEventListener(
+            'keydown',
+            (event) =>
+              window.__moteImeKeys.push({
+                key: event.key,
+                keyCode: event.keyCode,
+                isComposing: event.isComposing
+              }),
+            { capture: true, once: true }
+          )
+        })
+        const cdp = await page.context().newCDPSession(page)
+        await cdp.send('Input.imeSetComposition', {
+          text: composing,
+          selectionStart: composing.length,
+          selectionEnd: composing.length
+        })
+        await page.keyboard.press('Enter')
+        await cdp.send('Input.insertText', { text: commit })
+        await cdp.detach()
+        return { enterKeydown: await page.evaluate(() => window.__moteImeKeys) }
+      })
+      break
+    }
     case 'eval':
       result = await act((page) => page.evaluate(opts.js))
       break

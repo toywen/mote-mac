@@ -66,6 +66,7 @@ With one live run, commands pick it. With several, pass `--run <id>` or set `MOT
 | `type --text T`                                  | Types into the focused element.                                         |
 | `wait <locator> [--state hidden] [--timeout ms]` | Waits for an element. Default 5000 ms.                                  |
 | `read <locator>`                                 | Prints an element's text.                                               |
+| `ime --text T --commit C`                        | Composes T with the input method, presses Enter, then commits C. Prints the Enter keydown it saw. |
 | `eval --js EXPR`                                 | Evaluates in the renderer. Read state only.                             |
 | `main-eval --js EXPR`                            | Evaluates in the main process. `electron` is in scope. Read state only. |
 | `dialog-answer --path {vault}`                   | Makes the next native open dialog return this path.                     |
