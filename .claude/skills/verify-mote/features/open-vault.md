@@ -1,6 +1,6 @@
 # Open a vault and browse the tree
 
-The user opens any folder as a vault. The file tree shows its folders and files and hides dot entries. Clicking a note opens it in the editor. mote reopens the last vault on the next launch. Status: step 1, not built.
+The user opens a folder as a vault. The file tree shows its folders and files and hides dot entries. Clicking a note opens it in the editor. mote reopens the last vault on the next launch.
 
 ## Sub-features
 
@@ -27,7 +27,8 @@ Preconditions:
 - **List.** Read the tree. Run `$V snapshot --out tree-list`. It shows `欢迎`, `CRLF笔记`, `带BOM`, `无结尾换行`, folders `项目` and `附件`, and `图片.png`. It does not show `.隐藏` or `.obsidian`.
 - **Collapse.** Click the folder. Run `$V click --role treeitem --name 项目 --exact`. `计划` disappears from the snapshot. Click again and it returns.
 - **Open note.** Click a note. Run `$V click --role treeitem --name 欢迎 --exact`. Then `$V read --role textbox --name 编辑器` contains `这是 mote 的验证笔记库。`.
-- **Reopen.** Quit and relaunch with the same settings dir. This needs a `launch --reuse-settings` option the helper does not have yet; add it with this feature.
+- **Open every note.** Run `$V walk-notes --out opened-notes` with all folders expanded. It compares visible note paths with the copied vault and waits for the matching editor after each click.
+- **Reopen.** Run the Electron test named `edits preserve source bytes, save on navigation and quit, and the vault reopens`. It quits and launches again with the same isolated settings directory.
 - **No writes.** Run `$V vault-diff --out open-after --expect-unchanged`. It prints `unchanged`. That covers `.obsidian` too.
 - **Proof.** Run `$V screenshot --out tree-open-note`, then `$V stop`.
 

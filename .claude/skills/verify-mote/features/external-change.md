@@ -1,6 +1,6 @@
 # External changes
 
-When Obsidian, git, or another program changes an open note, mote shows the new text within 100 ms. If the user has unsaved edits, mote keeps both versions and asks which to keep. Status: step 1, not built.
+When Obsidian, git, or another program changes an open note, mote shows the new text. The latency target is 100 ms. If the user has unsaved edits, mote keeps both versions and asks which to keep.
 
 ## Sub-features
 
@@ -27,6 +27,6 @@ Preconditions:
 
 ## Gotchas
 
-- Acceptance item 4 says Obsidian. A shell write is the stand-in; also test once with real Obsidian on the vault copy before calling item 4 done.
+- Acceptance item 4 requires real Obsidian. Launch it with an isolated settings directory registered to the copied vault. Disable community plugins in the copy before launching Obsidian, and take the edit baseline after Obsidian opens.
 - File events can arrive in bursts or twice. One reload per change is the goal; check that the editor does not flicker or lose the cursor.
 - The `--timeout 1000` is slack over the 100 ms target. Measure the real latency separately.

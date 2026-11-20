@@ -33,7 +33,7 @@ This directory is the maintained source for verifying mote's user-facing behavio
 
 ## Status and handle contract
 
-Only the app shell has shipped. The other files describe step 1 of `docs/tech-stack.md`. Their handles (roles and names) are a contract. The PR that builds the feature exposes those handles, or edits the file to the real ones in the same PR.
+The app shell and step 1 of `docs/tech-stack.md` are implemented. The roles and names in these recipes match the desktop window.
 
 ## Features
 

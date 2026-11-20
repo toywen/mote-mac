@@ -1,6 +1,8 @@
+import type { MoteApi } from '../core/ipc'
+
 declare global {
   interface Window {
-    mote: Record<string, never>
+    mote: MoteApi
   }
 }
 

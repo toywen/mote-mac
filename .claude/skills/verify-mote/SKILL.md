@@ -59,6 +59,7 @@ With one live run, commands pick it. With several, pass `--run <id>` or set `MOT
 | Command                                          | Does                                                                    |
 | ------------------------------------------------ | ----------------------------------------------------------------------- |
 | `snapshot [--out name]`                          | Prints the window's ARIA tree. Read it to find handles.                 |
+| `walk-notes [--out name]`                        | Clicks every visible note and checks the full path and editor state.   |
 | `click <locator>`                                | Clicks.                                                                 |
 | `fill <locator> --value V`                       | Replaces an input's text.                                               |
 | `press --key Meta+O`                             | Presses a key or chord in the window.                                   |
@@ -87,6 +88,7 @@ A proof meets these standards:
 - Capture the action and the result: the `actions.jsonl` lines, plus a snapshot or screenshot after the action.
 - Check side effects on disk. Every proof that touches notes ends with `vault-diff`. Opening without editing must print `unchanged`. A save must change only the note you edited.
 - `tools/hash-vault.mjs` skips dot entries, so it cannot prove `.obsidian` is untouched. `vault-diff` hashes dot entries and empty folders too.
+- For a `hash-vault` comparison, hash the copied vault before opening it and again after `walk-notes`. Keep the output of `diff -u` with the two manifests.
 - Report a journey that cannot run as a failure, with the command and the missing precondition.
 
 ## Cleanup

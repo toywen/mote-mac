@@ -1,6 +1,6 @@
 # Edit and save a note
 
-The user edits a note. mote saves it after typing stops, and before switching notes or quitting. A note opened but not edited keeps every byte, including its line separator, BOM, and final newline. Status: step 1, not built.
+The user edits a note. mote saves it after typing stops, and before switching notes or quitting. Opening a note without editing preserves every byte, including line separators, BOM, and the final newline.
 
 ## Sub-features
 
@@ -24,7 +24,7 @@ Preconditions:
 - **Edit CRLF note.** Open `CRLF笔记` and type at the end. Run `$V click --role textbox --name 编辑器`, `$V press --key Meta+ArrowDown`, and `$V type --text 新增一行`. Wait 2 s for autosave.
 - **Check the save.** Run `$V vault-diff --out crlf-edit`. It prints only `changed file CRLF笔记.md`. Then `xxd "$VAULT/CRLF笔记.md" | tail -2` shows `0d0a` endings, and no bare `0a`.
 - **Edit BOM note and no-final-newline note.** Repeat the edit for `带BOM` and `无结尾换行`. The file still starts with `efbbbf`, and the second still has no final newline unless you typed one.
-- **Switch saves.** Type in `欢迎`, then click `计划` within 1 s. `vault-diff` shows `欢迎.md` changed.
+- **Switch saves.** Type in `欢迎`, then click `计划` before the 750 ms autosave delay. `vault-diff` shows `欢迎.md` changed. The Electron regression test drives both actions in one connection to avoid CLI startup time.
 - **Proof.** Keep each diff and `xxd` output in the evidence dir, then `$V stop`.
 
 ## Gotchas

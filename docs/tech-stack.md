@@ -127,7 +127,9 @@ type DocState =
 
 ### IPC 接口
 
-渲染进程只能通过这些接口碰磁盘。
+渲染进程通过 preload 暴露的 `window.mote` 访问磁盘。第 1 步的实际接口定义在 [src/core/ipc.ts](../src/core/ipc.ts)。主进程打开目录并推送文件树变动。读写笔记和打开附件时，调用者同时传入笔记库目录和库内路径。保存遇到冲突时返回磁盘版本，文件已删除时返回空版本。
+
+下面是后续步骤使用的接口草案。
 
 ```ts
 interface MoteApi {
@@ -165,12 +167,12 @@ copy(JSON.stringify({ resolved: app.metadataCache.resolvedLinks, unresolved: app
 ### 不改动字节
 
 - 只有 `DocState` 是 dirty 时才写盘。
-- CodeMirror 默认用 `\n` 拼接行。打开笔记时检测换行符，设置 `EditorState.lineSeparator`，保存时原样保留 `\r\n`。
+- CodeMirror 内部用 `\n` 表示换行。编辑器保存原始 BOM 和各行的换行符，新增的换行沿用文件首个换行的格式。
 - 保存直接覆盖原文件，不用"写临时文件再改名"。改名会换掉文件的创建时间，Obsidian 按创建时间排序时会乱。
 
 ### 外部修改
 
-主进程用 `fs.watch` 监听整个笔记库，忽略以 `.` 开头的路径。收到事件后重新读文件、算哈希。哈希等于 mote 自己刚写入的值，就当作自己的写入，忽略。否则更新索引，并推送 `onVaultChanged`。
+主进程用 `fs.watch` 监听整个笔记库，忽略以 `.` 开头的路径。对 mote 自己刚保存的文件，比较磁盘哈希后过滤重复通知。目录、文件新增或移除时更新文件树。收到笔记变动通知后，编辑器重新读取打开的笔记，按磁盘哈希决定是否刷新或保留两份内容。
 
 ### 改名和移动
 

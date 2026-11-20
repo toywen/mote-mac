@@ -25,5 +25,4 @@ Preconditions:
 
 ## Gotchas
 
-- The pane labels are placeholders from step 0. Step 1 replaces them. Update this file in that PR.
-- The tree pane label may become the tree's accessible name rather than visible text. Check `snapshot` before you assert text.
+- The shell labels also name the three accessible regions. The interactive file tree appears after opening a vault.

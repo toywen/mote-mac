@@ -106,8 +106,11 @@ function diffHashes(before, after) {
   const index = (text) => {
     const map = new Map()
     for (const line of text.split('\n').filter(Boolean)) {
-      const [kind, rel, ...rest] = line.split(' ').filter(Boolean)
-      map.set(`${kind} ${rel}`, rest.join(' '))
+      const kind = line.slice(0, 4).trim()
+      const entry = line.slice(5)
+      const boundary =
+        kind === 'file' ? entry.length - 65 : kind === 'link' ? entry.indexOf(' -> ') : entry.length
+      map.set(`${kind} ${entry.slice(0, boundary)}`, entry.slice(boundary))
     }
     return map
   }
@@ -173,6 +176,38 @@ async function waitUntilUsable(page) {
     undefined,
     { timeout: READY_TIMEOUT_MS }
   )
+}
+
+async function walkNotes(page, vault) {
+  const tree = page.getByRole('tree', { name: '文件树' })
+  await tree.waitFor()
+  const rows = tree.locator('[data-kind="note"]')
+  const paths = await rows.evaluateAll((nodes) => nodes.map((node) => node.dataset.path))
+  const expected = fs
+    .readdirSync(vault, { withFileTypes: true, recursive: true })
+    .filter((entry) => entry.isFile() && path.extname(entry.name).toLowerCase() === '.md')
+    .map((entry) => path.relative(vault, path.join(entry.parentPath, entry.name)))
+    .filter((rel) => !rel.split(path.sep).some((part) => part.startsWith('.')))
+    .sort()
+  if (JSON.stringify(paths.toSorted()) !== JSON.stringify(expected)) {
+    throw new Error(
+      `visible tree notes (${paths.length}) differ from the vault (${expected.length})`
+    )
+  }
+  const errors = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  for (const note of paths) {
+    const row = rows.and(page.locator(`[data-path=${JSON.stringify(note)}]`))
+    await row.click()
+    await page
+      .getByRole('textbox', { name: '编辑器' })
+      .and(page.locator(`[data-note-path=${JSON.stringify(note)}]`))
+      .waitFor({ timeout: 5000 })
+    const alerts = await page.getByRole('alert').allTextContents()
+    if (errors.length || alerts.length)
+      throw new Error(`${note}: ${[...errors, ...alerts].join('; ')}`)
+  }
+  return { opened: paths.length, expected: expected.length, errorCount: errors.length, paths }
 }
 
 async function mainEval(state, expression) {
@@ -260,6 +295,7 @@ async function launch(opts, extra) {
   const logFd = fs.openSync(logFile, 'a')
   const env = { ...process.env }
   delete env.ELECTRON_RENDERER_URL
+  delete env.ELECTRON_RUN_AS_NODE
   const appArgs = extra.map((arg) => arg.replaceAll('{vault}', vault))
   const child = spawn(
     ELECTRON,
@@ -386,6 +422,13 @@ async function main() {
       result = await act((page) => page.locator('body').ariaSnapshot())
       if (opts.out) fs.writeFileSync(evidencePath(state, opts, '.aria.txt'), result + '\n')
       break
+    case 'walk-notes': {
+      const opened = await act((page) => walkNotes(page, state.vault))
+      if (opts.out)
+        fs.writeFileSync(evidencePath(state, opts, '.json'), JSON.stringify(opened, null, 2) + '\n')
+      result = { opened: opened.opened, expected: opened.expected, errorCount: opened.errorCount }
+      break
+    }
     case 'screenshot':
       result = evidencePath(state, opts, '.png')
       await act((page) => page.screenshot({ path: result }))

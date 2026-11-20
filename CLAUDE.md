@@ -49,4 +49,4 @@ Each piece of state has one owner. Do not add a second copy that both sides writ
 
 ## Current status
 
-Step 0 of the development order is done: the skeleton builds, lint and typecheck pass, and `tests/e2e/smoke.spec.ts` checks the placeholder three-pane window. Step 1 (open a vault, file tree, plain editing, save, external changes) is next.
+Step 1 of the development order is implemented. The Electron tests cover opening a vault, preserving note bytes during edits, saving on switch and quit, reopening the last vault, and handling external changes. Use `verify-mote` to check an entire disposable vault in the real window.
