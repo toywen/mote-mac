@@ -65,16 +65,17 @@ function linkUnder(view: EditorView, event: MouseEvent): Found | null {
 export function followLinks(follow: (dest: LinkDest) => void): Extension {
   return ViewPlugin.define((view) => {
     let pressed: Found | null = null
-    const plain = (event: MouseEvent): boolean =>
+    // The left button, alone or with Cmd.
+    const followable = (event: MouseEvent): boolean =>
       event.button === 0 && !event.shiftKey && !event.altKey && !event.ctrlKey
     const mousedown = (event: MouseEvent): void => {
-      pressed = plain(event) ? linkUnder(view, event) : null
+      pressed = followable(event) ? linkUnder(view, event) : null
       if (pressed) event.preventDefault()
     }
     const click = (event: MouseEvent): void => {
       const link = pressed
       pressed = null
-      if (!link || !plain(event) || linkUnder(view, event)?.from !== link.from) return
+      if (!link || !followable(event) || linkUnder(view, event)?.from !== link.from) return
       event.preventDefault()
       const context = view.state.facet(linkContext)
       const dest = context && linkDest(link.target, context.path, context.index, context.config)
