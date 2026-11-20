@@ -11,7 +11,7 @@ The editor draws Markdown as you write. An element shows its Markdown marks only
 - `reading-mode`: `Cmd+E` or the header button switches modes. Typing changes nothing. The mode stays when another note opens.
 - `preview-ime`: composing next to an element adds only the committed characters, and the element keeps its marks until the composition ends.
 
-Images, task checkboxes, callouts, tables, Mermaid and embeds still show as source. Later PRs of step 3 add them.
+Task checkboxes, callouts, tables, Mermaid and note embeds still show as source. Later PRs of step 3 add them. Images are in [images.md](./images.md).
 
 ## How to get to it (user POV)
 

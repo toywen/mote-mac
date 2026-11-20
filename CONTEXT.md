@@ -11,6 +11,7 @@
 | 笔记库 | vault | 一个装 Markdown 文件的文件夹，Obsidian 里也叫 vault |
 | 笔记 | note | 笔记库里的一个 `.md` 文件 |
 | 附件 | file | 笔记库里不是笔记的文件，例如图片和 PDF。用 macOS 的默认程序打开 |
+| 图片 | image | 扩展名是 png、jpg、jpeg、gif、svg、webp、bmp 或 avif 的附件。编辑器经 `mote-file://` 读取并显示它 |
 | 库内路径 | `VaultPath` | 笔记库内的相对路径，用 `/` 分隔，不含以 `.` 开头的部分。只由 `parseVaultPath` 创建 |
 | 笔记库配置 | `VaultConfig` | 笔记库里 `.obsidian` 文件夹中的 JSON 配置。mote 只读，从不修改 |
 | 日记 | daily note | 按日期命名、每天一篇的笔记 |
