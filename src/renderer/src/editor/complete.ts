@@ -7,13 +7,11 @@ import {
 } from '@codemirror/autocomplete'
 import { syntaxTree } from '@codemirror/language'
 import { EditorState, Facet, type Extension } from '@codemirror/state'
-import type { EditorView } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
 import type { VaultPath } from '../../../core/ipc'
 import { linkText, type LinkFormat } from '../../../core/linkText'
 import { suggest } from '../quickOpenMatch'
 import { linkContext } from './livePreview'
-import type { LinkContext } from './preview'
 import './complete.css'
 
 // What [[ completion offers and how it writes the link: the vault's notes, the notes opened last,
@@ -46,47 +44,32 @@ function linkQuery(state: EditorState, pos: number): string | null {
 
 type Row = Completion & { matched: number[] }
 
-const noteName = (path: VaultPath): string => path.slice(path.lastIndexOf('/') + 1, -3)
-const folder = (path: VaultPath): string => path.slice(0, Math.max(0, path.lastIndexOf('/')))
-
-// Replaces the [[ and the query from start to the cursor, and whatever Obsidian replaces after it.
-function insert(
-  view: EditorView,
-  row: Row,
-  links: LinkContext,
-  format: LinkFormat,
-  target: VaultPath,
-  start: number,
-  cursor: number
-): void {
-  const line = view.state.doc.lineAt(cursor)
-  const after = line.text.slice(cursor - line.from)
-  const { text, consumed } = linkText(links.index, target, links.path, format, after)
-  view.dispatch({
-    changes: { from: start, to: cursor + consumed, insert: text },
-    selection: { anchor: start + text.length },
-    annotations: pickedCompletion.of(row),
-    userEvent: 'input.complete'
-  })
-}
-
 // Rows come from quick open's matcher, in its order. The library's own filtering stays off.
+// Picking a row replaces the [[ and the query, and whatever Obsidian replaces after the cursor.
 function linkSource(context: CompletionContext): CompletionResult | null {
   const vault = context.state.facet(completeContext)
   const links = context.state.facet(linkContext)
   const query = linkQuery(context.state, context.pos)
   if (!vault || !links || query === null) return null
   const options = suggest(vault.notes, vault.recent, query).map(({ path, label, match }): Row => {
-    const name = noteName(path)
-    const offset = label.length - name.length
+    const name = label.lastIndexOf('/') + 1
     return {
-      label: name,
-      detail: folder(path),
+      label: label.slice(name),
+      detail: label.slice(0, Math.max(0, name - 1)),
       matched: (match?.matches ?? []).flatMap(([from, to]) =>
-        to > offset ? [Math.max(from, offset) - offset, to - offset] : []
+        to > name ? [Math.max(from, name) - name, to - name] : []
       ),
-      apply: (view, row, from, to) =>
-        insert(view, row as Row, links, vault.format, path, from - 2, to)
+      apply: (view, row, from, to) => {
+        const line = view.state.doc.lineAt(to)
+        const after = line.text.slice(to - line.from)
+        const { text, consumed } = linkText(links.index, path, links.path, vault.format, after)
+        view.dispatch({
+          changes: { from: from - 2, to: to + consumed, insert: text },
+          selection: { anchor: from - 2 + text.length },
+          annotations: pickedCompletion.of(row),
+          userEvent: 'input.complete'
+        })
+      }
     }
   })
   return {
