@@ -4,8 +4,9 @@
 //   node tools/compare-links.mjs --bench 5 <dir>...   time scan + read + parse + resolve, no export needed
 // Each <dir> needs <dir>.obsidian-links.json from tools/obsidian-export.mjs.
 // Also checks that NoteIndex.backlinks (the main process's backlinks query) gives, for every
-// note, the same sources and counts as Obsidian's resolvedLinks read backwards.
-// Exit code 1 when any file set, link count or backlink count differs.
+// note, the same sources and counts as Obsidian's resolvedLinks read backwards, and that every
+// link with a #subpath lands on the same line of its target as in Obsidian.
+// Exit code 1 when any file set, link count, backlink count or subpath line differs.
 import { readFileSync, realpathSync } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
 import { performance } from 'node:perf_hooks'
@@ -14,6 +15,7 @@ process.removeAllListeners('warning')
 const { scanVault, readNoteFiles } = await import('../src/main/notes.ts')
 const { NoteIndex } = await import('../src/core/noteIndex.ts')
 const { buildLinkIndex, resolveLink, resolveNotes } = await import('../src/core/resolve.ts')
+const { resolveSubpath } = await import('../src/core/subpath.ts')
 
 const dirs = process.argv.slice(2)
 let bench = 0
@@ -124,6 +126,39 @@ async function compare(input) {
           mote: actual[source] ?? 0
         })
   }
+  // Subpaths: for every link with a #subpath, the 0-based line it lands on in its target.
+  const subpathKey = (s) => `${s.source} -> ${s.target} ${s.subpath}`
+  const expectedLines = new Map()
+  const actualLines = new Map()
+  const add = (map, key, line) => map.set(key, [...(map.get(key) ?? []), line])
+  for (const s of obsidian.subpaths ?? []) add(expectedLines, subpathKey(s), s.line)
+  for (const note of notes) {
+    for (const link of note.links) {
+      if (link.subpath === null) continue
+      const target = resolveLink(index, link.target, note.path)
+      const text = target ? byPath.get(target)?.text : undefined
+      const at = text === undefined ? null : resolveSubpath(text, link.subpath)
+      const line = at === null ? null : text.slice(0, at).split('\n').length - 1
+      add(actualLines, subpathKey({ source: note.path, target, subpath: link.subpath }), line)
+    }
+  }
+  const subpathMismatches = []
+  let subpathTotal = 0
+  let subpathAgree = 0
+  for (const key of [...new Set([...expectedLines.keys(), ...actualLines.keys()])].sort()) {
+    const want = (expectedLines.get(key) ?? []).map(String).sort()
+    const got = (actualLines.get(key) ?? []).map(String).sort()
+    subpathTotal += want.length
+    const left = [...got]
+    for (const line of want) {
+      const i = left.indexOf(line)
+      if (i >= 0) {
+        subpathAgree++
+        left.splice(i, 1)
+      }
+    }
+    if (want.join() !== got.join()) subpathMismatches.push({ key, obsidian: want, mote: got })
+  }
   return {
     dir,
     onlyMote,
@@ -133,7 +168,11 @@ async function compare(input) {
     moteTotal,
     mismatches,
     backlinkTotal,
-    backlinkMismatches
+    backlinkMismatches,
+    hasSubpaths: Array.isArray(obsidian.subpaths),
+    subpathTotal,
+    subpathAgree,
+    subpathMismatches
   }
 }
 
@@ -188,20 +227,37 @@ for (const input of dirs) {
   console.log(`backlinks: total ${r.backlinkTotal}, mismatches ${r.backlinkMismatches.length}`)
   for (const m of r.backlinkMismatches)
     console.log(`  [backlink] ${m.target} <- ${m.source}: Obsidian ${m.obsidian}, mote ${m.mote}`)
-  if (!sameFiles || r.mismatches.length || r.backlinkMismatches.length) failed = true
+  if (r.hasSubpaths)
+    console.log(
+      `subpaths: total ${r.subpathTotal}, agree ${r.subpathAgree}, mismatches ${r.subpathMismatches.length}`
+    )
+  else console.log('subpaths: the export has none; run tools/obsidian-export.mjs again')
+  for (const m of r.subpathMismatches)
+    console.log(`  [subpath] ${m.key}: Obsidian line ${m.obsidian}, mote line ${m.mote}`)
+  if (
+    !sameFiles ||
+    r.mismatches.length ||
+    r.backlinkMismatches.length ||
+    !r.hasSubpaths ||
+    r.subpathMismatches.length
+  )
+    failed = true
   summary.push({
     name,
     total: r.total,
     agree: r.agree,
     mismatches: r.mismatches.length,
     backlinks: r.backlinkTotal,
-    backlinkMismatches: r.backlinkMismatches.length
+    backlinkMismatches: r.backlinkMismatches.length,
+    subpaths: r.subpathTotal,
+    subpathMismatches: r.hasSubpaths ? r.subpathMismatches.length : 'no export'
   })
 }
 console.log('== summary')
 for (const s of summary)
   console.log(
     `${s.name}: total ${s.total}, agree ${s.agree}, mismatches ${s.mismatches}, ` +
-      `backlinks ${s.backlinks}, backlink mismatches ${s.backlinkMismatches}`
+      `backlinks ${s.backlinks}, backlink mismatches ${s.backlinkMismatches}, ` +
+      `subpaths ${s.subpaths}, subpath mismatches ${s.subpathMismatches}`
   )
 process.exit(failed ? 1 : 0)

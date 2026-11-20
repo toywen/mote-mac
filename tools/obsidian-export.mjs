@@ -1,7 +1,8 @@
 #!/usr/bin/env node
 // Opens a vault copy in an isolated Obsidian and saves Obsidian's link resolution next to it:
 //   node tools/obsidian-export.mjs ~/mote-link-check/wiki-copy [more copies...]
-// writes ~/mote-link-check/wiki-copy.obsidian-links.json as { obsidian, files, resolved, unresolved }.
+// writes ~/mote-link-check/wiki-copy.obsidian-links.json as
+// { obsidian, files, resolved, unresolved, subpaths }.
 //
 //   node tools/obsidian-export.mjs --linktext <copy>...
 // writes <copy>.obsidian-linktext.json with the link text Obsidian makes for every source note and
@@ -191,13 +192,40 @@ async function exportVault(input) {
       const files = vault.getFiles().map((file) => file.path)
       const markdown = files.filter((path) => path.endsWith('.md'))
       const missing = markdown.filter((path) => !(path in metadataCache.resolvedLinks))
+      // For every link with a #subpath, the 0-based line Obsidian lands on: the line that
+      // MarkdownView.setEphemeralState takes from resolveSubpath when it follows the link.
+      const subpaths = []
+      for (const file of vault.getMarkdownFiles()) {
+        const cache = metadataCache.getFileCache(file) ?? {}
+        for (const { link } of [
+          ...(cache.links ?? []),
+          ...(cache.embeds ?? []),
+          ...(cache.frontmatterLinks ?? [])
+        ]) {
+          const at = link.indexOf('#')
+          if (at < 0) continue
+          const dest = metadataCache.getFirstLinkpathDest(link.slice(0, at), file.path)
+          subpaths.push({ source: file.path, target: dest?.path ?? null, subpath: link.slice(at) })
+        }
+      }
+      const leaf = window.app.workspace.getLeaf(true)
+      for (const entry of subpaths) {
+        const target = entry.target && vault.getAbstractFileByPath(entry.target)
+        entry.line = null
+        if (target?.extension !== 'md') continue
+        if (leaf.view.file !== target) await leaf.openFile(target)
+        const state = { subpath: entry.subpath }
+        leaf.view.setEphemeralState(state)
+        entry.line = state.line ?? null
+      }
       return {
         obsidian: window.electron.ipcRenderer.sendSync('version'),
         vault: vault.adapter.basePath,
         missing,
         files,
         resolved: metadataCache.resolvedLinks,
-        unresolved: metadataCache.unresolvedLinks
+        unresolved: metadataCache.unresolvedLinks,
+        subpaths
       }
     }, TIMEOUT_MS)
     if (result.vault !== vault) throw new Error(`Obsidian opened ${result.vault}, not ${vault}`)
@@ -205,8 +233,8 @@ async function exportVault(input) {
       throw new Error(`Obsidian ran ${result.obsidian}, not ${VERSION}`)
     if (result.missing.length)
       throw new Error(`notes missing from resolvedLinks: ${result.missing.slice(0, 5).join(', ')}`)
-    const { obsidian, files, resolved, unresolved } = result
-    writeFileSync(out, JSON.stringify({ obsidian, files, resolved, unresolved }))
+    const { obsidian, files, resolved, unresolved, subpaths } = result
+    writeFileSync(out, JSON.stringify({ obsidian, files, resolved, unresolved, subpaths }))
     const count = (links) =>
       Object.values(links).reduce(
         (sum, targets) => sum + Object.values(targets).reduce((a, b) => a + b, 0),
@@ -219,7 +247,8 @@ async function exportVault(input) {
         files: files.length,
         notes: Object.keys(resolved).length,
         resolvedLinks: count(resolved),
-        unresolvedLinks: count(unresolved)
+        unresolvedLinks: count(unresolved),
+        subpaths: subpaths.length
       })
     )
   } finally {
