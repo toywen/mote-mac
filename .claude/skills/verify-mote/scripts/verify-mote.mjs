@@ -156,7 +156,10 @@ async function waitForLog(logFile, pid) {
 }
 
 async function withPage(state, fn) {
-  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${state.cdpPort}`)
+  // noDefaults keeps Playwright from forcing a light color scheme and focus onto the window.
+  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${state.cdpPort}`, {
+    noDefaults: true
+  })
   try {
     const pages = browser.contexts().flatMap((context) => context.pages())
     const page = pages.find((p) => p.url().startsWith(RENDERER_URL))
@@ -187,7 +190,17 @@ function obsidianBacklinks(exportFile) {
   return result
 }
 
+// Nearest-rank percentile.
+function percentile(values, p) {
+  const sorted = values.toSorted((a, b) => a - b)
+  return sorted[Math.max(0, Math.ceil((p / 100) * sorted.length) - 1)]
+}
+
+const round = (ms) => Math.round(ms * 100) / 100
+
 async function walkNotes(page, vault, exportFile) {
+  const started = performance.now()
+  const noteMs = []
   const expectedBacklinks = exportFile ? obsidianBacklinks(exportFile) : null
   const backlinkMismatches = []
   let backlinkCount = 0
@@ -219,11 +232,13 @@ async function walkNotes(page, vault, exportFile) {
   page.on('pageerror', (error) => errors.push(error.message))
   for (const note of paths) {
     const row = rows.and(page.locator(`[data-path=${JSON.stringify(note)}]`))
+    const clickedAt = performance.now()
     await row.click()
     await page
       .getByRole('textbox', { name: '编辑器' })
       .and(page.locator(`[data-note-path=${JSON.stringify(note)}]`))
       .waitFor({ timeout: 5000 })
+    noteMs.push(performance.now() - clickedAt)
     const alerts = await page.getByRole('alert').allTextContents()
     if (errors.length || alerts.length)
       throw new Error(`${note}: ${[...errors, ...alerts].join('; ')}`)
@@ -252,8 +267,88 @@ async function walkNotes(page, vault, exportFile) {
     opened: paths.length,
     expected: expected.length,
     errorCount: errors.length,
+    durationMs: round(performance.now() - started),
+    medianNoteMs: round(percentile(noteMs, 50)),
     ...(expectedBacklinks ? { backlinks: backlinkCount, backlinkMismatches } : {}),
     paths
+  }
+}
+
+// Reads CodeMirror's document through the view it keeps on .cm-content. Read only.
+function readEditor(page, from = 0, to = 0) {
+  return page.evaluate(
+    ([from, to]) => {
+      const view = document.querySelector('.cm-content')?.cmTile?.root?.view
+      if (!view) throw new Error('no CodeMirror view on .cm-content')
+      const { doc, selection } = view.state
+      return { length: doc.length, head: selection.main.head, slice: doc.sliceString(from, to) }
+    },
+    [from, to]
+  )
+}
+
+const MAIN_THREAD_METRICS = {
+  task: 'TaskDuration',
+  script: 'ScriptDuration',
+  layout: 'LayoutDuration',
+  recalcStyle: 'RecalcStyleDuration'
+}
+
+// Counts the renderer main-thread work each key causes, so the number does not depend on vsync.
+async function benchTyping(page, { chars, gap, where }) {
+  const editor = page.getByRole('textbox', { name: '编辑器' })
+  const note = await editor.getAttribute('data-note-path')
+  await editor.click()
+  await page.keyboard.press(where === 'start' ? 'Meta+ArrowUp' : 'Meta+ArrowDown')
+  const before = await readEditor(page)
+  if (before.head !== (where === 'start' ? 0 : before.length))
+    throw new Error(`caret at ${before.head} of ${before.length}, not at the ${where}`)
+
+  const cdp = await page.context().newCDPSession(page)
+  const sample = async () => {
+    const { metrics } = await cdp.send('Performance.getMetrics')
+    const seconds = Object.fromEntries(metrics.map((m) => [m.name, m.value]))
+    return Object.fromEntries(
+      Object.entries(MAIN_THREAD_METRICS).map(([key, name]) => [key, seconds[name] * 1000])
+    )
+  }
+  const measure = async (key) => {
+    const start = await sample()
+    if (key) await page.keyboard.press(key)
+    await new Promise((resolve) => setTimeout(resolve, gap))
+    const end = await sample()
+    return Object.fromEntries(Object.keys(start).map((k) => [k, end[k] - start[k]]))
+  }
+  const text = Array.from({ length: chars }, (_, i) => String.fromCharCode(97 + (i % 26))).join('')
+  const idle = []
+  const keys = []
+  try {
+    await cdp.send('Performance.enable')
+    // The same sampling with no key shows what the gap costs on its own.
+    for (let i = 0; i < 20; i++) idle.push((await measure(null)).task)
+    for (const key of text) keys.push(await measure(key))
+  } finally {
+    await cdp.detach()
+  }
+
+  const after = await readEditor(page, before.head, before.head + chars)
+  if (after.length !== before.length + chars || after.slice !== text)
+    throw new Error(`editor grew by ${after.length - before.length}, expected ${chars}`)
+  const task = keys.map((k) => k.task)
+  const mean = (key) => round(keys.reduce((sum, k) => sum + k[key], 0) / keys.length)
+  return {
+    note,
+    where,
+    chars,
+    gapMs: gap,
+    docLength: { before: before.length, after: after.length },
+    taskMs: {
+      median: round(percentile(task, 50)),
+      p95: round(percentile(task, 95)),
+      max: round(percentile(task, 100))
+    },
+    meanMs: { script: mean('script'), layout: mean('layout'), recalcStyle: mean('recalcStyle') },
+    idleTaskMs: { median: round(percentile(idle, 50)), max: round(percentile(idle, 100)) }
   }
 }
 
@@ -473,12 +568,50 @@ async function main() {
       const opened = await act((page) => walkNotes(page, state.vault, opts.obsidian))
       if (opts.out)
         fs.writeFileSync(evidencePath(state, opts, '.json'), JSON.stringify(opened, null, 2) + '\n')
-      result = { opened: opened.opened, expected: opened.expected, errorCount: opened.errorCount }
+      result = {
+        opened: opened.opened,
+        expected: opened.expected,
+        errorCount: opened.errorCount,
+        durationMs: opened.durationMs,
+        medianNoteMs: opened.medianNoteMs
+      }
       if (opened.backlinkMismatches) {
         result.backlinks = opened.backlinks
         result.backlinkMismatches = opened.backlinkMismatches
         if (opened.backlinkMismatches.length) process.exitCode = 1
       }
+      break
+    }
+    case 'theme': {
+      const scheme = opts.scheme
+      if (!['dark', 'light', 'system'].includes(scheme))
+        throw new UsageError('give --scheme dark|light|system')
+      // themeSource applies to this app only. The macOS appearance setting stays as it is.
+      const dark = await mainEval(
+        state,
+        `(() => {
+          electron.nativeTheme.themeSource = ${JSON.stringify(scheme)}
+          return electron.nativeTheme.shouldUseDarkColors
+        })()`
+      )
+      await act((page) =>
+        page.waitForFunction(
+          (dark) => matchMedia('(prefers-color-scheme: dark)').matches === dark,
+          dark,
+          { timeout: 5000 }
+        )
+      )
+      result = { themeSource: scheme, inEffect: dark ? 'dark' : 'light' }
+      break
+    }
+    case 'bench-typing': {
+      const chars = Number(opts.chars ?? 200)
+      const gap = Number(opts.gap ?? 50)
+      const where = opts.where ?? 'end'
+      if (!['end', 'start'].includes(where)) throw new UsageError('give --where end|start')
+      if (!(chars > 0) || !(gap >= 0 && gap < 750))
+        throw new UsageError('give --chars N > 0 and --gap ms below the 750 ms autosave delay')
+      result = await act((page) => benchTyping(page, { chars, gap, where }))
       break
     }
     case 'screenshot':

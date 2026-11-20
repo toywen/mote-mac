@@ -59,7 +59,10 @@ With one live run, commands pick it. With several, pass `--run <id>` or set `MOT
 | Command                                          | Does                                                                    |
 | ------------------------------------------------ | ----------------------------------------------------------------------- |
 | `snapshot [--out name]`                          | Prints the window's ARIA tree. Read it to find handles.                 |
-| `walk-notes [--out name] [--obsidian export]`    | Clicks every visible note and checks the full path and editor state. With `--obsidian`, also checks each note's backlinks pane against the export. |
+| `walk-notes [--out name] [--obsidian export]`    | Clicks every visible note and checks the full path and editor state. With `--obsidian`, also checks each note's backlinks pane against the export. Prints `durationMs` for the whole walk and `medianNoteMs`, the median time from click to editor ready. |
+| `theme --scheme dark\|light\|system`             | Sets the app's color scheme, waits until the window follows, and prints the scheme in effect. |
+| `bench-typing [--chars 200] [--gap 50] [--where end\|start]` | Types into the open note one key at a time and prints the main-thread work per key. See Measure. |
+| `screenshot --out name`                          | Saves a PNG of the window to the evidence dir.                          |
 | `click <locator>`                                | Clicks.                                                                 |
 | `fill <locator> --value V`                       | Replaces an input's text.                                               |
 | `press --key Meta+O`                             | Presses a key or chord in the window.                                   |
@@ -79,13 +82,36 @@ To act like Obsidian or git changing a note, write the file under the vault copy
 
 Each command appends what it did and what it got to `verify-artifacts/<run>/actions.jsonl`.
 
+The helper connects with Playwright's `noDefaults`, so Playwright does not force a light color scheme or fake window focus. The window shows what the user sees.
+
+## Color scheme
+
+`theme` sets Electron's `nativeTheme.themeSource` in the main process. It stands in for the macOS appearance switch, which lives outside the app. It changes this app only, never the macOS setting. `system` hands the choice back to macOS. After `theme`, read colors with `eval` and take a `screenshot`.
+
+## Measure
+
+`bench-typing` needs an open note. It clicks the editor, presses `Cmd+Down` or `Cmd+Up` to move the caret to the end or the start, then types `--chars` letters as real key events. Before each key and again `--gap` ms after it, it reads Chrome's main-thread counters with the CDP call `Performance.getMetrics`. The difference is the work that one key caused: script, style, layout, and the rest of the task.
+
+It prints JSON:
+
+- `taskMs`: the median, p95 and max of the per-key `TaskDuration` difference.
+- `meanMs`: the mean per-key `ScriptDuration`, `LayoutDuration` and `RecalcStyleDuration`.
+- `idleTaskMs`: the same sampling for 20 gaps with no key. Subtract it before you blame mote.
+- `docLength`: the editor's length before and after. The command fails unless it grew by exactly `--chars`.
+
+The metric counts work, not time to the next frame, so the display refresh rate does not bound it. It misses work on the compositor and GPU threads and in the main process.
+
+The gap must stay below mote's 750 ms autosave delay, so no save runs during the measurement. The run leaves the note edited. mote saves it after the run, and `vault-diff` will list that note.
+
+Run every number at least twice in a row. If two medians differ by more than 30 percent, find out why before you record one.
+
 ## Evidence
 
 Evidence goes to `verify-artifacts/<run>/`. It is gitignored and survives `stop`. Do not put it in `test-results/`; Playwright wipes that dir on every test run.
 
 A proof meets these standards:
 
-- Drive the real user path: clicks, keys, and files written from outside. Never call internal functions to set state. `eval` and `main-eval` only read. `dialog-answer` is the one exception, because the native dialog is outside the app.
+- Drive the real user path: clicks, keys, and files written from outside. Never call internal functions to set state. `eval` and `main-eval` only read. `dialog-answer` and `theme` are the exceptions, because the native dialog and the macOS appearance switch are outside the app.
 - Capture the action and the result: the `actions.jsonl` lines, plus a snapshot or screenshot after the action.
 - Check side effects on disk. Every proof that touches notes ends with `vault-diff`. Opening without editing must print `unchanged`. A save must change only the note you edited.
 - `tools/hash-vault.mjs` skips dot entries, so it cannot prove `.obsidian` is untouched. `vault-diff` hashes dot entries and empty folders too.
