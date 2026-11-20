@@ -298,6 +298,79 @@ rebase 到 `f4aa01d` 之前，在 `ab712d1` 的应用代码上也跑过 3 次。
 - [x] 性能，输入：`$V launch --vault ~/mote-link-check/Pesemic-copy`，打开 `compute/compute_mvp_spec.md`。在实时预览下交替跑 `bench-typing --chars 200 --where end` 和 `--where start`，各 3 次。任一位置的每键 `taskMs` 中位数超过 16 毫秒算失败。基线是 `end` 4.94 毫秒、`start` 5.18 毫秒，见上面的基线一节。
 - [x] 性能，打开：`$V launch --vault ~/mote-link-check/workspace-copy`，跑 3 次 `walk-notes`。`medianNoteMs` 超过 117 毫秒算失败，这是基线 78.2 毫秒的 1.5 倍。`durationMs` 3 次之间差 22%，只记录，不判断。
 
+### 结果
+
+2026-11-20 实测，机器和基线一节相同。量之前用 `pgrep` 查过，没有别的 mote Electron 和 `compare-links` 在跑。
+
+**模块。** 都在 `src/renderer/src/editor/` 下。
+
+- `preview.ts`：数据结构 `PreviewItem`、`Renderer`、`EditorMode`，和几个共用的装饰。
+- `livePreview.ts`：唯一的 `StateField`。文档、语法树或链接解析的输入变了，才遍历语法树。选区、焦点或编辑器模式变了，只按显示源码的规则重画。
+- `renderers.ts`：注册表。`inline.ts`、`headings.ts`、`links.ts`、`lists.ts`、`quotes.ts`、`code.ts` 各管几种节点。行内样式表 `inlineStyles` 在 `inline.ts`。
+- `markdown.ts`：编辑器的语言和回车、退格的按键。`preview.css`：样式，颜色只用 `main.css` 的变量。
+
+**和设计不同的三处。**
+
+1. 编辑器的语言不能只写 `new Language(markdownLanguage.data, markdownParser, [], 'markdown')`。`@codemirror/language` 6.13.1 的 `isActiveAt` 读语法树顶层节点上的 `languageDataProp`。所以 `markdown.ts` 用 `markdownParser.configure({ props })` 给 `Document` 节点加上它，另加一个缩进属性。只加属性，不加语法，语法树和索引的一样。在 Node 里先试过：不加时回车命令返回 `false`，加了以后插入 `\n- `。
+2. 输入法选字期间，已经显示源码的元素保持显示源码，选字结束后再按规则重画。不这样做时，在 `[[目标]]` 后面选字，画面是 `目标]]ce shi`：`[[` 藏了，`]]` 还在。
+3. 输入法检查改用 `ime --no-enter`。原命令在选字中按一次键码 13 的回车，CodeMirror 把它当换行。main 上也一样：在 main 上跑原命令，文件多出 `测试\n\n`。macOS 输入法确认选字时不发这种回车。
+
+**真实窗口。**
+
+| 检查 | 结果 |
+| --- | --- |
+| `preview`，`行内.md` | 可见文字里没有 `**`、`[[`。点 `粗体` 后这一行是 `这一行有 **粗体**、斜体、删除线、高亮 和 行内代码。`，只有粗体显示源码。`Cmd+E` 后输入“字”，`vault-diff --expect-unchanged` 输出 `unchanged` |
+| 输入法 | 在 `**重点** 见 [[目标]]` 行尾输入“测试”。选字时这一行是 `[[目标]]测试`，上屏后是 `目标测试`。`vault-diff` 只列出 `行内.md`，`diff` 只多出 `测试`，文件多 6 个字节 |
+| 列表 | `列表.md` 的第二项折行后，第二行从文字下面开始。嵌套的列表逐层缩进 |
+
+配色，用 `theme` 切换后读计算颜色：
+
+| 配色 | 编辑器背景 | 正文 | 正文对比度 | 链接对比度 | 不存在的链接对比度 | 窗口底色 |
+| --- | --- | --- | --- | --- | --- | --- |
+| dark | `rgb(30, 30, 30)` | `rgb(220, 221, 222)` | 12.26 | 10.16 | 8.26 | `#1E1E1E` |
+| light | `rgb(255, 255, 255)` | `rgb(34, 34, 34)` | 15.91 | 7.04 | 6.00 | `#FFFFFF` |
+
+5 个副本，每个副本一次启动、一次 `walk-notes`：
+
+| 副本 | 篇数 | 实时预览 `errorCount` | 阅读模式 `errorCount` | `vault-diff` |
+| --- | --- | --- | --- | --- |
+| `life-os-copy` | 113 | 0 | 0 | 两次都 `unchanged` |
+| `wiki-copy` | 11 | 0 | 0 | 两次都 `unchanged` |
+| `Pesemic-copy` | 15 | 0 | 0 | 两次都 `unchanged` |
+| `knowledge-base-copy` | 68 | 0 | 0 | 两次都 `unchanged` |
+| `workspace-copy` | 603 | 0 | 0 | 两次都 `unchanged` |
+
+**性能，输入。** `compute/compute_mvp_spec.md`，实时预览，同一次启动交替跑。
+
+| 次 | 位置 | 开始时文档长度 | 每键中位数 | p95 | 最大 | 脚本均值 | 布局均值 | 样式均值 | 空闲中位数 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | end | 51,751 | 7.58 | 9.83 | 24.73 | 4.70 | 0.27 | 0.08 | 0.22 |
+| 2 | start | 51,951 | 7.50 | 9.08 | 28.49 | 4.40 | 0.29 | 0.07 | 0.20 |
+| 3 | end | 52,151 | 7.38 | 9.14 | 19.15 | 4.33 | 0.28 | 0.07 | 0.21 |
+| 4 | start | 52,351 | 7.56 | 9.13 | 20.32 | 4.24 | 0.35 | 0.07 | 0.18 |
+| 5 | end | 52,551 | 6.51 | 10.52 | 18.01 | 4.18 | 0.26 | 0.07 | 0.20 |
+| 6 | start | 52,751 | 7.95 | 10.28 | 23.79 | 4.63 | 0.41 | 0.07 | 0.17 |
+
+`end` 每键中位数 7.38 毫秒，基线 4.94。`start` 7.56 毫秒，基线 5.18。都低于 16 毫秒，通过。同一时段在 main 上各跑一次，`end` 5.21、`start` 4.85 毫秒，和基线一致。多出的约 2.4 毫秒全在脚本里：脚本均值从 2.1 到 2.5 毫秒变成 4.2 到 4.7 毫秒，布局和样式没变。脚本里多的是每键一次的增量解析、整棵语法树的遍历和重建装饰（推断，低于 10 毫秒，没做剖析）。
+
+**性能，打开。** `workspace-copy`，实时预览，同一次启动。
+
+| 次 | 打开篇数 | `errorCount` | `durationMs` | `medianNoteMs` |
+| --- | --- | --- | --- | --- |
+| 1 | 603 | 0 | 113,163 | 64.3 |
+| 2 | 603 | 0 | 143,259 | 68.5 |
+| 3 | 603 | 0 | 117,393 | 64.7 |
+| 中位数 | | | 117,393 | 64.7 |
+
+`vault-diff --expect-unchanged` 输出 `unchanged`。`medianNoteMs` 64.7 毫秒，低于 117 毫秒，通过。它比基线 78.2 还低，因为机器比量基线时空闲。同一时段 main 跑了 2 次，是 63.3 和 64.6 毫秒。所以这个 PR 让每次打开多 1 到 2 毫秒，在噪声里（推断）。阅读模式跑 1 次是 67.0 毫秒。
+
+**还没证明的。**
+
+- 真实的 macOS 外观切换和真实的输入法。`theme` 用 `nativeTheme` 模拟，`ime` 用 CDP 模拟。
+- 阅读模式下从反向链接或搜索跳过去时，编辑器拿不到焦点，选中的范围不显示，只滚动到那里。
+- 真实窗口的检查跑在 rebase 到 `7391686` 之前的构建上。rebase 后重跑了 4 项自动检查和对照工具。`7391686` 只改链接提取，编辑器只用 `markdownParser`。
+- 渲染进程的包是 1.36 MB。`lang-markdown` 引用了 `lang-html`，但包里搜不到 HTML、CSS、JavaScript 语法的节点名，没有打进去。
+
 ## PR C：点击链接、新建笔记、后退和前进
 
 - [ ] 依赖：PR B。
