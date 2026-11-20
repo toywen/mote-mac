@@ -1,4 +1,4 @@
-import { app, shell, BrowserWindow, dialog, ipcMain } from 'electron'
+import { app, shell, BrowserWindow, dialog, ipcMain, nativeTheme } from 'electron'
 import { join } from 'path'
 import { lstat, mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { optimizer, is } from '@electron-toolkit/utils'
@@ -17,6 +17,9 @@ function currentVault(dir: string): Vault {
 }
 
 const settingsFile = (): string => join(app.getPath('userData'), 'settings.json')
+
+// The --background of src/renderer/src/assets/main.css, so a dark window never flashes white.
+const windowBackground = (): string => (nativeTheme.shouldUseDarkColors ? '#1e1e1e' : '#ffffff')
 
 function openVault(dir: string): Promise<Vault> {
   return Vault.open(dir, (change) => {
@@ -97,6 +100,7 @@ function createWindow(): void {
     width: 1200,
     height: 800,
     show: false,
+    backgroundColor: windowBackground(),
     titleBarStyle: 'hiddenInset',
     webPreferences: {
       preload: join(__dirname, '../preload/index.js'),
@@ -142,6 +146,7 @@ app.whenReady().then(async () => {
     // An unavailable vault can be selected again in the window.
   }
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
+  nativeTheme.on('updated', () => window?.setBackgroundColor(windowBackground()))
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
