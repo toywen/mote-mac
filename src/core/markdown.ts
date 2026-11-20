@@ -161,22 +161,62 @@ function decode(path: string): string {
   }
 }
 
-function markdownRef(node: SyntaxNode, text: string): LinkRef | null {
+// What one link node points at: a file in the vault, or an address outside it.
+export type LinkTarget = { kind: 'vault'; ref: LinkRef } | { kind: 'external'; url: string }
+
+// Reads [from, to) of the text the node was parsed from.
+export type ReadText = (from: number, to: number) => string
+
+function markdownTarget(node: SyntaxNode, read: ReadText): LinkTarget | null {
   const url = node.getChild('URL')
   if (!url) return null
-  let dest = text.slice(url.from, url.to)
+  let dest = read(url.from, url.to)
   if (dest.startsWith('<') && dest.endsWith('>')) dest = dest.slice(1, -1)
-  if (external.test(dest)) return null
+  if (external.test(dest)) return { kind: 'external', url: dest }
   const hash = dest.indexOf('#')
   const marks = node.getChildren('LinkMark')
-  const label = marks.length >= 2 ? text.slice(marks[0].to, marks[1].from) : ''
+  const label = marks.length >= 2 ? read(marks[0].to, marks[1].from) : ''
   return {
-    syntax: 'markdown',
-    embed: node.name === 'Image',
-    target: decode(hash < 0 ? dest : dest.slice(0, hash)),
-    subpath: hash < 0 ? null : decode(dest.slice(hash)),
-    alias: label || null,
-    range: { from: node.from, to: node.to }
+    kind: 'vault',
+    ref: {
+      syntax: 'markdown',
+      embed: node.name === 'Image',
+      target: decode(hash < 0 ? dest : dest.slice(0, hash)),
+      subpath: hash < 0 ? null : decode(dest.slice(hash)),
+      alias: label || null,
+      range: { from: node.from, to: node.to }
+    }
+  }
+}
+
+const insideLink = new Set(['Link', 'Image', 'Autolink', 'LinkReference'])
+
+// The target of a WikiLink, WikiEmbed, Link, Image, Autolink or bare URL node. Null for any
+// other node, for a URL that is part of another link, and for a Link or Image with no
+// destination, such as a reference link. The editor and extractLinks both read links here.
+export function linkTarget(node: SyntaxNode, read: ReadText): LinkTarget | null {
+  switch (node.name) {
+    case 'WikiLink':
+    case 'WikiEmbed': {
+      const embed = node.name === 'WikiEmbed'
+      const inner = read(node.from + (embed ? 3 : 2), node.to - 2)
+      return { kind: 'vault', ref: wikiRef(inner, embed, node.from, node.to) }
+    }
+    case 'Link':
+    case 'Image':
+      return markdownTarget(node, read)
+    case 'Autolink': {
+      const url = node.getChild('URL')
+      if (!url) return null
+      const address = read(url.from, url.to)
+      // CommonMark lets <name@example.com> stand for a mailto address.
+      return { kind: 'external', url: external.test(address) ? address : 'mailto:' + address }
+    }
+    case 'URL':
+      if (insideLink.has(node.parent?.name ?? '')) return null
+      return { kind: 'external', url: read(node.from, node.to) }
+    default:
+      return null
   }
 }
 
@@ -234,20 +274,16 @@ function frontmatterLinks(block: string, offset: number): LinkRef[] {
 
 export function extractLinks(text: string): LinkRef[] {
   const links: LinkRef[] = []
+  const read: ReadText = (from, to) => text.slice(from, to)
   markdownParser.parse(text).iterate({
     enter(node) {
       switch (node.name) {
         case 'WikiLink':
-        case 'WikiEmbed': {
-          const embed = node.name === 'WikiEmbed'
-          const inner = text.slice(node.from + (embed ? 3 : 2), node.to - 2)
-          links.push(wikiRef(inner, embed, node.from, node.to))
-          return false
-        }
+        case 'WikiEmbed':
         case 'Link':
         case 'Image': {
-          const ref = markdownRef(node.node, text)
-          if (ref) links.push(ref)
+          const target = linkTarget(node.node, read)
+          if (target?.kind === 'vault') links.push(target.ref)
           return false
         }
         case 'Frontmatter': {
