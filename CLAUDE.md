@@ -8,10 +8,9 @@ mote is an Electron app that replaces Obsidian on the Mac for any existing Obsid
 
 - `CONTEXT.md` is the glossary. Use its terms in docs, code, and replies. Add a new term there before a doc uses it.
 - `ARCHITECTURE.md` is the module map, the state owners, and the invariants.
-- `docs/features.md` is the only list of features, with status, evidence, development order (steps 0 to 7), performance targets, and the acceptance checklist.
+- `docs/features.md` is the single source for the goal, the scope and the data behind it, the only list of features with status and evidence, the development order (steps 0 to 7), performance targets, and the acceptance checklist. Plan work from it.
 - `docs/adr/` holds architecture decision records. Never edit a decision; write a new ADR that replaces it.
 - `docs/plans/step-N.md` is the implementation plan for one step.
-- `docs/mvp.md` is frozen. It records the original goal and why the scope was drawn that way. Do not update it.
 
 Types and the IPC contract live only in code (`src/core/ipc.ts`). Do not copy them into docs.
 
