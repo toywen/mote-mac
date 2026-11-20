@@ -45,3 +45,5 @@ Which features are implemented, and which recipe proves each, is tracked in `doc
 - [Link resolution](./links.md): step 2, acceptance item 2.
 - [Backlinks](./backlinks.md): step 2, right pane.
 - [Full-text search](./search.md): step 2, `Cmd+Shift+F`.
+- [Live preview and reading mode](./live-preview.md): step 3, `Cmd+E`. Uses the `tests/fixtures/vaults/preview` vault.
+- [Light and dark color schemes](./dark-mode.md): step 3, the `theme` command.

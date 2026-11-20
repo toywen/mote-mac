@@ -27,5 +27,6 @@ Steps:
 
 ## Gotchas
 
+- A script of your own that attaches with Playwright's `connectOverCDP` saw `prefers-color-scheme: light` after `theme --scheme dark`. Call `page.emulateMedia({ colorScheme: null })` before you read colors there. `$V screenshot` showed the dark window.
 - `theme` sets Electron's `nativeTheme.themeSource`. It never changes the macOS setting, so the real System Settings switch is not covered.
 - Playwright's own tests emulate a light scheme by default. `tests/e2e/preview.spec.ts` turns that off with `emulateMedia({ colorScheme: null })` before it switches.
