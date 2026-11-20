@@ -116,11 +116,16 @@ export function suggest(
       .map((path) => ({ path, label: label(path), match: null }))
   }
   const query = parseQuery(text)
-  const found: Suggestion[] = []
+  // The limit best matches, best first. Equal scores keep the notes' order, like a stable sort.
+  const best: Suggestion[] = []
   for (const path of notes) {
     const shown = label(path)
     const match = matchPath(query, shown)
-    if (match) found.push({ path, label: shown, match })
+    if (!match || (best.length === limit && match.score <= best[limit - 1].match!.score)) continue
+    let at = best.length
+    while (at > 0 && best[at - 1].match!.score < match.score) at--
+    best.splice(at, 0, { path, label: shown, match })
+    if (best.length > limit) best.pop()
   }
-  return found.sort((a, b) => b.match!.score - a.match!.score).slice(0, limit)
+  return best
 }
