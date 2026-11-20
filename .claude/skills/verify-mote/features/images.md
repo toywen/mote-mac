@@ -8,7 +8,7 @@
 - `image-https`: `![](https://...)` loads from the network. `http:` images are blocked by the window's content security policy.
 - `image-size`: `![[图片.png|300]]` and `![alt|300](path)` are 300 pixels wide. `|300x200` sets both. No image grows wider than the editor.
 - `image-missing`: an image that does not resolve or does not load shows a small box with its name, not a broken-image icon.
-- `embed-link`: an embed that is not an image, such as `![[笔记]]` or `![[文件.pdf]]`, shows its target as a link. A missing target has the missing-link color.
+- `embed-link`: an embed that is neither an image nor a note, such as `![[文件.pdf]]`, shows its target as a link. A missing target has the missing-link color. `![[笔记]]` shows the note; see [reading-mode.md](./reading-mode.md).
 - `image-protocol`: `mote-file://` refuses `..`, dot paths such as `.obsidian`, symlinks, notes, other hosts and anything outside the vault.
 
 ## How to get to it (user POV)
