@@ -1,5 +1,6 @@
 import { calloutRenderers } from './callouts'
 import { codeRenderers } from './code'
+import { embedRenderers } from './embeds'
 import { headingRenderers } from './headings'
 import { imageRenderers } from './images'
 import { inlineRenderers } from './inline'
@@ -25,5 +26,7 @@ export const renderers: Record<string, Renderer> = {
   ...tableRenderers,
   ...taskRenderers,
   // Takes FencedCode from codeRenderers and hands it every block that is not a diagram.
-  ...mermaidRenderers
+  ...mermaidRenderers,
+  // Takes WikiEmbed from imageRenderers and hands it every embed that is not a note.
+  ...embedRenderers
 }

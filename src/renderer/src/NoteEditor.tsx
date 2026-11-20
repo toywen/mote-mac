@@ -12,9 +12,8 @@ import { useLayoutEffect, useMemo, useRef } from 'react'
 import type { VaultInfo, VaultPath } from '../../core/ipc'
 import { sourceText, type LineFormat } from '../../core/text'
 import { completeContext, linkCompletion } from './editor/complete'
-import { followLinks } from './editor/follow'
-import { editorMode, linkContext, livePreview } from './editor/livePreview'
-import { markdown } from './editor/markdown'
+import { editorMode, linkContext } from './editor/livePreview'
+import { noteView } from './editor/noteView'
 import type { EditorMode, LinkContext } from './editor/preview'
 import { editorLocked } from './editor/tasks'
 import { workspace, type Selection } from './workspace'
@@ -86,11 +85,9 @@ export function NoteEditor({
         lineFormat,
         access.current.of([]),
         resolve.current.of([]),
-        markdown,
-        livePreview,
+        noteView(),
         linkCompletion,
         complete.current.of([]),
-        followLinks((dest) => void workspace.follow(dest)),
         history(),
         keymap.of([
           {
@@ -103,7 +100,6 @@ export function NoteEditor({
           ...defaultKeymap,
           ...historyKeymap
         ]),
-        EditorView.lineWrapping,
         EditorView.contentAttributes.of({
           'aria-label': '编辑器',
           'data-note-path': path,
