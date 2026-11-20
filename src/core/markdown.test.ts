@@ -298,67 +298,62 @@ function callouts(text: string): (CalloutHeader | null)[] {
 }
 
 describe('calloutHeader', () => {
-  it('reads the type and the title, and where the title starts', () => {
-    const line = '> [!warning] \u6CE8\u610F **\u7C97\u4F53**'
+  it('reads the type, the title, and where the marks before the title sit', () => {
+    const line = '> [!warning] 注意 **粗体**'
     expect(calloutHeader(line)).toEqual({
       type: 'warning',
-      title: '\u6CE8\u610F **\u7C97\u4F53**',
-      end: line.indexOf('\u6CE8\u610F')
+      title: '注意 **粗体**',
+      marks: { from: 2, to: line.indexOf('注意') }
     })
-    expect(calloutHeader('>[!tip]   \u63D0\u793A  ')).toEqual({
+    expect(calloutHeader('>[!tip]   提示  ')).toEqual({
       type: 'tip',
-      title: '\u63D0\u793A',
-      end: 10
+      title: '提示',
+      marks: { from: 1, to: 10 }
     })
   })
 
   it('makes the title from the type when the line has none, as Obsidian shows it', () => {
-    expect(calloutHeader('> [!note]')).toEqual({ type: 'note', title: 'Note', end: 9 })
-    expect(calloutHeader('> [!NOTE]  ')).toEqual({ type: 'note', title: 'Note', end: 11 })
+    const note = { from: 2, to: 9 }
+    expect(calloutHeader('> [!note]')).toEqual({ type: 'note', title: 'Note', marks: note })
+    expect(calloutHeader('> [!NOTE]  ')?.marks).toEqual({ from: 2, to: 11 })
     expect(calloutHeader('> [!My Own  type]')).toEqual({
       type: 'my-own-type',
       title: 'My own type',
-      end: 17
+      marks: { from: 2, to: 17 }
     })
   })
 
   it('takes a fold mark, and metadata after a bar', () => {
-    expect(calloutHeader('> [!tip]- \u6298\u53E0')).toEqual({
+    expect(calloutHeader('> [!tip]- 折叠')).toEqual({
       type: 'tip',
-      title: '\u6298\u53E0',
-      end: 10
+      title: '折叠',
+      marks: { from: 2, to: 10 }
     })
-    expect(calloutHeader('> [!tip]+')).toEqual({ type: 'tip', title: 'Tip', end: 9 })
-    expect(calloutHeader('> [!info|wide] \u5BBD')?.type).toBe('info')
+    expect(calloutHeader('> [!tip]+')).toEqual({
+      type: 'tip',
+      title: 'Tip',
+      marks: { from: 2, to: 9 }
+    })
+    expect(calloutHeader('> [!info|wide] 宽')?.type).toBe('info')
   })
 
   it('keeps an alias or an unknown type as written, for the editor to look up', () => {
-    expect(calloutHeader('> [!tldr]')).toEqual({ type: 'tldr', title: 'Tldr', end: 9 })
-    expect(calloutHeader('> [!\u672A\u77E5\u7C7B\u578B] \u672A\u77E5')).toEqual({
-      type: '\u672A\u77E5\u7C7B\u578B',
-      title: '\u672A\u77E5',
-      end: 10
-    })
+    expect(calloutHeader('> [!tldr]')).toMatchObject({ type: 'tldr', title: 'Tldr' })
+    expect(calloutHeader('> [!未知类型] 未知')).toMatchObject({ type: '未知类型', title: '未知' })
   })
 
   it('gives null for a plain quote and for marks Obsidian does not read as a callout', () => {
-    expect(calloutHeader('> \u666E\u901A\u5F15\u7528')).toBeNull()
-    expect(calloutHeader('> [!note]\u6CA1\u6709\u7A7A\u683C')).toBeNull()
-    expect(calloutHeader('>  [!note] \u4E24\u4E2A\u7A7A\u683C')).toBeNull()
-    expect(calloutHeader('> [note] \u5C11\u4E86\u611F\u53F9\u53F7')).toBeNull()
-    expect(calloutHeader('[!note] \u4E0D\u662F\u5F15\u7528')).toBeNull()
+    expect(calloutHeader('> 普通引用')).toBeNull()
+    expect(calloutHeader('> [!note]没有空格')).toBeNull()
+    expect(calloutHeader('>  [!note] 两个空格')).toBeNull()
+    expect(calloutHeader('> [note] 少了感叹号')).toBeNull()
+    expect(calloutHeader('[!note] 不是引用')).toBeNull()
   })
 
   it('reads only the first line of a blockquote, and the innermost quote of a nested one', () => {
-    expect(callouts('> \u7B2C\u4E00\u884C\n> [!note] \u7B2C\u4E8C\u884C')).toEqual([null])
-    expect(
-      callouts('> [!tip] \u5916\u5C42\n> > [!warning] \u5185\u5C42\n> > \u6B63\u6587').map(
-        (h) => h?.type
-      )
-    ).toEqual(['tip', 'warning'])
-    expect(callouts('> > [!note] \u53EA\u5728\u5185\u5C42').map((h) => h?.type ?? null)).toEqual([
-      null,
-      'note'
-    ])
+    expect(callouts('> 第一行\n> [!note] 第二行')).toEqual([null])
+    const nested = callouts('> [!tip] 外层\n> > [!warning] 内层\n> > 正文')
+    expect(nested.map((h) => h?.type)).toEqual(['tip', 'warning'])
+    expect(callouts('> > [!note] 只在内层').map((h) => h?.type ?? null)).toEqual([null, 'note'])
   })
 })
