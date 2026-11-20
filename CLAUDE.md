@@ -23,6 +23,7 @@ npm run build:mac    # unsigned local .app in dist/
 
 node tools/vault-audit.mjs <vault> [...]   # count Obsidian features a vault uses; scope decisions come from this
 node tools/hash-vault.mjs <vault> > a.txt  # hash every file; diff two runs to prove mote changed no bytes
+node tools/bench-quick-open.mjs <vault> <query>   # quick-open results in Node; add --bench N to time N paths
 ```
 
 ## Architecture
@@ -49,4 +50,4 @@ Each piece of state has one owner. Do not add a second copy that both sides writ
 
 ## Current status
 
-Step 1 of the development order is implemented. The Electron tests cover opening a vault, preserving note bytes during edits, saving on switch and quit, reopening the last vault, and handling external changes. Use `verify-mote` to check an entire disposable vault in the real window.
+Step 1 of the development order is implemented. Step 2 is in progress; its plan is `docs/plans/step-2.md`, and quick open (`Cmd+O`) is done. The Electron tests cover opening a vault, preserving note bytes during edits, saving on switch and quit, reopening the last vault, and handling external changes. Use `verify-mote` to check an entire disposable vault in the real window.

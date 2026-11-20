@@ -12,6 +12,8 @@ type Doc =
 type WorkspaceState = { vault: VaultInfo | null; doc: Doc | null; busy: boolean; error: string }
 
 const AUTOSAVE_MS = 750
+const RECENT_LIMIT = 50
+const recentKey = (dir: string): string => `mote.recent:${dir}`
 
 class Workspace {
   private state: WorkspaceState = { vault: null, doc: null, busy: true, error: '' }
@@ -96,12 +98,31 @@ class Workspace {
       if (!(await this.flush())) return
       const version = await window.mote.readNote(vault.dir, path)
       this.load(path, version)
+      if (version) this.remember(vault.dir, path)
       void this.refresh()
     } catch (error) {
       this.fail(error)
     } finally {
       this.set({ busy: false })
     }
+  }
+
+  recent(): VaultPath[] {
+    const { vault } = this.state
+    if (!vault) return []
+    try {
+      const saved: unknown = JSON.parse(localStorage.getItem(recentKey(vault.dir)) ?? '[]')
+      return Array.isArray(saved)
+        ? saved.filter((path): path is VaultPath => typeof path === 'string')
+        : []
+    } catch {
+      return []
+    }
+  }
+
+  private remember(dir: string, path: VaultPath): void {
+    const recent = [path, ...this.recent().filter((item) => item !== path)]
+    localStorage.setItem(recentKey(dir), JSON.stringify(recent.slice(0, RECENT_LIMIT)))
   }
 
   async openFile(path: VaultPath): Promise<void> {
