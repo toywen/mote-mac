@@ -60,6 +60,7 @@ With one live run, commands pick it. With several, pass `--run <id>` or set `MOT
 | ------------------------------------------------ | ----------------------------------------------------------------------- |
 | `snapshot [--out name]`                          | Prints the window's ARIA tree. Read it to find handles.                 |
 | `walk-notes [--out name] [--obsidian export]`    | Clicks every visible note and checks the full path and editor state. With `--obsidian`, also checks each note's backlinks pane against the export. Prints `durationMs` for the whole walk and `medianNoteMs`, the median time from click to editor ready. See Measure. |
+| `walk-links --obsidian export [--out name] [--limit N] [--bench N]` | In every note, clicks each drawn link that resolves, records where it went, and goes back with `Cmd+Option+Left`. Compares the notes and files reached, and the links drawn as missing, with the export. `--limit` stops after N clicks that opened a note; `--bench` then opens those notes from the file tree and compares the medians. See [features/follow-links.md](features/follow-links.md). |
 | `theme --scheme dark\|light\|system`             | Sets the app's color scheme, waits until the window follows, and prints the scheme in effect. |
 | `bench-typing [--chars 200] [--gap 50] [--where end\|start]` | Types into the open note one key at a time and prints the main-thread work per key. See Measure. |
 | `screenshot --out name`                          | Saves a PNG of the window to the evidence dir.                          |
@@ -113,7 +114,7 @@ Evidence goes to `verify-artifacts/<run>/`. It is gitignored and survives `stop`
 
 A proof meets these standards:
 
-- Drive the real user path: clicks, keys, and files written from outside. Never call internal functions to set state. `eval` and `main-eval` only read. `dialog-answer` and `theme` are the exceptions, because the native dialog and the macOS appearance switch are outside the app.
+- Drive the real user path: clicks, keys, and files written from outside. Never call internal functions to set state. `eval` and `main-eval` only read. `dialog-answer` and `theme` are the exceptions, because the native dialog and the macOS appearance switch are outside the app. So is `walk-links`: it replaces `shell.openPath` and `shell.openExternal` in the main process with recorders for the rest of the run, so a click on a file or an address opens no program. `main-eval --js "globalThis.__moteShell"` reads what they recorded.
 - Capture the action and the result: the `actions.jsonl` lines, plus a snapshot or screenshot after the action.
 - Check side effects on disk. Every proof that touches notes ends with `vault-diff`. Opening without editing must print `unchanged`. A save must change only the note you edited.
 - `tools/hash-vault.mjs` skips dot entries, so it cannot prove `.obsidian` is untouched. `vault-diff` hashes dot entries and empty folders too.
