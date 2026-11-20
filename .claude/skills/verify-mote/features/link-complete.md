@@ -6,7 +6,7 @@ The user types `[[` in the editor. A list of note names opens. Enter inserts a l
 
 - `complete-open`: the list opens when the text before the cursor on its line is `[[` plus a query with no `]`, `|`, `#` or `^`. It stays closed inside code blocks and inline code.
 - `complete-match`: rows come from quick open's matcher, in its order, at most 20. An empty query lists up to 10 recently opened notes. Each row shows the note name and, after it, its folder.
-- `complete-insert`: Enter or a click replaces the `[[` and the query with the link, and puts the cursor after it. A `]]` after the cursor, with any text before it, is replaced too, as Obsidian does.
+- `complete-insert`: Enter or a click replaces the `[[` and the query with the link, and puts the cursor after it. The list has no opening delay and no accept guard, so Enter right behind the last key picks the row instead of breaking the line. A `]]` after the cursor, with any text before it, is replaced too, as Obsidian does.
 - `complete-format`: wiki links or Markdown links, and the shortest, relative or absolute path, follow `useMarkdownLinks` and `newLinkFormat`. A wiki link whose path holds a `/` gets the note name as its alias, as Obsidian does.
 - `complete-ime`: while an input method composes, Enter commits the composition and picks no row. After the commit the list shows matches for the committed text.
 

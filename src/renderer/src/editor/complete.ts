@@ -81,6 +81,14 @@ function linkSource(context: CompletionContext): CompletionResult | null {
 }
 
 export const linkCompletion: Extension = [
-  autocompletion({ override: [linkSource], icons: false }),
+  // CodeMirror waits 100 ms after a key before it asks for rows, and ignores Enter for 75 ms
+  // after the list opens. Enter in either gap would break the line instead of picking the note.
+  // Obsidian's [[ list has no such gaps, and here the rows cost about a millisecond.
+  autocompletion({
+    override: [linkSource],
+    icons: false,
+    activateOnTypingDelay: 0,
+    interactionDelay: 0
+  }),
   EditorState.phrases.of({ Completions: '链接补全' })
 ]

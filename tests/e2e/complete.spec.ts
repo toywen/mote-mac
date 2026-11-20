@@ -98,14 +98,12 @@ test("typing [[ completes note names in the vault's link format", async () => {
     const { window, vault } = markdown
     await open(window, '欢迎', '欢迎.md')
     const editor = window.getByRole('textbox', { name: '编辑器' })
-    const rows = window.getByRole('listbox', { name: '链接补全' }).getByRole('option')
     await editor.locator('.cm-line').filter({ hasText: line }).click()
     await window.keyboard.press('End')
-    await window.keyboard.type(' [[计')
-    await expect(rows).toHaveText(['计划项目'])
-    // CodeMirror ignores Enter for 75 ms after the list opens, so that a key aimed at the text
-    // does not pick a row. A person cannot press it that soon; the test waits it out.
-    await window.waitForTimeout(150)
+    // Typed at a fast typist's pace, with Enter right behind the last key: the note is picked,
+    // and the line is not broken.
+    await window.keyboard.type(' [[计', { delay: 30 })
+    await window.waitForTimeout(30)
     await window.keyboard.press('Enter')
     await window.keyboard.type('。')
     await expect
