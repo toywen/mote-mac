@@ -17,6 +17,6 @@ ADR（Architecture Decision Record）是架构决策记录。每个文件记一�
 | [0004](0004-substring-search.md) | 全文搜索用内存子串匹配 | 已接受 |
 | [0005](0005-own-sync-service.md) | 同步用 mote 自己的服务，不用 git | 已接受 |
 | [0006](0006-rename-journal.md) | 改名和移动用 journal 保证可以重跑 | 已接受 |
-| [0007](0007-mote-file-protocol.md) | 图片通过 `mote-file://` 协议读取 | 已接受 |
+| [0007](0007-mote-file-protocol.md) | 图片通过 `mote-file://` 协议读取 | 已实现 |
 | [0008](0008-isolated-obsidian-export.md) | 用隔离的 Obsidian 自动导出解析结果 | 已实现，替代 0003 的导出方法 |
 | [0009](0009-frontmatter-yaml.md) | 属性用 yaml 包解析，和 Obsidian 同一个库 | 已实现 |
