@@ -33,6 +33,8 @@
 | `src/core/markdown.ts` | 唯一的解析器配置（`@lezer/markdown` 加双链、嵌入、属性块），从笔记里提取链接 |
 | `src/core/resolve.ts` | 链接解析，照搬 Obsidian 的 `getLinkpathDest` |
 | `src/core/linkText.ts` | 新链接的文字，照搬 Obsidian 的 `fileToLinktext` 和它 `[[` 列表插入的文字。按笔记库配置选双链或 Markdown 链接，以及最短、相对、绝对路径 |
+| `src/core/linkDest.ts` | 链接去向：一个链接点击后去哪里。上色和点击都读它。不存在的笔记的新建路径照搬 Obsidian 的 `openLinkText`。外部网址的白名单也在这里 |
+| `src/core/subpath.ts` | `#标题`、`#上级#下级` 和 `#^块` 落在目标笔记的哪一处，照搬 Obsidian 的 `resolveSubpath` |
 | `src/core/model.ts` | 链接和解析结果的类型 |
 | `src/core/fileUrl.ts` | `mote-file://` 地址的唯一定义：库内路径和地址互转，哪些扩展名算图片 |
 | `src/core/search.ts` | 全文搜索：分词、引号短语、不分大小写的子串匹配、按文件名排序 |
@@ -53,6 +55,7 @@
 | `src/renderer/src/editor/images.ts` | 图片和嵌入的渲染函数。图片放在源码下面，不是图片的嵌入显示为链接。样式在旁边的 `images.css` |
 | `src/renderer/src/editor/preview.css` | 实时预览的样式。颜色只用 `main.css` 里的变量 |
 | `src/renderer/src/editor/complete.ts`、`complete.css` | 双链补全：输入 `[[` 后列出笔记，候选用快速打开的 `quickOpenMatch.ts` 排序，插入 `linkText.ts` 生成的链接。笔记列表、最近打开和笔记库配置从 `completeContext` 读 |
+| `src/renderer/src/editor/follow.ts`、`follow.css` | 点击链接：在编辑器的元素上先于 CodeMirror 接住鼠标，按链接去向交给 `workspace.follow`。部件里画的链接也接得到 |
 | `src/renderer/src/FileTree.tsx` | 文件树 |
 | `src/renderer/src/QuickOpen.tsx`、`quickOpenMatch.ts` | 快速打开窗口和照搬 Obsidian 的匹配打分 |
 | `src/renderer/src/HitList.tsx` | 按笔记分组列出命中位置，点一处打开笔记并选中。反向链接面板和搜索共用 |
@@ -74,6 +77,7 @@
 - 渲染进程里的笔记路径列表是主进程推过来的副本，只读。
 - 最近打开的笔记列表归渲染进程，按笔记库存在 `localStorage`。
 - 编辑器模式归渲染进程的 `workspace`。整个窗口一个值，切换笔记时不变。编辑器只读它。
+- 导航历史归渲染进程的 `workspace`。整个窗口一个列表和一个位置。用任何方式打开另一篇笔记都加一项。编辑器只报告光标，后退和前进时 `workspace` 把光标放回去。
 - 渲染进程用笔记路径列表的副本建链接解析用的索引。它是算出来的结果，不是新的状态。
 
 ## 一篇打开的笔记的状态
@@ -96,7 +100,8 @@
 下面的规则任何改动都不能破坏。
 
 **笔记库**
-- 只在两种情况下写笔记库：保存你编辑过的笔记，执行改名或移动。
+- 只在三种情况下写笔记库：保存你编辑过的笔记，执行改名或移动，点击指向不存在的笔记的链接时新建这篇笔记。
+- 新建笔记只建空的 `.md` 文件，路径要通过 `parseVaultPath`。缺的文件夹从笔记库根目录起逐级新建，已有的必须是真的文件夹，不穿过符号链接。文件用 `O_CREAT | O_EXCL` 新建，已经存在就直接打开，不覆盖。主进程先更新条目和索引，再通知渲染进程。
 - 从不写 `.obsidian`。只读笔记库配置，缺的字段用 Obsidian 的默认值。
 - mote 自己的设置和 journal 存在 `~/Library/Application Support/mote`，不存在笔记库里。
 - 忽略所有以 `.` 开头的文件和文件夹。`parseVaultPath` 拒绝这类路径。
@@ -127,3 +132,5 @@
 - 渲染进程只能通过 `window.mote` 和 `mote-file://` 访问磁盘。`mote-file://` 只读图片，笔记只走 `window.mote`。
 - `mote-file://vault/<库内路径>` 只返回当前笔记库里的图片文件。它拒绝 `..` 和以 `.` 开头的部分、符号链接、笔记、别的主机和非 GET 请求，拒绝时不返回任何字节。见 ADR 0007。
 - 内容安全策略只放开图片：`img-src` 允许 `mote-file:` 和 `https:`，不允许 `http:`。
+- 渲染进程只能通过 `window.mote` 访问磁盘。
+- 点击链接时，主进程只把 `http`、`https` 和 `mailto` 网址交给系统。主进程是边界，所以它自己再查一遍白名单。
