@@ -64,7 +64,10 @@ test('live preview hides syntax away from the selection and shows it at the sele
     await expect(styled).toHaveText('这一行有 **粗体**、斜体、删除线、高亮 和 行内代码。')
     await window.keyboard.press('ArrowDown')
     await expect(styled).toHaveText('这一行有 粗体、斜体、删除线、高亮 和 行内代码。')
-    await links.getByText('别名', { exact: true }).click()
+    // A click on a link follows it, so a click right after the link puts the cursor at its end.
+    const alias = await links.getByText('别名', { exact: true }).boundingBox()
+    if (!alias) throw new Error('no alias on screen')
+    await window.mouse.click(alias.x + alias.width + 2, alias.y + alias.height / 2)
     await expect(links).toHaveText('双链 目标，带别名的 [[目标|别名]]，不存在的 不存在的笔记。')
     await window.screenshot({ path: test.info().outputPath('inline.png') })
     expect(await readFile(inline, 'utf8')).toBe(original)
