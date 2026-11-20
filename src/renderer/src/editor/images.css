@@ -1,0 +1,35 @@
+/* Images in live preview and reading mode. Colors come from the variables in assets/main.css. */
+
+/* A block under the source, as wide as its image and never wider than the editor. */
+.mote-image {
+  display: block;
+  width: fit-content;
+  max-width: 100%;
+  padding: 4px 0;
+}
+
+.mote-image img {
+  display: block;
+  max-width: 100%;
+  border-radius: 4px;
+}
+
+/* Without a height, the image keeps its shape when max-width narrows it. With one, it fits. */
+.mote-image img:not([height]) {
+  height: auto;
+}
+.mote-image img[height] {
+  object-fit: contain;
+}
+
+/* An image that does not resolve or does not load: its name instead of a broken icon. */
+.mote-image-missing {
+  display: inline-block;
+  max-width: 100%;
+  padding: 2px 8px;
+  border: 1px dashed var(--border);
+  border-radius: 4px;
+  color: var(--muted);
+  font-size: 0.9em;
+  overflow-wrap: anywhere;
+}

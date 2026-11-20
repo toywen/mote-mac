@@ -2,7 +2,7 @@ import { Decoration } from '@codemirror/view'
 import { resolveLink } from '../../../core/resolve'
 import { marks, type PreviewContext, type PreviewItem, type Renderer } from './preview'
 
-type LinkKind = 'note' | 'missing' | 'external'
+export type LinkKind = 'note' | 'missing' | 'external'
 
 const kindClass: Record<LinkKind, string> = {
   note: 'mote-link',
@@ -27,7 +27,7 @@ function noteKind(cx: PreviewContext, target: string): LinkKind {
 }
 
 // The text a link shows, keyed for later clicks by where the link node starts.
-function linkText(
+export function linkText(
   item: PreviewItem,
   kind: LinkKind,
   start: number,
