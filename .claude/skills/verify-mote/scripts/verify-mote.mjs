@@ -178,7 +178,19 @@ async function waitUntilUsable(page) {
   )
 }
 
-async function walkNotes(page, vault) {
+// Obsidian's resolvedLinks read backwards: target -> { source: count }.
+function obsidianBacklinks(exportFile) {
+  const { resolved } = JSON.parse(fs.readFileSync(exportFile, 'utf8'))
+  const result = {}
+  for (const [source, targets] of Object.entries(resolved))
+    for (const [target, count] of Object.entries(targets)) (result[target] ??= {})[source] = count
+  return result
+}
+
+async function walkNotes(page, vault, exportFile) {
+  const expectedBacklinks = exportFile ? obsidianBacklinks(exportFile) : null
+  const backlinkMismatches = []
+  let backlinkCount = 0
   const tree = page.getByRole('tree', { name: '文件树' })
   await tree.waitFor()
   const expected = fs
@@ -215,8 +227,34 @@ async function walkNotes(page, vault) {
     const alerts = await page.getByRole('alert').allTextContents()
     if (errors.length || alerts.length)
       throw new Error(`${note}: ${[...errors, ...alerts].join('; ')}`)
+    if (expectedBacklinks) {
+      const pane = page.getByRole('complementary', { name: '反向链接' })
+      const list = pane.locator(`[data-note-path=${JSON.stringify(note)}]`)
+      await list.waitFor({ timeout: 5000 })
+      const shown = await list
+        .locator('button.hit')
+        .evaluateAll((nodes) => nodes.map((node) => node.dataset.path))
+      const actual = {}
+      for (const source of shown) actual[source] = (actual[source] ?? 0) + 1
+      const want = expectedBacklinks[note] ?? {}
+      backlinkCount += shown.length
+      for (const source of new Set([...Object.keys(want), ...Object.keys(actual)]))
+        if ((want[source] ?? 0) !== (actual[source] ?? 0))
+          backlinkMismatches.push({
+            note,
+            source,
+            obsidian: want[source] ?? 0,
+            mote: actual[source] ?? 0
+          })
+    }
   }
-  return { opened: paths.length, expected: expected.length, errorCount: errors.length, paths }
+  return {
+    opened: paths.length,
+    expected: expected.length,
+    errorCount: errors.length,
+    ...(expectedBacklinks ? { backlinks: backlinkCount, backlinkMismatches } : {}),
+    paths
+  }
 }
 
 async function mainEval(state, expression) {
@@ -432,10 +470,15 @@ async function main() {
       if (opts.out) fs.writeFileSync(evidencePath(state, opts, '.aria.txt'), result + '\n')
       break
     case 'walk-notes': {
-      const opened = await act((page) => walkNotes(page, state.vault))
+      const opened = await act((page) => walkNotes(page, state.vault, opts.obsidian))
       if (opts.out)
         fs.writeFileSync(evidencePath(state, opts, '.json'), JSON.stringify(opened, null, 2) + '\n')
       result = { opened: opened.opened, expected: opened.expected, errorCount: opened.errorCount }
+      if (opened.backlinkMismatches) {
+        result.backlinks = opened.backlinks
+        result.backlinkMismatches = opened.backlinkMismatches
+        if (opened.backlinkMismatches.length) process.exitCode = 1
+      }
       break
     }
     case 'screenshot':

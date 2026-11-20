@@ -1,4 +1,11 @@
-import type { ContentHash, NoteVersion, VaultChange, VaultInfo, VaultPath } from '../../core/ipc'
+import type {
+  ContentHash,
+  Hit,
+  NoteVersion,
+  VaultChange,
+  VaultInfo,
+  VaultPath
+} from '../../core/ipc'
 
 type Draft = { path: VaultPath; text: string; source: { text: string } }
 type DirtyDoc = Draft & { kind: 'dirty'; baseHash: ContentHash }
@@ -9,18 +16,38 @@ type Doc =
   | DirtyDoc
   | ConflictDoc
 
-type WorkspaceState = { vault: VaultInfo | null; doc: Doc | null; busy: boolean; error: string }
+export type Selection = { path: VaultPath; from: number; to: number; id: number }
+
+type WorkspaceState = {
+  vault: VaultInfo | null
+  doc: Doc | null
+  busy: boolean
+  error: string
+  // Links to the open note, from main's index. path says which note they belong to.
+  backlinks: { path: VaultPath; hits: Hit[] } | null
+  // A range the editor should select, in the note's normalized text.
+  selection: Selection | null
+}
 
 const AUTOSAVE_MS = 750
 const RECENT_LIMIT = 50
 const recentKey = (dir: string): string => `mote.recent:${dir}`
 
 class Workspace {
-  private state: WorkspaceState = { vault: null, doc: null, busy: true, error: '' }
+  private state: WorkspaceState = {
+    vault: null,
+    doc: null,
+    busy: true,
+    error: '',
+    backlinks: null,
+    selection: null
+  }
   private readonly listeners = new Set<() => void>()
   private timer?: number
   private saving?: Promise<boolean>
   private refreshId = 0
+  private backlinksId = 0
+  private selectionId = 0
 
   snapshot = (): WorkspaceState => this.state
 
@@ -82,7 +109,7 @@ class Workspace {
     try {
       if (!(await this.flush())) return
       const vault = await window.mote.chooseVault()
-      if (vault) this.set({ vault, doc: null })
+      if (vault) this.set({ vault, doc: null, backlinks: null, selection: null })
     } catch (error) {
       this.fail(error)
     } finally {
@@ -90,20 +117,44 @@ class Workspace {
     }
   }
 
-  async open(path: VaultPath): Promise<void> {
+  // Opens a note. With at, also selects that range of the note's normalized text.
+  async open(path: VaultPath, at?: { from: number; to: number }): Promise<void> {
     const { vault, busy, doc } = this.state
-    if (!vault || busy || path === doc?.path) return
+    if (!vault || busy) return
+    if (path === doc?.path) {
+      if (at) this.select(path, at)
+      return
+    }
     this.set({ busy: true, error: '' })
     try {
       if (!(await this.flush())) return
       const version = await window.mote.readNote(vault.dir, path)
       this.load(path, version)
       if (version) this.remember(vault.dir, path)
+      if (version && at) this.select(path, at)
+      void this.loadBacklinks()
       void this.refresh()
     } catch (error) {
       this.fail(error)
     } finally {
       this.set({ busy: false })
+    }
+  }
+
+  private select(path: VaultPath, at: { from: number; to: number }): void {
+    this.set({ selection: { path, from: at.from, to: at.to, id: ++this.selectionId } })
+  }
+
+  private async loadBacklinks(): Promise<void> {
+    const { vault, doc } = this.state
+    const id = ++this.backlinksId
+    if (!vault || !doc) return
+    try {
+      const hits = await window.mote.backlinks(vault.dir, doc.path)
+      if (id === this.backlinksId && this.state.doc?.path === doc.path)
+        this.set({ backlinks: { path: doc.path, hits } })
+    } catch (error) {
+      if (id === this.backlinksId) this.fail(error)
     }
   }
 
@@ -197,6 +248,7 @@ class Workspace {
       const kind = current.text === doc.text ? 'clean' : 'dirty'
       this.set({ doc: { ...current, kind, baseHash: result.hash }, error: '' })
       if (kind === 'dirty') this.scheduleSave()
+      void this.loadBacklinks()
       return this.refresh()
     } catch (error) {
       const current = this.state.doc
@@ -229,6 +281,7 @@ class Workspace {
     const { vault, doc } = this.state
     if (vault?.dir !== change.dir) return
     if (change.entries) this.set({ vault: { ...vault, entries: change.entries } })
+    void this.loadBacklinks()
     if (doc && (change.changed.includes(doc.path) || change.removed.includes(doc.path))) {
       void this.refresh()
     }

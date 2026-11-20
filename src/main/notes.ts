@@ -71,6 +71,7 @@ export async function readNoteFile(full: string): Promise<NoteVersion | null> {
 }
 
 // Reads many notes with a bounded number of open files. Order follows paths.
+// A note that is gone or cannot be read or decoded gives null, so one bad file cannot stop the rest.
 export async function readNoteFiles(
   root: string,
   paths: VaultPath[],
@@ -81,7 +82,7 @@ export async function readNoteFiles(
   async function worker(): Promise<void> {
     while (next < paths.length) {
       const index = next++
-      result[index] = await readNoteFile(join(root, paths[index]))
+      result[index] = await readNoteFile(join(root, paths[index])).catch(() => null)
     }
   }
   await Promise.all(Array.from({ length: Math.min(concurrency, paths.length) }, worker))

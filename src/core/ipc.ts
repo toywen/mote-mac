@@ -33,6 +33,14 @@ export type NoteVersion = { text: string; hash: ContentHash }
 
 export type WriteResult = { ok: true; hash: ContentHash } | { ok: false; disk: NoteVersion | null }
 
+// A place in a note's normalized text (see sourceText), with the line around it for display.
+export type Hit = {
+  path: VaultPath
+  from: number
+  to: number
+  preview: { text: string; from: number; to: number }
+}
+
 export type VaultChange = {
   dir: string
   entries?: VaultEntry[]
@@ -51,6 +59,7 @@ export interface MoteApi {
     baseHash: ContentHash | null
   ): Promise<WriteResult>
   openWithDefaultApp(dir: string, path: VaultPath): Promise<void>
+  backlinks(dir: string, path: VaultPath): Promise<Hit[]>
   onVaultChanged(callback: (change: VaultChange) => void): () => void
   onCloseRequested(callback: () => void): () => void
   respondToClose(ready: boolean): void
@@ -62,6 +71,7 @@ export const channels = {
   readNote: 'mote:read-note',
   writeNote: 'mote:write-note',
   openWithDefaultApp: 'mote:open-with-default-app',
+  backlinks: 'mote:backlinks',
   vaultChanged: 'mote:vault-changed',
   closeRequested: 'mote:close-requested',
   respondToClose: 'mote:respond-to-close'

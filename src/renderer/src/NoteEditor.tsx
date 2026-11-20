@@ -11,7 +11,7 @@ import { EditorView, keymap } from '@codemirror/view'
 import { useLayoutEffect, useRef } from 'react'
 import type { VaultPath } from '../../core/ipc'
 import { sourceText, type LineFormat } from '../../core/text'
-import { workspace } from './workspace'
+import { workspace, type Selection } from './workspace'
 
 const replaceFormat = StateEffect.define<LineFormat>()
 
@@ -45,11 +45,13 @@ function serialize(doc: Text, format: LineFormat): string {
 export function NoteEditor({
   path,
   source,
-  locked
+  locked,
+  selection
 }: {
   path: VaultPath
   source: { text: string }
   locked: boolean
+  selection: Selection | null
 }): React.JSX.Element {
   const host = useRef<HTMLDivElement>(null)
   const editor = useRef<EditorView>(null)
@@ -124,6 +126,20 @@ export function NoteEditor({
       effects: readOnly.current.reconfigure(EditorState.readOnly.of(locked))
     })
   }, [path, locked])
+
+  useLayoutEffect(() => {
+    const view = editor.current
+    if (!view || selection?.path !== path) return
+    const length = view.state.doc.length
+    view.dispatch({
+      selection: {
+        anchor: Math.min(selection.from, length),
+        head: Math.min(selection.to, length)
+      },
+      scrollIntoView: true
+    })
+    view.focus()
+  }, [path, selection])
 
   return <div className="editor-content" ref={host} />
 }

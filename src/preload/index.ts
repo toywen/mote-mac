@@ -8,6 +8,7 @@ const mote: MoteApi = {
   writeNote: (dir, path, text, baseHash) =>
     ipcRenderer.invoke(channels.writeNote, dir, path, text, baseHash),
   openWithDefaultApp: (dir, path) => ipcRenderer.invoke(channels.openWithDefaultApp, dir, path),
+  backlinks: (dir, path) => ipcRenderer.invoke(channels.backlinks, dir, path),
   onVaultChanged: (callback) => {
     const listener = (_event: IpcRendererEvent, change: VaultChange): void => callback(change)
     ipcRenderer.on(channels.vaultChanged, listener)

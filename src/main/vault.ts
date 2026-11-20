@@ -4,6 +4,7 @@ import { dirname, join, resolve } from 'node:path'
 import {
   parseVaultPath,
   type ContentHash,
+  type Hit,
   type NoteVersion,
   type VaultChange,
   type VaultConfig,
@@ -12,7 +13,8 @@ import {
   type VaultPath,
   type WriteResult
 } from '../core/ipc'
-import { hash, kind, missing, noteVersion, readNoteFile, scanVault } from './notes'
+import { NoteIndex } from '../core/noteIndex'
+import { hash, kind, missing, noteVersion, readNoteFile, readNoteFiles, scanVault } from './notes'
 
 async function readConfig(root: string): Promise<VaultConfig> {
   const obsidian = join(root, '.obsidian')
@@ -48,6 +50,7 @@ async function readConfig(root: string): Promise<VaultConfig> {
 
 export class Vault {
   private entries = new Map<VaultPath, VaultEntry>()
+  private readonly index = new NoteIndex()
   private readonly ownWrites = new Map<VaultPath, ContentHash>()
   private readonly pending = new Set<VaultPath>()
   private queue: Promise<unknown> = Promise.resolve()
@@ -70,6 +73,8 @@ export class Vault {
       vault.watcher.on('error', () => vault.schedule(null))
       await vault.run(async () => {
         vault.entries = await vault.scan()
+        vault.indexFiles()
+        await vault.indexNotes([...vault.entries.values()].filter((e) => e.kind === 'note'))
       })
       return vault
     } catch (error) {
@@ -96,6 +101,29 @@ export class Vault {
 
   private scan(): Promise<Map<VaultPath, VaultEntry>> {
     return scanVault(this.dir)
+  }
+
+  private indexFiles(): void {
+    const files = [...this.entries.values()].filter((entry) => entry.kind !== 'folder')
+    this.index.setFiles(files.map((entry) => entry.path))
+  }
+
+  // Reads the notes from disk into the index. A note that is gone leaves the index.
+  private async indexNotes(notes: VaultEntry[]): Promise<void> {
+    const paths = notes.map((entry) => entry.path)
+    const versions = await readNoteFiles(this.dir, paths)
+    paths.forEach((path, i) => {
+      const version = versions[i]
+      if (version) this.index.set(path, version.text)
+      else this.index.delete(path)
+    })
+  }
+
+  // Every link in the vault that resolves to path, ordered by source note and position.
+  backlinks(path: VaultPath): Hit[] {
+    return this.index
+      .backlinks(parseVaultPath(path))
+      .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : a.from - b.from))
   }
 
   private schedule(name: string | null): void {
@@ -139,9 +167,11 @@ export class Vault {
       for (const path of previous.keys()) {
         if (!this.entries.has(path)) {
           this.ownWrites.delete(path)
+          this.index.delete(path)
           removed.push(path)
         }
       }
+      this.indexFiles()
       for (const { path, kind } of entries) {
         if (
           kind === 'note' &&
@@ -153,6 +183,14 @@ export class Vault {
         }
       }
     }
+    // The index is updated before the renderer hears about the change, so a backlinks
+    // request sent on the notification already sees it.
+    await this.indexNotes(
+      [...paths].flatMap((path) => {
+        const entry = this.entries.get(path)
+        return entry?.kind === 'note' ? [entry] : []
+      })
+    )
     const changed: VaultPath[] = []
     for (const path of paths) {
       if (this.entries.get(path)?.kind !== 'note') continue
@@ -222,6 +260,7 @@ export class Vault {
           }
           await file.truncate(bytes.length)
           this.ownWrites.set(path, nextHash)
+          this.index.set(path, text)
           return { ok: true, hash: nextHash }
         } finally {
           await file.close()

@@ -1,19 +1,8 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { VaultEntry, VaultPath } from '../../core/ipc'
-import { suggest, type Range } from './quickOpenMatch'
+import { Highlighted } from './HitList'
+import { suggest } from './quickOpenMatch'
 import { workspace } from './workspace'
-
-function Highlighted({ text, ranges }: { text: string; ranges: Range[] }): React.JSX.Element {
-  const parts: React.ReactNode[] = []
-  let at = 0
-  for (const [from, to] of ranges) {
-    if (from > at) parts.push(text.slice(at, from))
-    parts.push(<mark key={from}>{text.slice(from, to)}</mark>)
-    at = to
-  }
-  parts.push(text.slice(at))
-  return <>{parts}</>
-}
 
 export function QuickOpen({
   entries,

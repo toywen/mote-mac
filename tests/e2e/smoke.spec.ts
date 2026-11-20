@@ -1,5 +1,5 @@
 import { test, expect, _electron as electron, type Locator } from '@playwright/test'
-import { cp, mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { cp, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 
 function launch(settings: string): ReturnType<typeof electron.launch> {
@@ -205,6 +205,52 @@ test('quick open ranks notes like Obsidian and lists recent notes for an empty q
     await window.keyboard.press('ArrowDown')
     await window.keyboard.press('Enter')
     await expect(editor).toHaveAttribute('data-note-path', '项目/计划.md')
+  } finally {
+    await app.close()
+  }
+})
+
+test('the backlinks pane lists links to the open note and jumps to them', async () => {
+  const info = test.info()
+  const vault = info.outputPath('vault')
+  await cp('tests/fixtures/vaults/basic', vault, { recursive: true })
+  const app = await launch(info.outputPath('settings'))
+  try {
+    const window = await app.firstWindow()
+    await app.evaluate(({ dialog }, path) => {
+      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
+    }, vault)
+    await window.getByRole('button', { name: '打开笔记库' }).click()
+    const pane = window.getByRole('complementary', { name: '反向链接' })
+    const hits = pane.locator('button.hit')
+    const editor = window.getByRole('textbox', { name: '编辑器' })
+    const selected = (): Promise<string> =>
+      window.evaluate(() => window.getSelection()?.toString() ?? '')
+
+    await window.getByRole('treeitem', { name: '欢迎', exact: true }).click()
+    await expect(pane.locator('[data-note-path="欢迎.md"]')).toBeVisible()
+    await expect(hits).toHaveText(['回到 [[欢迎]]。'])
+    await expect(hits.locator('mark')).toHaveText(['[[欢迎]]'])
+    await hits.first().click()
+    await expect(editor).toHaveAttribute('data-note-path', '项目/计划.md')
+    await expect.poll(selected).toBe('[[欢迎]]')
+
+    await expect(pane.locator('[data-note-path="项目/计划.md"]')).toBeVisible()
+    await expect(hits).toHaveText(['- [ ] 读一遍 [[项目/计划]]', '- [x] 打开 [计划](项目/计划.md)'])
+    await hits.nth(1).click()
+    await expect(editor).toHaveAttribute('data-note-path', '欢迎.md')
+    await expect.poll(selected).toBe('[计划](项目/计划.md)')
+
+    await writeFile(join(vault, '外部.md'), '外部新增 [[欢迎]]')
+    await expect(pane.locator('.hit-group[data-path="外部.md"]')).toBeVisible()
+    await rm(join(vault, '外部.md'))
+    await expect(pane.locator('.hit-group[data-path="外部.md"]')).toHaveCount(0)
+
+    await editor.click()
+    await window.keyboard.press('Meta+ArrowDown')
+    await window.keyboard.insertText('\n自己 [[欢迎]]')
+    await expect(pane.locator('.hit-group[data-path="欢迎.md"]')).toBeVisible()
+    await expect(window.getByRole('status', { name: '反向链接数' })).toHaveText('2')
   } finally {
     await app.close()
   }

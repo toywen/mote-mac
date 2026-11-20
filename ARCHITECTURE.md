@@ -33,6 +33,7 @@
 | `src/core/markdown.ts` | 唯一的解析器配置（`@lezer/markdown` 加双链、嵌入、属性块），从笔记里提取链接 |
 | `src/core/resolve.ts` | 链接解析，照搬 Obsidian 的 `getLinkpathDest` |
 | `src/core/model.ts` | 链接和解析结果的类型 |
+| `src/core/noteIndex.ts` | 笔记索引：每篇笔记的规范化文本和链接，反向链接查询。不缓存反向链接，每次查询重新解析 |
 | `src/main/index.ts` | 窗口、IPC 处理、mote 自己的设置（`~/Library/Application Support/mote/settings.json`） |
 | `src/main/vault.ts` | 打开笔记库、读取笔记库配置、监听外部修改、按哈希读写笔记 |
 | `src/main/notes.ts` | 扫描文件和读取笔记。不引用 Electron，`tools/` 里的脚本也直接用它 |
@@ -41,6 +42,7 @@
 | `src/renderer/src/NoteEditor.tsx` | CodeMirror 编辑器，把规范化文本还原成原始字节 |
 | `src/renderer/src/FileTree.tsx` | 文件树 |
 | `src/renderer/src/QuickOpen.tsx`、`quickOpenMatch.ts` | 快速打开窗口和照搬 Obsidian 的匹配打分 |
+| `src/renderer/src/HitList.tsx` | 按笔记分组列出命中位置，点一处打开笔记并选中。反向链接面板在用，搜索也会用 |
 | `tools/` | 审计笔记库、哈希对比、性能测量等命令行工具 |
 | `tests/e2e/` | Playwright 的 Electron 测试 |
 | `tests/fixtures/vaults/` | 测试笔记库 |
@@ -51,7 +53,8 @@
 
 每份状态只有一个持有者。不要加第二份两边都写的副本。
 
-- 磁盘和索引归主进程。
+- 磁盘和索引归主进程。主进程先更新索引，再通知渲染进程，mote 自己保存的笔记也一样。
+- 渲染进程里的反向链接列表是向主进程查询的结果，只读。切换笔记、收到笔记库变化、保存成功后重新查询。
 - 正在编辑的文字归渲染进程。
 - 渲染进程里的笔记路径列表是主进程推过来的副本，只读。
 - 最近打开的笔记列表归渲染进程，按笔记库存在 `localStorage`。

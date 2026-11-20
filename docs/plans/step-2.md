@@ -182,12 +182,21 @@ type ResolvedLinks = {
 
 ## PR C：反向链接
 
-- [ ] 依赖：PR B。
-- [ ] 改动文件：`src/main/vault.ts`、`src/main/index.ts`、`src/core/ipc.ts`、`src/preload/index.ts`、`workspace.ts`、`NoteEditor.tsx`、`App.tsx`、`src/renderer/src/HitList.tsx`（新）、`main.css`、`tests/e2e/`、`verify-mote.mjs`、`features/backlinks.md`。
-- [ ] 做的一件事：主进程在内存里保存全部笔记的文本和链接，右侧面板显示当前笔记的反向链接。
-- [ ] 你会看到：打开 `欢迎`，右侧列出 `计划` 和链接所在的那一行。点这一行，打开 `计划`，光标选中那个链接。
+- [x] 依赖：PR B。已合并，从 main 开分支。
+- [x] 改动文件：`src/core/noteIndex.ts`（新）、`src/main/vault.ts`、`src/main/index.ts`、`src/core/ipc.ts`、`src/preload/index.ts`、`workspace.ts`、`NoteEditor.tsx`、`App.tsx`、`src/renderer/src/HitList.tsx`（新）、`main.css`、`tests/e2e/`、`verify-mote.mjs`、`features/backlinks.md`。
+- [x] 做的一件事：主进程在内存里保存全部笔记的文本和链接，右侧面板显示当前笔记的反向链接。
+- [x] 你会看到：打开 `欢迎`，右侧列出 `计划` 和链接所在的那一行。点这一行，打开 `计划`，光标选中那个链接。
 
 主进程打开笔记库时读入全部笔记，文件变化时更新。新增 IPC `backlinks(dir, path): Promise<Hit[]>`。渲染进程在三种时候重新获取：切换笔记、收到 `onVaultChanged`、保存成功。新增 `workspace.open(path, at?)`，打开笔记后选中 `at` 指定的范围。PR D 复用它和 `HitList`。
+
+### 结果
+
+- [x] 单元：Vitest 测 `NoteIndex` 的位置、增删改和预览截断。e2e：the backlinks pane lists links to the open note and jumps to them。
+- [x] Node 对照：`compare-links.mjs` 对每篇笔记调用 `NoteIndex.backlinks`，和 Obsidian 的 `resolvedLinks` 反查比较。5 个副本 0 不一致。
+- [x] 真实窗口：5 个副本 `walk-notes --obsidian`，逐篇读面板的行数，和导出文件比较。打开 15、68、113、11、603 篇，反向链接 58、282、97、20、1466 处，0 不一致，`errorCount` 0。
+- [x] 真实窗口，`basic`：点击跳转后选中 `[[欢迎]]`；外部新增和删除笔记，面板跟着变；自己保存后面板列出自身，计数 2。
+- [x] `vault-diff --expect-unchanged`：6 次走查都输出 `unchanged`。保存那一步只改了 `欢迎.md`。
+- [x] 性能（实测，node，`workspace-copy`，9 次中位数）：main 上打开笔记库只扫描，10.5 毫秒；本分支扫描加读入索引，480 毫秒。真实窗口 `chooseVault` 中位数 402 毫秒（5 次）。查询链接最多的笔记（96 处）中位数 1.06 毫秒（100 次），预算 50 毫秒。
 
 容易出错的两处：
 
