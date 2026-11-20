@@ -29,11 +29,16 @@
 | --- | --- |
 | `src/core/` | 纯 TypeScript，主进程和渲染进程共用。不能引用 Electron |
 | `src/core/ipc.ts` | 库内路径、笔记库配置、`MoteApi` 接口和 IPC 通道名。IPC 的唯一定义 |
+| `src/core/text.ts` | 规范化文本：去掉 BOM，换行统一成 `\n`。链接位置都指向规范化文本 |
+| `src/core/markdown.ts` | 唯一的解析器配置（`@lezer/markdown` 加双链、嵌入、属性块），从笔记里提取链接 |
+| `src/core/resolve.ts` | 链接解析，照搬 Obsidian 的 `getLinkpathDest` |
+| `src/core/model.ts` | 链接和解析结果的类型 |
 | `src/main/index.ts` | 窗口、IPC 处理、mote 自己的设置（`~/Library/Application Support/mote/settings.json`） |
-| `src/main/vault.ts` | 打开笔记库、读取笔记库配置、扫描文件、监听外部修改、按哈希读写笔记 |
+| `src/main/vault.ts` | 打开笔记库、读取笔记库配置、监听外部修改、按哈希读写笔记 |
+| `src/main/notes.ts` | 扫描文件和读取笔记。不引用 Electron，`tools/` 里的脚本也直接用它 |
 | `src/preload/` | 用 `contextBridge` 暴露 `window.mote` |
 | `src/renderer/src/workspace.ts` | 渲染进程的状态：当前笔记库、打开的笔记和它的状态机 |
-| `src/renderer/src/NoteEditor.tsx` | CodeMirror 编辑器，规范化文本和原始字节的互相转换 |
+| `src/renderer/src/NoteEditor.tsx` | CodeMirror 编辑器，把规范化文本还原成原始字节 |
 | `src/renderer/src/FileTree.tsx` | 文件树 |
 | `src/renderer/src/QuickOpen.tsx`、`quickOpenMatch.ts` | 快速打开窗口和照搬 Obsidian 的匹配打分 |
 | `tools/` | 审计笔记库、哈希对比、性能测量等命令行工具 |

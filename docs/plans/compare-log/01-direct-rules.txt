@@ -1,0 +1,1017 @@
+== Pesemic-copy
+files: same
+links: total 89, agree 22, mismatches 18, mote total 32
+  [resolved] basic/Foundry_Ontology构建体系详解.md -> basic/Foundry_Ontology构建体系详解.md: Obsidian 9, mote 0
+  [resolved] basic/Foundry产品全景详解.md -> basic/Foundry产品全景详解.md: Obsidian 8, mote 0
+  [resolved] basic/Foundry数据连接与集成详解.md -> basic/Foundry数据连接与集成详解.md: Obsidian 11, mote 0
+  [resolved] basic/Foundry模型集成体系详解.md -> basic/Foundry模型集成体系详解.md: Obsidian 11, mote 0
+  [resolved] basic/Palantir_Foundry_概念边界详解.md -> basic/Palantir_Foundry_概念边界详解.md: Obsidian 9, mote 0
+  [resolved] basic/特征平台vs_Foundry对比分析.md -> basic/特征平台vs_Foundry对比分析.md: Obsidian 9, mote 0
+  [unresolved] compute/liwen-deps.md -> ../05-21-industrial-20260521-split/prd: Obsidian 2, mote 0
+      ~L5: **关联 liwen 任务**：[05-21-liwen-storage-compute-mvp](../05-21-liwen-storage-compute-mvp/prd.md)（in_progress）
+      ~L11: ## 1. PRD 层声明的依赖
+      ~L17: | O2 多列 PK | [prd.md:24](./prd.md#L24) | 前置 [05-21-liwen-storage-compute-mvp §130](../05-21-liwen-storage-compute-mvp/prd.md)：`pk_column: str` → `pk_columns: li
+  [unresolved] compute/liwen-deps.md -> ../05-21-industrial-20260521-split/prd.md: Obsidian 0, mote 2
+      L20: ### 1.2 父 split 任务（[05-21-industrial-20260521-split](../05-21-industrial-20260521-split/prd.md)）登记的 yzl × liwen 协作点
+      L22: 来自 [prd.md:70-75](../05-21-industrial-20260521-split/prd.md#L70-L75)：
+  [unresolved] compute/liwen-deps.md -> ../05-21-liwen-storage-compute-mvp/prd: Obsidian 2, mote 0
+      ~L5: **关联 liwen 任务**：[05-21-liwen-storage-compute-mvp](../05-21-liwen-storage-compute-mvp/prd.md)（in_progress）
+      ~L11: ## 1. PRD 层声明的依赖
+      ~L17: | O2 多列 PK | [prd.md:24](./prd.md#L24) | 前置 [05-21-liwen-storage-compute-mvp §130](../05-21-liwen-storage-compute-mvp/prd.md)：`pk_column: str` → `pk_columns: li
+  [unresolved] compute/liwen-deps.md -> ../05-21-liwen-storage-compute-mvp/prd.md: Obsidian 0, mote 2
+      L5: **关联 liwen 任务**：[05-21-liwen-storage-compute-mvp](../05-21-liwen-storage-compute-mvp/prd.md)（in_progress）
+      L17: | O2 多列 PK | [prd.md:24](./prd.md#L24) | 前置 [05-21-liwen-storage-compute-mvp §130](../05-21-liwen-storage-compute-mvp/prd.md)：`pk_column: str` → `pk_columns: li
+  [unresolved] compute/liwen-deps.md -> ../archive/2026-05/05-22-fs-connector-mode-create-replace-append/prd: Obsidian 1, mote 0
+      ~L5: **关联 liwen 任务**：[05-21-liwen-storage-compute-mvp](../05-21-liwen-storage-compute-mvp/prd.md)（in_progress）
+      ~L11: ## 1. PRD 层声明的依赖
+      ~L17: | O2 多列 PK | [prd.md:24](./prd.md#L24) | 前置 [05-21-liwen-storage-compute-mvp §130](../05-21-liwen-storage-compute-mvp/prd.md)：`pk_column: str` → `pk_columns: li
+  [unresolved] compute/liwen-deps.md -> ../archive/2026-05/05-22-fs-connector-mode-create-replace-append/prd.md: Obsidian 0, mote 1
+      L26: | **O3 重新导入覆盖** | ✅ 已完成（归档 [05-22-fs-connector-mode-create-replace-append](../archive/2026-05/05-22-fs-connector-mode-create-replace-append/prd.md)） | publisher
+  [unresolved] compute/liwen-deps.md -> ../archive/2026-05/05-22-phase-5-streamsyncmanager-publisher-integration-stream-connector/prd: Obsidian 1, mote 0
+      ~L5: **关联 liwen 任务**：[05-21-liwen-storage-compute-mvp](../05-21-liwen-storage-compute-mvp/prd.md)（in_progress）
+      ~L11: ## 1. PRD 层声明的依赖
+      ~L17: | O2 多列 PK | [prd.md:24](./prd.md#L24) | 前置 [05-21-liwen-storage-compute-mvp §130](../05-21-liwen-storage-compute-mvp/prd.md)：`pk_column: str` → `pk_columns: li
+  [unresolved] compute/liwen-deps.md -> ../archive/2026-05/05-22-phase-5-streamsyncmanager-publisher-integration-stream-connector/prd.md: Obsidian 0, mote 1
+      L35: 来自归档任务 [05-22-phase-5-streamsyncmanager-publisher-integration-stream-connector](../archive/2026-05/05-22-phase-5-streamsyncmanager-publisher-integration-stream-
+  [unresolved] compute/liwen-deps.md -> ./prd: Obsidian 2, mote 0
+      ~L5: **关联 liwen 任务**：[05-21-liwen-storage-compute-mvp](../05-21-liwen-storage-compute-mvp/prd.md)（in_progress）
+      ~L11: ## 1. PRD 层声明的依赖
+      ~L17: | O2 多列 PK | [prd.md:24](./prd.md#L24) | 前置 [05-21-liwen-storage-compute-mvp §130](../05-21-liwen-storage-compute-mvp/prd.md)：`pk_column: str` → `pk_columns: li
+  [unresolved] compute/liwen-deps.md -> ./prd.md: Obsidian 0, mote 2
+      L17: | O2 多列 PK | [prd.md:24](./prd.md#L24) | 前置 [05-21-liwen-storage-compute-mvp §130](../05-21-liwen-storage-compute-mvp/prd.md)：`pk_column: str` → `pk_columns: li
+      L18: | 实现层等 O2 | [prd.md:156](./prd.md#L156) | brainstorm 阶段不阻塞；实现层等 O2 落地后再合并，避免重复改 publisher 调用点。 |
+  [unresolved] compute/pipeline_nl_management_spec.md -> ./code_transform_proposal_spec: Obsidian 2, mote 0
+      ~L54: > **说明**: 本文档聚焦 **operator_chain** transform 类型的对话式生成与管理。`code_transform` 动态注册流程 (Python 代码提案 / 沙箱校验 / lifecycle promote) 见独立文档 [`code_transform_proposal_spec.m
+      ~L54: > **说明**: 本文档聚焦 **operator_chain** transform 类型的对话式生成与管理。`code_transform` 动态注册流程 (Python 代码提案 / 沙箱校验 / lifecycle promote) 见独立文档 [`code_transform_proposal_spec.m
+      ~L785: - ❌ code_transform 动态注册 (Python 代码提案 / 沙箱校验 / 运行时注册) — 见独立文档 [`code_transform_proposal_spec.md`](./code_transform_proposal_spec.md)
+  [unresolved] compute/pipeline_nl_management_spec.md -> ./code_transform_proposal_spec.md: Obsidian 0, mote 2
+      L54: > **说明**: 本文档聚焦 **operator_chain** transform 类型的对话式生成与管理。`code_transform` 动态注册流程 (Python 代码提案 / 沙箱校验 / lifecycle promote) 见独立文档 [`code_transform_proposal_spec.m
+      L785: - ❌ code_transform 动态注册 (Python 代码提案 / 沙箱校验 / 运行时注册) — 见独立文档 [`code_transform_proposal_spec.md`](./code_transform_proposal_spec.md)
+== knowledge-base-copy
+files: same
+links: total 306, agree 196, mismatches 176, mote total 306
+  [resolved] output/briefs/2026-04-05-llm-wiki-workflow-synthesis.md -> raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L24: - [你不知道的 Agent：原理、架构与工程实践](../../wiki/docs/%E4%BD%A0%E4%B8%8D%E7%9F%A5%E9%81%93%E7%9A%84%20Agent%EF%BC%9A%E5%8E%9F%E7%90%86%E3%80%81%E6%9E%B6%E6%9E%84%E4%B8%8E%
+  [resolved] output/briefs/2026-04-05-llm-wiki-workflow-synthesis.md -> raw/articles/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 0, mote 1
+      L25: - [你不知道的大模型训练：原理、路径与新实践](../../wiki/docs/%E4%BD%A0%E4%B8%8D%E7%9F%A5%E9%81%93%E7%9A%84%E5%A4%A7%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83%EF%BC%9A%E5%8E%9F%E7%90%86%E
+  [resolved] output/briefs/2026-04-05-llm-wiki-workflow-synthesis.md -> wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L24: - [你不知道的 Agent：原理、架构与工程实践](../../wiki/docs/%E4%BD%A0%E4%B8%8D%E7%9F%A5%E9%81%93%E7%9A%84%20Agent%EF%BC%9A%E5%8E%9F%E7%90%86%E3%80%81%E6%9E%B6%E6%9E%84%E4%B8%8E%
+  [resolved] output/briefs/2026-04-05-llm-wiki-workflow-synthesis.md -> wiki/docs/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 1, mote 0
+      ~L25: - [你不知道的大模型训练：原理、路径与新实践](../../wiki/docs/%E4%BD%A0%E4%B8%8D%E7%9F%A5%E9%81%93%E7%9A%84%E5%A4%A7%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83%EF%BC%9A%E5%8E%9F%E7%90%86%E
+  [resolved] wiki/concepts/agent-loop.md -> raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L20: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] wiki/concepts/agent-loop.md -> raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L19: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/concepts/agent-loop.md -> wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L20: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] wiki/concepts/agent-loop.md -> wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L19: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/concepts/context-engineering.md -> raw/articles/How to Vibe Code A Developer's Playbook.md: Obsidian 0, mote 1
+      L19: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] wiki/concepts/context-engineering.md -> raw/articles/Thread by @karpathy.md: Obsidian 0, mote 1
+      L20: - [[Thread by @karpathy]]
+  [resolved] wiki/concepts/context-engineering.md -> raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L18: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/concepts/context-engineering.md -> wiki/docs/How to Vibe Code A Developer's Playbook.md: Obsidian 1, mote 0
+      ~L19: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] wiki/concepts/context-engineering.md -> wiki/docs/Thread by @karpathy.md: Obsidian 1, mote 0
+      ~L20: - [[Thread by @karpathy]]
+  [resolved] wiki/concepts/context-engineering.md -> wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L18: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/concepts/evaluation.md -> raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L20: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] wiki/concepts/evaluation.md -> raw/articles/How to Vibe Code A Developer's Playbook.md: Obsidian 0, mote 1
+      L21: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] wiki/concepts/evaluation.md -> raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L18: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/concepts/evaluation.md -> raw/articles/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 0, mote 1
+      L19: - [[你不知道的大模型训练：原理、路径与新实践]]
+  [resolved] wiki/concepts/evaluation.md -> wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L20: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] wiki/concepts/evaluation.md -> wiki/docs/How to Vibe Code A Developer's Playbook.md: Obsidian 1, mote 0
+      ~L21: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] wiki/concepts/evaluation.md -> wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L18: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/concepts/evaluation.md -> wiki/docs/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 1, mote 0
+      ~L19: - [[你不知道的大模型训练：原理、路径与新实践]]
+  [resolved] wiki/concepts/harness-engineering.md -> raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L18: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] wiki/concepts/harness-engineering.md -> raw/articles/Claude Managed Agents get to production 10x faster.md: Obsidian 0, mote 1
+      L22: - [[Claude Managed Agents get to production 10x faster]]
+  [resolved] wiki/concepts/harness-engineering.md -> raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 1
+      L20: - [[Continual learning for AI agents]]
+  [resolved] wiki/concepts/harness-engineering.md -> raw/articles/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 0, mote 1
+      L23: - [[Scaling Managed Agents Decoupling the brain from the hands]]
+  [resolved] wiki/concepts/harness-engineering.md -> raw/articles/The Anatomy of an Agent Harness.md: Obsidian 0, mote 1
+      L19: - [[The Anatomy of an Agent Harness]]
+  [resolved] wiki/concepts/harness-engineering.md -> raw/articles/Thread by @deedydas.md: Obsidian 0, mote 1
+      L21: - [[Thread by @deedydas]]
+  [resolved] wiki/concepts/harness-engineering.md -> raw/articles/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 0, mote 1
+      L24: - [[Why Your “AI-First” Strategy Is Probably Wrong]]
+  [resolved] wiki/concepts/harness-engineering.md -> wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L18: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] wiki/concepts/harness-engineering.md -> wiki/docs/Claude Managed Agents get to production 10x faster.md: Obsidian 1, mote 0
+      ~L22: - [[Claude Managed Agents get to production 10x faster]]
+  [resolved] wiki/concepts/harness-engineering.md -> wiki/docs/Continual learning for AI agents.md: Obsidian 1, mote 0
+      ~L20: - [[Continual learning for AI agents]]
+  [resolved] wiki/concepts/harness-engineering.md -> wiki/docs/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 1, mote 0
+      ~L23: - [[Scaling Managed Agents Decoupling the brain from the hands]]
+  [resolved] wiki/concepts/harness-engineering.md -> wiki/docs/The Anatomy of an Agent Harness.md: Obsidian 1, mote 0
+      ~L19: - [[The Anatomy of an Agent Harness]]
+  [resolved] wiki/concepts/harness-engineering.md -> wiki/docs/Thread by @deedydas.md: Obsidian 1, mote 0
+      ~L21: - [[Thread by @deedydas]]
+  [resolved] wiki/concepts/harness-engineering.md -> wiki/docs/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 1, mote 0
+      ~L24: - [[Why Your “AI-First” Strategy Is Probably Wrong]]
+  [resolved] wiki/concepts/memory.md -> raw/articles/Thread by @karpathy.md: Obsidian 0, mote 1
+      L20: - [[Thread by @karpathy]]
+  [resolved] wiki/concepts/memory.md -> raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L19: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/concepts/memory.md -> wiki/docs/Thread by @karpathy.md: Obsidian 1, mote 0
+      ~L20: - [[Thread by @karpathy]]
+  [resolved] wiki/concepts/memory.md -> wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L19: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/concepts/post-training.md -> raw/articles/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 0, mote 1
+      L18: - [[你不知道的大模型训练：原理、路径与新实践]]
+  [resolved] wiki/concepts/post-training.md -> wiki/docs/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 1, mote 0
+      ~L18: - [[你不知道的大模型训练：原理、路径与新实践]]
+  [resolved] wiki/concepts/tool-design.md -> raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L20: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] wiki/concepts/tool-design.md -> raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L18: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/concepts/tool-design.md -> wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L20: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] wiki/concepts/tool-design.md -> wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L18: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/index.md -> raw/articles/12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List.md: Obsidian 0, mote 1
+      L57: - [[docs/12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List|12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List.]
+  [resolved] wiki/index.md -> raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L48: - [[docs/AutoAgent first open source library for self-optimizing agents|AutoAgent: first open source library for self-optimizing agents]] - a source note about 
+  [resolved] wiki/index.md -> raw/articles/Claude Managed Agents get to production 10x faster.md: Obsidian 0, mote 1
+      L51: - [[docs/Claude Managed Agents get to production 10x faster|Claude Managed Agents: get to production 10x faster]] - a source note on managed runtime infrastruct
+  [resolved] wiki/index.md -> raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 1
+      L40: - [[docs/Continual learning for AI agents|Continual learning for AI agents]] - a source note on model, harness, and context-level continual learning.
+  [resolved] wiki/index.md -> raw/articles/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 0, mote 1
+      L41: - [[docs/How I built a chief of staff on OpenClaw that's better than any human I've hired|How I built a chief of staff on OpenClaw that's better than any human 
+  [resolved] wiki/index.md -> raw/articles/How to Build a Multi-Agent Team in Hermes.md: Obsidian 0, mote 1
+      L53: - [[docs/How to Build a Multi-Agent Team in Hermes|How to Build a Multi-Agent Team in Hermes]] - a source note on profile isolation and role-based multi-agent t
+  [resolved] wiki/index.md -> raw/articles/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 0, mote 1
+      L42: - [[docs/How to Master AI Agents from Zero to Production — The Complete Guide|How to Master AI Agents from Zero to Production — The Complete Guide]] - a source 
+  [resolved] wiki/index.md -> raw/articles/How to Vibe Code A Developer's Playbook.md: Obsidian 0, mote 1
+      L49: - [[docs/How to Vibe Code A Developer's Playbook|How to Vibe Code: A Developer's Playbook]] - a source note about spec-first AI-assisted development, context di
+  [resolved] wiki/index.md -> raw/articles/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 0, mote 1
+      L52: - [[docs/Scaling Managed Agents Decoupling the brain from the hands|Scaling Managed Agents: Decoupling the brain from the hands]] - a source note on decoupled a
+  [resolved] wiki/index.md -> raw/articles/The Anatomy of an Agent Harness.md: Obsidian 0, mote 1
+      L43: - [[docs/The Anatomy of an Agent Harness|The Anatomy of an Agent Harness]] - a source note on production harness components and architecture tradeoffs.
+  [resolved] wiki/index.md -> raw/articles/Thread by @deedydas.md: Obsidian 0, mote 1
+      L44: - [[docs/Thread by @deedydas|Thread by @deedydas]] - a source note on meta-harness optimization over verifiable tasks.
+  [resolved] wiki/index.md -> raw/articles/Thread by @karpathy.md: Obsidian 0, mote 1
+      L50: - [[docs/Thread by @karpathy|Thread by @karpathy]] - a source note about explicit, local, file-based personal memory artifacts.
+  [resolved] wiki/index.md -> raw/articles/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 0, mote 1
+      L56: - [[docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required|Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - a sourc
+  [resolved] wiki/index.md -> raw/articles/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 0, mote 1
+      L54: - [[docs/Why Your “AI-First” Strategy Is Probably Wrong|Why Your “AI-First” Strategy Is Probably Wrong]] - a source note on AI-first operating-model redesign an
+  [resolved] wiki/index.md -> raw/articles/Yes, they're moving faster than you.md: Obsidian 0, mote 1
+      L55: - [[docs/Yes, they're moving faster than you|Yes, they're moving faster than you]] - a source note on organizational adoption patterns linked to AI-era velocity
+  [resolved] wiki/index.md -> raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L46: - [[docs/你不知道的 Agent：原理、架构与工程实践|你不知道的 Agent：原理、架构与工程实践]] - a source note about agent mechanics, memory, evaluation, and harness design.
+  [resolved] wiki/index.md -> raw/articles/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 0, mote 1
+      L47: - [[docs/你不知道的大模型训练：原理、路径与新实践|你不知道的大模型训练：原理、路径与新实践]] - a source note about training paths and post-training practice.
+  [resolved] wiki/index.md -> wiki/docs/12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List.md: Obsidian 1, mote 0
+      ~L57: - [[docs/12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List|12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List.]
+      ~L57: - [[docs/12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List|12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List.]
+  [resolved] wiki/index.md -> wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L48: - [[docs/AutoAgent first open source library for self-optimizing agents|AutoAgent: first open source library for self-optimizing agents]] - a source note about 
+  [resolved] wiki/index.md -> wiki/docs/Claude Managed Agents get to production 10x faster.md: Obsidian 1, mote 0
+      ~L51: - [[docs/Claude Managed Agents get to production 10x faster|Claude Managed Agents: get to production 10x faster]] - a source note on managed runtime infrastruct
+  [resolved] wiki/index.md -> wiki/docs/Continual learning for AI agents.md: Obsidian 1, mote 0
+      ~L40: - [[docs/Continual learning for AI agents|Continual learning for AI agents]] - a source note on model, harness, and context-level continual learning.
+      ~L40: - [[docs/Continual learning for AI agents|Continual learning for AI agents]] - a source note on model, harness, and context-level continual learning.
+  [resolved] wiki/index.md -> wiki/docs/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 1, mote 0
+      ~L41: - [[docs/How I built a chief of staff on OpenClaw that's better than any human I've hired|How I built a chief of staff on OpenClaw that's better than any human 
+      ~L41: - [[docs/How I built a chief of staff on OpenClaw that's better than any human I've hired|How I built a chief of staff on OpenClaw that's better than any human 
+  [resolved] wiki/index.md -> wiki/docs/How to Build a Multi-Agent Team in Hermes.md: Obsidian 1, mote 0
+      ~L53: - [[docs/How to Build a Multi-Agent Team in Hermes|How to Build a Multi-Agent Team in Hermes]] - a source note on profile isolation and role-based multi-agent t
+      ~L53: - [[docs/How to Build a Multi-Agent Team in Hermes|How to Build a Multi-Agent Team in Hermes]] - a source note on profile isolation and role-based multi-agent t
+  [resolved] wiki/index.md -> wiki/docs/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 1, mote 0
+      ~L42: - [[docs/How to Master AI Agents from Zero to Production — The Complete Guide|How to Master AI Agents from Zero to Production — The Complete Guide]] - a source 
+      ~L42: - [[docs/How to Master AI Agents from Zero to Production — The Complete Guide|How to Master AI Agents from Zero to Production — The Complete Guide]] - a source 
+  [resolved] wiki/index.md -> wiki/docs/How to Vibe Code A Developer's Playbook.md: Obsidian 1, mote 0
+      ~L49: - [[docs/How to Vibe Code A Developer's Playbook|How to Vibe Code: A Developer's Playbook]] - a source note about spec-first AI-assisted development, context di
+  [resolved] wiki/index.md -> wiki/docs/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 1, mote 0
+      ~L52: - [[docs/Scaling Managed Agents Decoupling the brain from the hands|Scaling Managed Agents: Decoupling the brain from the hands]] - a source note on decoupled a
+  [resolved] wiki/index.md -> wiki/docs/The Anatomy of an Agent Harness.md: Obsidian 1, mote 0
+      ~L43: - [[docs/The Anatomy of an Agent Harness|The Anatomy of an Agent Harness]] - a source note on production harness components and architecture tradeoffs.
+      ~L43: - [[docs/The Anatomy of an Agent Harness|The Anatomy of an Agent Harness]] - a source note on production harness components and architecture tradeoffs.
+  [resolved] wiki/index.md -> wiki/docs/Thread by @deedydas.md: Obsidian 1, mote 0
+      ~L44: - [[docs/Thread by @deedydas|Thread by @deedydas]] - a source note on meta-harness optimization over verifiable tasks.
+      ~L44: - [[docs/Thread by @deedydas|Thread by @deedydas]] - a source note on meta-harness optimization over verifiable tasks.
+  [resolved] wiki/index.md -> wiki/docs/Thread by @karpathy.md: Obsidian 1, mote 0
+      ~L50: - [[docs/Thread by @karpathy|Thread by @karpathy]] - a source note about explicit, local, file-based personal memory artifacts.
+      ~L50: - [[docs/Thread by @karpathy|Thread by @karpathy]] - a source note about explicit, local, file-based personal memory artifacts.
+  [resolved] wiki/index.md -> wiki/docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 1, mote 0
+      ~L56: - [[docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required|Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - a sourc
+      ~L56: - [[docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required|Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - a sourc
+  [resolved] wiki/index.md -> wiki/docs/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 1, mote 0
+      ~L54: - [[docs/Why Your “AI-First” Strategy Is Probably Wrong|Why Your “AI-First” Strategy Is Probably Wrong]] - a source note on AI-first operating-model redesign an
+      ~L54: - [[docs/Why Your “AI-First” Strategy Is Probably Wrong|Why Your “AI-First” Strategy Is Probably Wrong]] - a source note on AI-first operating-model redesign an
+  [resolved] wiki/index.md -> wiki/docs/Yes, they're moving faster than you.md: Obsidian 1, mote 0
+      ~L55: - [[docs/Yes, they're moving faster than you|Yes, they're moving faster than you]] - a source note on organizational adoption patterns linked to AI-era velocity
+      ~L55: - [[docs/Yes, they're moving faster than you|Yes, they're moving faster than you]] - a source note on organizational adoption patterns linked to AI-era velocity
+  [resolved] wiki/index.md -> wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L46: - [[docs/你不知道的 Agent：原理、架构与工程实践|你不知道的 Agent：原理、架构与工程实践]] - a source note about agent mechanics, memory, evaluation, and harness design.
+      ~L46: - [[docs/你不知道的 Agent：原理、架构与工程实践|你不知道的 Agent：原理、架构与工程实践]] - a source note about agent mechanics, memory, evaluation, and harness design.
+  [resolved] wiki/index.md -> wiki/docs/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 1, mote 0
+      ~L47: - [[docs/你不知道的大模型训练：原理、路径与新实践|你不知道的大模型训练：原理、路径与新实践]] - a source note about training paths and post-training practice.
+      ~L47: - [[docs/你不知道的大模型训练：原理、路径与新实践|你不知道的大模型训练：原理、路径与新实践]] - a source note about training paths and post-training practice.
+  [resolved] wiki/indexes/sources.md -> raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 2
+      L29: - [[AutoAgent first open source library for self-optimizing agents]] - autonomous harness optimization with benchmark feedback.
+      L54: - [[AutoAgent first open source library for self-optimizing agents]] - autonomous harness edits validated by repeated evaluations.
+  [resolved] wiki/indexes/sources.md -> raw/articles/Claude Managed Agents get to production 10x faster.md: Obsidian 0, mote 3
+      L12: - [[Claude Managed Agents get to production 10x faster]] - managed runtime packaging for production agent infrastructure.
+      L34: - [[Claude Managed Agents get to production 10x faster]] - managed execution runtime for long-running and governed agent workflows.
+      L59: - [[Claude Managed Agents get to production 10x faster]] - hosted infrastructure abstraction for deploying agents rapidly.
+  [resolved] wiki/indexes/sources.md -> raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 3
+      L24: - [[Continual learning for AI agents]] - agent learning split into model, harness, and context layers.
+      L45: - [[Continual learning for AI agents]] - model-level continual updates contextualized against non-model learning surfaces.
+      L52: - [[Continual learning for AI agents]] - trace-driven improvement framing across harness and memory layers.
+  [resolved] wiki/indexes/sources.md -> raw/articles/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 0, mote 2
+      L25: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]] - durable operations loops for high-context assistant workflows.
+      L51: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]] - operations design for persistent assistants in real workflows.
+  [resolved] wiki/indexes/sources.md -> raw/articles/How to Build a Multi-Agent Team in Hermes.md: Obsidian 0, mote 3
+      L14: - [[How to Build a Multi-Agent Team in Hermes]] - profile-based multi-agent operating pattern with role isolation.
+      L36: - [[How to Build a Multi-Agent Team in Hermes]] - role-specialized multi-agent setup with isolated profile state.
+      L61: - [[How to Build a Multi-Agent Team in Hermes]] - role and identity decomposition for multi-agent operation.
+  [resolved] wiki/indexes/sources.md -> raw/articles/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 0, mote 2
+      L26: - [[How to Master AI Agents from Zero to Production — The Complete Guide]] - foundational implementation and production checklist for agent builders.
+      L50: - [[How to Master AI Agents from Zero to Production — The Complete Guide]] - practical implementation guardrails for shipping agents.
+  [resolved] wiki/indexes/sources.md -> raw/articles/How to Vibe Code A Developer's Playbook.md: Obsidian 0, mote 2
+      L33: - [[How to Vibe Code A Developer's Playbook]] - practical plan-execute-verify loops for coding agents.
+      L55: - [[How to Vibe Code A Developer's Playbook]] - context engineering, testing, and security review for production workflows.
+  [resolved] wiki/indexes/sources.md -> raw/articles/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 0, mote 3
+      L13: - [[Scaling Managed Agents Decoupling the brain from the hands]] - architectural rationale for decoupled brain-hand-session interfaces.
+      L35: - [[Scaling Managed Agents Decoupling the brain from the hands]] - decoupled harness/sandbox/session architecture for resilient agents.
+      L60: - [[Scaling Managed Agents Decoupling the brain from the hands]] - systems interface design for secure, scalable managed agents.
+  [resolved] wiki/indexes/sources.md -> raw/articles/The Anatomy of an Agent Harness.md: Obsidian 0, mote 2
+      L27: - [[The Anatomy of an Agent Harness]] - end-to-end harness decomposition and loop execution model.
+      L49: - [[The Anatomy of an Agent Harness]] - harness architecture patterns and production reliability boundaries.
+  [resolved] wiki/indexes/sources.md -> raw/articles/Thread by @deedydas.md: Obsidian 0, mote 2
+      L28: - [[Thread by @deedydas]] - higher-order harness search over verifiable task families.
+      L53: - [[Thread by @deedydas]] - meta-level harness optimization and domain-fit considerations.
+  [resolved] wiki/indexes/sources.md -> raw/articles/Thread by @karpathy.md: Obsidian 0, mote 2
+      L30: - [[Thread by @karpathy]] - explicit personal wiki memory and user-controlled AI personalization.
+      L56: - [[Thread by @karpathy]] - explicit file-based memory and BYOAI interoperability framing.
+  [resolved] wiki/indexes/sources.md -> raw/articles/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 0, mote 3
+      L17: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - no-code automation catalog organized by workflow domain.
+      L39: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - broad agent-enabled automation use cases for non-technical operators.
+      L64: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - practical automation portfolio framing for AI-enabled workflows.
+  [resolved] wiki/indexes/sources.md -> raw/articles/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 0, mote 3
+      L15: - [[Why Your “AI-First” Strategy Is Probably Wrong]] - organizational redesign argument for AI-first delivery systems.
+      L37: - [[Why Your “AI-First” Strategy Is Probably Wrong]] - agent-first software delivery model with strict validation loops.
+      L62: - [[Why Your “AI-First” Strategy Is Probably Wrong]] - process and org redesign for AI-native delivery cadence.
+  [resolved] wiki/indexes/sources.md -> raw/articles/Yes, they're moving faster than you.md: Obsidian 0, mote 3
+      L16: - [[Yes, they're moving faster than you]] - adoption commentary on high-velocity AI operating models.
+      L38: - [[Yes, they're moving faster than you]] - organizational adoption characteristics linked to agent-era execution speed.
+      L63: - [[Yes, they're moving faster than you]] - cross-functional adoption signals tied to higher throughput.
+  [resolved] wiki/indexes/sources.md -> raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 2
+      L32: - [[你不知道的 Agent：原理、架构与工程实践]] - agent engineering mechanics and evaluation concerns.
+      L57: - [[你不知道的 Agent：原理、架构与工程实践]] - engineering mechanics for reliable agents.
+  [resolved] wiki/indexes/sources.md -> raw/articles/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 0, mote 1
+      L44: - [[你不知道的大模型训练：原理、路径与新实践]] - training paths and post-training practice.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 2, mote 0
+      ~L29: - [[AutoAgent first open source library for self-optimizing agents]] - autonomous harness optimization with benchmark feedback.
+      ~L54: - [[AutoAgent first open source library for self-optimizing agents]] - autonomous harness edits validated by repeated evaluations.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/Claude Managed Agents get to production 10x faster.md: Obsidian 3, mote 0
+      ~L12: - [[Claude Managed Agents get to production 10x faster]] - managed runtime packaging for production agent infrastructure.
+      ~L34: - [[Claude Managed Agents get to production 10x faster]] - managed execution runtime for long-running and governed agent workflows.
+      ~L59: - [[Claude Managed Agents get to production 10x faster]] - hosted infrastructure abstraction for deploying agents rapidly.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/Continual learning for AI agents.md: Obsidian 3, mote 0
+      ~L24: - [[Continual learning for AI agents]] - agent learning split into model, harness, and context layers.
+      ~L45: - [[Continual learning for AI agents]] - model-level continual updates contextualized against non-model learning surfaces.
+      ~L52: - [[Continual learning for AI agents]] - trace-driven improvement framing across harness and memory layers.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 2, mote 0
+      ~L25: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]] - durable operations loops for high-context assistant workflows.
+      ~L51: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]] - operations design for persistent assistants in real workflows.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/How to Build a Multi-Agent Team in Hermes.md: Obsidian 3, mote 0
+      ~L14: - [[How to Build a Multi-Agent Team in Hermes]] - profile-based multi-agent operating pattern with role isolation.
+      ~L36: - [[How to Build a Multi-Agent Team in Hermes]] - role-specialized multi-agent setup with isolated profile state.
+      ~L61: - [[How to Build a Multi-Agent Team in Hermes]] - role and identity decomposition for multi-agent operation.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 2, mote 0
+      ~L26: - [[How to Master AI Agents from Zero to Production — The Complete Guide]] - foundational implementation and production checklist for agent builders.
+      ~L50: - [[How to Master AI Agents from Zero to Production — The Complete Guide]] - practical implementation guardrails for shipping agents.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/How to Vibe Code A Developer's Playbook.md: Obsidian 2, mote 0
+      ~L33: - [[How to Vibe Code A Developer's Playbook]] - practical plan-execute-verify loops for coding agents.
+      ~L55: - [[How to Vibe Code A Developer's Playbook]] - context engineering, testing, and security review for production workflows.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 3, mote 0
+      ~L13: - [[Scaling Managed Agents Decoupling the brain from the hands]] - architectural rationale for decoupled brain-hand-session interfaces.
+      ~L35: - [[Scaling Managed Agents Decoupling the brain from the hands]] - decoupled harness/sandbox/session architecture for resilient agents.
+      ~L60: - [[Scaling Managed Agents Decoupling the brain from the hands]] - systems interface design for secure, scalable managed agents.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/The Anatomy of an Agent Harness.md: Obsidian 2, mote 0
+      ~L27: - [[The Anatomy of an Agent Harness]] - end-to-end harness decomposition and loop execution model.
+      ~L49: - [[The Anatomy of an Agent Harness]] - harness architecture patterns and production reliability boundaries.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/Thread by @deedydas.md: Obsidian 2, mote 0
+      ~L28: - [[Thread by @deedydas]] - higher-order harness search over verifiable task families.
+      ~L53: - [[Thread by @deedydas]] - meta-level harness optimization and domain-fit considerations.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/Thread by @karpathy.md: Obsidian 2, mote 0
+      ~L30: - [[Thread by @karpathy]] - explicit personal wiki memory and user-controlled AI personalization.
+      ~L56: - [[Thread by @karpathy]] - explicit file-based memory and BYOAI interoperability framing.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 3, mote 0
+      ~L17: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - no-code automation catalog organized by workflow domain.
+      ~L39: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - broad agent-enabled automation use cases for non-technical operators.
+      ~L64: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - practical automation portfolio framing for AI-enabled workflows.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 3, mote 0
+      ~L15: - [[Why Your “AI-First” Strategy Is Probably Wrong]] - organizational redesign argument for AI-first delivery systems.
+      ~L37: - [[Why Your “AI-First” Strategy Is Probably Wrong]] - agent-first software delivery model with strict validation loops.
+      ~L62: - [[Why Your “AI-First” Strategy Is Probably Wrong]] - process and org redesign for AI-native delivery cadence.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/Yes, they're moving faster than you.md: Obsidian 3, mote 0
+      ~L16: - [[Yes, they're moving faster than you]] - adoption commentary on high-velocity AI operating models.
+      ~L38: - [[Yes, they're moving faster than you]] - organizational adoption characteristics linked to agent-era execution speed.
+      ~L63: - [[Yes, they're moving faster than you]] - cross-functional adoption signals tied to higher throughput.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 2, mote 0
+      ~L32: - [[你不知道的 Agent：原理、架构与工程实践]] - agent engineering mechanics and evaluation concerns.
+      ~L57: - [[你不知道的 Agent：原理、架构与工程实践]] - engineering mechanics for reliable agents.
+  [resolved] wiki/indexes/sources.md -> wiki/docs/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 1, mote 0
+      ~L44: - [[你不知道的大模型训练：原理、路径与新实践]] - training paths and post-training practice.
+  [resolved] wiki/topics/agent.md -> raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L28: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] wiki/topics/agent.md -> raw/articles/Claude Managed Agents get to production 10x faster.md: Obsidian 0, mote 1
+      L31: - [[Claude Managed Agents get to production 10x faster]]
+  [resolved] wiki/topics/agent.md -> raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 1
+      L22: - [[Continual learning for AI agents]]
+  [resolved] wiki/topics/agent.md -> raw/articles/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 0, mote 1
+      L24: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]]
+  [resolved] wiki/topics/agent.md -> raw/articles/How to Build a Multi-Agent Team in Hermes.md: Obsidian 0, mote 1
+      L33: - [[How to Build a Multi-Agent Team in Hermes]]
+  [resolved] wiki/topics/agent.md -> raw/articles/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 0, mote 1
+      L23: - [[How to Master AI Agents from Zero to Production — The Complete Guide]]
+  [resolved] wiki/topics/agent.md -> raw/articles/How to Vibe Code A Developer's Playbook.md: Obsidian 0, mote 1
+      L30: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] wiki/topics/agent.md -> raw/articles/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 0, mote 1
+      L32: - [[Scaling Managed Agents Decoupling the brain from the hands]]
+  [resolved] wiki/topics/agent.md -> raw/articles/The Anatomy of an Agent Harness.md: Obsidian 0, mote 1
+      L21: - [[The Anatomy of an Agent Harness]]
+  [resolved] wiki/topics/agent.md -> raw/articles/Thread by @deedydas.md: Obsidian 0, mote 1
+      L25: - [[Thread by @deedydas]]
+  [resolved] wiki/topics/agent.md -> raw/articles/Thread by @karpathy.md: Obsidian 0, mote 1
+      L29: - [[Thread by @karpathy]]
+  [resolved] wiki/topics/agent.md -> raw/articles/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 0, mote 1
+      L36: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]]
+  [resolved] wiki/topics/agent.md -> raw/articles/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 0, mote 1
+      L34: - [[Why Your “AI-First” Strategy Is Probably Wrong]]
+  [resolved] wiki/topics/agent.md -> raw/articles/Yes, they're moving faster than you.md: Obsidian 0, mote 1
+      L35: - [[Yes, they're moving faster than you]]
+  [resolved] wiki/topics/agent.md -> raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L27: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L28: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/Claude Managed Agents get to production 10x faster.md: Obsidian 1, mote 0
+      ~L31: - [[Claude Managed Agents get to production 10x faster]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/Continual learning for AI agents.md: Obsidian 1, mote 0
+      ~L22: - [[Continual learning for AI agents]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 1, mote 0
+      ~L24: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/How to Build a Multi-Agent Team in Hermes.md: Obsidian 1, mote 0
+      ~L33: - [[How to Build a Multi-Agent Team in Hermes]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 1, mote 0
+      ~L23: - [[How to Master AI Agents from Zero to Production — The Complete Guide]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/How to Vibe Code A Developer's Playbook.md: Obsidian 1, mote 0
+      ~L30: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 1, mote 0
+      ~L32: - [[Scaling Managed Agents Decoupling the brain from the hands]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/The Anatomy of an Agent Harness.md: Obsidian 1, mote 0
+      ~L21: - [[The Anatomy of an Agent Harness]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/Thread by @deedydas.md: Obsidian 1, mote 0
+      ~L25: - [[Thread by @deedydas]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/Thread by @karpathy.md: Obsidian 1, mote 0
+      ~L29: - [[Thread by @karpathy]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 1, mote 0
+      ~L36: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 1, mote 0
+      ~L34: - [[Why Your “AI-First” Strategy Is Probably Wrong]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/Yes, they're moving faster than you.md: Obsidian 1, mote 0
+      ~L35: - [[Yes, they're moving faster than you]]
+  [resolved] wiki/topics/agent.md -> wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L27: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L27: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/Claude Managed Agents get to production 10x faster.md: Obsidian 0, mote 1
+      L30: - [[Claude Managed Agents get to production 10x faster]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 1
+      L23: - [[Continual learning for AI agents]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 0, mote 1
+      L22: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/How to Build a Multi-Agent Team in Hermes.md: Obsidian 0, mote 1
+      L32: - [[How to Build a Multi-Agent Team in Hermes]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 0, mote 1
+      L21: - [[How to Master AI Agents from Zero to Production — The Complete Guide]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/How to Vibe Code A Developer's Playbook.md: Obsidian 0, mote 1
+      L28: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 0, mote 1
+      L31: - [[Scaling Managed Agents Decoupling the brain from the hands]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/The Anatomy of an Agent Harness.md: Obsidian 0, mote 1
+      L20: - [[The Anatomy of an Agent Harness]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/Thread by @deedydas.md: Obsidian 0, mote 1
+      L24: - [[Thread by @deedydas]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/Thread by @karpathy.md: Obsidian 0, mote 1
+      L29: - [[Thread by @karpathy]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 0, mote 1
+      L35: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 0, mote 1
+      L33: - [[Why Your “AI-First” Strategy Is Probably Wrong]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/Yes, they're moving faster than you.md: Obsidian 0, mote 1
+      L34: - [[Yes, they're moving faster than you]]
+  [resolved] wiki/topics/llm-engineering.md -> raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L26: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L27: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/Claude Managed Agents get to production 10x faster.md: Obsidian 1, mote 0
+      ~L30: - [[Claude Managed Agents get to production 10x faster]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/Continual learning for AI agents.md: Obsidian 1, mote 0
+      ~L23: - [[Continual learning for AI agents]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 1, mote 0
+      ~L22: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/How to Build a Multi-Agent Team in Hermes.md: Obsidian 1, mote 0
+      ~L32: - [[How to Build a Multi-Agent Team in Hermes]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 1, mote 0
+      ~L21: - [[How to Master AI Agents from Zero to Production — The Complete Guide]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/How to Vibe Code A Developer's Playbook.md: Obsidian 1, mote 0
+      ~L28: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 1, mote 0
+      ~L31: - [[Scaling Managed Agents Decoupling the brain from the hands]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/The Anatomy of an Agent Harness.md: Obsidian 1, mote 0
+      ~L20: - [[The Anatomy of an Agent Harness]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/Thread by @deedydas.md: Obsidian 1, mote 0
+      ~L24: - [[Thread by @deedydas]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/Thread by @karpathy.md: Obsidian 1, mote 0
+      ~L29: - [[Thread by @karpathy]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 1, mote 0
+      ~L35: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 1, mote 0
+      ~L33: - [[Why Your “AI-First” Strategy Is Probably Wrong]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/Yes, they're moving faster than you.md: Obsidian 1, mote 0
+      ~L34: - [[Yes, they're moving faster than you]]
+  [resolved] wiki/topics/llm-engineering.md -> wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L26: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] wiki/topics/llm-training.md -> raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 1
+      L21: - [[Continual learning for AI agents]]
+  [resolved] wiki/topics/llm-training.md -> raw/articles/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 0, mote 1
+      L20: - [[你不知道的大模型训练：原理、路径与新实践]]
+  [resolved] wiki/topics/llm-training.md -> wiki/docs/Continual learning for AI agents.md: Obsidian 1, mote 0
+      ~L21: - [[Continual learning for AI agents]]
+  [resolved] wiki/topics/llm-training.md -> wiki/docs/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 1, mote 0
+      ~L20: - [[你不知道的大模型训练：原理、路径与新实践]]
+== life-os-copy
+files: same
+links: total 125, agree 118, mismatches 19, mote total 132
+  [resolved] Daily/2026/2026-05/2026-05-06.md -> Daily/2026/2026-05/2026-05-06.md: Obsidian 0, mote 1
+      L1: 1. 今天看了six minutes youtube [[02_Projects/🎓 English Learning/📅 Daily Log/2026-05-06|2026-05-06]]
+  [resolved] Daily/2026/2026-07/2026-07-16.md -> AI/Prompts/README.md: Obsidian 0, mote 1
+      L8: - [x] start to write fanqie novel [[02_Projects/番茄小说/全民觉醒：我体内是灭世核心/README|README]]
+  [resolved] English/README.md -> AI/Prompts/README.md: Obsidian 0, mote 1
+      L14: - [[Vocabulary/README]] and the vocabulary cards: expressions selected for long-term use.
+  [resolved] English/README.md -> English/Vocabulary/README.md: Obsidian 1, mote 0
+      ~L14: - [[Vocabulary/README]] and the vocabulary cards: expressions selected for long-term use.
+  [resolved] English/README.md -> English/Vocabulary/_Template.md: Obsidian 0, mote 1
+      L13: - [[Weekly/_Template]] and the weekly files: practice records, speaking output, and new candidates.
+  [resolved] English/README.md -> English/Weekly/_Template.md: Obsidian 1, mote 0
+      ~L13: - [[Weekly/_Template]] and the weekly files: practice records, speaking output, and new candidates.
+  [resolved] English/Vocabulary/at your own pace.md -> English/Transcripts/2026-W32-01 - You Are Not Running Out of Time.md: Obsidian 1, mote 2
+      L8: - [[2026-W32-01 - You Are Not Running Out of Time]]
+      L45: - Transcript: [[2026-W32-01 - You Are Not Running Out of Time]]
+  [resolved] English/Vocabulary/go through.md -> English/Transcripts/2026-W29-01 - New Year Resolutions.md: Obsidian 1, mote 2
+      L8: - [[2026-W29-01 - New Year Resolutions]]
+      L53: - Transcript: [[2026-W29-01 - New Year Resolutions]]
+  [resolved] English/Vocabulary/let go of.md -> English/Transcripts/2026-W29-02 - How Language Shapes Thinking.md: Obsidian 1, mote 2
+      L8: - [[2026-W29-02 - How Language Shapes Thinking]]
+      L44: - Transcript: [[2026-W29-02 - How Language Shapes Thinking]]
+  [resolved] English/Vocabulary/run out of time.md -> English/Transcripts/2026-W32-01 - You Are Not Running Out of Time.md: Obsidian 1, mote 2
+      L8: - [[2026-W32-01 - You Are Not Running Out of Time]]
+      L49: - Transcript: [[2026-W32-01 - You Are Not Running Out of Time]]
+  [resolved] English/Vocabulary/stick around.md -> English/Transcripts/2026-W31-01 - How to Become Fluent.md: Obsidian 1, mote 2
+      L8: - [[2026-W31-01 - How to Become Fluent]]
+      L52: - Transcript: [[2026-W31-01 - How to Become Fluent]]
+  [resolved] English/Vocabulary/stress yourself out.md -> English/Transcripts/2026-W29-02 - How Language Shapes Thinking.md: Obsidian 1, mote 2
+      L8: - [[2026-W29-02 - How Language Shapes Thinking]]
+      L44: - Transcript: [[2026-W29-02 - How Language Shapes Thinking]]
+  [resolved] English/Vocabulary/take it a step further.md -> English/Transcripts/2026-W29-01 - New Year Resolutions.md: Obsidian 1, mote 2
+      L8: - [[2026-W29-01 - New Year Resolutions]]
+      L49: - Transcript: [[2026-W29-01 - New Year Resolutions]]
+  [resolved] English/Weekly/2026-W28.md -> English/Vocabulary/_Template.md: Obsidian 0, mote 1
+      L13: > **历史说明：** 本页保留的是第一版旧模板，只用于记录决策过程。当前模板为 [[_Template]]，以后不要复制本页结构。
+  [resolved] English/Weekly/2026-W28.md -> English/Weekly/_Template.md: Obsidian 1, mote 0
+      ~L13: > **历史说明：** 本页保留的是第一版旧模板，只用于记录决策过程。当前模板为 [[_Template]]，以后不要复制本页结构。
+  [resolved] Investing/持仓分析.md -> English/CLAUDE.md: Obsidian 0, mote 2
+      L60: （每周复盘一只，在这里追加。四问与铁律见 [[CLAUDE|CLAUDE.md]]。）
+      L87: - 新建 [[CLAUDE|CLAUDE.md]]（账户级规范：铁律 / 四问 / 复盘方法 / 数据口径 / 文件组织）。本文原「用 CLAUDE.md 里的固定四问」为悬空引用，该文件此前并不存在，现已补建并接上链接。
+  [resolved] Investing/持仓分析.md -> Investing/CLAUDE.md: Obsidian 2, mote 0
+      ~L60: （每周复盘一只，在这里追加。四问与铁律见 [[CLAUDE|CLAUDE.md]]。）
+      ~L60: （每周复盘一只，在这里追加。四问与铁律见 [[CLAUDE|CLAUDE.md]]。）
+      ~L87: - 新建 [[CLAUDE|CLAUDE.md]]（账户级规范：铁律 / 四问 / 复盘方法 / 数据口径 / 文件组织）。本文原「用 CLAUDE.md 里的固定四问」为悬空引用，该文件此前并不存在，现已补建并接上链接。
+  [unresolved] Daily/2026/2026-05/2026-05-06.md -> 02_Projects/🎓 English Learning/📅 Daily Log/2026-05-06: Obsidian 1, mote 0
+      ~L1: 1. 今天看了six minutes youtube [[02_Projects/🎓 English Learning/📅 Daily Log/2026-05-06|2026-05-06]]
+      ~L1: 1. 今天看了six minutes youtube [[02_Projects/🎓 English Learning/📅 Daily Log/2026-05-06|2026-05-06]]
+  [unresolved] Daily/2026/2026-07/2026-07-16.md -> 02_Projects/番茄小说/全民觉醒：我体内是灭世核心/README: Obsidian 1, mote 0
+      ~L8: - [x] start to write fanqie novel [[02_Projects/番茄小说/全民觉醒：我体内是灭世核心/README|README]]
+      ~L8: - [x] start to write fanqie novel [[02_Projects/番茄小说/全民觉醒：我体内是灭世核心/README|README]]
+== wiki-copy
+files: same
+links: total 20, agree 20, mismatches 0, mote total 20
+== workspace-copy
+files: same
+links: total 1631, agree 1392, mismatches 215, mote total 1520
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/colloquial.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/Claude Prompting Best Practices.md: Obsidian 1, mote 2
+      L7: source: "[[Claude Prompting Best Practices]]"
+      L104: *📅 Added: 2026-03-13 · 🎬 Source: [[Claude Prompting Best Practices]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/happen to.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L144: *📅 Added: 2026-03-11 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/if anything.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L129: *📅 Added: 2026-03-11 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/in time.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L142: *📅 Added: 2026-03-11 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/on time.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L145: *📅 Added: 2026-03-11 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/pitchy.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/Improve Your English Listening & Comprehension English with Disney Movies.md: Obsidian 1, mote 2
+      L7: source: "[[Improve Your English Listening & Comprehension English with Disney Movies]]"
+      L90: *📅 Added: 2026-03-12 · 🎬 Source: [[Improve Your English Listening & Comprehension English with Disney Movies]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/punctually.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L119: *📅 Added: 2026-03-12 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/riding on.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/Improve Your English Listening & Comprehension English with Disney Movies.md: Obsidian 1, mote 2
+      L7: source: "[[Improve Your English Listening & Comprehension English with Disney Movies]]"
+      L90: *📅 Added: 2026-03-12 · 🎬 Source: [[Improve Your English Listening & Comprehension English with Disney Movies]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/rip.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L130: *📅 Added: 2026-03-11 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/steer clear of.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/Claude Prompting Best Practices.md: Obsidian 1, mote 2
+      L7: source: "[[Claude Prompting Best Practices]]"
+      L106: *📅 Added: 2026-03-13 · 🎬 Source: [[Claude Prompting Best Practices]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/what in the word.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L99: *📅 Added: 2026-03-12 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 04_Works/foundry/docs1/Foundry_Ontology构建体系详解.md -> 04_Works/foundry/docs1/Foundry_Ontology构建体系详解.md: Obsidian 9, mote 0
+  [resolved] 04_Works/foundry/docs1/Foundry产品全景详解.md -> 04_Works/foundry/docs1/Foundry产品全景详解.md: Obsidian 8, mote 0
+  [resolved] 04_Works/foundry/docs1/Foundry数据连接与集成详解.md -> 04_Works/foundry/docs1/Foundry数据连接与集成详解.md: Obsidian 11, mote 0
+  [resolved] 04_Works/foundry/docs1/Foundry模型集成体系详解.md -> 04_Works/foundry/docs1/Foundry模型集成体系详解.md: Obsidian 11, mote 0
+  [resolved] 04_Works/foundry/docs1/Palantir_Foundry_概念边界详解.md -> 04_Works/foundry/docs1/Palantir_Foundry_概念边界详解.md: Obsidian 9, mote 0
+  [resolved] 04_Works/foundry/docs1/特征平台vs_Foundry对比分析.md -> 04_Works/foundry/docs1/特征平台vs_Foundry对比分析.md: Obsidian 9, mote 0
+  [resolved] 04_Works/foundry/docs2/01_第一性原理与世界观.md -> 04_Works/foundry/docs2/01_第一性原理与世界观.md: Obsidian 6, mote 0
+  [resolved] 04_Works/foundry/docs2/02_四层架构与组件全景.md -> 04_Works/foundry/docs2/02_四层架构与组件全景.md: Obsidian 8, mote 0
+  [resolved] 04_Works/foundry/docs2/03_Ontology_语义与动力双引擎.md -> 04_Works/foundry/docs2/03_Ontology_语义与动力双引擎.md: Obsidian 9, mote 0
+  [resolved] 04_Works/foundry/docs2/04_数据流与事务模型.md -> 04_Works/foundry/docs2/04_数据流与事务模型.md: Obsidian 10, mote 0
+  [resolved] 04_Works/foundry/docs2/05_AI与Agent原生集成.md -> 04_Works/foundry/docs2/05_AI与Agent原生集成.md: Obsidian 11, mote 0
+  [resolved] 04_Works/foundry/docs2/06_安全治理与企业交付.md -> 04_Works/foundry/docs2/06_安全治理与企业交付.md: Obsidian 11, mote 0
+  [resolved] 04_Works/foundry/docs2/07_适用边界与决策框架.md -> 04_Works/foundry/docs2/07_适用边界与决策框架.md: Obsidian 9, mote 0
+  [resolved] conflict-files-obsidian-git.md -> conflict-files-obsidian-git.md: Obsidian 1, mote 0
+  [resolved] knowledge-base/output/answers/2026-04-07-what-is-agent-harness.md -> knowledge-base/raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 1
+      L23: - [[wiki/docs/Continual learning for AI agents|Continual learning for AI agents]]：把持续学习拆为 model/harness/context 三层，说明 Harness 是独立优化层。
+  [resolved] knowledge-base/output/answers/2026-04-07-what-is-agent-harness.md -> knowledge-base/raw/articles/The Anatomy of an Agent Harness.md: Obsidian 0, mote 1
+      L22: - [[wiki/docs/The Anatomy of an Agent Harness|The Anatomy of an Agent Harness]]：明确 Harness 组件边界，强调“非模型基础设施决定实际性能”。
+  [resolved] knowledge-base/output/answers/2026-04-07-what-is-agent-harness.md -> knowledge-base/raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L24: - [[wiki/docs/你不知道的 Agent：原理、架构与工程实践|你不知道的 Agent：原理、架构与工程实践]]：指出工程实践中 Harness 与评测质量常比单纯升模更关键。
+  [resolved] knowledge-base/output/answers/2026-04-07-what-is-agent-harness.md -> knowledge-base/wiki/docs/Continual learning for AI agents.md: Obsidian 1, mote 0
+      ~L23: - [[wiki/docs/Continual learning for AI agents|Continual learning for AI agents]]：把持续学习拆为 model/harness/context 三层，说明 Harness 是独立优化层。
+      ~L23: - [[wiki/docs/Continual learning for AI agents|Continual learning for AI agents]]：把持续学习拆为 model/harness/context 三层，说明 Harness 是独立优化层。
+  [resolved] knowledge-base/output/answers/2026-04-07-what-is-agent-harness.md -> knowledge-base/wiki/docs/The Anatomy of an Agent Harness.md: Obsidian 1, mote 0
+      ~L22: - [[wiki/docs/The Anatomy of an Agent Harness|The Anatomy of an Agent Harness]]：明确 Harness 组件边界，强调“非模型基础设施决定实际性能”。
+      ~L22: - [[wiki/docs/The Anatomy of an Agent Harness|The Anatomy of an Agent Harness]]：明确 Harness 组件边界，强调“非模型基础设施决定实际性能”。
+  [resolved] knowledge-base/output/answers/2026-04-07-what-is-agent-harness.md -> knowledge-base/wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L24: - [[wiki/docs/你不知道的 Agent：原理、架构与工程实践|你不知道的 Agent：原理、架构与工程实践]]：指出工程实践中 Harness 与评测质量常比单纯升模更关键。
+      ~L24: - [[wiki/docs/你不知道的 Agent：原理、架构与工程实践|你不知道的 Agent：原理、架构与工程实践]]：指出工程实践中 Harness 与评测质量常比单纯升模更关键。
+  [resolved] knowledge-base/output/briefs/2026-04-05-llm-wiki-workflow-synthesis.md -> knowledge-base/raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L24: - [你不知道的 Agent：原理、架构与工程实践](../../wiki/docs/%E4%BD%A0%E4%B8%8D%E7%9F%A5%E9%81%93%E7%9A%84%20Agent%EF%BC%9A%E5%8E%9F%E7%90%86%E3%80%81%E6%9E%B6%E6%9E%84%E4%B8%8E%
+  [resolved] knowledge-base/output/briefs/2026-04-05-llm-wiki-workflow-synthesis.md -> knowledge-base/raw/articles/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 0, mote 1
+      L25: - [你不知道的大模型训练：原理、路径与新实践](../../wiki/docs/%E4%BD%A0%E4%B8%8D%E7%9F%A5%E9%81%93%E7%9A%84%E5%A4%A7%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83%EF%BC%9A%E5%8E%9F%E7%90%86%E
+  [resolved] knowledge-base/output/briefs/2026-04-05-llm-wiki-workflow-synthesis.md -> knowledge-base/wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L24: - [你不知道的 Agent：原理、架构与工程实践](../../wiki/docs/%E4%BD%A0%E4%B8%8D%E7%9F%A5%E9%81%93%E7%9A%84%20Agent%EF%BC%9A%E5%8E%9F%E7%90%86%E3%80%81%E6%9E%B6%E6%9E%84%E4%B8%8E%
+  [resolved] knowledge-base/output/briefs/2026-04-05-llm-wiki-workflow-synthesis.md -> knowledge-base/wiki/docs/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 1, mote 0
+      ~L25: - [你不知道的大模型训练：原理、路径与新实践](../../wiki/docs/%E4%BD%A0%E4%B8%8D%E7%9F%A5%E9%81%93%E7%9A%84%E5%A4%A7%E6%A8%A1%E5%9E%8B%E8%AE%AD%E7%BB%83%EF%BC%9A%E5%8E%9F%E7%90%86%E
+  [resolved] knowledge-base/wiki/concepts/agent-loop.md -> knowledge-base/raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L20: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] knowledge-base/wiki/concepts/agent-loop.md -> knowledge-base/raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L19: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/concepts/agent-loop.md -> knowledge-base/wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L20: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] knowledge-base/wiki/concepts/agent-loop.md -> knowledge-base/wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L19: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/concepts/context-engineering.md -> knowledge-base/raw/articles/How to Vibe Code A Developer's Playbook.md: Obsidian 0, mote 1
+      L19: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] knowledge-base/wiki/concepts/context-engineering.md -> knowledge-base/raw/articles/Thread by @karpathy.md: Obsidian 0, mote 1
+      L20: - [[Thread by @karpathy]]
+  [resolved] knowledge-base/wiki/concepts/context-engineering.md -> knowledge-base/raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L18: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/concepts/context-engineering.md -> knowledge-base/wiki/docs/How to Vibe Code A Developer's Playbook.md: Obsidian 1, mote 0
+      ~L19: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] knowledge-base/wiki/concepts/context-engineering.md -> knowledge-base/wiki/docs/Thread by @karpathy.md: Obsidian 1, mote 0
+      ~L20: - [[Thread by @karpathy]]
+  [resolved] knowledge-base/wiki/concepts/context-engineering.md -> knowledge-base/wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L18: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/concepts/evaluation.md -> knowledge-base/raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L20: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] knowledge-base/wiki/concepts/evaluation.md -> knowledge-base/raw/articles/How to Vibe Code A Developer's Playbook.md: Obsidian 0, mote 1
+      L21: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] knowledge-base/wiki/concepts/evaluation.md -> knowledge-base/raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L18: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/concepts/evaluation.md -> knowledge-base/raw/articles/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 0, mote 1
+      L19: - [[你不知道的大模型训练：原理、路径与新实践]]
+  [resolved] knowledge-base/wiki/concepts/evaluation.md -> knowledge-base/wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L20: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] knowledge-base/wiki/concepts/evaluation.md -> knowledge-base/wiki/docs/How to Vibe Code A Developer's Playbook.md: Obsidian 1, mote 0
+      ~L21: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] knowledge-base/wiki/concepts/evaluation.md -> knowledge-base/wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L18: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/concepts/evaluation.md -> knowledge-base/wiki/docs/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 1, mote 0
+      ~L19: - [[你不知道的大模型训练：原理、路径与新实践]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L18: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/raw/articles/Claude Managed Agents get to production 10x faster.md: Obsidian 0, mote 1
+      L22: - [[Claude Managed Agents get to production 10x faster]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 1
+      L20: - [[Continual learning for AI agents]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/raw/articles/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 0, mote 1
+      L23: - [[Scaling Managed Agents Decoupling the brain from the hands]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/raw/articles/The Anatomy of an Agent Harness.md: Obsidian 0, mote 1
+      L19: - [[The Anatomy of an Agent Harness]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/raw/articles/Thread by @deedydas.md: Obsidian 0, mote 1
+      L21: - [[Thread by @deedydas]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/raw/articles/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 0, mote 1
+      L24: - [[Why Your “AI-First” Strategy Is Probably Wrong]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L18: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/wiki/docs/Claude Managed Agents get to production 10x faster.md: Obsidian 1, mote 0
+      ~L22: - [[Claude Managed Agents get to production 10x faster]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/wiki/docs/Continual learning for AI agents.md: Obsidian 1, mote 0
+      ~L20: - [[Continual learning for AI agents]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/wiki/docs/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 1, mote 0
+      ~L23: - [[Scaling Managed Agents Decoupling the brain from the hands]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/wiki/docs/The Anatomy of an Agent Harness.md: Obsidian 1, mote 0
+      ~L19: - [[The Anatomy of an Agent Harness]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/wiki/docs/Thread by @deedydas.md: Obsidian 1, mote 0
+      ~L21: - [[Thread by @deedydas]]
+  [resolved] knowledge-base/wiki/concepts/harness-engineering.md -> knowledge-base/wiki/docs/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 1, mote 0
+      ~L24: - [[Why Your “AI-First” Strategy Is Probably Wrong]]
+  [resolved] knowledge-base/wiki/concepts/memory.md -> knowledge-base/raw/articles/Thread by @karpathy.md: Obsidian 0, mote 1
+      L20: - [[Thread by @karpathy]]
+  [resolved] knowledge-base/wiki/concepts/memory.md -> knowledge-base/raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L19: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/concepts/memory.md -> knowledge-base/wiki/docs/Thread by @karpathy.md: Obsidian 1, mote 0
+      ~L20: - [[Thread by @karpathy]]
+  [resolved] knowledge-base/wiki/concepts/memory.md -> knowledge-base/wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L19: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/concepts/post-training.md -> knowledge-base/raw/articles/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 0, mote 1
+      L18: - [[你不知道的大模型训练：原理、路径与新实践]]
+  [resolved] knowledge-base/wiki/concepts/post-training.md -> knowledge-base/wiki/docs/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 1, mote 0
+      ~L18: - [[你不知道的大模型训练：原理、路径与新实践]]
+  [resolved] knowledge-base/wiki/concepts/tool-design.md -> knowledge-base/raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L20: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] knowledge-base/wiki/concepts/tool-design.md -> knowledge-base/raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L18: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/concepts/tool-design.md -> knowledge-base/wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L20: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] knowledge-base/wiki/concepts/tool-design.md -> knowledge-base/wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L18: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List.md: Obsidian 0, mote 1
+      L57: - [[docs/12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List|12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List.]
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L48: - [[docs/AutoAgent first open source library for self-optimizing agents|AutoAgent: first open source library for self-optimizing agents]] - a source note about 
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/Claude Managed Agents get to production 10x faster.md: Obsidian 0, mote 1
+      L51: - [[docs/Claude Managed Agents get to production 10x faster|Claude Managed Agents: get to production 10x faster]] - a source note on managed runtime infrastruct
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 1
+      L40: - [[docs/Continual learning for AI agents|Continual learning for AI agents]] - a source note on model, harness, and context-level continual learning.
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 0, mote 1
+      L41: - [[docs/How I built a chief of staff on OpenClaw that's better than any human I've hired|How I built a chief of staff on OpenClaw that's better than any human 
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/How to Build a Multi-Agent Team in Hermes.md: Obsidian 0, mote 1
+      L53: - [[docs/How to Build a Multi-Agent Team in Hermes|How to Build a Multi-Agent Team in Hermes]] - a source note on profile isolation and role-based multi-agent t
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 0, mote 1
+      L42: - [[docs/How to Master AI Agents from Zero to Production — The Complete Guide|How to Master AI Agents from Zero to Production — The Complete Guide]] - a source 
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/How to Vibe Code A Developer's Playbook.md: Obsidian 0, mote 1
+      L49: - [[docs/How to Vibe Code A Developer's Playbook|How to Vibe Code: A Developer's Playbook]] - a source note about spec-first AI-assisted development, context di
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 0, mote 1
+      L52: - [[docs/Scaling Managed Agents Decoupling the brain from the hands|Scaling Managed Agents: Decoupling the brain from the hands]] - a source note on decoupled a
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/The Anatomy of an Agent Harness.md: Obsidian 0, mote 1
+      L43: - [[docs/The Anatomy of an Agent Harness|The Anatomy of an Agent Harness]] - a source note on production harness components and architecture tradeoffs.
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/Thread by @deedydas.md: Obsidian 0, mote 1
+      L44: - [[docs/Thread by @deedydas|Thread by @deedydas]] - a source note on meta-harness optimization over verifiable tasks.
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/Thread by @karpathy.md: Obsidian 0, mote 1
+      L50: - [[docs/Thread by @karpathy|Thread by @karpathy]] - a source note about explicit, local, file-based personal memory artifacts.
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 0, mote 1
+      L56: - [[docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required|Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - a sourc
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 0, mote 1
+      L54: - [[docs/Why Your “AI-First” Strategy Is Probably Wrong|Why Your “AI-First” Strategy Is Probably Wrong]] - a source note on AI-first operating-model redesign an
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/Yes, they're moving faster than you.md: Obsidian 0, mote 1
+      L55: - [[docs/Yes, they're moving faster than you|Yes, they're moving faster than you]] - a source note on organizational adoption patterns linked to AI-era velocity
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L46: - [[docs/你不知道的 Agent：原理、架构与工程实践|你不知道的 Agent：原理、架构与工程实践]] - a source note about agent mechanics, memory, evaluation, and harness design.
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/raw/articles/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 0, mote 1
+      L47: - [[docs/你不知道的大模型训练：原理、路径与新实践|你不知道的大模型训练：原理、路径与新实践]] - a source note about training paths and post-training practice.
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List.md: Obsidian 1, mote 0
+      ~L57: - [[docs/12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List|12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List.]
+      ~L57: - [[docs/12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List|12 Claude Shortcuts That Slashed My Workflow in Half. Here's the Full List.]
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L48: - [[docs/AutoAgent first open source library for self-optimizing agents|AutoAgent: first open source library for self-optimizing agents]] - a source note about 
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/Claude Managed Agents get to production 10x faster.md: Obsidian 1, mote 0
+      ~L51: - [[docs/Claude Managed Agents get to production 10x faster|Claude Managed Agents: get to production 10x faster]] - a source note on managed runtime infrastruct
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/Continual learning for AI agents.md: Obsidian 1, mote 0
+      ~L40: - [[docs/Continual learning for AI agents|Continual learning for AI agents]] - a source note on model, harness, and context-level continual learning.
+      ~L40: - [[docs/Continual learning for AI agents|Continual learning for AI agents]] - a source note on model, harness, and context-level continual learning.
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 1, mote 0
+      ~L41: - [[docs/How I built a chief of staff on OpenClaw that's better than any human I've hired|How I built a chief of staff on OpenClaw that's better than any human 
+      ~L41: - [[docs/How I built a chief of staff on OpenClaw that's better than any human I've hired|How I built a chief of staff on OpenClaw that's better than any human 
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/How to Build a Multi-Agent Team in Hermes.md: Obsidian 1, mote 0
+      ~L53: - [[docs/How to Build a Multi-Agent Team in Hermes|How to Build a Multi-Agent Team in Hermes]] - a source note on profile isolation and role-based multi-agent t
+      ~L53: - [[docs/How to Build a Multi-Agent Team in Hermes|How to Build a Multi-Agent Team in Hermes]] - a source note on profile isolation and role-based multi-agent t
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 1, mote 0
+      ~L42: - [[docs/How to Master AI Agents from Zero to Production — The Complete Guide|How to Master AI Agents from Zero to Production — The Complete Guide]] - a source 
+      ~L42: - [[docs/How to Master AI Agents from Zero to Production — The Complete Guide|How to Master AI Agents from Zero to Production — The Complete Guide]] - a source 
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/How to Vibe Code A Developer's Playbook.md: Obsidian 1, mote 0
+      ~L49: - [[docs/How to Vibe Code A Developer's Playbook|How to Vibe Code: A Developer's Playbook]] - a source note about spec-first AI-assisted development, context di
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 1, mote 0
+      ~L52: - [[docs/Scaling Managed Agents Decoupling the brain from the hands|Scaling Managed Agents: Decoupling the brain from the hands]] - a source note on decoupled a
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/The Anatomy of an Agent Harness.md: Obsidian 1, mote 0
+      ~L43: - [[docs/The Anatomy of an Agent Harness|The Anatomy of an Agent Harness]] - a source note on production harness components and architecture tradeoffs.
+      ~L43: - [[docs/The Anatomy of an Agent Harness|The Anatomy of an Agent Harness]] - a source note on production harness components and architecture tradeoffs.
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/Thread by @deedydas.md: Obsidian 1, mote 0
+      ~L44: - [[docs/Thread by @deedydas|Thread by @deedydas]] - a source note on meta-harness optimization over verifiable tasks.
+      ~L44: - [[docs/Thread by @deedydas|Thread by @deedydas]] - a source note on meta-harness optimization over verifiable tasks.
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/Thread by @karpathy.md: Obsidian 1, mote 0
+      ~L50: - [[docs/Thread by @karpathy|Thread by @karpathy]] - a source note about explicit, local, file-based personal memory artifacts.
+      ~L50: - [[docs/Thread by @karpathy|Thread by @karpathy]] - a source note about explicit, local, file-based personal memory artifacts.
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 1, mote 0
+      ~L56: - [[docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required|Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - a sourc
+      ~L56: - [[docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required|Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - a sourc
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 1, mote 0
+      ~L54: - [[docs/Why Your “AI-First” Strategy Is Probably Wrong|Why Your “AI-First” Strategy Is Probably Wrong]] - a source note on AI-first operating-model redesign an
+      ~L54: - [[docs/Why Your “AI-First” Strategy Is Probably Wrong|Why Your “AI-First” Strategy Is Probably Wrong]] - a source note on AI-first operating-model redesign an
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/Yes, they're moving faster than you.md: Obsidian 1, mote 0
+      ~L55: - [[docs/Yes, they're moving faster than you|Yes, they're moving faster than you]] - a source note on organizational adoption patterns linked to AI-era velocity
+      ~L55: - [[docs/Yes, they're moving faster than you|Yes, they're moving faster than you]] - a source note on organizational adoption patterns linked to AI-era velocity
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L46: - [[docs/你不知道的 Agent：原理、架构与工程实践|你不知道的 Agent：原理、架构与工程实践]] - a source note about agent mechanics, memory, evaluation, and harness design.
+      ~L46: - [[docs/你不知道的 Agent：原理、架构与工程实践|你不知道的 Agent：原理、架构与工程实践]] - a source note about agent mechanics, memory, evaluation, and harness design.
+  [resolved] knowledge-base/wiki/index.md -> knowledge-base/wiki/docs/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 1, mote 0
+      ~L47: - [[docs/你不知道的大模型训练：原理、路径与新实践|你不知道的大模型训练：原理、路径与新实践]] - a source note about training paths and post-training practice.
+      ~L47: - [[docs/你不知道的大模型训练：原理、路径与新实践|你不知道的大模型训练：原理、路径与新实践]] - a source note about training paths and post-training practice.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 2
+      L29: - [[AutoAgent first open source library for self-optimizing agents]] - autonomous harness optimization with benchmark feedback.
+      L54: - [[AutoAgent first open source library for self-optimizing agents]] - autonomous harness edits validated by repeated evaluations.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/Claude Managed Agents get to production 10x faster.md: Obsidian 0, mote 3
+      L12: - [[Claude Managed Agents get to production 10x faster]] - managed runtime packaging for production agent infrastructure.
+      L34: - [[Claude Managed Agents get to production 10x faster]] - managed execution runtime for long-running and governed agent workflows.
+      L59: - [[Claude Managed Agents get to production 10x faster]] - hosted infrastructure abstraction for deploying agents rapidly.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 3
+      L24: - [[Continual learning for AI agents]] - agent learning split into model, harness, and context layers.
+      L45: - [[Continual learning for AI agents]] - model-level continual updates contextualized against non-model learning surfaces.
+      L52: - [[Continual learning for AI agents]] - trace-driven improvement framing across harness and memory layers.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 0, mote 2
+      L25: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]] - durable operations loops for high-context assistant workflows.
+      L51: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]] - operations design for persistent assistants in real workflows.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/How to Build a Multi-Agent Team in Hermes.md: Obsidian 0, mote 3
+      L14: - [[How to Build a Multi-Agent Team in Hermes]] - profile-based multi-agent operating pattern with role isolation.
+      L36: - [[How to Build a Multi-Agent Team in Hermes]] - role-specialized multi-agent setup with isolated profile state.
+      L61: - [[How to Build a Multi-Agent Team in Hermes]] - role and identity decomposition for multi-agent operation.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 0, mote 2
+      L26: - [[How to Master AI Agents from Zero to Production — The Complete Guide]] - foundational implementation and production checklist for agent builders.
+      L50: - [[How to Master AI Agents from Zero to Production — The Complete Guide]] - practical implementation guardrails for shipping agents.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/How to Vibe Code A Developer's Playbook.md: Obsidian 0, mote 2
+      L33: - [[How to Vibe Code A Developer's Playbook]] - practical plan-execute-verify loops for coding agents.
+      L55: - [[How to Vibe Code A Developer's Playbook]] - context engineering, testing, and security review for production workflows.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 0, mote 3
+      L13: - [[Scaling Managed Agents Decoupling the brain from the hands]] - architectural rationale for decoupled brain-hand-session interfaces.
+      L35: - [[Scaling Managed Agents Decoupling the brain from the hands]] - decoupled harness/sandbox/session architecture for resilient agents.
+      L60: - [[Scaling Managed Agents Decoupling the brain from the hands]] - systems interface design for secure, scalable managed agents.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/The Anatomy of an Agent Harness.md: Obsidian 0, mote 2
+      L27: - [[The Anatomy of an Agent Harness]] - end-to-end harness decomposition and loop execution model.
+      L49: - [[The Anatomy of an Agent Harness]] - harness architecture patterns and production reliability boundaries.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/Thread by @deedydas.md: Obsidian 0, mote 2
+      L28: - [[Thread by @deedydas]] - higher-order harness search over verifiable task families.
+      L53: - [[Thread by @deedydas]] - meta-level harness optimization and domain-fit considerations.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/Thread by @karpathy.md: Obsidian 0, mote 2
+      L30: - [[Thread by @karpathy]] - explicit personal wiki memory and user-controlled AI personalization.
+      L56: - [[Thread by @karpathy]] - explicit file-based memory and BYOAI interoperability framing.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 0, mote 3
+      L17: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - no-code automation catalog organized by workflow domain.
+      L39: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - broad agent-enabled automation use cases for non-technical operators.
+      L64: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - practical automation portfolio framing for AI-enabled workflows.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 0, mote 3
+      L15: - [[Why Your “AI-First” Strategy Is Probably Wrong]] - organizational redesign argument for AI-first delivery systems.
+      L37: - [[Why Your “AI-First” Strategy Is Probably Wrong]] - agent-first software delivery model with strict validation loops.
+      L62: - [[Why Your “AI-First” Strategy Is Probably Wrong]] - process and org redesign for AI-native delivery cadence.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/Yes, they're moving faster than you.md: Obsidian 0, mote 3
+      L16: - [[Yes, they're moving faster than you]] - adoption commentary on high-velocity AI operating models.
+      L38: - [[Yes, they're moving faster than you]] - organizational adoption characteristics linked to agent-era execution speed.
+      L63: - [[Yes, they're moving faster than you]] - cross-functional adoption signals tied to higher throughput.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 2
+      L32: - [[你不知道的 Agent：原理、架构与工程实践]] - agent engineering mechanics and evaluation concerns.
+      L57: - [[你不知道的 Agent：原理、架构与工程实践]] - engineering mechanics for reliable agents.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/raw/articles/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 0, mote 1
+      L44: - [[你不知道的大模型训练：原理、路径与新实践]] - training paths and post-training practice.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 2, mote 0
+      ~L29: - [[AutoAgent first open source library for self-optimizing agents]] - autonomous harness optimization with benchmark feedback.
+      ~L54: - [[AutoAgent first open source library for self-optimizing agents]] - autonomous harness edits validated by repeated evaluations.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/Claude Managed Agents get to production 10x faster.md: Obsidian 3, mote 0
+      ~L12: - [[Claude Managed Agents get to production 10x faster]] - managed runtime packaging for production agent infrastructure.
+      ~L34: - [[Claude Managed Agents get to production 10x faster]] - managed execution runtime for long-running and governed agent workflows.
+      ~L59: - [[Claude Managed Agents get to production 10x faster]] - hosted infrastructure abstraction for deploying agents rapidly.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/Continual learning for AI agents.md: Obsidian 3, mote 0
+      ~L24: - [[Continual learning for AI agents]] - agent learning split into model, harness, and context layers.
+      ~L45: - [[Continual learning for AI agents]] - model-level continual updates contextualized against non-model learning surfaces.
+      ~L52: - [[Continual learning for AI agents]] - trace-driven improvement framing across harness and memory layers.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 2, mote 0
+      ~L25: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]] - durable operations loops for high-context assistant workflows.
+      ~L51: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]] - operations design for persistent assistants in real workflows.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/How to Build a Multi-Agent Team in Hermes.md: Obsidian 3, mote 0
+      ~L14: - [[How to Build a Multi-Agent Team in Hermes]] - profile-based multi-agent operating pattern with role isolation.
+      ~L36: - [[How to Build a Multi-Agent Team in Hermes]] - role-specialized multi-agent setup with isolated profile state.
+      ~L61: - [[How to Build a Multi-Agent Team in Hermes]] - role and identity decomposition for multi-agent operation.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 2, mote 0
+      ~L26: - [[How to Master AI Agents from Zero to Production — The Complete Guide]] - foundational implementation and production checklist for agent builders.
+      ~L50: - [[How to Master AI Agents from Zero to Production — The Complete Guide]] - practical implementation guardrails for shipping agents.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/How to Vibe Code A Developer's Playbook.md: Obsidian 2, mote 0
+      ~L33: - [[How to Vibe Code A Developer's Playbook]] - practical plan-execute-verify loops for coding agents.
+      ~L55: - [[How to Vibe Code A Developer's Playbook]] - context engineering, testing, and security review for production workflows.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 3, mote 0
+      ~L13: - [[Scaling Managed Agents Decoupling the brain from the hands]] - architectural rationale for decoupled brain-hand-session interfaces.
+      ~L35: - [[Scaling Managed Agents Decoupling the brain from the hands]] - decoupled harness/sandbox/session architecture for resilient agents.
+      ~L60: - [[Scaling Managed Agents Decoupling the brain from the hands]] - systems interface design for secure, scalable managed agents.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/The Anatomy of an Agent Harness.md: Obsidian 2, mote 0
+      ~L27: - [[The Anatomy of an Agent Harness]] - end-to-end harness decomposition and loop execution model.
+      ~L49: - [[The Anatomy of an Agent Harness]] - harness architecture patterns and production reliability boundaries.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/Thread by @deedydas.md: Obsidian 2, mote 0
+      ~L28: - [[Thread by @deedydas]] - higher-order harness search over verifiable task families.
+      ~L53: - [[Thread by @deedydas]] - meta-level harness optimization and domain-fit considerations.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/Thread by @karpathy.md: Obsidian 2, mote 0
+      ~L30: - [[Thread by @karpathy]] - explicit personal wiki memory and user-controlled AI personalization.
+      ~L56: - [[Thread by @karpathy]] - explicit file-based memory and BYOAI interoperability framing.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 3, mote 0
+      ~L17: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - no-code automation catalog organized by workflow domain.
+      ~L39: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - broad agent-enabled automation use cases for non-technical operators.
+      ~L64: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]] - practical automation portfolio framing for AI-enabled workflows.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 3, mote 0
+      ~L15: - [[Why Your “AI-First” Strategy Is Probably Wrong]] - organizational redesign argument for AI-first delivery systems.
+      ~L37: - [[Why Your “AI-First” Strategy Is Probably Wrong]] - agent-first software delivery model with strict validation loops.
+      ~L62: - [[Why Your “AI-First” Strategy Is Probably Wrong]] - process and org redesign for AI-native delivery cadence.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/Yes, they're moving faster than you.md: Obsidian 3, mote 0
+      ~L16: - [[Yes, they're moving faster than you]] - adoption commentary on high-velocity AI operating models.
+      ~L38: - [[Yes, they're moving faster than you]] - organizational adoption characteristics linked to agent-era execution speed.
+      ~L63: - [[Yes, they're moving faster than you]] - cross-functional adoption signals tied to higher throughput.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 2, mote 0
+      ~L32: - [[你不知道的 Agent：原理、架构与工程实践]] - agent engineering mechanics and evaluation concerns.
+      ~L57: - [[你不知道的 Agent：原理、架构与工程实践]] - engineering mechanics for reliable agents.
+  [resolved] knowledge-base/wiki/indexes/sources.md -> knowledge-base/wiki/docs/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 1, mote 0
+      ~L44: - [[你不知道的大模型训练：原理、路径与新实践]] - training paths and post-training practice.
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L28: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/Claude Managed Agents get to production 10x faster.md: Obsidian 0, mote 1
+      L31: - [[Claude Managed Agents get to production 10x faster]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 1
+      L22: - [[Continual learning for AI agents]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 0, mote 1
+      L24: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/How to Build a Multi-Agent Team in Hermes.md: Obsidian 0, mote 1
+      L33: - [[How to Build a Multi-Agent Team in Hermes]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 0, mote 1
+      L23: - [[How to Master AI Agents from Zero to Production — The Complete Guide]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/How to Vibe Code A Developer's Playbook.md: Obsidian 0, mote 1
+      L30: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 0, mote 1
+      L32: - [[Scaling Managed Agents Decoupling the brain from the hands]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/The Anatomy of an Agent Harness.md: Obsidian 0, mote 1
+      L21: - [[The Anatomy of an Agent Harness]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/Thread by @deedydas.md: Obsidian 0, mote 1
+      L25: - [[Thread by @deedydas]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/Thread by @karpathy.md: Obsidian 0, mote 1
+      L29: - [[Thread by @karpathy]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 0, mote 1
+      L36: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 0, mote 1
+      L34: - [[Why Your “AI-First” Strategy Is Probably Wrong]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/Yes, they're moving faster than you.md: Obsidian 0, mote 1
+      L35: - [[Yes, they're moving faster than you]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L27: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L28: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/Claude Managed Agents get to production 10x faster.md: Obsidian 1, mote 0
+      ~L31: - [[Claude Managed Agents get to production 10x faster]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/Continual learning for AI agents.md: Obsidian 1, mote 0
+      ~L22: - [[Continual learning for AI agents]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 1, mote 0
+      ~L24: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/How to Build a Multi-Agent Team in Hermes.md: Obsidian 1, mote 0
+      ~L33: - [[How to Build a Multi-Agent Team in Hermes]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 1, mote 0
+      ~L23: - [[How to Master AI Agents from Zero to Production — The Complete Guide]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/How to Vibe Code A Developer's Playbook.md: Obsidian 1, mote 0
+      ~L30: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 1, mote 0
+      ~L32: - [[Scaling Managed Agents Decoupling the brain from the hands]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/The Anatomy of an Agent Harness.md: Obsidian 1, mote 0
+      ~L21: - [[The Anatomy of an Agent Harness]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/Thread by @deedydas.md: Obsidian 1, mote 0
+      ~L25: - [[Thread by @deedydas]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/Thread by @karpathy.md: Obsidian 1, mote 0
+      ~L29: - [[Thread by @karpathy]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 1, mote 0
+      ~L36: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 1, mote 0
+      ~L34: - [[Why Your “AI-First” Strategy Is Probably Wrong]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/Yes, they're moving faster than you.md: Obsidian 1, mote 0
+      ~L35: - [[Yes, they're moving faster than you]]
+  [resolved] knowledge-base/wiki/topics/agent.md -> knowledge-base/wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L27: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/AutoAgent first open source library for self-optimizing agents.md: Obsidian 0, mote 1
+      L27: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/Claude Managed Agents get to production 10x faster.md: Obsidian 0, mote 1
+      L30: - [[Claude Managed Agents get to production 10x faster]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 1
+      L23: - [[Continual learning for AI agents]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 0, mote 1
+      L22: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/How to Build a Multi-Agent Team in Hermes.md: Obsidian 0, mote 1
+      L32: - [[How to Build a Multi-Agent Team in Hermes]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 0, mote 1
+      L21: - [[How to Master AI Agents from Zero to Production — The Complete Guide]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/How to Vibe Code A Developer's Playbook.md: Obsidian 0, mote 1
+      L28: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 0, mote 1
+      L31: - [[Scaling Managed Agents Decoupling the brain from the hands]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/The Anatomy of an Agent Harness.md: Obsidian 0, mote 1
+      L20: - [[The Anatomy of an Agent Harness]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/Thread by @deedydas.md: Obsidian 0, mote 1
+      L24: - [[Thread by @deedydas]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/Thread by @karpathy.md: Obsidian 0, mote 1
+      L29: - [[Thread by @karpathy]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 0, mote 1
+      L35: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 0, mote 1
+      L33: - [[Why Your “AI-First” Strategy Is Probably Wrong]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/Yes, they're moving faster than you.md: Obsidian 0, mote 1
+      L34: - [[Yes, they're moving faster than you]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/raw/articles/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 0, mote 1
+      L26: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/AutoAgent first open source library for self-optimizing agents.md: Obsidian 1, mote 0
+      ~L27: - [[AutoAgent first open source library for self-optimizing agents]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/Claude Managed Agents get to production 10x faster.md: Obsidian 1, mote 0
+      ~L30: - [[Claude Managed Agents get to production 10x faster]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/Continual learning for AI agents.md: Obsidian 1, mote 0
+      ~L23: - [[Continual learning for AI agents]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/How I built a chief of staff on OpenClaw that's better than any human I've hired.md: Obsidian 1, mote 0
+      ~L22: - [[How I built a chief of staff on OpenClaw that's better than any human I've hired]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/How to Build a Multi-Agent Team in Hermes.md: Obsidian 1, mote 0
+      ~L32: - [[How to Build a Multi-Agent Team in Hermes]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/How to Master AI Agents from Zero to Production — The Complete Guide.md: Obsidian 1, mote 0
+      ~L21: - [[How to Master AI Agents from Zero to Production — The Complete Guide]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/How to Vibe Code A Developer's Playbook.md: Obsidian 1, mote 0
+      ~L28: - [[How to Vibe Code A Developer's Playbook]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/Scaling Managed Agents Decoupling the brain from the hands.md: Obsidian 1, mote 0
+      ~L31: - [[Scaling Managed Agents Decoupling the brain from the hands]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/The Anatomy of an Agent Harness.md: Obsidian 1, mote 0
+      ~L20: - [[The Anatomy of an Agent Harness]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/Thread by @deedydas.md: Obsidian 1, mote 0
+      ~L24: - [[Thread by @deedydas]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/Thread by @karpathy.md: Obsidian 1, mote 0
+      ~L29: - [[Thread by @karpathy]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/Top 40 AI Automations You Can Build This Weekend — Zero Code Required.md: Obsidian 1, mote 0
+      ~L35: - [[Top 40 AI Automations You Can Build This Weekend — Zero Code Required]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/Why Your “AI-First” Strategy Is Probably Wrong.md: Obsidian 1, mote 0
+      ~L33: - [[Why Your “AI-First” Strategy Is Probably Wrong]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/Yes, they're moving faster than you.md: Obsidian 1, mote 0
+      ~L34: - [[Yes, they're moving faster than you]]
+  [resolved] knowledge-base/wiki/topics/llm-engineering.md -> knowledge-base/wiki/docs/你不知道的 Agent：原理、架构与工程实践.md: Obsidian 1, mote 0
+      ~L26: - [[你不知道的 Agent：原理、架构与工程实践]]
+  [resolved] knowledge-base/wiki/topics/llm-training.md -> knowledge-base/raw/articles/Continual learning for AI agents.md: Obsidian 0, mote 1
+      L21: - [[Continual learning for AI agents]]
+  [resolved] knowledge-base/wiki/topics/llm-training.md -> knowledge-base/raw/articles/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 0, mote 1
+      L20: - [[你不知道的大模型训练：原理、路径与新实践]]
+  [resolved] knowledge-base/wiki/topics/llm-training.md -> knowledge-base/wiki/docs/Continual learning for AI agents.md: Obsidian 1, mote 0
+      ~L21: - [[Continual learning for AI agents]]
+  [resolved] knowledge-base/wiki/topics/llm-training.md -> knowledge-base/wiki/docs/你不知道的大模型训练：原理、路径与新实践.md: Obsidian 1, mote 0
+      ~L20: - [[你不知道的大模型训练：原理、路径与新实践]]
+  [resolved] youtube-transcript/bbc-learning-english/should-we-eat-ultra-processed-food-6-minute-english/transcript.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/youtube-transcript/bbc-learning-english/how-do-we-adapt-to-the-cold-6-minute-english/imgs/cover.jpg: Obsidian 0, mote 1
+      L24: ![cover](imgs/cover.jpg)
+  [resolved] youtube-transcript/bbc-learning-english/should-we-eat-ultra-processed-food-6-minute-english/transcript.md -> youtube-transcript/bbc-learning-english/should-we-eat-ultra-processed-food-6-minute-english/imgs/cover.jpg: Obsidian 1, mote 0
+      ~L6: cover: imgs/cover.jpg
+      ~L24: ![cover](imgs/cover.jpg)
+  [resolved] youtube-transcript/bbc-learning-english/teotihuacan-columbine-inspired-shooting-at-mexican-pyramids-bbc-learning-english-from-the-news/transcript.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/youtube-transcript/bbc-learning-english/how-do-we-adapt-to-the-cold-6-minute-english/imgs/cover.jpg: Obsidian 0, mote 1
+      L24: ![cover](imgs/cover.jpg)
+  [resolved] youtube-transcript/bbc-learning-english/teotihuacan-columbine-inspired-shooting-at-mexican-pyramids-bbc-learning-english-from-the-news/transcript.md -> youtube-transcript/bbc-learning-english/teotihuacan-columbine-inspired-shooting-at-mexican-pyramids-bbc-learning-english-from-the-news/imgs/cover.jpg: Obsidian 1, mote 0
+      ~L6: cover: imgs/cover.jpg
+      ~L24: ![cover](imgs/cover.jpg)
+  [resolved] youtube-transcript/bbc-learning-english/the-future-of-food-6-minute-english/transcript.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/youtube-transcript/bbc-learning-english/how-do-we-adapt-to-the-cold-6-minute-english/imgs/cover.jpg: Obsidian 0, mote 1
+      L24: ![cover](imgs/cover.jpg)
+  [resolved] youtube-transcript/bbc-learning-english/the-future-of-food-6-minute-english/transcript.md -> youtube-transcript/bbc-learning-english/the-future-of-food-6-minute-english/imgs/cover.jpg: Obsidian 1, mote 0
+      ~L6: cover: imgs/cover.jpg
+      ~L24: ![cover](imgs/cover.jpg)
+  [resolved] youtube-transcript/bbc-learning-english/why-are-we-all-so-stressed-6-minute-english/transcript.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/youtube-transcript/bbc-learning-english/how-do-we-adapt-to-the-cold-6-minute-english/imgs/cover.jpg: Obsidian 0, mote 1
+      L24: ![cover](imgs/cover.jpg)
+  [resolved] youtube-transcript/bbc-learning-english/why-are-we-all-so-stressed-6-minute-english/transcript.md -> youtube-transcript/bbc-learning-english/why-are-we-all-so-stressed-6-minute-english/imgs/cover.jpg: Obsidian 1, mote 0
+      ~L6: cover: imgs/cover.jpg
+      ~L24: ![cover](imgs/cover.jpg)
+== summary
+Pesemic-copy: total 89, agree 22, mismatches 18
+knowledge-base-copy: total 306, agree 196, mismatches 176
+life-os-copy: total 125, agree 118, mismatches 19
+wiki-copy: total 20, agree 20, mismatches 0
+workspace-copy: total 1631, agree 1392, mismatches 215

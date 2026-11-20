@@ -10,19 +10,9 @@ import {
 import { EditorView, keymap } from '@codemirror/view'
 import { useLayoutEffect, useRef } from 'react'
 import type { VaultPath } from '../../core/ipc'
+import { sourceText, type LineFormat } from '../../core/text'
 import { workspace } from './workspace'
 
-function sourceText(raw: string): { text: string; format: LineFormat } {
-  const bom = raw.startsWith('\uFEFF') ? '\uFEFF' : ''
-  const breaks: string[] = []
-  const text = raw.slice(bom.length).replace(/\r\n?|\n/g, (separator) => {
-    breaks.push(separator)
-    return '\n'
-  })
-  return { text, format: { bom, breaks, preferred: breaks[0] ?? '\n' } }
-}
-
-type LineFormat = { bom: string; breaks: string[]; preferred: string }
 const replaceFormat = StateEffect.define<LineFormat>()
 
 const lineFormat = StateField.define<LineFormat>({

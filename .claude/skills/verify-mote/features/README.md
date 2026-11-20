@@ -42,3 +42,4 @@ Which features are implemented, and which recipe proves each, is tracked in `doc
 - [Edit and save a note](./edit-and-save.md): step 1, acceptance item 1.
 - [External changes](./external-change.md): step 1, acceptance item 4.
 - [Quick open](./quick-open.md): step 2, `Cmd+O`.
+- [Link resolution](./links.md): step 2, acceptance item 2.

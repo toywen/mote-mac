@@ -30,7 +30,7 @@ A 和 B 改的文件不重叠，可以同时做。B 等你跑完导出就能开�
 
 ## 先做：在副本上导出 Obsidian 的解析结果
 
-副本已经建好。拷贝时跳过了 `.git`，关掉了全部社区插件和 Sync 核心插件，所以 obsidian-git 不会提交或推送。笔记字节和原始笔记库一致，已用 `tools/hash-vault.mjs` 对比过。
+副本已经建好。拷贝时跳过了 `.git`，关掉了全部社区插件和 Sync 核心插件。笔记字节和原始笔记库一致，已用 `tools/hash-vault.mjs` 对比过。
 
 | 副本 | 原始笔记库 | 笔记数 |
 | --- | --- | --- |
@@ -40,21 +40,13 @@ A 和 B 改的文件不重叠，可以同时做。B 等你跑完导出就能开�
 | `~/mote-link-check/workspace-copy` | `~/Downloads/workspace` | 603 |
 | `~/mote-link-check/knowledge-base-copy` | `~/Downloads/workspace/knowledge-base` | 68 |
 
-对每个副本做一遍：
+导出用 `tools/obsidian-export.mjs`，不用手动操作 Obsidian。做法见 ADR 0008。
 
-1. 在 Obsidian 的笔记库切换器里选 **打开本地文件夹作为仓库**，选中这个副本。
-2. 等索引跑完，大约 10 秒。
-3. 按 `Cmd+Option+I`，切到 **Console**。第一次粘贴前，Console 可能要求输入 `allow pasting`。
-4. 粘贴下面这一行，按回车。5 个副本用同一行，不用改。
-5. 关掉这个 Obsidian 窗口。不要在里面改笔记。
-
-```js
-require('fs').writeFileSync(app.vault.adapter.basePath + '.obsidian-links.json', JSON.stringify({ files: app.vault.getFiles().map((f) => f.path), resolved: app.metadataCache.resolvedLinks, unresolved: app.metadataCache.unresolvedLinks }))
+```sh
+node tools/obsidian-export.mjs ~/mote-link-check/*-copy
 ```
 
-这行命令把导出文件写到副本旁边，例如 `~/mote-link-check/life-os-copy.obsidian-links.json`。它比 ADR 0003 里的命令多导出一份文件列表。对照工具用这份列表确认两边看到的文件相同。如果 `require` 报错，改用 `copy(...)` 包住同样的对象，再在终端运行 `pbpaste > ~/mote-link-check/<副本>.obsidian-links.json`。
-
-PR B 末尾还需要一次导出，对象是测试笔记库 `links` 的副本。到时我会给出路径。
+它把 `{ obsidian, files, resolved, unresolved }` 写到副本旁边，例如 `~/mote-link-check/life-os-copy.obsidian-links.json`。`obsidian` 是实际加载的 Obsidian 版本。导出前后用 `tools/hash-vault.mjs` 哈希副本，笔记字节不变（2026-11-20 实测，5 个副本）。
 
 ## 数据结构
 
@@ -138,10 +130,10 @@ type ResolvedLinks = {
 
 ## PR B：解析器、链接解析和对照工具
 
-- [ ] 依赖：无，从 main 开分支。需要 5 个导出文件。
-- [ ] 改动文件：`src/core/model.ts`、`text.ts`、`markdown.ts`、`resolve.ts`（均为新）、`src/main/notes.ts`（新，从 `vault.ts` 抽出扫描和读取）、`vault.ts`、`NoteEditor.tsx`（规范化函数移到 `src/core/text.ts`）、`tools/compare-links.mjs`（新）、`tests/fixtures/vaults/links/`（新）、`package.json`、`tsconfig*.json`、`docs/features.md`、`ARCHITECTURE.md`、`verify-mote` 的 `features/links.md`。
-- [ ] 做的一件事：mote 能从笔记里提取链接，并按 Obsidian 的规则解析目标。
-- [ ] 你会看到：对照工具在 5 个副本上的输出：总数、一致数、不一致 0 处。
+- [x] 依赖：无，从 main 开分支。需要 5 个导出文件。
+- [x] 改动文件：`src/core/model.ts`、`text.ts`、`markdown.ts`、`resolve.ts`（均为新）、`src/main/notes.ts`（新，从 `vault.ts` 抽出扫描和读取）、`vault.ts`、`NoteEditor.tsx`（规范化函数移到 `src/core/text.ts`）、`tools/compare-links.mjs`（新）、`tests/fixtures/vaults/links/`（新）、`package.json`、`tsconfig*.json`、`docs/features.md`、`ARCHITECTURE.md`、`verify-mote` 的 `features/links.md`。
+- [x] 做的一件事：mote 能从笔记里提取链接，并按 Obsidian 的规则解析目标。
+- [x] 你会看到：对照工具在 5 个副本上的输出：总数、一致数、不一致 0 处。
 
 解析器用 `@lezer/markdown`，加上双链、嵌入和属性块三个扩展。代码块和行内代码里的链接不算。第 3 步的编辑器也用这份配置。
 
@@ -166,11 +158,27 @@ type ResolvedLinks = {
 
 验证：
 
-- [ ] 单元：Vitest 测 `extractLinks` 的位置、别名、子路径、代码块和属性块。`npm test` 跑 Vitest，再在 `links` 测试笔记库上跑对照工具。
-- [ ] 对照：`node tools/compare-links.mjs ~/mote-link-check/*-copy`，5 个副本都是 0 处不一致。完整输出贴在 PR 里。
-- [ ] 真实窗口：这个 PR 不改界面，所以窗口只做回归检查。在 5 个副本上分别 `launch --vault`，跑 `walk-notes`。在 `basic` 上重跑编辑保存的步骤，用 `xxd` 确认 CRLF、BOM、无结尾换行三篇笔记的字节不变，因为规范化函数换了位置。链接解析在真实窗口里的证明放在 PR C。
-- [ ] `vault-diff --expect-unchanged` 输出 `unchanged`。
-- [ ] 性能：用 node 计时读取并解析 `workspace-copy` 的全部笔记，取 5 次中位数。超过 500 毫秒算失败。这是我定的数，用来给打开笔记库的 2 秒目标留余量。
+- [x] 单元：Vitest 测 `extractLinks` 的位置、别名、子路径、代码块和属性块。`npm test` 跑 Vitest，再在 `links` 测试笔记库上跑对照工具。
+- [x] 对照：`node tools/compare-links.mjs ~/mote-link-check/*-copy`，5 个副本都是 0 处不一致。完整输出贴在 PR 里。
+- [x] 真实窗口：这个 PR 不改界面，所以窗口只做回归检查。在 5 个副本上分别 `launch --vault`，跑 `walk-notes`。在 `basic` 上重跑编辑保存的步骤，用 `xxd` 确认 CRLF、BOM、无结尾换行三篇笔记的字节不变，因为规范化函数换了位置。链接解析在真实窗口里的证明放在 PR C。
+- [x] `vault-diff --expect-unchanged` 输出 `unchanged`。
+- [x] 性能：用 node 计时读取并解析 `workspace-copy` 的全部笔记，取 5 次中位数。超过 500 毫秒算失败。这是我定的数，用来给打开笔记库的 2 秒目标留余量。
+  结果（实测）：逐篇顺序读取时中位数 608 毫秒，失败。改成 32 路并发读取后，9 次中位数 483 毫秒，通过，但余量只有 17 毫秒。其中 lezer 解析约 310 毫秒，是单一解析器的成本。
+
+### 结果
+
+规则从对照结果收敛，每一轮的完整输出在 `docs/plans/compare-log/`：
+
+| 轮次 | 改了什么 | 不一致 |
+| --- | --- | --- |
+| [01](compare-log/01-direct-rules.txt) | 最直接的规则：完整路径，再按文件名取第一个 | 428 |
+| [02](compare-log/02-obsidian-lookup.txt) | 照搬 Obsidian 的 `getLinkpathDest`：自链接、相对路径、后缀匹配、同文件夹优先、按路径长度排序；未解析的键去掉 `.md` | 18 |
+| [03](compare-log/03-frontmatter-yaml.txt) | 属性用 `yaml` 包解析，只认整串是链接的字符串值（ADR 0009） | 0 |
+
+查找顺序和计数规则读自 Obsidian 1.15.1 的 `app.js`：`getLinkpathDest`、`aJ`、`pi`、`wR`、`Ps`、`QK`。源码只用来解释对照里的不一致，每条规则都由对照结果确认。
+
+测试笔记库 `tests/fixtures/vaults/links/` 每条规则一个例子。它的导出文件是 `tests/fixtures/vaults/links.obsidian-links.json`，由 `obsidian-export.mjs` 生成。
+
 
 ## PR C：反向链接
 

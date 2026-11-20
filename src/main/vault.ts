@@ -1,7 +1,6 @@
-import { createHash } from 'node:crypto'
 import { constants, watch, type FSWatcher } from 'node:fs'
-import { lstat, open, readdir, readFile, realpath, stat } from 'node:fs/promises'
-import { dirname, extname, join, resolve } from 'node:path'
+import { lstat, open, readFile, realpath, stat } from 'node:fs/promises'
+import { dirname, join, resolve } from 'node:path'
 import {
   parseVaultPath,
   type ContentHash,
@@ -13,25 +12,7 @@ import {
   type VaultPath,
   type WriteResult
 } from '../core/ipc'
-
-function missing(error: unknown): boolean {
-  return ['ENOENT', 'ENOTDIR'].includes((error as NodeJS.ErrnoException).code ?? '')
-}
-
-function hash(bytes: Buffer): ContentHash {
-  return createHash('sha256').update(bytes).digest('hex') as ContentHash
-}
-
-function noteVersion(bytes: Buffer): NoteVersion {
-  return {
-    text: new TextDecoder('utf-8', { fatal: true, ignoreBOM: true }).decode(bytes),
-    hash: hash(bytes)
-  }
-}
-
-function kind(name: string): 'note' | 'file' {
-  return extname(name).toLowerCase() === '.md' ? 'note' : 'file'
-}
+import { hash, kind, missing, noteVersion, readNoteFile, scanVault } from './notes'
 
 async function readConfig(root: string): Promise<VaultConfig> {
   const obsidian = join(root, '.obsidian')
@@ -113,26 +94,8 @@ export class Vault {
     return result
   }
 
-  private async scan(): Promise<Map<VaultPath, VaultEntry>> {
-    const result = new Map<VaultPath, VaultEntry>()
-    async function visit(dir: string, prefix: string): Promise<void> {
-      const entries = await readdir(dir, { withFileTypes: true }).catch((error: unknown) => {
-        if (!prefix || !missing(error)) throw error
-        return []
-      })
-      for (const entry of entries) {
-        if (entry.name.startsWith('.')) continue
-        const path = parseVaultPath(prefix + entry.name)
-        if (entry.isDirectory()) {
-          result.set(path, { path, kind: 'folder' })
-          await visit(join(dir, entry.name), path + '/')
-        } else if (entry.isFile()) {
-          result.set(path, { path, kind: kind(path) })
-        }
-      }
-    }
-    await visit(this.dir, '')
-    return result
+  private scan(): Promise<Map<VaultPath, VaultEntry>> {
+    return scanVault(this.dir)
   }
 
   private schedule(name: string | null): void {
@@ -215,16 +178,7 @@ export class Vault {
   async readNote(path: VaultPath): Promise<NoteVersion | null> {
     if (kind(path) !== 'note') throw new Error('请选择 Markdown 笔记')
     try {
-      const file = await open(
-        await this.filePath(path),
-        constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK
-      )
-      try {
-        if (!(await file.stat()).isFile()) return null
-        return noteVersion(await file.readFile())
-      } finally {
-        await file.close()
-      }
+      return await readNoteFile(await this.filePath(path))
     } catch (error) {
       if (missing(error)) return null
       throw error

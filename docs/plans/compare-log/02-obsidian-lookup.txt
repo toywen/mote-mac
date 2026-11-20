@@ -1,0 +1,75 @@
+== Pesemic-copy
+files: same
+links: total 89, agree 89, mismatches 0, mote total 89
+== knowledge-base-copy
+files: same
+links: total 306, agree 306, mismatches 0, mote total 306
+== life-os-copy
+files: same
+links: total 125, agree 125, mismatches 7, mote total 132
+  [resolved] English/Vocabulary/at your own pace.md -> English/Transcripts/2026-W32-01 - You Are Not Running Out of Time.md: Obsidian 1, mote 2
+      L8: - [[2026-W32-01 - You Are Not Running Out of Time]]
+      L45: - Transcript: [[2026-W32-01 - You Are Not Running Out of Time]]
+  [resolved] English/Vocabulary/go through.md -> English/Transcripts/2026-W29-01 - New Year Resolutions.md: Obsidian 1, mote 2
+      L8: - [[2026-W29-01 - New Year Resolutions]]
+      L53: - Transcript: [[2026-W29-01 - New Year Resolutions]]
+  [resolved] English/Vocabulary/let go of.md -> English/Transcripts/2026-W29-02 - How Language Shapes Thinking.md: Obsidian 1, mote 2
+      L8: - [[2026-W29-02 - How Language Shapes Thinking]]
+      L44: - Transcript: [[2026-W29-02 - How Language Shapes Thinking]]
+  [resolved] English/Vocabulary/run out of time.md -> English/Transcripts/2026-W32-01 - You Are Not Running Out of Time.md: Obsidian 1, mote 2
+      L8: - [[2026-W32-01 - You Are Not Running Out of Time]]
+      L49: - Transcript: [[2026-W32-01 - You Are Not Running Out of Time]]
+  [resolved] English/Vocabulary/stick around.md -> English/Transcripts/2026-W31-01 - How to Become Fluent.md: Obsidian 1, mote 2
+      L8: - [[2026-W31-01 - How to Become Fluent]]
+      L52: - Transcript: [[2026-W31-01 - How to Become Fluent]]
+  [resolved] English/Vocabulary/stress yourself out.md -> English/Transcripts/2026-W29-02 - How Language Shapes Thinking.md: Obsidian 1, mote 2
+      L8: - [[2026-W29-02 - How Language Shapes Thinking]]
+      L44: - Transcript: [[2026-W29-02 - How Language Shapes Thinking]]
+  [resolved] English/Vocabulary/take it a step further.md -> English/Transcripts/2026-W29-01 - New Year Resolutions.md: Obsidian 1, mote 2
+      L8: - [[2026-W29-01 - New Year Resolutions]]
+      L49: - Transcript: [[2026-W29-01 - New Year Resolutions]]
+== wiki-copy
+files: same
+links: total 20, agree 20, mismatches 0, mote total 20
+== workspace-copy
+files: same
+links: total 1631, agree 1631, mismatches 11, mote total 1642
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/colloquial.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/Claude Prompting Best Practices.md: Obsidian 1, mote 2
+      L7: source: "[[Claude Prompting Best Practices]]"
+      L104: *📅 Added: 2026-03-13 · 🎬 Source: [[Claude Prompting Best Practices]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/happen to.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L144: *📅 Added: 2026-03-11 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/if anything.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L129: *📅 Added: 2026-03-11 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/in time.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L142: *📅 Added: 2026-03-11 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/on time.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L145: *📅 Added: 2026-03-11 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/pitchy.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/Improve Your English Listening & Comprehension English with Disney Movies.md: Obsidian 1, mote 2
+      L7: source: "[[Improve Your English Listening & Comprehension English with Disney Movies]]"
+      L90: *📅 Added: 2026-03-12 · 🎬 Source: [[Improve Your English Listening & Comprehension English with Disney Movies]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/punctually.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L119: *📅 Added: 2026-03-12 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/riding on.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/Improve Your English Listening & Comprehension English with Disney Movies.md: Obsidian 1, mote 2
+      L7: source: "[[Improve Your English Listening & Comprehension English with Disney Movies]]"
+      L90: *📅 Added: 2026-03-12 · 🎬 Source: [[Improve Your English Listening & Comprehension English with Disney Movies]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/rip.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L130: *📅 Added: 2026-03-11 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/steer clear of.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/Claude Prompting Best Practices.md: Obsidian 1, mote 2
+      L7: source: "[[Claude Prompting Best Practices]]"
+      L106: *📅 Added: 2026-03-13 · 🎬 Source: [[Claude Prompting Best Practices]]*
+  [resolved] 03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/what in the word.md -> 03_Areas/🎓 English Learning/📥 Input/🎬 Movies & Videos/LearnEnglish with Movie - zootopia2.md: Obsidian 1, mote 2
+      L7: source: "[[LearnEnglish with Movie - zootopia2]]"
+      L99: *📅 Added: 2026-03-12 · 🎬 Source: [[LearnEnglish with Movie - zootopia2]]*
+== summary
+Pesemic-copy: total 89, agree 89, mismatches 0
+knowledge-base-copy: total 306, agree 306, mismatches 0
+life-os-copy: total 125, agree 125, mismatches 7
+wiki-copy: total 20, agree 20, mismatches 0
+workspace-copy: total 1631, agree 1631, mismatches 11
