@@ -232,13 +232,32 @@ async function walkNotes(page, vault, exportFile) {
   page.on('pageerror', (error) => errors.push(error.message))
   for (const note of paths) {
     const row = rows.and(page.locator(`[data-path=${JSON.stringify(note)}]`))
-    const clickedAt = performance.now()
+    // Times the open inside the page: Playwright's click and waitFor add about 60 ms of their own.
+    await page.evaluate((note) => {
+      window.__moteOpenMs = new Promise((resolve) => {
+        let clickedAt = null
+        const editor = `.cm-content[data-note-path="${CSS.escape(note)}"]`
+        const observer = new MutationObserver(() => check())
+        const check = () => {
+          if (clickedAt === null || !document.querySelector(editor)) return
+          observer.disconnect()
+          resolve(performance.now() - clickedAt)
+        }
+        // check() also covers a note that is open already, which adds no mutation.
+        const onClick = (event) => {
+          clickedAt = event.timeStamp
+          check()
+        }
+        addEventListener('click', onClick, { capture: true, once: true })
+        observer.observe(document.body, { childList: true, subtree: true, attributes: true })
+      })
+    }, note)
     await row.click()
     await page
       .getByRole('textbox', { name: '编辑器' })
       .and(page.locator(`[data-note-path=${JSON.stringify(note)}]`))
       .waitFor({ timeout: 5000 })
-    noteMs.push(performance.now() - clickedAt)
+    noteMs.push(await page.evaluate(() => window.__moteOpenMs))
     const alerts = await page.getByRole('alert').allTextContents()
     if (errors.length || alerts.length)
       throw new Error(`${note}: ${[...errors, ...alerts].join('; ')}`)
