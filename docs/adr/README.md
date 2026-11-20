@@ -12,7 +12,7 @@ ADR（Architecture Decision Record）是架构决策记录。每个文件记一�
 | 编号 | 决策 | 状态 |
 | --- | --- | --- |
 | [0001](0001-tech-stack.md) | 技术选型 | 已实现 |
-| [0002](0002-one-parser.md) | 编辑器、索引和阅读模式只用一个解析器 | 已接受 |
+| [0002](0002-one-parser.md) | 编辑器、索引和阅读模式只用一个解析器 | 已实现 |
 | [0003](0003-link-resolution-matches-obsidian.md) | 链接解析以 Obsidian 的结果为准 | 已实现，导出方法被 0008 替代 |
 | [0004](0004-substring-search.md) | 全文搜索用内存子串匹配 | 已接受 |
 | [0005](0005-own-sync-service.md) | 同步用 mote 自己的服务，不用 git | 已接受 |

@@ -76,6 +76,18 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | 🟡 部分 | 链接-3 | 链接目标不是笔记时，用 macOS 的默认程序打开 | 测试：clicking a link opens its target and Cmd+Option+Left goes back；verify：follow-links | 2026-11-20 第 3 步 PR C。测试证明 mote 把笔记库内的正确路径交给了 macOS，没有真的打开程序。网址只放行 `http`、`https` 和 `mailto` |
 | ✅ 已实现 | 链接-4 | 输入 `[[` 后弹出笔记名补全。插入的链接格式按笔记库配置决定 | 测试：typing [[ completes note names in the vault's link format；verify：link-complete；`npm test` 对照 Obsidian 导出的 `links.obsidian-linktext.json` | 2026-11-20。链接文字照搬 Obsidian 1.15.1 的 `fileToLinktext` 和 `[[` 列表插入的文字（`PR`），`links` 测试笔记库 540 对、2700 次插入和 Obsidian 完全相同。5 个副本 2,924,850 个链接用 `check-linktext.mjs` 解析回目标，5427 个不回。不回的是 3 篇文件名特殊的笔记，Obsidian 插入同样的文字，自己也解析不回，见 PR G 的结果。不补全标题、别名和附件 |
 | ✅ 已实现 | 链接-8 | `Cmd+Option+←` 后退，`Cmd+Option+→` 前进 | 测试：clicking a link opens its target and Cmd+Option+Left goes back；verify：follow-links | 2026-11-20 第 3 步 PR C。回到一篇笔记时，光标在离开时的位置。已删除的笔记会跳过 |
+| 🟡 部分 | 编辑器-1 | 实时预览渲染标题、粗体、斜体、`==高亮==`、行内代码、标签、双链、Markdown 链接、任务和图片 | 测试：live preview hides syntax away from the selection and shows it at the selection；callouts, tables and task checkboxes render, and a checkbox click changes one byte；verify：live-preview、blocks | 2026-11-20 第 3 步 PR B 做了标题、粗体、斜体、删除线、高亮、行内代码、标签、双链、Markdown 链接、网址、列表、引用、分隔线和代码块。PR E 做了任务复选框，见编辑器-5。图片在 PR D，现在显示源码 |
+| ⬜ 未实现 | 编辑器-2 | 图片支持 `![](路径)` 和 `![[图片名]]` | | 设计见 ADR 0007 |
+| ✅ 已实现 | 编辑器-3 | 实时预览里的 callout 显示为带颜色和标题的块 | Vitest：calloutHeader；测试：callouts, tables and task checkboxes render, and a checkbox click changes one byte；verify：blocks | 2026-11-20 第 3 步 PR E。识别规则、种类、别名、颜色和图标照搬 Obsidian 1.15.1。光标在第一行时显示 `[!类型]`。正文是普通文字，可以直接编辑。Obsidian 里 `note` 和 `info` 同是蓝色，`tip` 和 `important` 同是青色。不做折叠，嵌套的 callout 没有专门的样式 |
+| ✅ 已实现 | 编辑器-4 | 实时预览把表格渲染成表格。光标移进表格时显示 Markdown 源码 | 测试：callouts, tables and task checkboxes render, and a checkbox click changes one byte；verify：blocks | 2026-11-20 第 3 步 PR E。按分隔行对齐。单元格里渲染粗体、斜体、删除线、高亮、行内代码、标签和链接。点单元格，光标进到这一格的源码。表格里的链接点了跳转在 PR C |
+| ✅ 已实现 | 编辑器-5 | 点击任务复选框，切换完成状态 | 测试：callouts, tables and task checkboxes render, and a checkbox click changes one byte；verify：blocks | 2026-11-20 第 3 步 PR E。只改方括号里的 1 个字符，可以撤销。阅读模式下也能点。mote 忙时点了不改。复选框代替列表的圆点。完成的任务划线变灰 |
+| ✅ 已实现 | 编辑器-6 | 属性显示为 YAML 代码块，可以直接编辑 | 测试：live preview hides syntax away from the selection and shows it at the selection；verify：live-preview | 2026-11-20 第 3 步 PR B。等宽字体加底色。选区碰到属性块时显示 `---` |
+| 🟡 部分 | 编辑器-9 | `Cmd+E` 切到阅读模式。完整渲染表格、callout、Mermaid 图和 `![[笔记名]]` 嵌入 | 测试：Cmd+E switches to reading mode and back；verify：live-preview | 2026-11-20 第 3 步 PR B 做了 `Cmd+E` 和标题栏按钮。整个窗口一个编辑器模式，切换笔记时不变。表格和 callout 在 PR E 做了，阅读模式下也渲染。Mermaid 和嵌入在 PR F，现在显示源码 |
+| ⬜ 未实现 | 链接-1 | 点击双链或 Markdown 链接，跳到目标。带 `#标题` 时跳到这个标题 | | |
+| 🟡 部分 | 链接-2 | 目标不存在的双链用不同颜色显示。点击它，新建这篇笔记 | 测试：live preview hides syntax away from the selection and shows it at the selection | 2026-11-20 第 3 步 PR B 做了颜色，Markdown 链接也算。点击新建在 PR C |
+| ⬜ 未实现 | 链接-3 | 链接目标不是笔记时，用 macOS 的默认程序打开 | | |
+| ⬜ 未实现 | 链接-4 | 输入 `[[` 后弹出笔记名补全。插入的链接格式按笔记库配置决定 | | |
+| ⬜ 未实现 | 链接-8 | `Cmd+Option+←` 后退，`Cmd+Option+→` 前进 | | |
 
 ## 第 4 步：新建、改名、移动和删除
 
