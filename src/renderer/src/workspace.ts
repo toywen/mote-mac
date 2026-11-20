@@ -7,6 +7,9 @@ import type {
   VaultInfo,
   VaultPath
 } from '../../core/ipc'
+import type { LinkDest } from '../../core/linkDest'
+import { resolveSubpath } from '../../core/subpath'
+import { sourceText } from '../../core/text'
 import type { EditorMode } from './editor/preview'
 
 type Draft = { path: VaultPath; text: string; source: { text: string } }
@@ -18,7 +21,16 @@ type Doc =
   | DirtyDoc
   | ConflictDoc
 
-export type Selection = { path: VaultPath; from: number; to: number; id: number }
+type Range = { from: number; to: number }
+
+// Where the cursor goes in a note: a range of its normalized text, or a heading or block id.
+export type Place = Range | { subpath: string }
+
+// A range the editor selects. top puts its line at the top of the editor instead of just in view.
+export type Selection = Range & { path: VaultPath; top: boolean; id: number }
+
+// One note in the navigation history, with the cursor as it was when you left it.
+type Visit = { path: VaultPath; cursor: Range | null }
 
 type WorkspaceState = {
   vault: VaultInfo | null
@@ -56,6 +68,9 @@ class Workspace {
   private refreshId = 0
   private backlinksId = 0
   private selectionId = 0
+  // The window's navigation history and the visit the open note belongs to.
+  private visits: Visit[] = []
+  private visit = -1
 
   snapshot = (): WorkspaceState => this.state
 
@@ -121,7 +136,11 @@ class Workspace {
     try {
       if (!(await this.flush())) return
       const vault = await window.mote.chooseVault()
-      if (vault) this.set({ vault, doc: null, backlinks: null, selection: null })
+      if (vault) {
+        this.set({ vault, doc: null, backlinks: null, selection: null })
+        this.visits = []
+        this.visit = -1
+      }
     } catch (error) {
       this.fail(error)
     } finally {
@@ -129,12 +148,64 @@ class Workspace {
     }
   }
 
-  // Opens a note. With at, also selects that range of the note's normalized text.
-  async open(path: VaultPath, at?: { from: number; to: number }): Promise<void> {
+  // Opens a note. With at, also puts the cursor there. Opening another note adds a visit to the
+  // history.
+  open(path: VaultPath, at?: Place): Promise<void> {
+    return this.show(path, at, null)
+  }
+
+  // Goes where a link points: opens a note at its heading or block, hands a file or an address
+  // to the system, or creates a missing note and opens it.
+  async follow(dest: LinkDest): Promise<void> {
+    const { vault } = this.state
+    if (!vault) return
+    try {
+      switch (dest.kind) {
+        case 'note':
+          return await this.open(dest.path, dest.subpath ? { subpath: dest.subpath } : undefined)
+        case 'file':
+          return await this.openFile(dest.path)
+        case 'missing':
+          await window.mote.createNote(vault.dir, dest.path)
+          return await this.open(dest.path)
+        case 'external':
+          return await window.mote.openExternal(dest.url)
+      }
+    } catch (error) {
+      this.fail(error)
+    }
+  }
+
+  back(): Promise<void> {
+    return this.travel(-1)
+  }
+
+  forward(): Promise<void> {
+    return this.travel(1)
+  }
+
+  // The editor reports the cursor, so going back to this note puts it there again.
+  cursor(path: VaultPath, at: Range): void {
+    const visit = this.visits[this.visit]
+    if (visit?.path === path) visit.cursor = at
+  }
+
+  // Moves through the history by step, skipping notes that no longer exist.
+  private async travel(step: -1 | 1): Promise<void> {
+    const notes = new Set(this.state.vault?.entries.map((entry) => entry.path))
+    let index = this.visit + step
+    while (this.visits[index] && !notes.has(this.visits[index].path)) index += step
+    const visit = this.visits[index]
+    if (visit) await this.show(visit.path, visit.cursor ?? undefined, index)
+  }
+
+  // visit is the history index being returned to, or null to add a visit.
+  private async show(path: VaultPath, at: Place | undefined, visit: number | null): Promise<void> {
     const { vault, busy, doc } = this.state
     if (!vault || busy) return
     if (path === doc?.path) {
-      if (at) this.select(path, at)
+      if (visit !== null) this.visit = visit
+      if (at) this.place(path, at)
       return
     }
     this.set({ busy: true, error: '' })
@@ -142,8 +213,14 @@ class Workspace {
       if (!(await this.flush())) return
       const version = await window.mote.readNote(vault.dir, path)
       this.load(path, version)
-      if (version) this.remember(vault.dir, path)
-      if (version && at) this.select(path, at)
+      if (version) {
+        this.remember(vault.dir, path)
+        if (visit === null) {
+          this.visits = [...this.visits.slice(0, this.visit + 1), { path, cursor: null }]
+          this.visit = this.visits.length - 1
+        } else this.visit = visit
+        if (at) this.place(path, at)
+      }
       void this.loadBacklinks()
       void this.refresh()
     } catch (error) {
@@ -153,8 +230,19 @@ class Workspace {
     }
   }
 
-  private select(path: VaultPath, at: { from: number; to: number }): void {
-    this.set({ selection: { path, from: at.from, to: at.to, id: ++this.selectionId } })
+  // A subpath that names no heading or block leaves the cursor where it is.
+  private place(path: VaultPath, at: Place): void {
+    const { doc } = this.state
+    if (!('subpath' in at)) {
+      this.select(path, at, false)
+      return
+    }
+    const from = doc?.path === path ? resolveSubpath(sourceText(doc.text).text, at.subpath) : null
+    if (from !== null) this.select(path, { from, to: from }, true)
+  }
+
+  private select(path: VaultPath, at: Range, top: boolean): void {
+    this.set({ selection: { path, from: at.from, to: at.to, top, id: ++this.selectionId } })
   }
 
   private async loadBacklinks(): Promise<void> {

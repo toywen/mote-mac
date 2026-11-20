@@ -1,0 +1,4 @@
+/* A rendered link that a click follows. */
+.cm-content .mote-link {
+  cursor: pointer;
+}

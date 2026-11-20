@@ -3,7 +3,7 @@ import type { SyntaxNodeRef } from '@lezer/common'
 import { fileUrl, imageType } from '../../../core/fileUrl'
 import { linkTarget, type ReadText } from '../../../core/markdown'
 import { resolveLink } from '../../../core/resolve'
-import { linkText } from './links'
+import { linkClass, linkMark } from './links'
 import { hidden, marks, type PreviewContext, type PreviewItem, type Renderer } from './preview'
 import './images.css'
 
@@ -118,16 +118,16 @@ const wikiEmbed: Renderer = (node, cx) => {
   if (link?.kind !== 'vault') return []
   const { target, subpath, alias } = link.ref
   if (imageType(target)) return [image(node, vaultImage(cx, target), target, alias ?? '')]
-  const resolved = cx.links && resolveLink(cx.links.index, target, cx.links.path)
+  const className = linkClass(node.node, cx)
+  if (!className) return []
   const item: PreviewItem = { reveal: { from: node.from, to: node.to }, always: [], concealed: [] }
   const textFrom = node.from + 3
   const textTo = textFrom + target.length + (subpath?.length ?? 0)
-  const kind = resolved || !cx.links ? 'note' : 'missing'
   if (textFrom >= textTo) {
-    linkText(item, kind, node.from, node.from, node.to)
+    linkMark(item, className, node.from, node.from, node.to)
     return [item]
   }
-  linkText(item, kind, node.from, textFrom, textTo)
+  linkMark(item, className, node.from, textFrom, textTo)
   return [
     marks(item, [
       { from: node.from, to: textFrom },

@@ -70,6 +70,11 @@ export interface MoteApi {
     baseHash: ContentHash | null
   ): Promise<WriteResult>
   openWithDefaultApp(dir: string, path: VaultPath): Promise<void>
+  // Creates an empty note, and any folders it needs, for a link to a missing note. A note that
+  // exists by then is left as it is. Resolves after the vault change is sent.
+  createNote(dir: string, path: VaultPath): Promise<void>
+  // Hands an http, https or mailto address to the system.
+  openExternal(url: string): Promise<void>
   backlinks(dir: string, path: VaultPath): Promise<Hit[]>
   search(dir: string, query: string, limit: number): Promise<SearchResult>
   onVaultChanged(callback: (change: VaultChange) => void): () => void
@@ -83,6 +88,8 @@ export const channels = {
   readNote: 'mote:read-note',
   writeNote: 'mote:write-note',
   openWithDefaultApp: 'mote:open-with-default-app',
+  createNote: 'mote:create-note',
+  openExternal: 'mote:open-external',
   backlinks: 'mote:backlinks',
   search: 'mote:search',
   vaultChanged: 'mote:vault-changed',

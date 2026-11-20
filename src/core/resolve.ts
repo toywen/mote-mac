@@ -6,23 +6,34 @@ import type { LinkRef, ResolvedLinks } from './model.ts'
 export type LinkIndex = {
   paths: Set<VaultPath>
   byName: Map<string, VaultPath[]>
+  // Where a new note can go: the folders, and every file and folder by its lower-case path.
+  folders: Set<VaultPath>
+  byLowerPath: Map<string, VaultPath>
 }
 
 const baseName = (path: string): string => path.slice(path.lastIndexOf('/') + 1)
 const parent = (path: string): string => path.slice(0, Math.max(0, path.lastIndexOf('/')))
 const byLength = (a: VaultPath, b: VaultPath): number => a.length - b.length
 
-export function buildLinkIndex(files: Iterable<VaultPath>): LinkIndex {
+export function buildLinkIndex(
+  files: Iterable<VaultPath>,
+  folderPaths: Iterable<VaultPath> = []
+): LinkIndex {
   const paths = new Set<VaultPath>()
   const byName = new Map<string, VaultPath[]>()
+  const folders = new Set(folderPaths)
+  const byLowerPath = new Map<string, VaultPath>()
+  for (const path of folders)
+    if (!byLowerPath.has(path.toLowerCase())) byLowerPath.set(path.toLowerCase(), path)
   for (const path of files) {
     paths.add(path)
     const name = baseName(path).toLowerCase()
     const list = byName.get(name)
     if (list) list.push(path)
     else byName.set(name, [path])
+    if (!byLowerPath.has(path.toLowerCase())) byLowerPath.set(path.toLowerCase(), path)
   }
-  return { paths, byName }
+  return { paths, byName, folders, byLowerPath }
 }
 
 // Every file linkpath can mean from source, best first.

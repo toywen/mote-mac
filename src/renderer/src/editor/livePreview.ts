@@ -117,6 +117,12 @@ const preview = StateField.define<Preview>({
   provide: (field) => EditorView.decorations.from(field, (value) => value.decorations)
 })
 
+// Whether the element whose reveal range is exactly [from, to) shows its source now.
+export function showsSource(state: EditorState, from: number, to: number): boolean {
+  const { items, shown } = state.field(preview)
+  return shown.some((i) => items[i].reveal.from === from && items[i].reveal.to === to)
+}
+
 export const livePreview: Extension = [
   focused,
   EditorView.focusChangeEffect.of((_state, focusing) => setFocused.of(focusing)),
