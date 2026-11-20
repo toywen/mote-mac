@@ -8,7 +8,11 @@ export function launch(settings: string): Promise<ElectronApplication> {
 }
 
 // Answers the native folder dialog with dir, then opens the vault from the window.
-export async function openVault(app: ElectronApplication, window: Page, dir: string): Promise<void> {
+export async function openVault(
+  app: ElectronApplication,
+  window: Page,
+  dir: string
+): Promise<void> {
   await app.evaluate(({ dialog }, path) => {
     dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
   }, dir)

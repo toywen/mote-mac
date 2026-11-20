@@ -35,3 +35,91 @@
   border-radius: 1em;
   padding: 0 0.45em;
 }
+
+.mote-link {
+  color: var(--link);
+  text-decoration: underline;
+  text-decoration-color: color-mix(in srgb, currentColor 40%, transparent);
+  text-underline-offset: 2px;
+}
+
+.mote-link-missing {
+  color: var(--link-missing);
+  text-decoration-style: dashed;
+}
+
+/* Headings. The editor's own rules use two classes, so these use three. */
+.cm-content .cm-line.mote-h {
+  font-weight: 700;
+  line-height: 1.35;
+  padding-top: 0.35em;
+  padding-bottom: 0.15em;
+}
+.cm-content .cm-line.mote-h1 {
+  font-size: 1.75em;
+}
+.cm-content .cm-line.mote-h2 {
+  font-size: 1.5em;
+}
+.cm-content .cm-line.mote-h3 {
+  font-size: 1.3em;
+}
+.cm-content .cm-line.mote-h4 {
+  font-size: 1.15em;
+}
+.cm-content .cm-line.mote-h5 {
+  font-size: 1.05em;
+}
+.cm-content .cm-line.mote-h6 {
+  font-size: 1em;
+  color: var(--muted);
+}
+
+/* A list line hangs: the marker fills the indent, and wrapped lines start under the text.
+   The prefix holds the raw marker while it shows source; the marker widget replaces it. */
+.cm-content .cm-line.mote-list {
+  --mote-list-indent: calc(var(--mote-list-depth) * 1.6em);
+  padding-left: calc(6px + var(--mote-list-indent));
+  text-indent: calc(-1 * var(--mote-list-indent));
+}
+.mote-list-prefix,
+.mote-list-marker {
+  display: inline-block;
+  box-sizing: border-box;
+  min-width: var(--mote-list-indent);
+  text-indent: 0;
+  white-space: pre;
+}
+.mote-list-marker {
+  padding-left: calc(var(--mote-list-indent) - 1.6em);
+  color: var(--muted);
+}
+
+.cm-content .cm-line.mote-quote {
+  border-left: 3px solid var(--quote);
+  padding-left: 14px;
+  color: var(--muted);
+}
+
+.mote-hr {
+  display: inline-block;
+  width: 100%;
+  vertical-align: middle;
+  border-top: 1px solid var(--border);
+}
+
+.cm-content .cm-line.mote-codeblock {
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  background: var(--code-background);
+  padding-left: 14px;
+  padding-right: 14px;
+}
+.cm-content .cm-line.mote-codeblock-first {
+  border-top-left-radius: 5px;
+  border-top-right-radius: 5px;
+}
+.cm-content .cm-line.mote-codeblock-last {
+  border-bottom-left-radius: 5px;
+  border-bottom-right-radius: 5px;
+}
