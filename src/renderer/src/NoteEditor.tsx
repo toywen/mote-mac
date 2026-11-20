@@ -8,10 +8,11 @@ import {
   type Text
 } from '@codemirror/state'
 import { EditorView, keymap } from '@codemirror/view'
-import { useLayoutEffect, useRef } from 'react'
-import type { VaultPath } from '../../core/ipc'
+import { useLayoutEffect, useMemo, useRef } from 'react'
+import type { VaultInfo, VaultPath } from '../../core/ipc'
 import type { LinkIndex } from '../../core/resolve'
 import { sourceText, type LineFormat } from '../../core/text'
+import { completeContext, linkCompletion } from './editor/complete'
 import { editorMode, linkContext, livePreview } from './editor/livePreview'
 import { markdown } from './editor/markdown'
 import type { EditorMode } from './editor/preview'
@@ -52,7 +53,8 @@ export function NoteEditor({
   locked,
   selection,
   mode,
-  links
+  links,
+  vault
 }: {
   path: VaultPath
   source: { text: string }
@@ -60,12 +62,20 @@ export function NoteEditor({
   selection: Selection | null
   mode: EditorMode
   links: LinkIndex | null
+  vault: VaultInfo | null
 }): React.JSX.Element {
   const host = useRef<HTMLDivElement>(null)
   const editor = useRef<EditorView>(null)
   const access = useRef(new Compartment())
   const resolve = useRef(new Compartment())
+  const complete = useRef(new Compartment())
   const shownMode = useRef(mode)
+  const entries = vault?.entries
+  const notes = useMemo(
+    () => (entries ?? []).filter((entry) => entry.kind === 'note').map((entry) => entry.path),
+    [entries]
+  )
+  const format = vault?.config
 
   useLayoutEffect(() => {
     if (!host.current) return
@@ -77,6 +87,8 @@ export function NoteEditor({
         resolve.current.of([]),
         markdown,
         livePreview,
+        linkCompletion,
+        complete.current.of([]),
         history(),
         keymap.of([
           {
@@ -137,6 +149,14 @@ export function NoteEditor({
       effects: resolve.current.reconfigure(links ? linkContext.of({ index: links, path }) : [])
     })
   }, [path, links])
+
+  useLayoutEffect(() => {
+    editor.current?.dispatch({
+      effects: complete.current.reconfigure(
+        format ? completeContext.of({ notes, recent: workspace.recent(), format }) : []
+      )
+    })
+  }, [notes, format])
 
   useLayoutEffect(() => {
     const view = editor.current

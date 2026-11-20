@@ -184,6 +184,7 @@ function App(): React.JSX.Element {
             selection={selection}
             mode={mode}
             links={links}
+            vault={vault}
           />
         ) : (
           <div className="empty">
