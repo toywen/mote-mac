@@ -135,6 +135,27 @@ export const markdownParser = commonmark.configure([
   }
 ])
 
+// A callout's first line. type is lowercased with runs of whitespace as `-`. title is the title
+// Obsidian shows. The `>` and `[!type]` marks with the spaces after them end at end, which is
+// the line's length when the line has no title of its own.
+export type CalloutHeader = { type: string; title: string; end: number }
+
+// Ported from Obsidian 1.15.1 app.js: the blockquote tokenizer $ue reads the first line after
+// `>` and one space with the pattern Kue, and rfe makes the title from the type when the line
+// has none. line is a blockquote's first line from its `>`. Returns null for a plain quote.
+export function calloutHeader(line: string): CalloutHeader | null {
+  const quote = /^[ \t]*> ?/.exec(line)
+  if (!quote) return null
+  const marks = /^\[!([^\]]+)\]([+-]?)(?:\s|$)/.exec(line.slice(quote[0].length))
+  if (!marks) return null
+  const type = marks[1].split('|')[0].trim().toLowerCase().replace(/\s+/g, '-')
+  const rest = line.slice(quote[0].length + marks[0].length)
+  const title = rest.trim()
+  if (title) return { type, title, end: line.length - rest.trimStart().length }
+  const name = type.replace(/-/g, ' ')
+  return { type, title: name.charAt(0).toUpperCase() + name.slice(1), end: line.length }
+}
+
 // Obsidian 1.15.1 worker.js It drops one `\` at the end of the link path, so the
 // `[[note\|alias]]` that Obsidian writes inside a table links to `note`.
 function wikiRef(inner: string, embed: boolean, from: number, to: number): LinkRef {
