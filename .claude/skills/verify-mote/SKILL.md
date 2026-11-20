@@ -59,7 +59,7 @@ With one live run, commands pick it. With several, pass `--run <id>` or set `MOT
 | Command                                          | Does                                                                    |
 | ------------------------------------------------ | ----------------------------------------------------------------------- |
 | `snapshot [--out name]`                          | Prints the window's ARIA tree. Read it to find handles.                 |
-| `walk-notes [--out name]`                        | Clicks every visible note and checks the full path and editor state.   |
+| `walk-notes [--out name] [--obsidian export]`    | Clicks every visible note and checks the full path and editor state. With `--obsidian`, also checks each note's backlinks pane against the export. |
 | `click <locator>`                                | Clicks.                                                                 |
 | `fill <locator> --value V`                       | Replaces an input's text.                                               |
 | `press --key Meta+O`                             | Presses a key or chord in the window.                                   |

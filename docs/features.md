@@ -23,7 +23,7 @@
 
 | 编号 | 功能 | 步骤 | 状态 | 证据 | 备注 |
 | --- | --- | --- | --- | --- | --- |
-| 界面-1 | 三栏布局：左边文件树，中间编辑器，右边反向链接 | 1 | 已实现 | 测试：the main window shows the three panes；verify：app-shell | 反向链接栏是空壳，内容见链接-7 |
+| 界面-1 | 三栏布局：左边文件树，中间编辑器，右边反向链接 | 1 | 已实现 | 测试：the main window shows the three panes；verify：app-shell | 反向链接栏内容见链接-7 |
 | 界面-2 | 跟随 macOS 的浅色和深色模式 | 3 | 部分 | 无 | `main.css` 有深色样式，没在真实窗口验证 |
 | 界面-3 | 收起和展开文件树 | 1 | 已实现 | 测试：long file trees preserve the vault name and can be collapsed | |
 
@@ -72,8 +72,8 @@
 | 链接-3 | 链接目标不是笔记时，用 macOS 的默认程序打开 | 3 | 未实现 | | |
 | 链接-4 | 输入 `[[` 后弹出笔记名补全。插入的链接格式按笔记库配置决定 | 3 | 未实现 | | |
 | 链接-5 | 支持 `[[笔记\|别名]]` | 2 | 部分 | Vitest：splits wikilinks into target, subpath and alias | 解析器已拆出别名，显示别名属于第 3 步 |
-| 链接-6 | 链接解析和 Obsidian 一致 | 2 | 已实现 | `npm test`（links 测试笔记库对照）；`node tools/compare-links.mjs ~/mote-link-check/*-copy`，5 个副本 2171 处 0 不一致，输出在 `docs/plans/compare-log/` | 2026-11-20。规则照搬 Obsidian 1.15.1，见 ADR 0003、0008、0009。还没有界面用到解析结果 |
-| 链接-7 | 右侧面板列出当前笔记的反向链接，两种链接都算 | 2 | 未实现 | | 计划见 step-2.md PR C |
+| 链接-6 | 链接解析和 Obsidian 一致 | 2 | 已实现 | `npm test`（links 测试笔记库对照）；`node tools/compare-links.mjs ~/mote-link-check/*-copy`，5 个副本 2171 处 0 不一致，输出在 `docs/plans/compare-log/` | 2026-11-20。规则照搬 Obsidian 1.15.1，见 ADR 0003、0008、0009。反向链接面板用到解析结果 |
+| 链接-7 | 右侧面板列出当前笔记的反向链接，两种链接都算 | 2 | 已实现 | 测试：the backlinks pane lists links to the open note and jumps to them；verify：backlinks（5 个副本 810 篇笔记逐篇对照 Obsidian，1923 处 0 不一致） | 2026-11-20。嵌入和属性里的链接也算，和 Obsidian 的 resolvedLinks 一致。来源按路径排序，Obsidian 按文件名 |
 | 链接-8 | `Cmd+Option+←` 后退，`Cmd+Option+→` 前进 | 3 | 未实现 | | |
 
 ### 查找
@@ -104,7 +104,7 @@
 
 | 操作 | 目标 | 状态 |
 | --- | --- | --- |
-| 打开笔记库到可以编辑 | 2 秒以内 | 未测。读取并解析 `workspace-copy` 的 603 篇笔记：中位数 483 毫秒（`compare-links.mjs --bench 9`，2026-11-20 实测），其中 lezer 解析约 310 毫秒。按字符数线性外推，1 万篇约 8 秒（推断），第 5 步要处理 |
+| 打开笔记库到可以编辑 | 2 秒以内 | 未测 1 万篇。真实窗口打开 `workspace-copy`（603 篇，含读入笔记索引）：`chooseVault` 中位数 402 毫秒（5 次，2026-11-20 实测）。读取并解析 `workspace-copy` 的 603 篇笔记：中位数 483 毫秒（`compare-links.mjs --bench 9`，2026-11-20 实测），其中 lezer 解析约 310 毫秒。按字符数线性外推，1 万篇约 8 秒（推断），第 5 步要处理 |
 | 全文搜索 | 200 毫秒以内 | 未测 |
 | 快速打开，每次按键 | 16 毫秒以内 | 用 `tools/bench-quick-open.mjs` 测，结果记在 quick-open 的 PR 里 |
 | 改名一篇有 100 个反向链接的笔记 | 1 秒以内 | 未测 |

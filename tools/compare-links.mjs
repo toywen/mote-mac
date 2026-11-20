@@ -3,15 +3,16 @@
 //   node tools/compare-links.mjs ~/mote-link-check/*-copy
 //   node tools/compare-links.mjs --bench 5 <dir>...   time scan + read + parse + resolve, no export needed
 // Each <dir> needs <dir>.obsidian-links.json from tools/obsidian-export.mjs.
-// Exit code 1 when any file set or link count differs.
+// Also checks that NoteIndex.backlinks (the main process's backlinks query) gives, for every
+// note, the same sources and counts as Obsidian's resolvedLinks read backwards.
+// Exit code 1 when any file set, link count or backlink count differs.
 import { readFileSync, realpathSync } from 'node:fs'
 import { basename, dirname, join } from 'node:path'
 import { performance } from 'node:perf_hooks'
 
 process.removeAllListeners('warning')
 const { scanVault, readNoteFiles } = await import('../src/main/notes.ts')
-const { sourceText } = await import('../src/core/text.ts')
-const { extractLinks } = await import('../src/core/markdown.ts')
+const { NoteIndex } = await import('../src/core/noteIndex.ts')
 const { buildLinkIndex, resolveLink, resolveNotes } = await import('../src/core/resolve.ts')
 
 const dirs = process.argv.slice(2)
@@ -42,18 +43,18 @@ async function readVault(dir) {
   const index = buildLinkIndex(files)
   const paths = entries.filter((e) => e.kind === 'note').map((e) => e.path)
   const versions = await readNoteFiles(dir, paths)
-  const notes = paths.map((path, i) => {
-    const text = sourceText(versions[i]?.text ?? '').text
-    return { path, text, links: extractLinks(text) }
-  })
-  return { files, index, notes, mote: resolveNotes(notes, index) }
+  const noteIndex = new NoteIndex()
+  noteIndex.setFiles(files)
+  paths.forEach((path, i) => noteIndex.set(path, versions[i]?.text ?? ''))
+  const notes = paths.map((path) => ({ path, ...noteIndex.get(path) }))
+  return { files, index, noteIndex, notes, mote: resolveNotes(notes, index) }
 }
 
 async function compare(input) {
   const dir = realpathSync(input)
   const exportFile = join(dirname(dir), basename(dir) + '.obsidian-links.json')
   const obsidian = JSON.parse(readFileSync(exportFile, 'utf8'))
-  const { files, index, notes, mote } = await readVault(dir)
+  const { files, index, noteIndex, notes, mote } = await readVault(dir)
 
   const ours = new Set(files)
   const theirs = new Set(obsidian.files)
@@ -103,7 +104,37 @@ async function compare(input) {
       }
     }
   }
-  return { dir, onlyMote, onlyObsidian, total, agree, moteTotal, mismatches }
+
+  // Backlinks: Obsidian's resolved map inverted, against NoteIndex.backlinks for every note.
+  const backlinkMismatches = []
+  let backlinkTotal = 0
+  for (const target of notes.map((n) => n.path)) {
+    const expected = {}
+    for (const [source, targets] of Object.entries(obsidian.resolved))
+      if (targets[target]) expected[source] = targets[target]
+    const actual = {}
+    for (const hit of noteIndex.backlinks(target)) actual[hit.path] = (actual[hit.path] ?? 0) + 1
+    backlinkTotal += sum(expected)
+    for (const source of keys(expected, actual))
+      if ((expected[source] ?? 0) !== (actual[source] ?? 0))
+        backlinkMismatches.push({
+          target,
+          source,
+          obsidian: expected[source] ?? 0,
+          mote: actual[source] ?? 0
+        })
+  }
+  return {
+    dir,
+    onlyMote,
+    onlyObsidian,
+    total,
+    agree,
+    moteTotal,
+    mismatches,
+    backlinkTotal,
+    backlinkMismatches
+  }
 }
 
 if (bench) {
@@ -154,10 +185,23 @@ for (const input of dirs) {
     for (const l of m.lines)
       console.log(`      ${l.guess ? '~' : ''}L${l.line}: ${l.text.slice(0, 160)}`)
   }
-  if (!sameFiles || r.mismatches.length) failed = true
-  summary.push({ name, total: r.total, agree: r.agree, mismatches: r.mismatches.length })
+  console.log(`backlinks: total ${r.backlinkTotal}, mismatches ${r.backlinkMismatches.length}`)
+  for (const m of r.backlinkMismatches)
+    console.log(`  [backlink] ${m.target} <- ${m.source}: Obsidian ${m.obsidian}, mote ${m.mote}`)
+  if (!sameFiles || r.mismatches.length || r.backlinkMismatches.length) failed = true
+  summary.push({
+    name,
+    total: r.total,
+    agree: r.agree,
+    mismatches: r.mismatches.length,
+    backlinks: r.backlinkTotal,
+    backlinkMismatches: r.backlinkMismatches.length
+  })
 }
 console.log('== summary')
 for (const s of summary)
-  console.log(`${s.name}: total ${s.total}, agree ${s.agree}, mismatches ${s.mismatches}`)
+  console.log(
+    `${s.name}: total ${s.total}, agree ${s.agree}, mismatches ${s.mismatches}, ` +
+      `backlinks ${s.backlinks}, backlink mismatches ${s.backlinkMismatches}`
+  )
 process.exit(failed ? 1 : 0)

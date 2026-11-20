@@ -1,6 +1,6 @@
 # Link resolution
 
-mote extracts every wikilink, embed, Markdown link and property link from a note, and resolves each one the way Obsidian 1.15.1 does. Nothing in the window shows the result yet. Backlinks (step 2, PR C) and clicking links (step 3) will. Rules and sources: `docs/plans/step-2.md` PR B, ADR 0003, 0008, 0009.
+mote extracts every wikilink, embed, Markdown link and property link from a note, and resolves each one the way Obsidian 1.15.1 does. The backlinks pane ([backlinks.md](./backlinks.md)) shows the result. Clicking links in the editor comes in step 3. Rules and sources: `docs/plans/step-2.md` PR B, ADR 0003, 0008, 0009.
 
 ## Sub-features
 

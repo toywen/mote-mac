@@ -1,12 +1,16 @@
 import { FolderOpen, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { FileTree } from './FileTree'
+import { HitList } from './HitList'
 import { NoteEditor } from './NoteEditor'
 import { QuickOpen } from './QuickOpen'
 import { workspace } from './workspace'
 
 function App(): React.JSX.Element {
-  const { vault, doc, busy, error } = useSyncExternalStore(workspace.subscribe, workspace.snapshot)
+  const { vault, doc, busy, error, backlinks, selection } = useSyncExternalStore(
+    workspace.subscribe,
+    workspace.snapshot
+  )
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const sidebarAction = sidebarOpen ? '收起文件树' : '展开文件树'
   const [quickOpen, setQuickOpen] = useState(false)
@@ -107,7 +111,13 @@ function App(): React.JSX.Element {
           </section>
         )}
         {doc && doc.kind !== 'missing' ? (
-          <NoteEditor key={doc.path} path={doc.path} source={doc.source} locked={busy} />
+          <NoteEditor
+            key={doc.path}
+            path={doc.path}
+            source={doc.source}
+            locked={busy}
+            selection={selection}
+          />
         ) : (
           <div className="empty">
             {!vault && !busy && (
@@ -127,7 +137,21 @@ function App(): React.JSX.Element {
       <aside className="pane backlinks" aria-label="反向链接">
         <header className="pane-header">
           <h2>反向链接</h2>
+          {doc && backlinks?.path === doc.path && (
+            <span className="hit-count" role="status" aria-label="反向链接数">
+              {backlinks.hits.length}
+            </span>
+          )}
         </header>
+        {doc && backlinks?.path === doc.path && (
+          <div className="hit-scroll" data-note-path={doc.path}>
+            {backlinks.hits.length ? (
+              <HitList hits={backlinks.hits} label="反向链接列表" />
+            ) : (
+              <div className="hit-empty">没有反向链接</div>
+            )}
+          </div>
+        )}
       </aside>
       {quickOpen && vault && (
         <QuickOpen entries={vault.entries} onClose={() => setQuickOpen(false)} />
