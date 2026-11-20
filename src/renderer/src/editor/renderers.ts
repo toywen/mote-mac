@@ -1,5 +1,6 @@
 import { codeRenderers } from './code'
 import { headingRenderers } from './headings'
+import { imageRenderers } from './images'
 import { inlineRenderers } from './inline'
 import { linkRenderers } from './links'
 import { listRenderers } from './lists'
@@ -13,5 +14,6 @@ export const renderers: Record<string, Renderer> = {
   ...linkRenderers,
   ...listRenderers,
   ...quoteRenderers,
-  ...codeRenderers
+  ...codeRenderers,
+  ...imageRenderers
 }

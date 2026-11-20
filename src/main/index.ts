@@ -1,8 +1,10 @@
-import { app, shell, BrowserWindow, dialog, ipcMain, nativeTheme } from 'electron'
+import { app, shell, BrowserWindow, dialog, ipcMain, nativeTheme, protocol } from 'electron'
 import { join } from 'path'
 import { lstat, mkdir, readFile, rename, writeFile } from 'node:fs/promises'
 import { optimizer, is } from '@electron-toolkit/utils'
+import { fileScheme } from '../core/fileUrl'
 import { channels, type ContentHash, type VaultPath } from '../core/ipc'
+import { serveFile } from './fileProtocol'
 import { Vault } from './vault'
 
 let window: BrowserWindow | undefined
@@ -10,6 +12,12 @@ let vault: Vault | undefined
 let choosingVault = false
 let closing = false
 let quitting = false
+
+// Standard, so a mote-file URL has a host and a path. Secure, so the window's images from it
+// are not mixed content.
+protocol.registerSchemesAsPrivileged([
+  { scheme: fileScheme, privileges: { standard: true, secure: true } }
+])
 
 function currentVault(dir: string): Vault {
   if (!vault || vault.dir !== dir) throw new Error('笔记库已切换')
@@ -145,6 +153,7 @@ app.whenReady().then(async () => {
   } catch {
     // An unavailable vault can be selected again in the window.
   }
+  protocol.handle(fileScheme, (request) => serveFile(vault, request))
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
   nativeTheme.on('updated', () => window?.setBackgroundColor(windowBackground()))
   createWindow()
