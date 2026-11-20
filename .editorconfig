@@ -7,3 +7,9 @@ indent_size = 2
 end_of_line = lf
 insert_final_newline = true
 trim_trailing_whitespace = true
+# Fixture vaults hold exact bytes on purpose: CRLF, a BOM, a missing final newline.
+[tests/fixtures/vaults/**]
+charset = unset
+end_of_line = unset
+insert_final_newline = unset
+trim_trailing_whitespace = unset

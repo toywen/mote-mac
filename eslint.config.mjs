@@ -29,7 +29,7 @@ export default defineConfig(
     }
   },
   {
-    files: ['tools/**/*.mjs'],
+    files: ['tools/**/*.mjs', '.claude/skills/**/*.mjs'],
     rules: {
       '@typescript-eslint/explicit-function-return-type': 'off'
     }

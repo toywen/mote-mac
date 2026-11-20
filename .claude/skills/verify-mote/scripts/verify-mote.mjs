@@ -1,0 +1,468 @@
+#!/usr/bin/env node
+// Drive a disposable mote instance for verification. Read ../SKILL.md before using it.
+// Usage: .claude/skills/verify-mote/scripts/verify-mote.mjs <command> [--flag value ...] [-- app args]
+import { execFileSync, spawn } from 'node:child_process'
+import crypto from 'node:crypto'
+import fs from 'node:fs'
+import { createRequire } from 'node:module'
+import os from 'node:os'
+import path from 'node:path'
+import { fileURLToPath, pathToFileURL } from 'node:url'
+import { chromium } from 'playwright-core'
+
+const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
+const SCRATCH_ROOT = path.join(os.tmpdir(), 'mote-verify')
+const EVIDENCE_ROOT = path.join(REPO, 'verify-artifacts')
+const DEFAULT_VAULT = path.join(REPO, 'tests/fixtures/vaults/basic')
+const RENDERER_URL = pathToFileURL(path.join(REPO, 'out/renderer/index.html')).href
+const ELECTRON = createRequire(import.meta.url)('electron')
+const READY_TIMEOUT_MS = 30_000
+
+class UsageError extends Error {}
+
+function parseArgs(argv) {
+  const opts = {}
+  const extra = []
+  for (let i = 0; i < argv.length; i++) {
+    const arg = argv[i]
+    if (arg === '--') {
+      extra.push(...argv.slice(i + 1))
+      break
+    }
+    if (!arg.startsWith('--')) throw new UsageError(`unexpected argument: ${arg}`)
+    const next = argv[i + 1]
+    if (next === undefined || next.startsWith('--')) opts[arg.slice(2)] = true
+    else {
+      opts[arg.slice(2)] = next
+      i++
+    }
+  }
+  return { opts, extra }
+}
+
+function isAlive(pid) {
+  try {
+    process.kill(pid, 0)
+    return true
+  } catch {
+    return false
+  }
+}
+
+function readState(run) {
+  const file = path.join(SCRATCH_ROOT, run, 'state.json')
+  if (!fs.existsSync(file)) throw new UsageError(`no run named ${run} in ${SCRATCH_ROOT}`)
+  return JSON.parse(fs.readFileSync(file, 'utf8'))
+}
+
+function runsOfThisCheckout() {
+  if (!fs.existsSync(SCRATCH_ROOT)) return []
+  return fs
+    .readdirSync(SCRATCH_ROOT)
+    .filter((run) => fs.existsSync(path.join(SCRATCH_ROOT, run, 'state.json')))
+    .map(readState)
+    .filter((state) => state.repo === REPO)
+}
+
+// A command without --run uses the only live run of this checkout, so two agents never share one.
+function selectRun(opts) {
+  const named = opts.run ?? process.env.MOTE_VERIFY_RUN
+  if (named) return readState(named)
+  const live = runsOfThisCheckout().filter((state) => isAlive(state.pid))
+  if (live.length === 1) return live[0]
+  if (live.length === 0) throw new UsageError('no live run for this checkout; run `launch` first')
+  throw new UsageError(`several live runs, pass --run: ${live.map((s) => s.run).join(', ')}`)
+}
+
+function record(state, command, result) {
+  const line = { time: new Date().toISOString(), command, result }
+  fs.appendFileSync(path.join(state.evidence, 'actions.jsonl'), JSON.stringify(line) + '\n')
+}
+
+// Hash every entry, dot entries included, so a write to .obsidian or a new empty folder shows up.
+// tools/hash-vault.mjs skips dot entries, so it cannot prove .obsidian is untouched.
+function hashTree(root) {
+  const lines = []
+  const walk = (dir) => {
+    for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+      if (entry.name === '.git') continue
+      const full = path.join(dir, entry.name)
+      const rel = path.relative(root, full)
+      if (entry.isSymbolicLink()) lines.push(`link ${rel} -> ${fs.readlinkSync(full)}`)
+      else if (entry.isDirectory()) {
+        lines.push(`dir  ${rel}/`)
+        walk(full)
+      } else if (entry.isFile()) {
+        const hash = crypto.createHash('sha256').update(fs.readFileSync(full)).digest('hex')
+        lines.push(`file ${rel} ${hash}`)
+      }
+    }
+  }
+  walk(root)
+  return lines.sort().join('\n') + '\n'
+}
+
+function diffHashes(before, after) {
+  const index = (text) => {
+    const map = new Map()
+    for (const line of text.split('\n').filter(Boolean)) {
+      const [kind, rel, ...rest] = line.split(' ').filter(Boolean)
+      map.set(`${kind} ${rel}`, rest.join(' '))
+    }
+    return map
+  }
+  const a = index(before)
+  const b = index(after)
+  const out = []
+  for (const [key, value] of a) {
+    if (!b.has(key)) out.push(`removed ${key}`)
+    else if (b.get(key) !== value) out.push(`changed ${key}`)
+  }
+  for (const key of b.keys()) if (!a.has(key)) out.push(`added   ${key}`)
+  return out
+}
+
+function newestMtime(dir) {
+  let newest = 0
+  for (const entry of fs.readdirSync(dir, { withFileTypes: true, recursive: true })) {
+    if (!entry.isFile()) continue
+    newest = Math.max(newest, fs.statSync(path.join(entry.parentPath, entry.name)).mtimeMs)
+  }
+  return newest
+}
+
+function git(...args) {
+  return execFileSync('git', args, { cwd: REPO, encoding: 'utf8' }).trim()
+}
+
+function stamp() {
+  return new Date().toISOString().replace(/[-:]/g, '').replace('T', '-').slice(0, 15)
+}
+
+async function waitForLog(logFile, pid) {
+  const deadline = Date.now() + READY_TIMEOUT_MS
+  while (Date.now() < deadline) {
+    const log = fs.readFileSync(logFile, 'utf8')
+    const inspector = log.match(/Debugger listening on (ws:\/\/\S+)/)
+    const devtools = log.match(/DevTools listening on ws:\/\/127\.0\.0\.1:(\d+)\//)
+    if (inspector && devtools) return { inspectorUrl: inspector[1], cdpPort: Number(devtools[1]) }
+    if (!isAlive(pid)) throw new Error(`mote exited during launch:\n${log}`)
+    await new Promise((resolve) => setTimeout(resolve, 200))
+  }
+  throw new Error(`mote printed no debug endpoints in ${READY_TIMEOUT_MS} ms`)
+}
+
+async function withPage(state, fn) {
+  const browser = await chromium.connectOverCDP(`http://127.0.0.1:${state.cdpPort}`)
+  try {
+    const pages = browser.contexts().flatMap((context) => context.pages())
+    const page = pages.find((p) => p.url().startsWith(RENDERER_URL))
+    if (!page) throw new Error(`no mote window; pages: ${pages.map((p) => p.url()).join(', ')}`)
+    return await fn(page)
+  } finally {
+    // Closing a CDP connection only disconnects. The app keeps running.
+    await browser.close()
+  }
+}
+
+// Usable means React mounted and the preload bridge exists.
+// Extend this when mote gains a state that must load first, such as an open vault.
+async function waitUntilUsable(page) {
+  await page.waitForFunction(
+    () => document.querySelector('#root > *') !== null && typeof window.mote === 'object',
+    undefined,
+    { timeout: READY_TIMEOUT_MS }
+  )
+}
+
+async function mainEval(state, expression) {
+  const ws = new WebSocket(state.inspectorUrl)
+  await new Promise((resolve, reject) => {
+    ws.onopen = resolve
+    ws.onerror = () => reject(new Error('cannot reach the main-process inspector'))
+  })
+  try {
+    const params = {
+      expression: `(async () => { const electron = require('electron'); return (${expression}) })()`,
+      includeCommandLineAPI: true,
+      awaitPromise: true,
+      returnByValue: true
+    }
+    ws.send(JSON.stringify({ id: 1, method: 'Runtime.evaluate', params }))
+    const reply = await new Promise((resolve) => {
+      ws.onmessage = (event) => {
+        const message = JSON.parse(event.data)
+        if (message.id === 1) resolve(message)
+      }
+    })
+    const failure = reply.error ?? reply.result.exceptionDetails
+    if (failure) throw new Error(failure.exception?.description ?? failure.message ?? failure.text)
+    return reply.result.result.value
+  } finally {
+    ws.close()
+  }
+}
+
+function locate(page, opts) {
+  const exact = Boolean(opts.exact)
+  if (opts.role) {
+    return page.getByRole(opts.role, opts.name ? { name: opts.name, exact } : {})
+  }
+  if (opts.text) return page.getByText(opts.text, { exact })
+  if (opts.label) return page.getByLabel(opts.label, { exact })
+  if (opts.selector) return page.locator(opts.selector)
+  throw new UsageError('give a locator: --role R [--name N] | --text T | --label L | --selector S')
+}
+
+function evidencePath(state, opts, ext) {
+  if (!opts.out) throw new UsageError('give --out <name>; the file goes into the evidence dir')
+  return path.join(state.evidence, `${opts.out}${ext}`)
+}
+
+async function launch(opts, extra) {
+  const run = opts.run ?? `${stamp()}-${crypto.randomBytes(2).toString('hex')}`
+  const source = path.resolve(opts.vault ?? DEFAULT_VAULT)
+  if (!fs.statSync(source, { throwIfNoEntry: false })?.isDirectory()) {
+    throw new UsageError(`vault is not a directory: ${source}`)
+  }
+  const scratch = path.join(SCRATCH_ROOT, run)
+  if (fs.existsSync(scratch)) throw new UsageError(`run ${run} already exists`)
+  const evidence = path.join(EVIDENCE_ROOT, run)
+  const vault = path.join(scratch, 'vault')
+  const userData = path.join(scratch, 'user-data')
+  fs.mkdirSync(evidence, { recursive: true })
+  fs.mkdirSync(userData, { recursive: true })
+
+  if (!opts['skip-build']) {
+    try {
+      execFileSync('npx', ['electron-vite', 'build'], { cwd: REPO, stdio: 'pipe' })
+    } catch (error) {
+      throw new Error(`build failed:\n${error.stdout}\n${error.stderr}`, { cause: error })
+    }
+  }
+  const builtAt = Math.min(
+    ...['out/main/index.js', 'out/preload/index.js', 'out/renderer/index.html'].map(
+      (file) => fs.statSync(path.join(REPO, file)).mtimeMs
+    )
+  )
+
+  // Clone-on-write copy, so even a large vault copies in seconds. The source is never opened by mote.
+  fs.cpSync(source, vault, {
+    recursive: true,
+    mode: fs.constants.COPYFILE_FICLONE,
+    verbatimSymlinks: true,
+    preserveTimestamps: true,
+    filter: (src) => path.basename(src) !== '.git'
+  })
+  fs.writeFileSync(path.join(evidence, 'vault-before.txt'), hashTree(vault))
+
+  const logFile = path.join(scratch, 'app.log')
+  const logFd = fs.openSync(logFile, 'a')
+  const env = { ...process.env }
+  delete env.ELECTRON_RENDERER_URL
+  const appArgs = extra.map((arg) => arg.replaceAll('{vault}', vault))
+  const child = spawn(
+    ELECTRON,
+    [REPO, '--inspect=0', '--remote-debugging-port=0', `--user-data-dir=${userData}`, ...appArgs],
+    { cwd: REPO, detached: true, stdio: ['ignore', logFd, logFd], env }
+  )
+  child.unref()
+
+  const state = {
+    run,
+    repo: REPO,
+    pid: child.pid,
+    vaultSource: source,
+    vault,
+    userData,
+    scratch,
+    evidence,
+    appArgs,
+    revision: git('rev-parse', 'HEAD'),
+    dirty: git('status', '--porcelain') !== '',
+    builtAt,
+    launchedAt: new Date().toISOString()
+  }
+  try {
+    Object.assign(state, await waitForLog(logFile, child.pid))
+    fs.writeFileSync(path.join(scratch, 'state.json'), JSON.stringify(state, null, 2))
+    await withPage(state, waitUntilUsable)
+  } catch (error) {
+    stopProcess(state.pid)
+    fs.rmSync(scratch, { recursive: true, force: true })
+    throw error
+  }
+  fs.writeFileSync(path.join(evidence, 'run.json'), JSON.stringify(state, null, 2))
+  record(state, ['launch', opts, extra], 'usable')
+  return state
+}
+
+function stopProcess(pid) {
+  // detached: true made the app a process group leader, so this signals only what we started.
+  try {
+    process.kill(-pid, 'SIGTERM')
+  } catch {
+    return
+  }
+  const deadline = Date.now() + 5000
+  while (isAlive(pid) && Date.now() < deadline) execFileSync('sleep', ['0.2'])
+  if (isAlive(pid)) process.kill(-pid, 'SIGKILL')
+}
+
+async function doctor(state) {
+  const checks = []
+  const check = (name, ok, detail) => checks.push({ name, ok, detail })
+  const alive = isAlive(state.pid)
+  check('process alive', alive, `pid ${state.pid}`)
+  if (alive) {
+    const command = execFileSync('ps', ['-o', 'command=', '-p', String(state.pid)], {
+      encoding: 'utf8'
+    })
+    check(
+      'process is this run',
+      command.includes(`--user-data-dir=${state.userData}`),
+      command.trim()
+    )
+    let owners
+    try {
+      owners = execFileSync('lsof', ['-nP', `-iTCP:${state.cdpPort}`, '-sTCP:LISTEN', '-t'], {
+        encoding: 'utf8'
+      })
+    } catch {
+      owners = ''
+    }
+    check('debug port owned by run', owners.split('\n').includes(String(state.pid)), owners.trim())
+    try {
+      await withPage(state, async (page) => {
+        await waitUntilUsable(page)
+        check('window usable', true, page.url())
+      })
+    } catch (error) {
+      check('window usable', false, error.message)
+    }
+    try {
+      const userData = await mainEval(state, `electron.app.getPath('userData')`)
+      check(
+        'settings isolated',
+        fs.realpathSync(userData) === fs.realpathSync(state.userData),
+        userData
+      )
+    } catch (error) {
+      check('settings isolated', false, error.message)
+    }
+  }
+  const srcNewest = newestMtime(path.join(REPO, 'src'))
+  check('build fresh', srcNewest <= state.builtAt, 'src/ must not change after the build')
+  check('vault copy exists', fs.existsSync(state.vault), state.vault)
+  return { ok: checks.every((c) => c.ok), run: state.run, revision: state.revision, checks }
+}
+
+async function main() {
+  const [command, ...rest] = process.argv.slice(2)
+  const { opts, extra } = parseArgs(rest)
+  if (command === 'launch') {
+    const state = await launch(opts, extra)
+    console.log(JSON.stringify({ run: state.run, vault: state.vault, evidence: state.evidence }))
+    return
+  }
+  if (command === 'list') {
+    for (const s of runsOfThisCheckout()) {
+      console.log(`${s.run}  ${isAlive(s.pid) ? 'live' : 'dead'}  ${s.vaultSource}`)
+    }
+    return
+  }
+  const state = selectRun(opts)
+  const act = (fn) => withPage(state, (page) => fn(page))
+  let result
+  switch (command) {
+    case 'paths':
+      result = state
+      break
+    case 'doctor':
+      result = await doctor(state)
+      if (!result.ok) process.exitCode = 1
+      break
+    case 'snapshot':
+      result = await act((page) => page.locator('body').ariaSnapshot())
+      if (opts.out) fs.writeFileSync(evidencePath(state, opts, '.aria.txt'), result + '\n')
+      break
+    case 'screenshot':
+      result = evidencePath(state, opts, '.png')
+      await act((page) => page.screenshot({ path: result }))
+      break
+    case 'click':
+      await act((page) => locate(page, opts).click())
+      result = 'clicked'
+      break
+    case 'fill':
+      await act((page) => locate(page, opts).fill(String(opts.value ?? '')))
+      result = 'filled'
+      break
+    case 'press':
+      await act((page) => page.keyboard.press(opts.key))
+      result = 'pressed'
+      break
+    case 'type':
+      await act((page) => page.keyboard.type(String(opts.text)))
+      result = 'typed'
+      break
+    case 'wait':
+      await act((page) =>
+        locate(page, opts).waitFor({
+          state: opts.state ?? 'visible',
+          timeout: Number(opts.timeout ?? 5000)
+        })
+      )
+      result = `reached ${opts.state ?? 'visible'}`
+      break
+    case 'read':
+      result = await act((page) => locate(page, opts).innerText())
+      break
+    case 'eval':
+      result = await act((page) => page.evaluate(opts.js))
+      break
+    case 'main-eval':
+      result = await mainEval(state, opts.js)
+      break
+    case 'dialog-answer': {
+      const answer = String(opts.path).replaceAll('{vault}', state.vault)
+      result = await mainEval(
+        state,
+        `(() => {
+          const p = ${JSON.stringify(answer)}
+          electron.dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [p] })
+          electron.dialog.showOpenDialogSync = () => [p]
+          return p
+        })()`
+      )
+      break
+    }
+    case 'vault-diff': {
+      const name = opts.out ?? `vault-after-${stamp()}`
+      const after = hashTree(state.vault)
+      fs.writeFileSync(path.join(state.evidence, `${name}.txt`), after)
+      const before = fs.readFileSync(path.join(state.evidence, 'vault-before.txt'), 'utf8')
+      const changes = diffHashes(before, after)
+      fs.writeFileSync(path.join(state.evidence, `${name}.diff.txt`), changes.join('\n') + '\n')
+      result = changes.length ? changes.join('\n') : 'unchanged'
+      if (opts['expect-unchanged'] && changes.length) process.exitCode = 1
+      break
+    }
+    case 'stop':
+      stopProcess(state.pid)
+      fs.copyFileSync(path.join(state.scratch, 'app.log'), path.join(state.evidence, 'app.log'))
+      record(state, ['stop'], 'stopped')
+      fs.rmSync(state.scratch, { recursive: true, force: true })
+      result = `stopped; evidence kept in ${state.evidence}`
+      break
+    default:
+      throw new UsageError(`unknown command: ${command ?? '(none)'}`)
+  }
+  if (command !== 'stop' && command !== 'paths') record(state, [command, opts], result)
+  console.log(typeof result === 'string' ? result : JSON.stringify(result, null, 2))
+}
+
+main().catch((error) => {
+  console.error(error instanceof UsageError ? `usage: ${error.message}` : error.stack)
+  process.exit(error instanceof UsageError ? 2 : 1)
+})
