@@ -107,7 +107,7 @@ test('images load from the vault and nothing outside it', async () => {
       range.selectNodeContents(line.firstChild!)
       return [
         range.getBoundingClientRect().bottom,
-        line.querySelector('img')!.getBoundingClientRect().top
+        line.querySelector('.mote-image img')!.getBoundingClientRect().top
       ]
     })
     expect(imageTop).toBeGreaterThanOrEqual(textBottom)
