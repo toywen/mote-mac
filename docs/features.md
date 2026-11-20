@@ -64,8 +64,8 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | 状态 | 编号 | 功能 | 证据 | 备注 |
 | --- | --- | --- | --- | --- |
 | ✅ 已实现 | 界面-2 | 跟随 macOS 的浅色和深色模式 | 测试：the window follows the system color scheme；verify：dark-mode | 2026-11-20 第 3 步 PR B。窗口底色由主进程按 `nativeTheme` 设置，打开时不闪白。正文对比度：深色 12.26，浅色 15.91。切换用 `nativeTheme` 模拟，没在 macOS 的系统设置里切过 |
-| 🟡 部分 | 编辑器-1 | 实时预览渲染标题、粗体、斜体、`==高亮==`、行内代码、标签、双链、Markdown 链接、任务和图片 | 测试：live preview hides syntax away from the selection and shows it at the selection；verify：live-preview | 2026-11-20 第 3 步 PR B 做了标题、粗体、斜体、删除线、高亮、行内代码、标签、双链、Markdown 链接、网址、列表、引用、分隔线和代码块。任务复选框在 PR E，图片在 PR D，现在显示源码 |
-| ⬜ 未实现 | 编辑器-2 | 图片支持 `![](路径)` 和 `![[图片名]]` | | 设计见 ADR 0007 |
+| 🟡 部分 | 编辑器-1 | 实时预览渲染标题、粗体、斜体、`==高亮==`、行内代码、标签、双链、Markdown 链接、任务和图片 | 测试：live preview hides syntax away from the selection and shows it at the selection；images load from the vault and nothing outside it；verify：live-preview、images | 2026-11-20 第 3 步 PR B 做了标题、粗体、斜体、删除线、高亮、行内代码、标签、双链、Markdown 链接、网址、列表、引用、分隔线和代码块。PR D 做了图片，见编辑器-2。任务复选框在 PR E，现在显示源码 |
+| ✅ 已实现 | 编辑器-2 | 图片支持 `![](路径)` 和 `![[图片名]]` | 测试：images load from the vault and nothing outside it；Vitest：fileUrl and parseFileUrl；verify：images | 2026-11-20 第 3 步 PR D。两种编辑器模式都显示图片。选区碰到时，源码在上，图片在下。`\|300` 和 `\|300x200` 设宽高，规则照搬 Obsidian 1.15.0。图片不比编辑器宽。找不到或加载失败的图片显示文件名。本地图片走 `mote-file://`，见 ADR 0007。`https` 图片直接加载，`http` 图片被内容安全策略拦下。不是图片的嵌入暂时显示为链接，笔记嵌入在 PR F |
 | ⬜ 未实现 | 编辑器-3 | 实时预览里的 callout 显示为带颜色和标题的块 | | |
 | ⬜ 未实现 | 编辑器-4 | 实时预览把表格渲染成表格。光标移进表格时显示 Markdown 源码 | | |
 | ⬜ 未实现 | 编辑器-5 | 点击任务复选框，切换完成状态 | | |
