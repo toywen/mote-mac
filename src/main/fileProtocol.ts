@@ -5,6 +5,13 @@ import type { Vault } from './vault'
 
 const refuse = (status: number): Response => new Response(null, { status })
 
+// An SVG is a document. Shown in an <img> its scripts never run; these headers keep it inert
+// if one is ever loaded as a page.
+const inert = {
+  'Content-Security-Policy': "default-src 'none'; style-src 'unsafe-inline'; sandbox",
+  'X-Content-Type-Options': 'nosniff'
+}
+
 // The mote-file:// handler. It serves an image file of the open vault and nothing else: no
 // note, no dot path, no symlink, nothing outside the vault. Every refusal carries no bytes.
 export async function serveFile(vault: Vault | undefined, request: Request): Promise<Response> {
@@ -26,9 +33,7 @@ export async function serveFile(vault: Vault | undefined, request: Request): Pro
     )
     try {
       if (!(await file.stat()).isFile()) return refuse(404)
-      return new Response(await file.readFile(), {
-        headers: { 'Content-Type': type }
-      })
+      return new Response(await file.readFile(), { headers: { ...inert, 'Content-Type': type } })
     } finally {
       await file.close()
     }

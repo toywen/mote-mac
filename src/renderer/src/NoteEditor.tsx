@@ -137,7 +137,10 @@ export function NoteEditor({
         editorMode.of(mode),
         EditorView.editable.of(mode === 'live'),
         EditorState.readOnly.of(locked || mode === 'reading'),
-        editorLocked.of(locked)
+        editorLocked.of(locked),
+        // Reading mode cannot be typed in, but it takes focus, so a jump from search or the
+        // backlinks pane shows its selection and the text can be selected and copied by key.
+        mode === 'reading' ? EditorView.contentAttributes.of({ tabindex: '0' }) : []
       ])
     })
     // Back in live preview, typing goes on where it stopped, unless another control has focus.
