@@ -7,6 +7,8 @@ import { linkRenderers } from './links'
 import { listRenderers } from './lists'
 import type { Renderer } from './preview'
 import { quoteRenderers } from './quotes'
+import { tableRenderers } from './tables'
+import { taskRenderers } from './tasks'
 
 // Syntax node name to the renderer that draws it. A new element adds a file and one line here.
 export const renderers: Record<string, Renderer> = {
@@ -18,5 +20,7 @@ export const renderers: Record<string, Renderer> = {
   ...codeRenderers,
   ...imageRenderers,
   // Takes Blockquote from quoteRenderers and hands it plain quotes.
-  ...calloutRenderers
+  ...calloutRenderers,
+  ...tableRenderers,
+  ...taskRenderers
 }

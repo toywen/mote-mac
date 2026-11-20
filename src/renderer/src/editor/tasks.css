@@ -1,0 +1,32 @@
+/* Task checkboxes. Colors come from the variables in assets/main.css. */
+
+.mote-task-box {
+  display: inline-block;
+  text-indent: 0;
+  vertical-align: baseline;
+}
+
+.mote-task-box input {
+  width: 1em;
+  height: 1em;
+  margin: 0 0.4em 0 0;
+  vertical-align: -0.12em;
+  accent-color: var(--accent);
+  cursor: pointer;
+}
+
+/* In a bullet list the checkbox takes the bullet's place: the bullet keeps its width but not
+   its glyph, and the checkbox sits in the bullet's 1.6em slot, so the text starts where the
+   list's wrapped lines start. */
+.cm-line.mote-task-bullet .mote-list-marker {
+  visibility: hidden;
+}
+.cm-line.mote-task-bullet .mote-task-box {
+  width: 1.6em;
+  margin-left: -1.6em;
+}
+
+.mote-task-done {
+  color: var(--muted);
+  text-decoration: line-through;
+}

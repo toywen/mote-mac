@@ -16,6 +16,7 @@ import { followLinks } from './editor/follow'
 import { editorMode, linkContext, livePreview } from './editor/livePreview'
 import { markdown } from './editor/markdown'
 import type { EditorMode, LinkContext } from './editor/preview'
+import { editorLocked } from './editor/tasks'
 import { workspace, type Selection } from './workspace'
 
 const replaceFormat = StateEffect.define<LineFormat>()
@@ -139,7 +140,8 @@ export function NoteEditor({
       effects: access.current.reconfigure([
         editorMode.of(mode),
         EditorView.editable.of(mode === 'live'),
-        EditorState.readOnly.of(locked || mode === 'reading')
+        EditorState.readOnly.of(locked || mode === 'reading'),
+        editorLocked.of(locked)
       ])
     })
     // Back in live preview, typing goes on where it stopped, unless another control has focus.

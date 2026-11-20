@@ -1,0 +1,26 @@
+/* Tables. Colors come from the variables in assets/main.css. */
+
+.mote-table-wrap {
+  overflow-x: auto;
+  padding: 4px 0;
+}
+
+.mote-table {
+  border-collapse: collapse;
+  font-size: inherit;
+  line-height: 1.5;
+}
+
+.mote-table th,
+.mote-table td {
+  border: 1px solid var(--border);
+  padding: 4px 10px;
+  text-align: left;
+  vertical-align: top;
+  white-space: pre-wrap;
+}
+
+.mote-table th {
+  font-weight: 700;
+  background: var(--code-background);
+}
