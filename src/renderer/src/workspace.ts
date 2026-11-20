@@ -292,10 +292,13 @@ class Workspace {
   private load(path: VaultPath, disk: NoteVersion | null): void {
     this.refreshId++
     const text = disk?.text ?? ''
+    // A selection made for an earlier visit to this note must not apply when it opens again.
+    const selection = path === this.state.doc?.path ? this.state.selection : null
     this.set({
       doc: disk
         ? { kind: 'clean', path, text, source: { text }, baseHash: disk.hash }
         : { kind: 'missing', path, text, source: { text } },
+      selection,
       error: ''
     })
   }

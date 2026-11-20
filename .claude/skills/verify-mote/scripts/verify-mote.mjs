@@ -389,6 +389,11 @@ async function drawnLinks(page) {
   const found = new Map()
   const box = await page.locator('.cm-scroller').boundingBox()
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  const scrollTop = () => page.evaluate(() => document.querySelector('.cm-scroller').scrollTop)
+  for (let tries = 0; tries < 20 && (await scrollTop()) > 0; tries++) {
+    await page.mouse.wheel(0, -(await scrollTop()))
+    await settle(page)
+  }
   for (;;) {
     const seen = await page.evaluate(() => {
       const scroller = document.querySelector('.cm-scroller')
