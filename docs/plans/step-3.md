@@ -497,21 +497,80 @@ rebase 到 `f4aa01d` 之前，在 `ab712d1` 的应用代码上也跑过 3 次。
 
 ## PR E：callout、表格和任务复选框
 
-- [ ] 依赖：PR B。
-- [ ] 改动文件：`src/core/markdown.ts`（callout 识别函数）、`src/renderer/src/editor/callouts.ts`、`tables.ts`、`tasks.ts`（均为新）、`tests/fixtures/vaults/preview/`、`tests/e2e/blocks.spec.ts`（新）、`features/blocks.md`、`docs/adr/0002-one-parser.md`（只改状态行）、`docs/features.md`。
-- [ ] 做的一件事：callout 显示为带颜色和标题的块。表格渲染成表格。任务前面是可以点的复选框。
-- [ ] 你会看到：`> [!warning] 注意` 变成橙色的块，标题是“注意”。表格有边框和对齐，光标移进去时变回 Markdown 源码。点复选框，`- [ ]` 变成 `- [x]`。
+- [x] 依赖：PR B。
+- [x] 改动文件：`package.json`（加 `lucide`）、`src/core/markdown.ts`（callout 识别函数）、`src/renderer/src/editor/callouts.ts`、`tables.ts`、`tasks.ts` 和各自的 CSS（均为新）、`renderers.ts`、`NoteEditor.tsx`、`tests/fixtures/vaults/preview/`、`tests/e2e/blocks.spec.ts`（新）、`features/blocks.md`、`docs/adr/0002-one-parser.md`（只改状态行）、`ARCHITECTURE.md`、`docs/features.md`。
+- [x] 做的一件事：callout 显示为带颜色和标题的块。表格渲染成表格。任务前面是可以点的复选框。
+- [x] 你会看到：`> [!warning] 注意` 变成橙色的块，标题是“注意”。表格有边框和对齐，光标移进去时变回 Markdown 源码。点复选框，`- [ ]` 变成 `- [x]`。
 
 callout 的类型和颜色放在一张表里，别名也在表里，例如 `tip`、`hint`、`important` 是同一种。表格单元格里的行内元素用 PR B 的 `inlineStyles` 渲染，链接可以点。点复选框只改方括号里的 1 个字符，在阅读模式下也能点。
 
 验证：
 
-- [ ] 单元：Vitest 测 callout 识别函数。e2e 测试 `callouts, tables and task checkboxes render, and a checkbox click changes one byte`。
-- [ ] 真实窗口，`preview`：8 种 callout 类型各一个，读到的边框颜色有 8 组不同的值。表格的 `th` 和 `td` 数量和源码一致。光标移进表格后，可见文字里有 `|`。
-- [ ] 真实窗口，任务：点一个复选框，等自动保存。`vault-diff` 只列出这篇笔记，`cmp -l` 显示只差 1 个字节。
-- [ ] 真实窗口，`workspace-copy`：打开 callout 最多和表格最多的两篇笔记，没有页面错误，截图。
-- [ ] 真实窗口，输入法：在表格下面一行用 `ime` 输入中文，上屏后只多出这几个字。
-- [ ] 性能：重跑 PR B 的输入检查，笔记换成表格最多的那篇。中位数超过 16 毫秒算失败。
+- [x] 单元：Vitest 测 callout 识别函数。e2e 测试 `callouts, tables and task checkboxes render, and a checkbox click changes one byte`。
+- [x] 真实窗口，`preview`：8 种 callout 类型各一个，读到的边框颜色和 Obsidian 的种类一致：`tip` 和 `important` 相同，`note` 和 `info` 相同，共 6 种，深色和浅色下都是。原计划写的是 8 种不同，和 Obsidian 不符，见结果。表格的 `th` 和 `td` 数量和源码一致。光标移进表格后，可见文字里有 `|`。
+- [x] 真实窗口，任务：点一个复选框，等自动保存。`vault-diff` 只列出这篇笔记，`cmp -l` 显示只差 1 个字节。
+- [x] 真实窗口，`workspace-copy`：打开 callout 最多和表格最多的两篇笔记，没有页面错误，截图。
+- [x] 真实窗口，输入法：在表格下面一行和 callout 里的一行用 `ime --no-enter` 输入中文，上屏后只多出这几个字。
+- [x] 性能：重跑 PR B 的输入检查，笔记换成表格最多的那篇。中位数超过 16 毫秒算失败。
+
+### 结果
+
+2026-11-20 实测，机器和基线一节相同。真实窗口和性能都在 `1faaaaf` 之后的构建上量，应用代码和合并的版本相同。
+
+**照搬 Obsidian 1.15.1 的规则。**
+
+| 规则 | 读的地方 | 内容 |
+| --- | --- | --- |
+| 什么是 callout | `app.js` 的 `$ue` 和正则 `Kue` | 引用的第一行，去掉 `>` 和后面最多 1 个空格后，以 `[!类型]` 开头，后面可以跟 `+` 或 `-`，再跟空白或行尾。类型取 `\|` 前面的部分，转小写，空白换成 `-` |
+| 没有标题时的标题 | `app.js` 的 `rfe` | 类型里的 `-` 换成空格，首字母大写，例如 `[!summary]` 显示 `Summary` |
+| 种类、别名、颜色、图标 | `app.css` 的 `.callout[data-callout=…]` | 13 种。`note`、`info`、`todo` 是蓝色，`abstract`、`tip` 是青色。`important` 是 `tip` 的别名，图标都是火焰。不认识的类型按 `note` 画 |
+| 颜色值 | `app.css` 的 `--color-<颜色>-rgb` | 浅色和深色各一组，写在 `callouts.css`。`quote` 两种配色都是灰色 `#9e9e9e` |
+
+识别函数是 `src/core/markdown.ts` 的 `calloutHeader`，编辑器和以后的索引都用它。改了 `src/core` 后，对照工具 6 个副本 0 处不一致。
+
+**和设计不同的两处。**
+
+1. 8 种类型只有 6 种颜色。Obsidian 给 `note` 和 `info` 的都是蓝色，只是图标不同。e2e 测试按这一点断言。
+2. 引用或列表项里的表格不在行首，画成行内组件，留在行里 `>` 的后面。从行首开始的表格画成行之间的块。5 个副本里只有 1 个表格在引用里。
+
+**真实窗口。** 证据目录在 `verify-artifacts/` 下，按启动编号区分。
+
+| 检查 | 结果 |
+| --- | --- |
+| `preview`，callout 颜色 | 深色：笔记、信息 `rgb(2, 122, 255)`，提示、重要 `rgb(83, 223, 221)`，注意 `rgb(233, 151, 63)`，危险 `rgb(251, 70, 76)`，示例 `rgb(168, 130, 255)`，引言 `rgb(158, 158, 158)`。浅色：蓝 `rgb(8, 109, 221)`，青 `rgb(0, 191, 188)`，橙 `rgb(236, 117, 0)`，红 `rgb(233, 49, 71)`，紫 `rgb(120, 82, 238)`，灰相同。`20261120-134700-7702` |
+| callout 显示源码 | 点“注意”后这一行是 `> [!warning] 注意`，按 `↓` 后变回 `注意` |
+| 表格 | 第一个表格表头 4 格、正文 12 格，和源码一致。第二个表格的两行在源码里是 1 格和 3 格，按 GFM 补齐和截断成 2 格。点“斜体”后可见文字有 5 行带 `\|`，点下面一行后只剩转义的 `\|` |
+| 输入法 | 表格下面一行、callout 正文一行、callout 标题一行，各输入一次，`diff` 只多出输入的字 |
+| 任务 | 新启动一次，点“待办任务”。`vault-diff` 只列出 `任务.md`，`cmp -l` 输出一行 `14 40 170`：第 14 个字节从空格变成 `x`。`20261120-135331-8138` |
+| `workspace-copy` | callout 最多的是 `03_Areas/🎓 English Learning/🧱 Building Blocks/Words & Phrases/considerate of.md`，10 个。表格最多的是 `04_Works/foundry/docs1/特征平台与Foundry完整差距分析.md`，23 个。两种编辑器模式各截图。阅读模式下 `walk-notes` 打开 603 篇，`errorCount` 0，`vault-diff --expect-unchanged` 输出 `unchanged`。`20261120-135501-cdb9` |
+| 新启动的 `walk-notes` | 实时预览打开 603 篇两次，`errorCount` 都是 0，`unchanged`。`20261120-140029-3004` |
+
+**性能，输入。** 5 个副本里表格最多的笔记是 `Pesemic-copy` 的 `basic/特征平台与Foundry完整差距分析.md`，23 个表格，11,948 个字符。`workspace-copy` 里有同一篇。实时预览，同一次启动交替跑，单位毫秒。
+
+| 次 | 位置 | 开始时文档长度 | 每键中位数 | p95 | 最大 | 脚本均值 | 空闲中位数 |
+| --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | end | 11,948 | 5.78 | 7.28 | 15.08 | 2.76 | 0.24 |
+| 2 | start | 12,148 | 5.98 | 6.86 | 9.60 | 2.81 | 0.19 |
+| 3 | end | 12,348 | 4.76 | 6.30 | 37.77 | 2.16 | 0.20 |
+| 4 | start | 12,548 | 5.83 | 9.63 | 34.65 | 2.98 | 0.20 |
+
+都低于 10 毫秒，通过。在开头输入时，每个键让 23 个表格都往后移。表格组件按源码比较，只更新链接的位置，不重建表格。
+
+**性能，打开。** `workspace-copy`，实时预览，每个版本一次新启动跑两次 `walk-notes`。
+
+| 版本 | `medianNoteMs` | `durationMs` |
+| --- | --- | --- |
+| main `c9dec5c`（PR B 合并后） | 63.8、65.9 | 111,889、112,158 |
+| 这个 PR | 64.3、64.9 | 116,946、109,760 |
+
+比值约 1.0，低于 1.5 倍，通过。
+
+**还没证明的。**
+
+- 表格里的链接只证明了类名、`data-link-from` 和颜色。点击跳转要等 PR C。
+- 真实的 macOS 输入法。`ime` 用 CDP 模拟。
+- 一次 `snapshot` 在刚打开 `表格.md` 时没看到第一个表格，截图里有。之后重开 5 次都看到了，原因没查明。
+- 复选框的无障碍名称是任务的原文，带着 `**` 这类符号。
 
 ## PR F：Mermaid 图和笔记嵌入
 
