@@ -52,7 +52,7 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 
 | 状态 | 编号 | 功能 | 证据 | 备注 |
 | --- | --- | --- | --- | --- |
-| 🟡 部分 | 链接-5 | 支持 `[[笔记\|别名]]` | Vitest：splits wikilinks into target, subpath and alias | 解析器已拆出别名，显示别名属于第 3 步 |
+| ✅ 已实现 | 链接-5 | 支持 `[[笔记\|别名]]` | Vitest：splits wikilinks into target, subpath and alias；测试：live preview hides syntax away from the selection and shows it at the selection；verify：live-preview | 2026-11-20 第 3 步 PR B。实时预览只显示别名，选区碰到时显示整个链接 |
 | ✅ 已实现 | 链接-6 | 链接解析和 Obsidian 一致 | `npm test`（links 测试笔记库对照）；`node tools/compare-links.mjs ~/mote-link-check/*-copy`，5 个副本 2171 处 0 不一致，输出在 `docs/plans/compare-log/` | 2026-11-20。规则照搬 Obsidian 1.15.1，见 ADR 0003、0008、0009。反向链接面板用到解析结果 |
 | ✅ 已实现 | 链接-7 | 右侧面板列出当前笔记的反向链接，两种链接都算 | 测试：the backlinks pane lists links to the open note and jumps to them；verify：backlinks（5 个副本 810 篇笔记逐篇对照 Obsidian，1923 处 0 不一致） | 2026-11-20。嵌入和属性里的链接也算，和 Obsidian 的 resolvedLinks 一致。来源按路径排序，Obsidian 按文件名 |
 | ✅ 已实现 | 查找-1 | `Cmd+O` 按文件名快速打开笔记 | 测试：quick open ranks notes like Obsidian and lists recent notes for an empty query；verify：quick-open | 2026-11-20。规则照搬 Obsidian 1.15.1，见 step-2.md PR A。结果顺序还没和 Obsidian 的快速打开并排对照过，要你在 Obsidian 里看一次 |
@@ -63,16 +63,16 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 
 | 状态 | 编号 | 功能 | 证据 | 备注 |
 | --- | --- | --- | --- | --- |
-| 🟡 部分 | 界面-2 | 跟随 macOS 的浅色和深色模式 | 无 | `main.css` 有深色样式，没在真实窗口验证 |
-| ⬜ 未实现 | 编辑器-1 | 实时预览渲染标题、粗体、斜体、`==高亮==`、行内代码、标签、双链、Markdown 链接、任务和图片 | | 现在是纯文本编辑 |
+| ✅ 已实现 | 界面-2 | 跟随 macOS 的浅色和深色模式 | 测试：the window follows the system color scheme；verify：dark-mode | 2026-11-20 第 3 步 PR B。窗口底色由主进程按 `nativeTheme` 设置，打开时不闪白。正文对比度：深色 12.26，浅色 15.91。切换用 `nativeTheme` 模拟，没在 macOS 的系统设置里切过 |
+| 🟡 部分 | 编辑器-1 | 实时预览渲染标题、粗体、斜体、`==高亮==`、行内代码、标签、双链、Markdown 链接、任务和图片 | 测试：live preview hides syntax away from the selection and shows it at the selection；verify：live-preview | 2026-11-20 第 3 步 PR B 做了标题、粗体、斜体、删除线、高亮、行内代码、标签、双链、Markdown 链接、网址、列表、引用、分隔线和代码块。任务复选框在 PR E，图片在 PR D，现在显示源码 |
 | ⬜ 未实现 | 编辑器-2 | 图片支持 `![](路径)` 和 `![[图片名]]` | | 设计见 ADR 0007 |
 | ⬜ 未实现 | 编辑器-3 | 实时预览里的 callout 显示为带颜色和标题的块 | | |
 | ⬜ 未实现 | 编辑器-4 | 实时预览把表格渲染成表格。光标移进表格时显示 Markdown 源码 | | |
 | ⬜ 未实现 | 编辑器-5 | 点击任务复选框，切换完成状态 | | |
-| ⬜ 未实现 | 编辑器-6 | 属性显示为 YAML 代码块，可以直接编辑 | | |
-| ⬜ 未实现 | 编辑器-9 | `Cmd+E` 切到阅读模式。完整渲染表格、callout、Mermaid 图和 `![[笔记名]]` 嵌入 | | |
+| ✅ 已实现 | 编辑器-6 | 属性显示为 YAML 代码块，可以直接编辑 | 测试：live preview hides syntax away from the selection and shows it at the selection；verify：live-preview | 2026-11-20 第 3 步 PR B。等宽字体加底色。选区碰到属性块时显示 `---` |
+| 🟡 部分 | 编辑器-9 | `Cmd+E` 切到阅读模式。完整渲染表格、callout、Mermaid 图和 `![[笔记名]]` 嵌入 | 测试：Cmd+E switches to reading mode and back；verify：live-preview | 2026-11-20 第 3 步 PR B 做了 `Cmd+E` 和标题栏按钮。整个窗口一个编辑器模式，切换笔记时不变。表格和 callout 在 PR E，Mermaid 和嵌入在 PR F，现在显示源码 |
 | ⬜ 未实现 | 链接-1 | 点击双链或 Markdown 链接，跳到目标。带 `#标题` 时跳到这个标题 | | |
-| ⬜ 未实现 | 链接-2 | 目标不存在的双链用不同颜色显示。点击它，新建这篇笔记 | | |
+| 🟡 部分 | 链接-2 | 目标不存在的双链用不同颜色显示。点击它，新建这篇笔记 | 测试：live preview hides syntax away from the selection and shows it at the selection | 2026-11-20 第 3 步 PR B 做了颜色，Markdown 链接也算。点击新建在 PR C |
 | ⬜ 未实现 | 链接-3 | 链接目标不是笔记时，用 macOS 的默认程序打开 | | |
 | ⬜ 未实现 | 链接-4 | 输入 `[[` 后弹出笔记名补全。插入的链接格式按笔记库配置决定 | | |
 | ⬜ 未实现 | 链接-8 | `Cmd+Option+←` 后退，`Cmd+Option+→` 前进 | | |
@@ -186,5 +186,5 @@ node tools/vault-audit.mjs ~/life-os ~/wiki ~/workspace/Pesemic ~/Downloads/work
   - **💤 未排期**：以后做，还没定在哪一步。
   - **🚫 不做**：明确不做，备注写原因。
 - 一步开始、完成或卡住时，同时改[进度一览](#进度一览)里那一步的状态。
-- 证据是 e2e 测试名，或 `verify-mote` 的功能文件（`.claude/skills/verify-mote/features/` 下）。没有证据不能标"已实现"。"测试：xxx"指 `tests/e2e/smoke.spec.ts` 里的同名测试，"verify：xxx"指 verify-mote 的功能文件。
+- 证据是 e2e 测试名，或 `verify-mote` 的功能文件（`.claude/skills/verify-mote/features/` 下）。没有证据不能标"已实现"。"测试：xxx"指 `tests/e2e/` 下的同名测试，"verify：xxx"指 verify-mote 的功能文件。
 - 条目编号固定。删掉的条目留下编号，状态改成"🚫 不做"。
