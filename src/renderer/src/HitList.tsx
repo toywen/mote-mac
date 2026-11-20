@@ -1,4 +1,4 @@
-import type { Hit, VaultPath } from '../../core/ipc'
+import type { HitGroup } from '../../core/ipc'
 import { workspace } from './workspace'
 
 export type Range = [number, number]
@@ -21,28 +21,28 @@ export function Highlighted({
   return <>{parts}</>
 }
 
-type HitGroup = { path: VaultPath; hits: Hit[] }
-
-// Groups hits that are already ordered by note.
-function groupHits(hits: Hit[]): HitGroup[] {
-  const groups: HitGroup[] = []
-  for (const hit of hits) {
-    const last = groups.at(-1)
-    if (last?.path === hit.path) last.hits.push(hit)
-    else groups.push({ path: hit.path, hits: [hit] })
-  }
-  return groups
-}
-
 // One group per note, one row per hit. Clicking a row opens the note and selects the hit.
-export function HitList({ hits, label }: { hits: Hit[]; label: string }): React.JSX.Element {
+// Clicking a group's title opens the note.
+export function HitList({
+  groups,
+  label
+}: {
+  groups: HitGroup[]
+  label: string
+}): React.JSX.Element {
   return (
     <ul className="hit-list" aria-label={label}>
-      {groupHits(hits).map((group) => (
+      {groups.map((group) => (
         <li key={group.path} className="hit-group" data-path={group.path}>
-          <div className="hit-title" title={group.path}>
-            {group.path.split('/').pop()?.replace(/\.md$/i, '')}
-          </div>
+          <button
+            type="button"
+            className="hit-title"
+            title={group.path}
+            onClick={() => void workspace.open(group.path)}
+          >
+            <span>{group.path.split('/').pop()?.replace(/\.md$/i, '')}</span>
+            {group.count > 0 && <span className="hit-group-count">{group.count}</span>}
+          </button>
           <ul>
             {group.hits.map((hit) => (
               <li key={hit.from}>

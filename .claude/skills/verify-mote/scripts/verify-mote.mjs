@@ -536,10 +536,15 @@ async function main() {
           selectionStart: composing.length,
           selectionEnd: composing.length
         })
+        // --hold N keeps the composition open for N ms; --probe-js reads state at that moment.
+        let probe
+        if (opts.hold) await page.waitForTimeout(Number(opts.hold))
+        if (opts['probe-js']) probe = await page.evaluate(String(opts['probe-js']))
         await page.keyboard.press('Enter')
         await cdp.send('Input.insertText', { text: commit })
         await cdp.detach()
-        return { enterKeydown: await page.evaluate(() => window.__moteImeKeys) }
+        const enterKeydown = await page.evaluate(() => window.__moteImeKeys)
+        return opts['probe-js'] ? { enterKeydown, probe } : { enterKeydown }
       })
       break
     }

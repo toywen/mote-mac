@@ -418,3 +418,90 @@ button:focus-visible {
   color: var(--text);
   border-radius: 2px;
 }
+
+.sidebar-views {
+  display: flex;
+  gap: 2px;
+  min-width: 0;
+}
+
+.sidebar-views button {
+  padding: 3px 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font-size: 13px;
+  color: var(--muted);
+}
+
+.sidebar-views button[aria-pressed='true'] {
+  background: var(--selected);
+  color: var(--text);
+  font-weight: 600;
+}
+
+.search-panel {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.search-panel input {
+  margin: 10px 10px 4px;
+  padding: 6px 8px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text);
+  font: inherit;
+  font-size: 13px;
+  outline: none;
+}
+
+.search-panel input:focus {
+  border-color: var(--accent);
+}
+
+.search-summary {
+  padding: 4px 6px 6px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.search-more {
+  margin: 8px 6px;
+  padding: 4px 8px;
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  background: transparent;
+  font-size: 12px;
+}
+
+.hit-title {
+  display: flex;
+  justify-content: space-between;
+  gap: 6px;
+  width: 100%;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  text-align: left;
+}
+
+.hit-title span:first-child {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.hit-title:hover {
+  background: var(--hover);
+}
+
+.hit-group-count {
+  flex-shrink: 0;
+  color: var(--muted);
+  font-weight: 400;
+  font-size: 12px;
+}

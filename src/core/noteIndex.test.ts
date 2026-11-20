@@ -1,6 +1,7 @@
 import { describe, expect, test } from 'vitest'
 import { parseVaultPath } from './ipc.ts'
-import { NoteIndex, preview } from './noteIndex.ts'
+import { preview } from './hits.ts'
+import { NoteIndex } from './noteIndex.ts'
 
 const p = parseVaultPath
 

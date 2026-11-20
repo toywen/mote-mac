@@ -2,24 +2,10 @@ import type { Hit, VaultPath } from './ipc.ts'
 import { extractLinks } from './markdown.ts'
 import type { LinkRef } from './model.ts'
 import { buildLinkIndex, resolveLink, type LinkIndex } from './resolve.ts'
+import { preview } from './hits.ts'
 import { sourceText } from './text.ts'
 
 export type IndexedNote = { text: string; links: LinkRef[] }
-
-const PREVIEW_BEFORE = 60
-const PREVIEW_MAX = 240
-
-// The line around [from, to), cut to PREVIEW_MAX characters, with the match offsets inside it.
-export function preview(text: string, from: number, to: number): Hit['preview'] {
-  let start = text.lastIndexOf('\n', from - 1) + 1
-  let end = text.indexOf('\n', to)
-  if (end < 0) end = text.length
-  if (end - start > PREVIEW_MAX) {
-    start = Math.max(start, from - PREVIEW_BEFORE)
-    end = Math.min(end, Math.max(to, start + PREVIEW_MAX))
-  }
-  return { text: text.slice(start, end), from: from - start, to: to - start }
-}
 
 // Every note's normalized text and links, plus the file list that links resolve against.
 // Backlinks are not cached: each query resolves every link, so nothing goes stale.

@@ -65,6 +65,9 @@ ipcMain.handle(
 ipcMain.handle(channels.backlinks, (_event, dir: string, path: VaultPath) =>
   currentVault(dir).backlinks(path)
 )
+ipcMain.handle(channels.search, (_event, dir: string, query: string, limit: number) =>
+  currentVault(dir).search(query, limit)
+)
 ipcMain.handle(channels.openWithDefaultApp, async (_event, dir: string, path: VaultPath) => {
   const file = await currentVault(dir).filePath(path)
   if (!(await lstat(file)).isFile()) throw new Error('无法打开该文件')

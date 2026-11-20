@@ -9,6 +9,7 @@ const mote: MoteApi = {
     ipcRenderer.invoke(channels.writeNote, dir, path, text, baseHash),
   openWithDefaultApp: (dir, path) => ipcRenderer.invoke(channels.openWithDefaultApp, dir, path),
   backlinks: (dir, path) => ipcRenderer.invoke(channels.backlinks, dir, path),
+  search: (dir, query, limit) => ipcRenderer.invoke(channels.search, dir, query, limit),
   onVaultChanged: (callback) => {
     const listener = (_event: IpcRendererEvent, change: VaultChange): void => callback(change)
     ipcRenderer.on(channels.vaultChanged, listener)

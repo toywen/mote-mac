@@ -1,9 +1,11 @@
 import { FolderOpen, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import { useEffect, useState, useSyncExternalStore } from 'react'
 import { FileTree } from './FileTree'
+import { groupHits } from '../../core/hits'
 import { HitList } from './HitList'
 import { NoteEditor } from './NoteEditor'
 import { QuickOpen } from './QuickOpen'
+import { SearchPanel } from './SearchPanel'
 import { workspace } from './workspace'
 
 function App(): React.JSX.Element {
@@ -14,12 +16,25 @@ function App(): React.JSX.Element {
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const sidebarAction = sidebarOpen ? '收起文件树' : '展开文件树'
   const [quickOpen, setQuickOpen] = useState(false)
+  const [sidebarView, setSidebarView] = useState<'files' | 'search'>('files')
+  const [searchQuery, setSearchQuery] = useState('')
+  const [searchFocus, setSearchFocus] = useState(0)
   useEffect(() => workspace.connect(), [])
   useEffect(() => {
     function keyDown(event: KeyboardEvent): void {
       if (event.metaKey && !event.shiftKey && !event.altKey && event.code === 'KeyO') {
         event.preventDefault()
         setQuickOpen(true)
+      } else if (event.metaKey && event.shiftKey && !event.altKey && event.code === 'KeyF') {
+        event.preventDefault()
+        // Text selected in the editor fills the search box, quoted when it has a space.
+        const inEditor = document.activeElement?.closest('.cm-content')
+        const selected = inEditor ? (document.getSelection()?.toString() ?? '') : ''
+        const query = /\s/.test(selected) ? `"${selected}"` : selected
+        if (query) setSearchQuery(query)
+        setSidebarOpen(true)
+        setSidebarView('search')
+        setSearchFocus((id) => id + 1)
       }
     }
     window.addEventListener('keydown', keyDown, true)
@@ -28,9 +43,24 @@ function App(): React.JSX.Element {
 
   return (
     <div className={sidebarOpen ? 'layout' : 'layout sidebar-hidden'}>
-      <aside id="file-sidebar" className="pane sidebar" aria-label="文件树" hidden={!sidebarOpen}>
+      <aside id="file-sidebar" className="pane sidebar" aria-label="侧栏" hidden={!sidebarOpen}>
         <header className="pane-header">
-          <h2>文件树</h2>
+          <div className="sidebar-views" role="group" aria-label="侧栏视图">
+            <button
+              type="button"
+              aria-pressed={sidebarView === 'files'}
+              onClick={() => setSidebarView('files')}
+            >
+              文件
+            </button>
+            <button
+              type="button"
+              aria-pressed={sidebarView === 'search'}
+              onClick={() => setSidebarView('search')}
+            >
+              搜索
+            </button>
+          </div>
           {vault && (
             <button
               className="icon-button"
@@ -44,7 +74,15 @@ function App(): React.JSX.Element {
             </button>
           )}
         </header>
-        {vault && (
+        {vault && sidebarView === 'search' && (
+          <SearchPanel
+            key={vault.dir}
+            query={searchQuery}
+            onQuery={setSearchQuery}
+            focusId={searchFocus}
+          />
+        )}
+        {vault && sidebarView === 'files' && (
           <>
             <div className="vault-name" title={vault.dir}>
               {vault.dir.split('/').pop() || '/'}
@@ -146,7 +184,7 @@ function App(): React.JSX.Element {
         {doc && backlinks?.path === doc.path && (
           <div className="hit-scroll" data-note-path={doc.path}>
             {backlinks.hits.length ? (
-              <HitList hits={backlinks.hits} label="反向链接列表" />
+              <HitList groups={groupHits(backlinks.hits)} label="反向链接列表" />
             ) : (
               <div className="hit-empty">没有反向链接</div>
             )}
