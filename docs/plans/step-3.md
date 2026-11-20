@@ -575,7 +575,7 @@ callout 的类型和颜色放在一张表里，别名也在表里，例如 `tip`
 ## PR F：Mermaid 图和笔记嵌入
 
 - [x] 依赖：PR C、D、E。
-- [x] 改动文件：`package.json`（加 `mermaid`）、`src/core/subpath.ts`（加 `subpathRange`）、`src/renderer/src/editor/mermaid.ts`、`embeds.ts`、`noteView.ts`（均为新）、`follow.ts`、`renderers.ts`、`NoteEditor.tsx`、`workspace.ts`、`tests/fixtures/vaults/preview/`、`tests/e2e/reading.spec.ts`（新）、`tests/e2e/images.spec.ts`、`features/reading-mode.md`（新）、`ARCHITECTURE.md`、`CONTEXT.md`、`docs/features.md`。`src/renderer/index.html` 没有改。
+- [x] 改动文件：`package.json`（加 `mermaid`）、`src/core/subpath.ts`（加 `subpathRange`）、`src/renderer/src/editor/mermaid.ts`、`embeds.ts`、`noteView.ts`（均为新）、`follow.ts`、`renderers.ts`、`NoteEditor.tsx`、`workspace.ts`、`tests/fixtures/vaults/preview/`、`tests/e2e/reading.spec.ts`（新）、`tests/e2e/images.spec.ts`、`features/reading-mode.md`（新）、`features/images.md`、`features/live-preview.md`、`verify-mote` 的 `loaded-scripts.mjs`（新）和 `SKILL.md`、`ARCHITECTURE.md`、`CONTEXT.md`、`docs/features.md`。`src/renderer/index.html` 没有改。
 - [x] 做的一件事：Mermaid 代码块显示为图。`![[笔记名]]` 显示被嵌入笔记的内容。
 - [x] 你会看到：阅读模式下，`mermaid` 代码块是一张流程图。`![[计划]]` 的位置是 `计划` 的正文，带一条左边线。`![[计划#目标]]` 只显示这一节。
 
