@@ -144,8 +144,13 @@ function createWindow(): void {
   mainWindow.on('ready-to-show', () => mainWindow.show())
 
   mainWindow.webContents.setWindowOpenHandler((details) => {
-    shell.openExternal(details.url)
+    if (isAllowedExternal(details.url)) void shell.openExternal(details.url)
     return { action: 'deny' }
+  })
+  // The window only ever shows mote. A page from anywhere else, such as a file dropped on the
+  // window, would get window.mote and with it the vault.
+  mainWindow.webContents.on('will-navigate', (event, url) => {
+    if (url.split('#')[0] !== mainWindow.webContents.getURL().split('#')[0]) event.preventDefault()
   })
 
   if (is.dev && process.env['ELECTRON_RENDERER_URL']) {
