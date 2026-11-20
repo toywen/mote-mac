@@ -36,8 +36,9 @@ const IMAGE_EXT = /\.(png|jpe?g|gif|webp|svg|bmp|avif)$/i
 // Source lines one screen shows, about. Only used to keep scrolled views apart.
 const VIEW_LINES = 20
 const MAX_SCROLLED = 3
-// JPEG of the 2x window shot, resampled. Chinese body text stays sharp at this width.
-const JPEG_WIDTH = 1800
+// The editor pane of the 2x window shot is about 1500 px wide. At 1200 px, 15 px Chinese text
+// is drawn about 24 px high and stays sharp.
+const JPEG_WIDTH = 1200
 const JPEG_QUALITY = 70
 
 // One screenshot pass: every view, or only the top and the densest, in one mode and scheme.
@@ -254,6 +255,12 @@ const SETTLE_JS = `new Promise((resolve) => {
   tick()
 })`
 
+const CROP_JS = `(() => {
+  const box = document.querySelector('main.pane.editor').getBoundingClientRect()
+  const px = (n) => Math.round(n * devicePixelRatio)
+  return { x: px(box.x), y: px(box.y), width: px(box.width), height: px(box.height) }
+})()`
+
 const MODE_JS = `document.querySelector('[aria-label="切换到阅读模式"]') ? 'live'
   : document.querySelector('[aria-label="切换到实时预览"]') ? 'reading' : 'none'`
 
@@ -291,10 +298,13 @@ function session(planFile) {
   const started = performance.now()
   let run = null
   const state = { mode: null, scheme: null }
+  // Mode and scheme switch only on change. After a failure both are read or set again.
   const setMode = (mode) => {
-    if (vm(run, 'eval', '--js', MODE_JS) !== mode) vm(run, 'press', '--key', 'Meta+E')
-    const now = vm(run, 'eval', '--js', MODE_JS)
-    if (now !== mode) throw new Error(`Cmd+E left the editor in ${now}, not ${mode}`)
+    state.mode ??= vm(run, 'eval', '--js', MODE_JS)
+    if (state.mode === mode) return
+    vm(run, 'press', '--key', 'Meta+E')
+    state.mode = vm(run, 'eval', '--js', MODE_JS)
+    if (state.mode !== mode) throw new Error(`Cmd+E left the editor in ${state.mode}, not ${mode}`)
   }
   const setScheme = (scheme) => {
     if (state.scheme !== scheme) vm(run, 'theme', '--scheme', scheme)
@@ -314,6 +324,8 @@ function session(planFile) {
       try {
         setScheme('dark')
         openNote(run, note.path, note.lines)
+        // The editor pane, in device pixels; the page shows only this part of each shot.
+        shot.crop = JSON.parse(vm(run, 'eval', '--js', CROP_JS))
         for (const phase of PHASES) {
           setScheme(phase.scheme)
           setMode(phase.mode)
@@ -343,15 +355,13 @@ function session(planFile) {
         }
       } catch (error) {
         shot.error = error.message
-        state.scheme = null
+        Object.assign(state, { mode: null, scheme: null })
       }
       shot.ms = Math.round(performance.now() - noteStarted)
       console.error(`  ${note.path}: ${shot.error ? `failed: ${shot.error}` : 'ok'} ${shot.ms} ms`)
       result.notes.push(shot)
       save()
     }
-    // Back to live preview, so the run ends where it started.
-    setMode('live')
     try {
       result.vaultDiff = vm(run, 'vault-diff', '--expect-unchanged', '--out', 'gallery-vault-after')
     } catch (error) {
@@ -398,7 +408,7 @@ function figure(vault, shot, mode, scheme) {
   if (!shot)
     return `<figure class="missing"><div>没有截图</div><figcaption>${caption}</figcaption></figure>`
   const [from, to] = shot.visibleLines
-  return `<figure><a href="${esc(shot.jpg)}" target="_blank"><img loading="lazy" src="${esc(shot.jpg)}" alt="${esc(caption)}"></a><figcaption>${caption} · 第 ${from}–${to} 行</figcaption></figure>`
+  return `<figure><a href="${esc(shot.jpg)}" target="_blank"><img loading="lazy" src="${esc(shot.jpg)}" width="${shot.width}" height="${shot.height}" alt="${esc(caption)}"></a><figcaption>${caption} · 第 ${from}–${to} 行</figcaption></figure>`
 }
 
 function noteBlock(vault, note, id) {
@@ -453,7 +463,7 @@ ${v.notes.map((n, i) => noteBlock(v, n, `${v.slug}-${i}`)).join('\n')}</section>
     )
     .join('\n')
   const html = `<!doctype html>
-<html lang="zh-CN"><head><meta charset="utf-8"><title>第 3 步截图页</title>
+<html lang="zh-CN"><head><meta charset="utf-8"><title>第 3 步截图页</title><link rel="icon" href="data:,">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 :root { --bg: #e9e9ec; --card: #fff; --text: #222; --muted: #666; --line: #ccc }
@@ -482,9 +492,9 @@ article h3 { margin: 0 0 4px; font-size: 16px; word-break: break-all }
 .row.light { margin-top: 4px }
 .label { font-size: 13px; margin-bottom: 4px } .label span { color: var(--muted) }
 .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 8px }
-figure { margin: 0 } figure img { width: 100%; display: block; border: 1px solid var(--line); border-radius: 4px; aspect-ratio: 3 / 2; object-fit: contain; background: #888 }
+figure { margin: 0 } figure img { width: 100%; display: block; border: 1px solid var(--line); border-radius: 4px; height: auto; background: #888 }
 figcaption { font-size: 12px; color: var(--muted) }
-.missing div { aspect-ratio: 3 / 2; display: grid; place-content: center; background: #ddd; border-radius: 4px; color: var(--muted) }
+.missing div { min-height: 200px; display: grid; place-content: center; background: #ddd; border-radius: 4px; color: var(--muted) }
 </style></head>
 <body>
 <nav><ul>${toc}</ul></nav>
@@ -547,31 +557,13 @@ function shootVault(vault, slug, opts) {
     : { notes: [], error: 'the session wrote no result', sessionMs: 0 }
   const totalMs = performance.now() - waited
 
-  // PNG from the evidence dir to a JPEG next to the page; the PNG is then deleted.
+  // Each PNG in the evidence dir becomes a JPEG of the editor pane next to the page.
   let shotCount = 0
   for (const note of result.notes)
     for (const view of note.views)
       for (const shot of Object.values(view.shots)) {
-        const jpg = `${slug}/${path.basename(shot.png, '.png')}.jpg`
-        execFileSync(
-          'sips',
-          [
-            '-s',
-            'format',
-            'jpeg',
-            '-s',
-            'formatOptions',
-            String(JPEG_QUALITY),
-            '--resampleWidth',
-            String(JPEG_WIDTH),
-            shot.png,
-            '--out',
-            path.join(opts.out, jpg)
-          ],
-          { stdio: 'ignore' }
-        )
-        fs.rmSync(shot.png)
-        shot.jpg = jpg
+        shot.jpg = `${slug}/${path.basename(shot.png, '.png')}.jpg`
+        Object.assign(shot, toJpeg(shot.png, note.crop, path.join(opts.out, shot.jpg)))
         shotCount++
       }
   const byPath = new Map(picks.map((p) => [p.path, p]))
@@ -590,6 +582,41 @@ function shootVault(vault, slug, opts) {
     waitMs: totalMs - (result.sessionMs ?? 0),
     shotCount
   }
+}
+
+// Crops the window shot to the editor pane, then scales it to JPEG_WIDTH. sips applies a crop
+// and a resample in one call in the wrong order, so it takes two. The PNG is deleted.
+function toJpeg(png, crop, jpg) {
+  const sips = (...args) => execFileSync('sips', args, { stdio: 'ignore' })
+  const cropped = `${png}.crop.png`
+  sips(
+    '--cropToHeightWidth',
+    String(crop.height),
+    String(crop.width),
+    '--cropOffset',
+    String(crop.y),
+    String(crop.x),
+    png,
+    '--out',
+    cropped
+  )
+  const width = Math.min(JPEG_WIDTH, crop.width)
+  sips(
+    '-s',
+    'format',
+    'jpeg',
+    '-s',
+    'formatOptions',
+    String(JPEG_QUALITY),
+    '--resampleWidth',
+    String(width),
+    cropped,
+    '--out',
+    jpg
+  )
+  fs.rmSync(png)
+  fs.rmSync(cropped)
+  return { width, height: Math.round((crop.height * width) / crop.width) }
 }
 
 function dirBytes(dir) {
