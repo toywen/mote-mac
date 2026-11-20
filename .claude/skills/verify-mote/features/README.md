@@ -46,6 +46,7 @@ Which features are implemented, and which recipe proves each, is tracked in `doc
 - [Backlinks](./backlinks.md): step 2, right pane.
 - [Full-text search](./search.md): step 2, `Cmd+Shift+F`.
 - [Live preview and reading mode](./live-preview.md): step 3, `Cmd+E`. Uses the `tests/fixtures/vaults/preview` vault.
+- [Callouts, tables and task checkboxes](./blocks.md): step 3, PR E. Uses the `tests/fixtures/vaults/preview` vault.
 - [Light and dark color schemes](./dark-mode.md): step 3, the `theme` command.
 - [Link completion](./link-complete.md): step 3, type `[[` in the editor.
 - [Images](./images.md): step 3, `![](path)`, `![[image]]` and the `mote-file://` protocol. Uses the `tests/fixtures/vaults/preview` vault.
