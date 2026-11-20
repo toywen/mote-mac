@@ -31,6 +31,7 @@
     "@lezer/markdown": "^1.8.1",
     "lucide": "^1.77.0",
     "lucide-react": "^1.76.0",
+    "mermaid": "^12.3.0",
     "yaml": "^2.9.1"
   },
   "devDependencies": {

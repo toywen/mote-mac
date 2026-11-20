@@ -1,0 +1,38 @@
+/* Mermaid diagrams. Colors come from the variables in assets/main.css. */
+
+.mote-mermaid {
+  margin: 6px 0;
+  padding: 8px 0;
+  text-align: center;
+  overflow-x: auto;
+}
+
+.mote-mermaid svg {
+  max-width: 100%;
+  height: auto;
+}
+
+.mote-mermaid-pending {
+  background: var(--code-background);
+  border-radius: 5px;
+}
+
+.mote-mermaid-error {
+  text-align: left;
+  background: var(--code-background);
+  border-radius: 5px;
+  padding: 8px 14px;
+}
+
+.mote-mermaid-message {
+  color: var(--link-missing);
+  white-space: pre-wrap;
+  margin-bottom: 6px;
+}
+
+.mote-mermaid-error pre {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 0.88em;
+  white-space: pre-wrap;
+}
