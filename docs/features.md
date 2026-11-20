@@ -71,11 +71,11 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | ⬜ 未实现 | 编辑器-5 | 点击任务复选框，切换完成状态 | | |
 | ✅ 已实现 | 编辑器-6 | 属性显示为 YAML 代码块，可以直接编辑 | 测试：live preview hides syntax away from the selection and shows it at the selection；verify：live-preview | 2026-11-20 第 3 步 PR B。等宽字体加底色。选区碰到属性块时显示 `---` |
 | 🟡 部分 | 编辑器-9 | `Cmd+E` 切到阅读模式。完整渲染表格、callout、Mermaid 图和 `![[笔记名]]` 嵌入 | 测试：Cmd+E switches to reading mode and back；verify：live-preview | 2026-11-20 第 3 步 PR B 做了 `Cmd+E` 和标题栏按钮。整个窗口一个编辑器模式，切换笔记时不变。表格和 callout 在 PR E，Mermaid 和嵌入在 PR F，现在显示源码 |
-| ⬜ 未实现 | 链接-1 | 点击双链或 Markdown 链接，跳到目标。带 `#标题` 时跳到这个标题 | | |
-| 🟡 部分 | 链接-2 | 目标不存在的双链用不同颜色显示。点击它，新建这篇笔记 | 测试：live preview hides syntax away from the selection and shows it at the selection | 2026-11-20 第 3 步 PR B 做了颜色，Markdown 链接也算。点击新建在 PR C |
-| ⬜ 未实现 | 链接-3 | 链接目标不是笔记时，用 macOS 的默认程序打开 | | |
+| 🟡 部分 | 链接-1 | 点击双链或 Markdown 链接，跳到目标。带 `#标题` 时跳到这个标题 | 测试：clicking a link opens its target and Cmd+Option+Left goes back；verify：follow-links | 2026-11-20 第 3 步 PR C。没有显示源码的链接单击就跳，`Cmd+单击` 任何时候都跳。标题和块的位置照搬 Obsidian 的 `resolveSubpath`，6 个副本 233 处 0 不一致。真实窗口逐个点击在 `links-copy` 和 `life-os-copy` 上 0 不一致，另外 4 个副本在 PR H |
+| ✅ 已实现 | 链接-2 | 目标不存在的双链用不同颜色显示。点击它，新建这篇笔记 | 测试：clicking a missing link creates the note where the vault config says；verify：follow-links | 2026-11-20 第 3 步 PR B 做了颜色，PR C 做了新建。新笔记的路径照搬 Obsidian 的 `openLinkText`，按笔记库配置的新笔记位置。新建的是空文件，`vault-diff` 只多出这一个文件 |
+| 🟡 部分 | 链接-3 | 链接目标不是笔记时，用 macOS 的默认程序打开 | 测试：clicking a link opens its target and Cmd+Option+Left goes back；verify：follow-links | 2026-11-20 第 3 步 PR C。测试证明 mote 把笔记库内的正确路径交给了 macOS，没有真的打开程序。网址只放行 `http`、`https` 和 `mailto` |
 | ✅ 已实现 | 链接-4 | 输入 `[[` 后弹出笔记名补全。插入的链接格式按笔记库配置决定 | 测试：typing [[ completes note names in the vault's link format；verify：link-complete；`npm test` 对照 Obsidian 导出的 `links.obsidian-linktext.json` | 2026-11-20。链接文字照搬 Obsidian 1.15.1 的 `fileToLinktext` 和 `[[` 列表插入的文字（`PR`），`links` 测试笔记库 540 对、2700 次插入和 Obsidian 完全相同。5 个副本 2,924,850 个链接用 `check-linktext.mjs` 解析回目标，5427 个不回。不回的是 3 篇文件名特殊的笔记，Obsidian 插入同样的文字，自己也解析不回，见 PR G 的结果。不补全标题、别名和附件 |
-| ⬜ 未实现 | 链接-8 | `Cmd+Option+←` 后退，`Cmd+Option+→` 前进 | | |
+| ✅ 已实现 | 链接-8 | `Cmd+Option+←` 后退，`Cmd+Option+→` 前进 | 测试：clicking a link opens its target and Cmd+Option+Left goes back；verify：follow-links | 2026-11-20 第 3 步 PR C。回到一篇笔记时，光标在离开时的位置。已删除的笔记会跳过 |
 
 ## 第 4 步：新建、改名、移动和删除
 
@@ -146,7 +146,7 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | 状态 | 编号 | 检查 | 步骤 | 结果 |
 | --- | --- | --- | --- | --- |
 | ✅ 通过 | 验收-1 | 打开 5 个本机笔记库的每篇笔记，没有报错。打开前后用脚本对比全部文件的哈希值，全部不变 | 1 | 2026-11-20：`verify-mote walk-notes` 在 5 个副本上逐篇打开全部 810 篇笔记，没有页面错误和提示框，`vault-diff` 输出 `unchanged`。见 verify：backlinks |
-| 🟡 部分通过 | 验收-2 | 5 个笔记库里的每个双链和 Markdown 链接，在 mote 里跳到的目标和在 Obsidian 里相同 | 2、3 | 解析目标在 5 个副本上和 Obsidian 完全一致（2026-11-20）。点击跳转属于第 3 步 |
+| 🟡 部分通过 | 验收-2 | 5 个笔记库里的每个双链和 Markdown 链接，在 mote 里跳到的目标和在 Obsidian 里相同 | 2、3 | 解析目标在 5 个副本上和 Obsidian 完全一致（2026-11-20）。逐个点击：`life-os-copy` 113 篇笔记点了 101 个链接，0 不一致（2026-11-20，第 3 步 PR C）。另外 4 个副本在 PR H |
 | ⬜ 未测 | 验收-3 | 在 `~/life-os` 和 `~/workspace/Pesemic` 里，各改名或移动一篇有链接进出的笔记。用 `diff -r` 对比操作前的副本，只有这次移动和相关链接有变化 | 4 | |
 | ⬜ 未测 | 验收-4 | mote 开着一篇笔记时，在 Obsidian 里修改这篇笔记。mote 立即显示新内容，两边都不丢字 | 1 | 功能已在第 1 步做完，还没在副本上跑 |
 | ⬜ 未测 | 验收-5 | 在 `~/life-os` 里按 `Cmd+Shift+D`，日记路径符合 `daily-notes.json`。在没有日记配置的笔记库里，日记是根目录下的 `YYYY-MM-DD.md` | 5 | |

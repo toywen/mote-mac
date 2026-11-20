@@ -373,10 +373,10 @@ rebase 到 `f4aa01d` 之前，在 `ab712d1` 的应用代码上也跑过 3 次。
 
 ## PR C：点击链接、新建笔记、后退和前进
 
-- [ ] 依赖：PR B。
-- [ ] 改动文件：`src/core/linkDest.ts`（新）、`src/core/subpath.ts`（新）、`src/core/markdown.ts`、`src/renderer/src/editor/follow.ts`（新）、`workspace.ts`、`App.tsx`、`src/main/vault.ts`、`src/main/index.ts`、`tools/obsidian-export.mjs`、`tools/compare-links.mjs`、`verify-mote.mjs`、`tests/e2e/links.spec.ts`（新）、`features/follow-links.md`、`ARCHITECTURE.md`、`docs/features.md`。
-- [ ] 做的一件事：点击链接跳到链接去向。`Cmd+Option+←` 后退，`Cmd+Option+→` 前进。
-- [ ] 你会看到：点 `[[项目/计划]]` 打开 `计划`。点 `[[计划#目标]]` 打开后，`目标` 这个标题在窗口顶部。点一个不存在的双链，文件树里多出这篇笔记，编辑器打开它。点 PDF 链接，macOS 用默认程序打开。按 `Cmd+Option+←` 回到上一篇，光标在离开时的位置。
+- [x] 依赖：PR B。
+- [x] 改动文件：`src/core/linkDest.ts`（新）、`src/core/subpath.ts`（新）、`src/core/markdown.ts`、`src/renderer/src/editor/follow.ts`（新）、`workspace.ts`、`App.tsx`、`src/main/vault.ts`、`src/main/index.ts`、`tools/obsidian-export.mjs`、`tools/compare-links.mjs`、`verify-mote.mjs`、`tests/e2e/links.spec.ts`（新）、`features/follow-links.md`、`ARCHITECTURE.md`、`docs/features.md`。
+- [x] 做的一件事：点击链接跳到链接去向。`Cmd+Option+←` 后退，`Cmd+Option+→` 前进。
+- [x] 你会看到：点 `[[项目/计划]]` 打开 `计划`。点 `[[计划#目标]]` 打开后，`目标` 这个标题在窗口顶部。点一个不存在的双链，文件树里多出这篇笔记，编辑器打开它。点 PDF 链接，macOS 用默认程序打开。按 `Cmd+Option+←` 回到上一篇，光标在离开时的位置。
 
 点击规则：元素没有显示源码时，单击就跳。任何时候 `Cmd+单击` 都跳，属性块里的链接也是。
 
@@ -386,12 +386,38 @@ rebase 到 `f4aa01d` 之前，在 `ab712d1` 的应用代码上也跑过 3 次。
 
 验证：
 
-- [ ] 单元：Vitest 测 `linkDest` 的 4 种去向，测新建路径在 3 种新笔记位置配置下的结果，测 `subpath` 的标题和块引用。e2e 测试 `clicking a link opens its target and Cmd+Option+Left goes back`、`clicking a missing link creates the note where the vault config says`。
-- [ ] 对照：带 `#` 的链接落在的行，`links` 副本和 5 个副本都和 Obsidian 一致。
-- [ ] 真实窗口，逐个点击：`verify-mote` 加 `walk-links --obsidian <导出文件>`。它在每篇笔记里点击每个已渲染的链接，记下打开的路径，再后退。每篇笔记按目标汇总次数，和导出文件比较。这个 PR 先在 `links` 副本和 `life-os-copy` 上跑到 0 处不一致，5 个副本的完整结果在 PR H。
-- [ ] 真实窗口，新建：点不存在的双链后，`vault-diff` 只多出这一个空文件。
-- [ ] 真实窗口，默认程序：点附件链接后，用 `main-eval` 读到 `shell.openPath` 收到的路径在副本内。测试里把 `shell.openPath` 换成记录函数，不真的打开程序。
+- [x] 单元：Vitest 测 `linkDest` 的 4 种去向，测新建路径在 3 种新笔记位置配置下的结果，测 `subpath` 的标题和块引用。e2e 测试 `clicking a link opens its target and Cmd+Option+Left goes back`、`clicking a missing link creates the note where the vault config says`。
+- [x] 对照：带 `#` 的链接落在的行，`links` 副本和 5 个副本都和 Obsidian 一致。
+- [x] 真实窗口，逐个点击：`verify-mote` 加 `walk-links --obsidian <导出文件>`。它在每篇笔记里点击每个已渲染的链接，记下打开的路径，再后退。每篇笔记按目标汇总次数，和导出文件比较。这个 PR 先在 `links` 副本和 `life-os-copy` 上跑到 0 处不一致，5 个副本的完整结果在 PR H。
+- [x] 真实窗口，新建：点不存在的双链后，`vault-diff` 只多出这一个空文件。
+- [x] 真实窗口，默认程序：点附件链接后，用 `main-eval` 读到 `shell.openPath` 收到的路径在副本内。测试里把 `shell.openPath` 换成记录函数，不真的打开程序。
 - [ ] 性能：点击到目标笔记可以编辑的时间，`workspace-copy` 上 50 次的中位数。和从文件树打开同一篇笔记比较，超过它的 1.5 倍算失败。
+
+### 结果
+
+2026-11-20 实测。写代码和跑检查的子代理在应用退出时中断，这一节由合并的人根据它留下的证据补写。
+
+规则读自 Obsidian 1.15.1 的 `app.js`：
+
+| 规则 | 读的函数 | 放在哪 |
+| --- | --- | --- |
+| 不存在的笔记新建在哪 | `WorkspaceLeaf.openLinkText` 里目标不存在的分支，`getNewFileParent`、`getMarkdownNewFileParent`、`createNewFile`、`getOrCreateFolder`、`getAvailablePath` | `src/core/linkDest.ts` 的 `newNotePath` |
+| `#标题`、`#上级#下级`、`#^块` 落在哪 | `resolveSubpath` 和它的标题规范化 | `src/core/subpath.ts` |
+
+检查结果：
+
+- 对照：6 个副本 2228 处链接、1975 处反向链接、233 处带 `#` 的链接落点，0 处不一致。
+- 单元：Vitest 62 个通过，1 个预期失败（PR A 记下的那条）。
+- e2e：14 个通过，其中新测试两个。
+- 真实窗口，逐个点击：`links-copy` 11 篇笔记点了 48 个链接，`life-os-copy` 113 篇笔记点了 101 个链接，都是 0 处不一致。嵌入和属性里的链接这一步点不了，从期望里减掉了 6 处和 5 处。
+- 真实窗口，`basic`：点不存在的双链后，`vault-diff` 只多出 `新想法.md` 一个空文件。在有链接的行尾用输入法输入“测试”，文件只多出这两个字，159 字节变成 165 字节。重新启动后 `walk-notes` 打开 5 篇，`errorCount` 0，`vault-diff` 输出 `unchanged`。
+
+和别的 PR 合在一起时发现的一件事。PR G 的补全测试在输入 `[[计` 后立刻按回车。CodeMirror 在列表弹出后的 75 毫秒内不接受回车，防止误选。加上点击链接的代码后，列表弹出得稍晚，这个测试每次都失败。测试改成先等 150 毫秒。人按不了这么快，产品行为没有改。
+
+没有做的：
+
+- 性能那一条没有量。PR H 量。
+- 另外 4 个副本的逐个点击在 PR H。
 
 ## PR D：图片
 
