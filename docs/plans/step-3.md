@@ -395,20 +395,79 @@ rebase 到 `f4aa01d` 之前，在 `ab712d1` 的应用代码上也跑过 3 次。
 
 ## PR D：图片
 
-- [ ] 依赖：PR B。
-- [ ] 改动文件：`src/main/index.ts`、`src/main/vault.ts`、`src/renderer/index.html`、`src/renderer/src/editor/images.ts`（新）、`tests/e2e/images.spec.ts`（新）、`features/images.md`、`docs/adr/0007-mote-file-protocol.md`（只改状态行）、`ARCHITECTURE.md`、`docs/features.md`。
-- [ ] 做的一件事：`![](路径)` 和 `![[图片名]]` 在两种编辑器模式下显示图片。
-- [ ] 你会看到：`欢迎.md` 里 `![[图片.png]]` 的位置出现图片。光标移到那一行时，图片上方显示源码。
+- [x] 依赖：PR B。
+- [x] 改动文件：`src/core/fileUrl.ts`（新）、`src/main/fileProtocol.ts`（新）、`src/main/index.ts`、`src/renderer/index.html`、`src/renderer/src/editor/images.ts`、`images.css`（均为新）、`links.ts`、`renderers.ts`、`tests/fixtures/vaults/preview/`、`tests/e2e/images.spec.ts`（新）、`features/images.md`、`docs/adr/0007-mote-file-protocol.md`（只改状态行）、`ARCHITECTURE.md`、`CONTEXT.md`、`docs/features.md`。没有改 `src/main/vault.ts`，协议直接用它的 `filePath`。
+- [x] 做的一件事：`![](路径)` 和 `![[图片名]]` 在两种编辑器模式下显示图片。
+- [x] 你会看到：`欢迎.md` 里 `![[图片.png]]` 的位置出现图片。光标移到那一行时，图片上方显示源码。
 
 主进程注册 `mote-file://`，只读当前笔记库里的文件，用 `parseVaultPath` 拒绝 `..` 和以 `.` 开头的部分。内容安全策略的 `img-src` 加上 `mote-file:` 和 `https:`。`![[图片.png|300]]` 按 300 像素宽显示。不是图片的嵌入显示为链接。
 
 验证：
 
-- [ ] 单元：e2e 测试 `images load from the vault and nothing outside it`。它检查图片的 `naturalWidth` 大于 0。它再请求 `mote-file://` 下的 `../` 路径、`.obsidian/app.json` 和笔记库外的绝对路径，全部失败。
-- [ ] 真实窗口，`knowledge-base-copy`：打开一篇有本地图片的笔记，页面里每个本地图片的 `naturalWidth` 都大于 0。
-- [ ] 真实窗口，`workspace-copy`：打开一篇有 `https` 图片的笔记，至少一张加载成功。断网时这一条记为未证明。
-- [ ] `vault-diff --expect-unchanged` 输出 `unchanged`。
-- [ ] 性能：`workspace-copy` 上 `walk-notes` 的总耗时，和 PR B 合并后的 main 比较，超过 1.5 倍算失败。
+- [x] 单元：e2e 测试 `images load from the vault and nothing outside it`。它检查图片的 `naturalWidth` 大于 0。它再请求 `mote-file://` 下的 `../` 路径、`.obsidian/app.json` 和笔记库外的绝对路径，全部失败。
+- [ ] 真实窗口，`knowledge-base-copy`：打开一篇有本地图片的笔记，页面里每个本地图片的 `naturalWidth` 都大于 0。这个副本没有本地图片，改在 `workspace-copy` 上查，见结果。
+- [x] 真实窗口，`workspace-copy`：打开一篇有 `https` 图片的笔记，至少一张加载成功。断网时这一条记为未证明。
+- [x] `vault-diff --expect-unchanged` 输出 `unchanged`。
+- [x] 性能：`workspace-copy` 上 `walk-notes` 的 `medianNoteMs`，和 PR B 合并后的 main 比较，超过 1.5 倍算失败。
+
+### 结果
+
+2026-11-20 实测。
+
+**协议怎么拒绝。** 一个地址只有一种写法：`mote-file://vault/<库内路径>`，路径的每一段单独百分号编码。`src/core/fileUrl.ts` 的 `fileUrl` 和 `parseFileUrl` 是唯一的定义，主进程、渲染进程和测试都用它。主进程的 `serveFile` 按下面的顺序检查，拒绝时不返回任何字节：
+
+| 请求 | Chromium 先做的事 | 谁拒绝 | 状态码 |
+| --- | --- | --- | --- |
+| `vault/../outside/secret.png` | 把 `..` 算掉，变成 `vault/outside/secret.png` | 笔记库里没有这个文件 | 404 |
+| `vault/..%2Foutside%2Fsecret.png` | 不动 | `parseFileUrl` 解码后交给 `parseVaultPath`，拒绝 `..` | 400 |
+| `vault/.obsidian/app.json`、`vault/.obsidian/secret.png` | 不动 | `parseVaultPath` 拒绝以 `.` 开头的部分 | 400 |
+| `vault//<绝对路径>` | 不动 | 空的一段，`parseVaultPath` 拒绝 | 400 |
+| `mote-file:///<绝对路径>` | 第一段变成主机名 | 主机名不是 `vault` | 400 |
+| 别的主机、带 `?` 或 `#`、坏的百分号编码 | | `parseFileUrl` | 400 |
+| `图片.md` 这样的笔记，或别的非图片扩展名 | | `imageType` 不认识这个扩展名 | 403 |
+| 指向笔记库外的文件符号链接 | | `open` 带 `O_NOFOLLOW` | 404 |
+| 路径上有指向笔记库外的文件夹符号链接 | | `Vault.filePath` 比较 `realpath` | 404 |
+| 没有打开的笔记库 | | `serveFile` | 404 |
+| 非 GET 请求 | | `serveFile` | 405 |
+
+图片扩展名和 Obsidian 一样：png、jpg、jpeg、gif、svg、webp、bmp、avif。查表用 `Map`，所以 `a.constructor` 这样的名字不算图片。
+
+**大小。** 规则照搬 Obsidian 1.15.0 `app.js` 的 `Y0` 和 `Zl`。双链嵌入读别名，Markdown 图片读方括号里的文字。最后一个 `|` 后面是 `300` 或 `300x200` 时，它是宽高。没有 `|` 时整段文字是数字也算，所以 `![300](a.png)` 也是 300 宽。
+
+**单元和 e2e。** Vitest 34 个通过，1 个预期失败（PR A 记下的那条）。e2e 11 个通过，其中新测试一个。它在测试副本外放一张真图片，再在副本里建一个指向它的文件符号链接和一个文件夹符号链接。窗口里 11 种越界请求都加载失败，主进程用 `net.fetch` 请求同样的地址，状态码都不低于 400，正文 0 字节。同一个工具请求库内图片，返回 200 和整张图片的字节，所以这些失败不是工具本身的问题。
+
+**真实窗口。**
+
+| 检查 | 结果 |
+| --- | --- |
+| `basic`，`欢迎.md` | `![[图片.png]]` 解析到 `附件/图片.png`，`naturalWidth` 1。点击图片后这一行是 `![[图片.png]]`，源码底边 357.4，图片顶边 365.2，图片在源码下面。`Cmd+E` 后这一行没有源码，图片还在。`vault-diff --expect-unchanged` 输出 `unchanged` |
+| 输入法 | 在图片下一行用 `ime --text 测试 --commit 测试 --no-enter`。`vault-diff` 只列出 `欢迎.md`，`diff` 只多出 `测试`，文件从 159 字节变成 165 字节 |
+| `basic`，`walk-notes` | 实时预览和阅读模式各 5 篇，`errorCount` 都是 0，`vault-diff` 输出 `unchanged` |
+| `workspace-copy`，本地图片 | `5-hermes.md` 有 8 张，`别再只做向量检索…路线图.md` 有 10 张。逐页往下翻，每张 `naturalWidth` 在 1096 到 1812 之间，宽度缩到编辑器的 678 像素。两篇都没有占位框。阅读模式下同样 |
+| `workspace-copy`，`https` 图片 | `knowledge-base/raw/articles/Claude Managed Agents get to production 10x faster.md` 的第一张来自 `cdn.prod.website-files.com`，`naturalWidth` 2032。阅读模式下同样。有一处 `![](https://www.youtube.com/watch?v=…)` 是网页不是图片，显示为占位框 |
+
+`knowledge-base-copy` 有 125 处图片，全是 `https`，没有一个图片文件。所以本地图片在 `workspace-copy` 上查。
+
+**性能，打开。** 基线用 PR B 的数，不重量：PR B 在 `workspace-copy` 上量到 `medianNoteMs` 64.7 毫秒（3 次是 64.3、68.5、64.7），1.5 倍是 97 毫秒。这个分支跑 1 次：603 篇，`errorCount` 0，`durationMs` 115,620，`medianNoteMs` 64.7 毫秒，通过。`vault-diff --expect-unchanged` 输出 `unchanged`。
+
+**性能，输入。** `bench-typing --chars 200 --where end`，`knowledge-base-copy`。
+
+| 笔记 | 光标附近 DOM 里的图片 | 次 | 每键中位数 | p95 | 最大 | 脚本均值 |
+| --- | --- | --- | --- | --- | --- | --- |
+| `你不知道的 Agent：原理、架构与工程实践.md`，25 张 | 0 张，图片都在中间 | 1 | 6.73 | 8.64 | 21.55 | 3.60 |
+| 同上 | | 2 | 6.58 | 8.02 | 28.39 | 3.18 |
+| `Claude Managed Agents get to production 10x faster.md`，21 张 | 5 张，前后都加载完 | 1 | 5.69 | 7.03 | 12.34 | 2.69 |
+| 同上 | | 2 | 4.63 | 5.80 | 7.74 | 2.10 |
+
+单位是毫秒，都低于 16，通过。第一篇的图片不在光标附近，只量到每次改动重建 25 个图片装饰的开销。所以又换了一篇末尾有图片的笔记。输入前后 DOM 里都是同样 5 张，都已加载。图片组件的 `eq` 比较地址和大小，别处输入不重建 `<img>`，e2e 测试读同一个元素在输入后还在页面里。
+
+**还没证明的。**
+
+- 换笔记库，或者图片文件在磁盘上被替换后，窗口可能还显示旧图。地址里只有库内路径，Chromium 可能按地址缓存。没有测。
+- 不是图片的嵌入显示为链接，点击跳转等 PR C。
+- `![](a.png)` 这种 Markdown 图片的目标是笔记时，显示占位框，不显示为链接。5 个副本里没有这种写法。
+- 输入法用 CDP 模拟，不是真的 macOS 输入法。
+- 真实窗口和性能跑在 rebase 到 `6732373`（PR G）之前的构建上。rebase 后重跑了 4 项自动检查。PR G 只改补全弹窗和文档。
 
 ## PR E：callout、表格和任务复选框
 

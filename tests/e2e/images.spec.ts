@@ -165,7 +165,16 @@ test('images load from the vault and nothing outside it', async () => {
         { urls, method }
       )
     expect(await fetchAll([good], 'GET')).toEqual([[200, image.length]])
-    for (const [i, [status, bytes]] of (await fetchAll(refused, 'GET')).entries()) {
+    const answers = await fetchAll(refused, 'GET')
+    await writeFile(
+      info.outputPath('refusals.json'),
+      JSON.stringify(
+        answers.map(([status], i) => [refused[i], status]),
+        null,
+        2
+      )
+    )
+    for (const [i, [status, bytes]] of answers.entries()) {
       expect(status, refused[i]).toBeGreaterThanOrEqual(400)
       expect(bytes, refused[i]).toBe(0)
     }
