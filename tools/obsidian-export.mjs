@@ -3,6 +3,15 @@
 //   node tools/obsidian-export.mjs ~/mote-link-check/wiki-copy [more copies...]
 // writes ~/mote-link-check/wiki-copy.obsidian-links.json as { obsidian, files, resolved, unresolved }.
 //
+//   node tools/obsidian-export.mjs --linktext <copy>...
+// writes <copy>.obsidian-linktext.json with the link text Obsidian makes for every source note and
+// target file, under each newLinkFormat with useMarkdownLinks off and on:
+//   { obsidian, files, after, formats: [{ useMarkdownLinks, newLinkFormat, links }] }
+// links[source][target] is [fileToLinktext, generateMarkdownLink, inserts]. inserts[i] is what
+// picking target from the [[ suggestions with Enter does when after[i] follows the cursor:
+// [replacement, characters replaced after the cursor, cursor offset from the [[]. This mode
+// changes the copy's .obsidian/app.json, so give it a copy under the system temp dir.
+//
 // Obsidian runs with its own --user-data-dir, so the user's Obsidian settings and vault list are
 // never read or written. The loader picks the newest obsidian-*.asar in that dir, so the script
 // copies the user's installed version there to pin it. Obsidian writes the copy's .obsidian folder.
@@ -19,11 +28,17 @@ const ALLOWED = [join(homedir(), 'mote-link-check'), realpathSync(tmpdir())]
 const TIMEOUT_MS = 180_000
 
 const vaults = process.argv.slice(2)
+const linktext = vaults[0] === '--linktext'
+if (linktext) vaults.shift()
 if (vaults.length === 0) {
-  console.error('usage: obsidian-export.mjs <vault copy>...')
+  console.error('usage: obsidian-export.mjs [--linktext] <vault copy>...')
   process.exit(2)
 }
 if (!existsSync(ASAR)) throw new Error(`missing ${ASAR}; set OBSIDIAN_VERSION`)
+
+// Text after the cursor when a suggestion is picked: nothing, the ]] Obsidian closes [[ with, an
+// alias, text before the next ]], and a link before any ]].
+const AFTER = ['', ']]', '|别名]]', ' 尾]] 后', ' [[下]]']
 
 async function devtoolsPort(child) {
   return new Promise((resolve, reject) => {
@@ -43,10 +58,90 @@ async function devtoolsPort(child) {
   })
 }
 
+// Runs in Obsidian's window. The [[ suggestion picks a file through a stand-in editor that records
+// the change, so no note is written.
+async function linktextInObsidian(after) {
+  const { metadataCache, fileManager, vault, workspace } = window.app
+  await new Promise((resolve) => workspace.onLayoutReady(resolve))
+  while (!metadataCache.initialized) await new Promise((resolve) => setTimeout(resolve, 200))
+  const suggest = workspace.editorSuggest.suggests.find((candidate) => candidate.suggestManager)
+  if (!suggest) throw new Error('no [[ suggestion found')
+  const files = vault.getFiles()
+  const notes = files.filter((file) => file.extension === 'md')
+  const enter = new KeyboardEvent('keydown', { key: 'Enter' })
+  const insert = (source, target, text) => {
+    let picked = null
+    const editor = {
+      getLine: () => '[[' + text,
+      transaction: (tx) => (picked = tx),
+      focus: () => null
+    }
+    suggest.context = {
+      editor,
+      start: { line: 0, ch: 2 },
+      end: { line: 0, ch: 2 },
+      query: '',
+      file: source
+    }
+    suggest.selectSuggestion({ type: 'file', file: target, path: target.path, score: 0 }, enter)
+    const [change, ...more] = picked?.changes ?? []
+    const { selection } = picked ?? {}
+    if (!change || more.length || change.from.ch !== 0 || selection.from.ch !== selection.to.ch)
+      throw new Error(`unexpected change for ${target.path}: ${JSON.stringify(picked)}`)
+    return [change.text, change.to.ch - 2, selection.from.ch]
+  }
+  const formats = []
+  for (const useMarkdownLinks of [false, true])
+    for (const newLinkFormat of ['shortest', 'relative', 'absolute']) {
+      vault.setConfig('useMarkdownLinks', useMarkdownLinks)
+      vault.setConfig('newLinkFormat', newLinkFormat)
+      const links = {}
+      for (const source of notes) {
+        links[source.path] = {}
+        for (const target of files)
+          links[source.path][target.path] = [
+            metadataCache.fileToLinktext(target, source.path, !useMarkdownLinks),
+            fileManager.generateMarkdownLink(target, source.path),
+            after.map((text) => insert(source, target, text))
+          ]
+      }
+      formats.push({ useMarkdownLinks, newLinkFormat, links })
+    }
+  return {
+    obsidian: window.electron.ipcRenderer.sendSync('version'),
+    vault: vault.adapter.basePath,
+    files: files.map((file) => file.path),
+    after,
+    formats
+  }
+}
+
+async function exportLinktext(page, vault) {
+  const { vault: opened, ...result } = await page.evaluate(linktextInObsidian, AFTER)
+  if (opened !== vault) throw new Error(`Obsidian opened ${opened}, not ${vault}`)
+  if (result.obsidian !== VERSION)
+    throw new Error(`Obsidian ran ${result.obsidian}, not ${VERSION}`)
+  const out = join(dirname(vault), basename(vault) + '.obsidian-linktext.json')
+  writeFileSync(out, JSON.stringify(result))
+  const sources = Object.keys(result.formats[0].links).length
+  console.log(
+    JSON.stringify({
+      out,
+      obsidian: result.obsidian,
+      files: result.files.length,
+      sources,
+      pairs: sources * result.files.length,
+      formats: result.formats.length,
+      inserts: sources * result.files.length * result.formats.length * AFTER.length
+    })
+  )
+}
+
 async function exportVault(input) {
   const vault = realpathSync(input)
-  if (!ALLOWED.some((root) => vault.startsWith(realpathSync(root) + '/')))
-    throw new Error(`refusing ${vault}: only copies under ${ALLOWED.join(' or ')}`)
+  const allowed = linktext ? ALLOWED.slice(1) : ALLOWED
+  if (!allowed.some((root) => vault.startsWith(realpathSync(root) + '/')))
+    throw new Error(`refusing ${vault}: only copies under ${allowed.join(' or ')}`)
   const out = join(dirname(vault), basename(vault) + '.obsidian-links.json')
   const userData = mkdtempSync(join(tmpdir(), 'obsidian-export-'))
   copyFileSync(ASAR, join(userData, basename(ASAR)))
@@ -70,6 +165,10 @@ async function exportVault(input) {
         if (await candidate.evaluate(() => !!window.app?.metadataCache).catch(() => false))
           page = candidate
       if (!page) await new Promise((resolve) => setTimeout(resolve, 500))
+    }
+    if (linktext) {
+      await exportLinktext(page, vault)
+      return
     }
     const result = await page.evaluate(async (timeout) => {
       const { metadataCache, vault } = window.app

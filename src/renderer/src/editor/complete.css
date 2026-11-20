@@ -1,0 +1,41 @@
+/* The [[ completion list. Colors come from the variables in assets/main.css. */
+
+.editor-content .cm-tooltip.cm-tooltip-autocomplete {
+  background: var(--background);
+  color: var(--text);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+  overflow: hidden;
+}
+
+.editor-content .cm-tooltip.cm-tooltip-autocomplete > ul {
+  font-family: var(--font-text);
+  min-width: 220px;
+  max-height: 16em;
+  padding: 4px;
+}
+
+.editor-content .cm-tooltip.cm-tooltip-autocomplete > ul > li {
+  padding: 4px 8px;
+  border-radius: 4px;
+  line-height: 1.4;
+}
+
+.editor-content .cm-tooltip.cm-tooltip-autocomplete > ul > li[aria-selected] {
+  background: var(--selected);
+  color: var(--text);
+}
+
+.editor-content .cm-tooltip-autocomplete .cm-completionMatchedText {
+  text-decoration: none;
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.editor-content .cm-tooltip-autocomplete .cm-completionDetail {
+  margin-left: 0.75em;
+  font-style: normal;
+  font-size: 0.85em;
+  color: var(--muted);
+}

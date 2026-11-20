@@ -1,7 +1,8 @@
 import type { VaultPath } from './ipc.ts'
 import type { LinkRef, ResolvedLinks } from './model.ts'
 
-// Ported from Obsidian 1.15.1 app.js: getLinkpathDest, uniqueFileLookup, aJ, pi, wR.
+// Ported from Obsidian 1.15.1 app.js: getLinkpathDest, getFirstLinkpathDest, uniqueFileLookup, aJ,
+// pi, wR.
 export type LinkIndex = {
   paths: Set<VaultPath>
   byName: Map<string, VaultPath[]>
@@ -24,12 +25,9 @@ export function buildLinkIndex(files: Iterable<VaultPath>): LinkIndex {
   return { paths, byName }
 }
 
-export function resolveLink(
-  index: LinkIndex,
-  linkpath: string,
-  source: VaultPath
-): VaultPath | null {
-  if (linkpath === '') return index.paths.has(source) ? source : null
+// Every file linkpath can mean from source, best first.
+export function linkpathDest(index: LinkIndex, linkpath: string, source: VaultPath): VaultPath[] {
+  if (linkpath === '') return index.paths.has(source) ? [source] : []
   let path = linkpath.toLowerCase()
   let name = baseName(path)
   let candidates = name.includes('.') ? index.byName.get(name) : undefined
@@ -38,8 +36,8 @@ export function resolveLink(
     name = baseName(path)
     candidates = index.byName.get(name)
   }
-  if (!candidates) return null
-  if (name === path && candidates.length === 1) return candidates[0]
+  if (!candidates) return []
+  if (name === path && candidates.length === 1) return [candidates[0]]
   let folder = parent(source).toLowerCase()
   if (path.startsWith('./') || path.startsWith('../')) {
     if (path.startsWith('./../')) path = path.slice(2)
@@ -54,18 +52,26 @@ export function resolveLink(
       if (folder !== '') folder += '/'
       path = folder + path
     }
-    for (const file of candidates) if (file.toLowerCase() === path) return file
+    for (const file of candidates) if (file.toLowerCase() === path) return [file]
   }
   if (path.startsWith('/')) path = path.slice(1)
-  for (const file of candidates) if (file.toLowerCase() === path) return file
-  if (linkpath.startsWith('/')) return null
+  for (const file of candidates) if (file.toLowerCase() === path) return [file]
+  if (linkpath.startsWith('/')) return []
   const near: VaultPath[] = []
   const far: VaultPath[] = []
   for (const file of candidates) {
     const lower = file.toLowerCase()
     if (lower.endsWith(path)) (lower.startsWith(folder) ? near : far).push(file)
   }
-  return near.sort(byLength)[0] ?? far.sort(byLength)[0] ?? null
+  return near.sort(byLength).concat(far.sort(byLength))
+}
+
+export function resolveLink(
+  index: LinkIndex,
+  linkpath: string,
+  source: VaultPath
+): VaultPath | null {
+  return linkpathDest(index, linkpath, source)[0] ?? null
 }
 
 const unresolvedKey = (linkpath: string): string =>
