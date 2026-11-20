@@ -5,7 +5,8 @@ import {
   StateField,
   type EditorState,
   type Extension,
-  type Range
+  type Range,
+  type Transaction
 } from '@codemirror/state'
 import { Decoration, EditorView, type DecorationSet } from '@codemirror/view'
 import type { EditorMode, LinkContext, PreviewItem } from './preview'
@@ -44,16 +45,36 @@ function collect(state: EditorState): PreviewItem[] {
   return items
 }
 
+const rangeKey = (from: number, to: number): string => `${from}:${to}`
+
 // The reveal rule: an item shows source only in live preview, while the editor has focus and a
-// selection range touches the item's reveal range, boundaries included.
-function reveal(state: EditorState, items: PreviewItem[]): number[] {
+// selection range touches the item's reveal range, boundaries included. held names reveal
+// ranges that keep showing source while an input method composes.
+function reveal(state: EditorState, items: PreviewItem[], held?: Set<string>): number[] {
   if (state.facet(editorMode) === 'reading' || !state.field(focused)) return []
   const ranges = state.selection.ranges
   const shown: number[] = []
   items.forEach(({ reveal }, i) => {
-    if (ranges.some((range) => range.from <= reveal.to && range.to >= reveal.from)) shown.push(i)
+    if (
+      ranges.some((range) => range.from <= reveal.to && range.to >= reveal.from) ||
+      held?.has(rangeKey(reveal.from, reveal.to))
+    )
+      shown.push(i)
   })
   return shown
+}
+
+// Typing with an input method moves the cursor off the element it started next to. Redrawing
+// that element under the composed text would show half of its marks, so it keeps its source
+// until the composition ends.
+function composing(value: Preview, tr: Transaction): Set<string> | undefined {
+  if (!tr.isUserEvent('input.type.compose')) return undefined
+  return new Set(
+    value.shown.map((i) => {
+      const { from, to } = value.items[i].reveal
+      return rangeKey(tr.changes.mapPos(from, 1), tr.changes.mapPos(to, -1))
+    })
+  )
 }
 
 function draw(items: PreviewItem[], shown: number[]): DecorationSet {
@@ -89,7 +110,7 @@ const preview = StateField.define<Preview>({
       syntaxTree(state) !== syntaxTree(startState) ||
       state.facet(linkContext) !== startState.facet(linkContext)
     const items = stale ? collect(state) : value.items
-    const shown = reveal(state, items)
+    const shown = reveal(state, items, composing(value, tr))
     if (!stale && sameList(shown, value.shown)) return value
     return { items, shown, decorations: draw(items, shown) }
   },
@@ -99,5 +120,13 @@ const preview = StateField.define<Preview>({
 export const livePreview: Extension = [
   focused,
   EditorView.focusChangeEffect.of((_state, focusing) => setFocused.of(focusing)),
-  preview
+  preview,
+  // The commit of a composition is itself a composing change. Once CodeMirror has read it, an
+  // empty transaction applies the reveal rule again.
+  EditorView.domEventHandlers({
+    compositionend(_event, view) {
+      setTimeout(() => view.dispatch({}))
+      return false
+    }
+  })
 ]
