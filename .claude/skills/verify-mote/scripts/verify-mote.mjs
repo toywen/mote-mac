@@ -918,6 +918,9 @@ async function main() {
       }
       break
     }
+    case 'record-shell':
+      result = await recordShell(state)
+      break
     case 'walk-links': {
       if (!opts.obsidian) throw new UsageError('give --obsidian <export file>')
       const walked = await act((page) => walkLinks(page, state, opts))
