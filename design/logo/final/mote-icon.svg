@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024"><title>mote</title><defs>
+<linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#303034"/><stop offset="1" stop-color="#151517"/></linearGradient>
+<linearGradient id="gl" gradientUnits="userSpaceOnUse" x1="0" y1="333" x2="0" y2="690"><stop offset="0" stop-color="#faf8f2"/><stop offset="1" stop-color="#e4e1d8"/></linearGradient>
+<filter id="sh" x="-.5" y="-.5" width="2" height="2"><feGaussianBlur stdDeviation="14"/></filter></defs>
+<rect x="100" y="100" width="824" height="824" rx="185" fill="url(#bg)"/>
+<rect x="102" y="102" width="820" height="820" rx="183" fill="none" stroke="rgba(255,255,255,.07)" stroke-width="3"/>
+<g transform="translate(0 -6)">
+<g transform="translate(0 16)" opacity="0.45" filter="url(#sh)"><path d="M330 690V333M330 470a91 91 0 0 1 182 0V690M512 470a91 91 0 0 1 182 0V556" fill="none" stroke="#000" stroke-width="92"/><circle cx="694" cy="640" r="50"/></g>
+<path d="M330 690V333M330 470a91 91 0 0 1 182 0V690M512 470a91 91 0 0 1 182 0V556" fill="none" stroke="url(#gl)" stroke-width="92"/>
+<circle cx="694" cy="640" r="50" fill="#f0b45c"/></g></svg>

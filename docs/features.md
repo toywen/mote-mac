@@ -1,6 +1,14 @@
 # mote 功能列表
 
-这是 mote 功能和进度的唯一来源。术语见 [CONTEXT.md](../CONTEXT.md)。当初怎么划定范围，见 [mvp.md](mvp.md)，它已冻结。
+这是 mote 目标、范围、功能和进度的唯一来源。术语见 [CONTEXT.md](../CONTEXT.md)，技术决策见 [adr/](adr/)。
+
+## 目标
+
+mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔记库，用来日常读写。
+
+`~/life-os` 是主要的测试笔记库，另外 4 个本机笔记库做补充测试。
+
+验收标准是你连续一周记笔记，不需要打开 Obsidian，见验收-7。
 
 ## 怎么维护
 
@@ -12,7 +20,7 @@
   - **未排期**：以后做，还没定在哪一步。
   - **不做**：明确不做，备注写原因。
 - 证据是 e2e 测试名，或 `verify-mote` 的功能文件（`.claude/skills/verify-mote/features/` 下）。没有证据不能标"已实现"。
-- 改范围时，比如把一个功能提前或移出，直接改本文，在备注里写原因和日期。
+- 改范围时，比如把一个功能提前或移出，直接改本文，在备注里写原因和日期。当初的依据见[范围依据](#范围依据)。
 - 条目编号固定。删掉的条目留下编号，状态改成"不做"。
 
 下文"测试：xxx"指 `tests/e2e/smoke.spec.ts` 里的同名测试。"verify：xxx"指 verify-mote 的功能文件。
@@ -80,8 +88,8 @@
 
 | 编号 | 功能 | 步骤 | 状态 | 证据 | 备注 |
 | --- | --- | --- | --- | --- | --- |
-| 查找-1 | `Cmd+O` 按文件名快速打开笔记 | 2 | 已实现 | 测试：quick open ranks notes like Obsidian and lists recent notes for an empty query；verify：quick-open | 已合并（PR #1）。计划见 step-2.md PR A |
-| 查找-2 | `Cmd+Shift+F` 全文搜索。点击结果，跳到匹配的位置 | 2 | 已实现 | 测试：search finds notes by body and file name, jumps to matches, and follows changes；verify：search（`workspace-copy` 4 个查询和 grep 计数一致） | 2026-11-20。规则见 step-2.md PR D，做法见 ADR 0004。不做 `path:`、`tag:`、正则、`OR`、`-` |
+| 查找-1 | `Cmd+O` 按文件名快速打开笔记 | 2 | 已实现 | 测试：quick open ranks notes like Obsidian and lists recent notes for an empty query；verify：quick-open | 2026-11-20。规则照搬 Obsidian 1.15.1，见 step-2.md PR A。结果顺序还没和 Obsidian 的快速打开并排对照过，要你在 Obsidian 里看一次 |
+| 查找-2 | `Cmd+Shift+F` 全文搜索。点击结果，跳到匹配的位置 | 2 | 已实现 | 测试：search finds notes by body and file name, jumps to matches, and follows changes；verify：search（`workspace-copy` 4 个查询和 grep 计数一致） | 2026-11-20。规则见 step-2.md PR D，做法见 ADR 0004。不做 `path:`、`tag:`、正则、`OR`、`-`。结果顺序还没和 Obsidian 的搜索面板对照过 |
 | 查找-3 | 快速打开和全文搜索都支持中文 | 2 | 已实现 | 测试：quick open ranks notes like Obsidian…；search finds notes by body and file name… | 2026-11-20。全文搜索用子串匹配，输入法选字期间不搜索 |
 
 ### 日记
@@ -106,7 +114,7 @@
 | --- | --- | --- |
 | 打开笔记库到可以编辑 | 2 秒以内 | 未测 1 万篇。真实窗口打开 `workspace-copy`（603 篇，含读入笔记索引）：`chooseVault` 中位数 402 毫秒（5 次，2026-11-20 实测）。读取并解析 `workspace-copy` 的 603 篇笔记：中位数 483 毫秒（`compare-links.mjs --bench 9`，2026-11-20 实测），其中 lezer 解析约 310 毫秒。按字符数线性外推，1 万篇约 8 秒（推断），第 5 步要处理 |
 | 全文搜索 | 200 毫秒以内 | `workspace-copy` 复制成 1 万篇（3140 万字符），node 里查询“的”中位数 76 毫秒、最慢 117 毫秒（2026-11-20 实测，不含 IPC）。用 gen-vault 生成的笔记库还没测 |
-| 快速打开，每次按键 | 16 毫秒以内 | 用 `tools/bench-quick-open.mjs` 测，结果记在 quick-open 的 PR 里 |
+| 快速打开，每次按键 | 16 毫秒以内 | `workspace-copy` 的路径复制成 1 万条，node 里 4 个查询的中位数 6.4 到 6.8 毫秒（`tools/bench-quick-open.mjs`，100 次，2026-11-20 实测，不含窗口渲染） |
 | 改名一篇有 100 个反向链接的笔记 | 1 秒以内 | 未测 |
 | 外部修改到编辑器显示 | 100 毫秒以内 | 未测 |
 
@@ -136,7 +144,29 @@
 | Claudian 侧栏 | 不做 | 2026-11-20 决定暂不处理 |
 | 英语复习流程 | 不做 | 2026-11-20 决定暂不处理，复习时继续用 Obsidian |
 | 手机端、AI 和语音 | 未排期 | 放到第二阶段 |
-| 同步 | 未实现，第 7 步 | 不用 git，见 ADR 0005 |
+| 同步 | 未实现，第 7 步 | 不用 git，见 ADR 0005。在这之前，`~/life-os` 靠 Obsidian 的 obsidian-git 插件每分钟 commit 并 push。插件只在 Obsidian 开着时运行 |
+
+## 范围依据
+
+上面的 P0 和"不做"按 2026-11-20 的数据划定。数据来自 5 个本机笔记库的笔记库配置，以及这条命令的统计：
+
+```sh
+node tools/vault-audit.mjs ~/life-os ~/wiki ~/workspace/Pesemic ~/Downloads/workspace ~/Downloads/workspace/knowledge-base
+```
+
+| 事实 | 对范围的影响 |
+| --- | --- |
+| 双链约 1300 处，指向笔记的 Markdown 链接约 40 处，例如 `life-os` 有 23 处、`Pesemic` 有 11 处 | 两种链接都进 P0。Markdown 链接虽少，点不开或改名后失效都会丢数据 |
+| `Downloads/workspace` 有 317 篇笔记用了 callout | 实时预览里的 callout 样式进 P0 |
+| 图片引用超过 200 处 | 图片渲染进 P0 |
+| 任务、表格和属性在 5 个笔记库里都常见，例如 `life-os` 有 300 个任务 | 三者都进 P0 |
+| `life-os` 的编辑器处在实时预览，`workspace.json` 里是 `"source": false` | 实时预览进 P0 |
+| 3 个笔记库的 `app.json` 开了 `"alwaysUpdateLinks": true` | 改名时更新链接进 P0 |
+| 只有 `life-os` 有 `daily-notes.json` | 有配置按配置，没配置按 Obsidian 默认值 |
+| macOS 和 Obsidian 都在用深色模式 | 深色模式进 P0 |
+| 最大的笔记库有 604 篇笔记，2.67 MB | 性能目标留出余量，见[性能目标](#性能目标) |
+| Dataview 查询只出现在 1 个笔记库的 9 篇笔记里 | Dataview 不做 |
+| 没有 `.canvas` 文件，只有 1 个 `.base` 文件 | Canvas 和 Bases 不做 |
 
 ## 开发顺序
 
@@ -150,7 +180,7 @@
 | 3 | 实时预览和阅读模式的全部组件、深色模式 | 用 5 个笔记库人工检查 | 未开始 |
 | 4 | 改名和移动 | 验收第 3 条 | 未开始 |
 | 5 | 日记、性能 | 验收第 5 条和第 6 条 | 未开始 |
-| 6 | 试用一周 | 验收第 7 条 | 未开始 |
+| 6 | 试用一周 | 验收第 7 条。试用期间让 Obsidian 在后台开着，obsidian-git 才会继续备份 `~/life-os` | 未开始 |
 | 7 | 同步服务和 Mac 端同步模块，之后关掉 obsidian-git | 两台 Mac 或模拟客户端同时改同一篇笔记，合并后不丢字 | 未开始 |
 
 ## 验收清单
@@ -159,7 +189,7 @@
 
 | 编号 | 检查 | 状态 |
 | --- | --- | --- |
-| 验收-1 | 打开 5 个本机笔记库的每篇笔记，没有报错。打开前后用脚本对比全部文件的哈希值，全部不变 | 未记录 |
+| 验收-1 | 打开 5 个本机笔记库的每篇笔记，没有报错。打开前后用脚本对比全部文件的哈希值，全部不变 | 通过（2026-11-20）：`verify-mote walk-notes` 在 5 个副本上逐篇打开全部 810 篇笔记，没有页面错误和提示框，`vault-diff` 输出 `unchanged`。见 verify：backlinks |
 | 验收-2 | 5 个笔记库里的每个双链和 Markdown 链接，在 mote 里跳到的目标和在 Obsidian 里相同 | 部分通过：解析目标在 5 个副本上和 Obsidian 完全一致（2026-11-20）。点击跳转属于第 3 步 |
 | 验收-3 | 在 `~/life-os` 和 `~/workspace/Pesemic` 里，各改名或移动一篇有链接进出的笔记。用 `diff -r` 对比操作前的副本，只有这次移动和相关链接有变化 | 未通过 |
 | 验收-4 | mote 开着一篇笔记时，在 Obsidian 里修改这篇笔记。mote 立即显示新内容，两边都不丢字 | 未记录 |
