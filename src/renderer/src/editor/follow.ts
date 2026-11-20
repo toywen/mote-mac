@@ -45,13 +45,15 @@ function linkCovering(state: EditorState, pos: number): Found | null {
 }
 
 // The link under a mouse event. A plain click takes a rendered link that is not showing its
-// source. Cmd+click takes any link under the pointer.
+// source. Cmd+click takes any link under the pointer. An embedded note's view inside this one
+// follows the links it draws itself, whose offsets are into its own text.
 function linkUnder(view: EditorView, event: MouseEvent): Found | null {
-  const element = event.target instanceof Element ? event.target.closest('[data-link-from]') : null
-  const rendered =
-    element && view.dom.contains(element)
-      ? linkAt(view.state, Number(element.getAttribute('data-link-from')))
-      : null
+  const target = event.target instanceof Element ? event.target : null
+  if (target?.closest('.cm-editor') !== view.dom) return null
+  const element = target.closest('[data-link-from]')
+  const rendered = element
+    ? linkAt(view.state, Number(element.getAttribute('data-link-from')))
+    : null
   if (!event.metaKey)
     return rendered && !showsSource(view.state, rendered.from, rendered.to) ? rendered : null
   if (rendered) return rendered
