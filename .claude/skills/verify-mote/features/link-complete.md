@@ -27,7 +27,7 @@ Steps:
 - **Match.** `$V type --text " [[计"`. `$V eval --js "[...document.querySelectorAll('[role=listbox] [role=option] .cm-completionLabel')].map(o => o.textContent)"` prints `["计划"]`. `$V screenshot --out list` shows `计划` with `项目` after it.
 - **Insert.** `$V press --key Enter`. After 2 s, `$V vault-diff` lists only `欢迎.md`, and the only added bytes are ` [[计划]]` at the end of that line.
 - **Input method, Enter inside the composition.** `$V type --text " [["`, then `$V ime --text 计划 --commit 计划 --hold 400 --probe-js "<read rows and the text before the cursor>"`. The output shows the Enter keydown with `isComposing: true`. The probe shows the row `计划` and the line ending in `[[计划`, with no link inserted. CDP's Enter has key code 13, so Chromium adds line breaks after the cursor (see Gotchas).
-- **Input method, commit only.** In a fresh launch, type ` [[` as above, then `$V ime --text 计划 --commit 计划 --no-enter`. The line ends in `[[计划`, and the first row is `计划`. `$V press --key Enter` turns it into `[[计划]]`. `vault-diff` shows only ` [[计划]]` added.
+- **Input method, commit only.** In a fresh launch, type ` [[` as above, then `$V ime --text 计划 --commit 计划 --no-enter --hold 400`. The line ends in `[[计划`, and the first row is `计划`. `$V press --key Enter` turns it into `[[计划]]`. `vault-diff` shows only ` [[计划]]` added.
 - **Other formats.** Write `{"useMarkdownLinks": true, "newLinkFormat": "relative"}` to the copy's `.obsidian/app.json` before `打开笔记库`. The same steps insert `[计划](项目/计划.md)`.
 - **No writes on open.** In a fresh launch, `$V walk-notes` has `errorCount` 0 and `$V vault-diff --expect-unchanged` prints `unchanged`.
 - **Proof.** Keep the screenshot, the probe output and the diffs, then `$V stop`.
