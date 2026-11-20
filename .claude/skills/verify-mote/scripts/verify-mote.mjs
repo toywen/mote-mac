@@ -181,14 +181,23 @@ async function waitUntilUsable(page) {
 async function walkNotes(page, vault) {
   const tree = page.getByRole('tree', { name: '文件树' })
   await tree.waitFor()
-  const rows = tree.locator('[data-kind="note"]')
-  const paths = await rows.evaluateAll((nodes) => nodes.map((node) => node.dataset.path))
   const expected = fs
     .readdirSync(vault, { withFileTypes: true, recursive: true })
     .filter((entry) => entry.isFile() && path.extname(entry.name).toLowerCase() === '.md')
     .map((entry) => path.relative(vault, path.join(entry.parentPath, entry.name)))
     .filter((rel) => !rel.split(path.sep).some((part) => part.startsWith('.')))
     .sort()
+  const folders = new Set()
+  for (const note of expected) {
+    const parts = note.split(path.sep)
+    for (let depth = 1; depth < parts.length; depth++) folders.add(parts.slice(0, depth).join('/'))
+  }
+  for (const folder of folders) {
+    const row = tree.locator(`[data-kind="folder"][data-path=${JSON.stringify(folder)}]`)
+    if ((await row.getAttribute('aria-expanded')) === 'false') await row.click()
+  }
+  const rows = tree.locator('[data-kind="note"]')
+  const paths = await rows.evaluateAll((nodes) => nodes.map((node) => node.dataset.path))
   if (JSON.stringify(paths.toSorted()) !== JSON.stringify(expected)) {
     throw new Error(
       `visible tree notes (${paths.length}) differ from the vault (${expected.length})`

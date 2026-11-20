@@ -42,11 +42,11 @@ export function FileTree({
   selected?: VaultPath
 }): React.JSX.Element {
   const roots = useMemo(() => buildTree(entries), [entries])
-  const [collapsed, setCollapsed] = useState<Set<VaultPath>>(() => new Set())
+  const [expandedFolders, setExpandedFolders] = useState<Set<VaultPath>>(() => new Set())
   const [focused, setFocused] = useState<VaultPath>()
 
   function toggle(path: VaultPath): void {
-    setCollapsed((previous) => {
+    setExpandedFolders((previous) => {
       const next = new Set(previous)
       if (!next.delete(path)) next.add(path)
       return next
@@ -97,7 +97,7 @@ export function FileTree({
   function render(branch: TreeNode[], depth: number): React.JSX.Element[] {
     return branch.map((node) => {
       const folder = node.kind === 'folder'
-      const expanded = folder && !collapsed.has(node.path)
+      const expanded = folder && expandedFolders.has(node.path)
       const Icon = folder
         ? expanded
           ? FolderOpen

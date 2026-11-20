@@ -42,9 +42,15 @@ body {
 }
 
 .layout {
+  --file-tree-width: minmax(165px, 245px);
+  --backlinks-width: minmax(130px, 225px);
   display: grid;
-  grid-template-columns: minmax(165px, 245px) minmax(0, 1fr) minmax(130px, 225px);
+  grid-template-columns: var(--file-tree-width) minmax(0, 1fr) var(--backlinks-width);
   height: 100%;
+}
+
+.layout.sidebar-hidden {
+  grid-template-columns: minmax(0, 1fr) var(--backlinks-width);
 }
 
 .pane {
@@ -66,8 +72,16 @@ body {
   app-region: drag;
 }
 
-.sidebar .pane-header {
+.sidebar .pane-header,
+.sidebar-hidden .editor .pane-header {
   padding-left: 78px;
+}
+
+.editor-title {
+  display: flex;
+  align-items: center;
+  min-width: 0;
+  gap: 8px;
 }
 
 .pane-header h1,
@@ -112,6 +126,7 @@ button:focus-visible {
 }
 
 .icon-button {
+  flex-shrink: 0;
   width: 28px;
   height: 28px;
   border: 0;
@@ -137,6 +152,7 @@ button:focus-visible {
 }
 
 .vault-name {
+  flex-shrink: 0;
   padding: 14px 12px 8px;
   color: var(--muted);
   font-size: 12px;
@@ -144,6 +160,8 @@ button:focus-visible {
 }
 
 .tree-scroll {
+  flex: 1;
+  min-height: 0;
   overflow: auto;
   padding: 0 7px 12px;
 }
@@ -191,6 +209,10 @@ button:focus-visible {
 
 .sidebar {
   border-right: 1px solid var(--border);
+}
+
+.sidebar[hidden] {
+  display: none;
 }
 
 .backlinks {
@@ -259,7 +281,11 @@ button:focus-visible {
 
 @media (max-width: 740px) {
   .layout {
-    grid-template-columns: minmax(142px, 29%) minmax(0, 1fr);
+    --file-tree-width: minmax(142px, 29%);
+    grid-template-columns: var(--file-tree-width) minmax(0, 1fr);
+  }
+  .layout.sidebar-hidden {
+    grid-template-columns: minmax(0, 1fr);
   }
   .backlinks {
     display: none;

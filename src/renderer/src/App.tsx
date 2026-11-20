@@ -1,16 +1,18 @@
-import { FolderOpen } from 'lucide-react'
-import { useEffect, useSyncExternalStore } from 'react'
+import { FolderOpen, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
+import { useEffect, useState, useSyncExternalStore } from 'react'
 import { FileTree } from './FileTree'
 import { NoteEditor } from './NoteEditor'
 import { workspace } from './workspace'
 
 function App(): React.JSX.Element {
   const { vault, doc, busy, error } = useSyncExternalStore(workspace.subscribe, workspace.snapshot)
+  const [sidebarOpen, setSidebarOpen] = useState(true)
+  const sidebarAction = sidebarOpen ? '收起文件树' : '展开文件树'
   useEffect(() => workspace.connect(), [])
 
   return (
-    <div className="layout">
-      <aside className="pane sidebar" aria-label="文件树">
+    <div className={sidebarOpen ? 'layout' : 'layout sidebar-hidden'}>
+      <aside id="file-sidebar" className="pane sidebar" aria-label="文件树" hidden={!sidebarOpen}>
         <header className="pane-header">
           <h2>文件树</h2>
           {vault && (
@@ -39,11 +41,26 @@ function App(): React.JSX.Element {
       </aside>
       <main className="pane editor" aria-label="编辑器">
         <header className="pane-header">
-          {doc ? (
-            <h1 title={doc.path}>{doc.path.split('/').pop()?.slice(0, -3)}</h1>
-          ) : (
-            <h1>编辑器</h1>
-          )}
+          <div className="editor-title">
+            {vault && (
+              <button
+                className="icon-button"
+                type="button"
+                title={sidebarAction}
+                aria-label={sidebarAction}
+                aria-expanded={sidebarOpen}
+                aria-controls="file-sidebar"
+                onClick={() => setSidebarOpen((open) => !open)}
+              >
+                {sidebarOpen ? <PanelLeftClose size={17} /> : <PanelLeftOpen size={17} />}
+              </button>
+            )}
+            {doc ? (
+              <h1 title={doc.path}>{doc.path.split('/').pop()?.slice(0, -3)}</h1>
+            ) : (
+              <h1>编辑器</h1>
+            )}
+          </div>
           {doc && doc.kind !== 'missing' && doc.kind !== 'conflict' && (
             <span className="save-state" role="status">
               {doc.kind === 'dirty' ? '未保存' : doc.kind === 'saving' ? '保存中' : '已保存'}
