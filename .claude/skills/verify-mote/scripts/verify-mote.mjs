@@ -616,6 +616,76 @@ function readEditor(page, from = 0, to = 0) {
   )
 }
 
+// Turns the mouse wheel over the editor until source line `line` sits at the top of the view, or
+// the editor scrolls no further. CodeMirror is read only to measure where the line is.
+async function scrollToLine(page, line) {
+  const margin = 24
+  const measure = () =>
+    page.evaluate((line) => {
+      const view = document.querySelector('.cm-content')?.cmTile?.root?.view
+      if (!view) throw new Error('no CodeMirror view on .cm-content')
+      const { doc } = view.state
+      const scroller = view.scrollDOM
+      const box = scroller.getBoundingClientRect()
+      const blockAt = (y) => view.lineBlockAtHeight(y - view.documentTop)
+      return {
+        offset: view.documentTop + view.lineBlockAt(doc.line(Math.min(line, doc.lines)).from).top,
+        top: box.top,
+        scrollTop: scroller.scrollTop,
+        room: scroller.scrollHeight - scroller.clientHeight - scroller.scrollTop,
+        box: { x: box.x, y: box.y, height: box.height },
+        visibleLines: [
+          doc.lineAt(blockAt(box.top).from).number,
+          doc.lineAt(blockAt(box.bottom - 1).to).number
+        ]
+      }
+    }, line)
+  // A wheel scroll may start a frame late and animate, so wait for it to begin and then hold still.
+  const settle = (before) =>
+    page.evaluate(
+      (before) =>
+        new Promise((resolve) => {
+          const scroller = document.querySelector('.cm-scroller')
+          const started = performance.now()
+          let last = scroller.scrollTop
+          let still = 0
+          const tick = () => {
+            const now = scroller.scrollTop
+            still = now === last ? still + 1 : 0
+            last = now
+            const elapsed = performance.now() - started
+            const moved = now !== before
+            if ((moved && still >= 3) || (!moved && elapsed > 300) || elapsed > 2000) resolve()
+            else requestAnimationFrame(tick)
+          }
+          requestAnimationFrame(tick)
+        }),
+      before
+    )
+  let at = await measure()
+  // The left edge of the scroller is outside the text, so the pointer hovers over nothing.
+  await page.mouse.move(at.box.x + 4, at.box.y + at.box.height / 2)
+  let wheels = 0
+  while (wheels < 30) {
+    const delta = Math.max(-at.scrollTop, Math.min(at.room, at.offset - at.top - margin))
+    if (Math.abs(delta) < 4) break
+    await page.mouse.wheel(0, delta)
+    wheels++
+    await settle(at.scrollTop)
+    const next = await measure()
+    const stuck = next.scrollTop === at.scrollTop
+    at = next
+    if (stuck) break
+  }
+  return {
+    line,
+    lineTop: Math.round(at.offset - at.top),
+    scrollTop: Math.round(at.scrollTop),
+    wheels,
+    visibleLines: at.visibleLines
+  }
+}
+
 const MAIN_THREAD_METRICS = {
   task: 'TaskDuration',
   script: 'ScriptDuration',
@@ -976,6 +1046,12 @@ async function main() {
       result = evidencePath(state, opts, '.png')
       await act((page) => page.screenshot({ path: result }))
       break
+    case 'scroll': {
+      const line = Number(opts.line)
+      if (!(line >= 1)) throw new UsageError('give --line N, a source line of the open note')
+      result = await act((page) => scrollToLine(page, line))
+      break
+    }
     case 'click':
       await act((page) => locate(page, opts).click())
       result = 'clicked'
