@@ -704,7 +704,9 @@ async function main() {
         let probe
         if (opts.hold) await page.waitForTimeout(Number(opts.hold))
         if (opts['probe-js']) probe = await page.evaluate(String(opts['probe-js']))
-        await page.keyboard.press('Enter')
+        // A raw Enter has key code 13. CodeMirror turns it into a new line, while a real macOS
+        // input method confirms with a composing key. --no-enter commits without it.
+        if (!opts['no-enter']) await page.keyboard.press('Enter')
         await cdp.send('Input.insertText', { text: commit })
         await cdp.detach()
         const enterKeydown = await page.evaluate(() => window.__moteImeKeys)
