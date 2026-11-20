@@ -33,5 +33,5 @@ export function parseFileUrl(url: string): VaultPath {
   if (!url.startsWith(prefix)) throw new Error('不是 mote-file 地址')
   const rest = url.slice(prefix.length)
   if (/[?#]/.test(rest)) throw new Error('mote-file 地址不能带查询或片段')
-  return parseVaultPath(rest.split('/').map(decodeURIComponent).join('/'))
+  return parseVaultPath(decodeURIComponent(rest))
 }
