@@ -42,6 +42,12 @@
 | `src/preload/` | 用 `contextBridge` 暴露 `window.mote` |
 | `src/renderer/src/workspace.ts` | 渲染进程的状态：当前笔记库、打开的笔记和它的状态机 |
 | `src/renderer/src/NoteEditor.tsx` | CodeMirror 编辑器，把规范化文本还原成原始字节 |
+| `src/renderer/src/editor/markdown.ts` | 编辑器用的语言。用共享的解析器，只加两个编辑器才读的节点属性。回车接着写列表和引用 |
+| `src/renderer/src/editor/livePreview.ts` | 实时预览的唯一字段：每次改动遍历一次语法树，再按显示源码的规则画装饰。编辑器模式和链接解析的输入也在这里 |
+| `src/renderer/src/editor/preview.ts` | 实时预览的数据结构：一个元素的显示源码范围、一直生效的装饰、隐藏源码时才生效的装饰 |
+| `src/renderer/src/editor/renderers.ts` | 语法节点名到渲染函数的注册表。加一种元素，就加一个文件，在这里注册一行 |
+| `src/renderer/src/editor/inline.ts`、`headings.ts`、`links.ts`、`lists.ts`、`quotes.ts`、`code.ts` | 各种元素的渲染函数。`inline.ts` 的 `inlineStyles` 是行内样式表，表格单元格以后也读它 |
+| `src/renderer/src/editor/preview.css` | 实时预览的样式。颜色只用 `main.css` 里的变量 |
 | `src/renderer/src/FileTree.tsx` | 文件树 |
 | `src/renderer/src/QuickOpen.tsx`、`quickOpenMatch.ts` | 快速打开窗口和照搬 Obsidian 的匹配打分 |
 | `src/renderer/src/HitList.tsx` | 按笔记分组列出命中位置，点一处打开笔记并选中。反向链接面板和搜索共用 |
@@ -62,6 +68,8 @@
 - 正在编辑的文字归渲染进程。
 - 渲染进程里的笔记路径列表是主进程推过来的副本，只读。
 - 最近打开的笔记列表归渲染进程，按笔记库存在 `localStorage`。
+- 编辑器模式归渲染进程的 `workspace`。整个窗口一个值，切换笔记时不变。编辑器只读它。
+- 渲染进程用笔记路径列表的副本建链接解析用的索引。它是算出来的结果，不是新的状态。
 
 ## 一篇打开的笔记的状态
 
@@ -104,6 +112,8 @@
 **解析和渲染**
 - 编辑器、索引和改名用同一份 `@lezer/markdown` 配置。见 ADR 0002。
 - 阅读模式是关掉编辑的同一个 CodeMirror 视图，不是第二个渲染器。
+- 编辑器的语言用 `markdownParser.configure` 加节点属性，不加语法。所以编辑器和索引得到的语法树相同。
+- 实时预览只有一个字段画装饰。显示源码的规则只写在 `livePreview.ts`：实时预览下、编辑器有焦点、选区碰到元素的范围。阅读模式下从不显示源码。
 - 链接解析以 Obsidian 的 `app.metadataCache.resolvedLinks` 为准，不靠猜。见 ADR 0003。
 - 全文搜索在内存里做子串匹配。见 ADR 0004。
 
