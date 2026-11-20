@@ -52,7 +52,7 @@
 | `src/renderer/src/editor/preview.ts` | 实时预览的数据结构：一个元素的显示源码范围、一直生效的装饰、隐藏源码时才生效的装饰 |
 | `src/renderer/src/editor/renderers.ts` | 语法节点名到渲染函数的注册表。加一种元素，就加一个文件，在这里注册一行 |
 | `src/renderer/src/editor/inline.ts`、`headings.ts`、`links.ts`、`lists.ts`、`quotes.ts`、`code.ts` | 各种元素的渲染函数。`inline.ts` 的 `inlineStyles` 是行内样式表，表格单元格以后也读它 |
-| `src/renderer/src/editor/images.ts` | 图片和嵌入的渲染函数。图片放在源码下面，不是图片的嵌入显示为链接。样式在旁边的 `images.css` |
+| `src/renderer/src/editor/images.ts` | 图片和嵌入的渲染函数。图片放在源码下面，既不是图片也不是笔记的嵌入显示为链接。样式在旁边的 `images.css` |
 | `src/renderer/src/editor/preview.css` | 实时预览的样式。颜色只用 `main.css` 里的变量 |
 | `src/renderer/src/editor/complete.ts`、`complete.css` | 双链补全：输入 `[[` 后列出笔记，候选用快速打开的 `quickOpenMatch.ts` 排序，插入 `linkText.ts` 生成的链接。笔记列表、最近打开和笔记库配置从 `completeContext` 读 |
 | `src/renderer/src/editor/follow.ts`、`follow.css` | 点击链接：在编辑器的元素上先于 CodeMirror 接住鼠标，按链接去向交给 `workspace.follow`。部件里画的链接也接得到 |
@@ -60,6 +60,9 @@
 | `src/renderer/src/editor/callouts.ts`、`callouts.css` | callout 的渲染函数。占 `Blockquote` 的位置，不是 callout 的引用交给 `quotes.ts`。callout 的种类、别名、颜色和图标是一张表，照搬 Obsidian 1.15.1 的 `app.css`。颜色变量的浅色值和深色值在 `callouts.css` |
 | `src/renderer/src/editor/tables.ts`、`tables.css` | 表格画成一个块级组件。单元格按语法节点画，行内样式读 `inlineStyles`，链接读 `linkTarget` |
 | `src/renderer/src/editor/tasks.ts`、`tasks.css` | 任务的复选框。点击只改方括号里的 1 个字符。`editorLocked` 是 mote 忙时锁住编辑器的输入 |
+| `src/renderer/src/editor/noteView.ts` | `noteView()`：一篇笔记的每个视图都用的扩展，即语言、实时预览、点击链接和折行。主编辑器和嵌入都调用它。主编辑器再加编辑、保存和补全 |
+| `src/renderer/src/editor/mermaid.ts`、`mermaid.css` | Mermaid 图的渲染函数。占 `FencedCode` 的位置，不是 `mermaid` 的代码块交给 `code.ts`。Mermaid 库第一次画图时才加载。画好的图按代码和配色缓存 |
+| `src/renderer/src/editor/embeds.ts`、`embeds.css` | 笔记嵌入的渲染函数。占 `WikiEmbed` 的位置，图片、附件和找不到的目标交给 `images.ts`。被嵌入的笔记画在一个只读的嵌套视图里，最多套 3 层 |
 | `src/renderer/src/FileTree.tsx` | 文件树 |
 | `src/renderer/src/QuickOpen.tsx`、`quickOpenMatch.ts` | 快速打开窗口和照搬 Obsidian 的匹配打分 |
 | `src/renderer/src/HitList.tsx` | 按笔记分组列出命中位置，点一处打开笔记并选中。反向链接面板和搜索共用 |
@@ -110,6 +113,7 @@
 - 磁盘和索引归主进程。主进程先更新索引，再通知渲染进程，mote 自己保存的笔记也一样。
 - 渲染进程里的反向链接列表是向主进程查询的结果，只读。切换笔记、收到笔记库变化、保存成功后重新查询。
 - 渲染进程里的搜索结果也是查询结果，只读。查询词改变、收到笔记库变化、保存成功后重新查询。
+- 嵌入里显示的笔记文字也是查询结果，只读。`workspace.noteText` 不打开笔记，经 `window.mote.readNote` 读磁盘。被嵌入的是正在编辑的笔记时，读编辑器里的文字。`workspace` 的 `revision` 变大时重新读。
 - 正在编辑的文字归渲染进程。
 - 渲染进程里的笔记路径列表是主进程推过来的副本，只读。
 - 最近打开的笔记列表归渲染进程，按笔记库存在 `localStorage`。
@@ -159,6 +163,7 @@
 **解析和渲染**
 - 编辑器、索引和改名用同一份 `@lezer/markdown` 配置。见 ADR 0002。
 - 阅读模式是关掉编辑的同一个 CodeMirror 视图，不是第二个渲染器。
+- 嵌入的笔记画在嵌套的 CodeMirror 视图里，扩展来自同一个 `noteView()`，编辑器模式固定为阅读模式。它不拿焦点，没有历史，不保存。
 - 编辑器的语言用 `markdownParser.configure` 加节点属性，不加语法。所以编辑器和索引得到的语法树相同。
 - 实时预览只有一个字段画装饰。显示源码的规则只写在 `livePreview.ts`：实时预览下、编辑器有焦点、选区碰到元素的范围。阅读模式下从不显示源码。
 - 链接解析以 Obsidian 的 `app.metadataCache.resolvedLinks` 为准，不靠猜。见 ADR 0003。
@@ -171,3 +176,4 @@
 - 内容安全策略只放开图片：`img-src` 允许 `mote-file:` 和 `https:`，不允许 `http:`。
 - 渲染进程只能通过 `window.mote` 访问磁盘。
 - 点击链接时，主进程只把 `http`、`https` 和 `mailto` 网址交给系统。主进程是边界，所以它自己再查一遍白名单。
+- Mermaid 的 `securityLevel` 是 `strict`，图里的文字过一遍 DOMPurify，点击回调不生效。Mermaid 不需要放宽内容安全策略。

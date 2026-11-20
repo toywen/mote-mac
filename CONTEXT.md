@@ -40,6 +40,7 @@
 | 编辑器模式 | `EditorMode` | 实时预览或阅读模式。按 `Cmd+E` 切换 |
 | 装饰 | decoration | CodeMirror 加在文字上的样式或组件，不改文字。实时预览靠它隐藏符号、加样式 |
 | 渲染函数 | `Renderer` | 把一种语法节点画成装饰的函数。注册表按节点名找到它 |
+| 嵌套视图 | nested view | 笔记嵌入里画被嵌入笔记的只读 CodeMirror 视图。扩展和主编辑器来自同一个 `noteView()`，编辑器模式固定为阅读模式 |
 | 属性 | properties | 笔记开头 `---` 之间的 YAML，也叫 frontmatter |
 | 规范化文本 | normalized text | 编辑器里的文本。去掉 BOM，所有换行统一成 `\n`。保存时还原原来的 BOM 和换行符 |
 | 基准哈希 | `baseHash` | 打开或上次保存笔记时磁盘内容的哈希。保存前和磁盘哈希比较 |
