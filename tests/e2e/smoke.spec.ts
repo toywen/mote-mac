@@ -1,12 +1,7 @@
-import { test, expect, _electron as electron, type Locator } from '@playwright/test'
+import { test, expect, type Locator } from '@playwright/test'
 import { cp, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-
-function launch(settings: string): ReturnType<typeof electron.launch> {
-  const env = { ...process.env }
-  delete env.ELECTRON_RUN_AS_NODE
-  return electron.launch({ args: ['.', `--user-data-dir=${settings}`], env })
-}
+import { launch, openVault } from './app'
 
 test('the main window shows the three panes', async () => {
   const info = test.info()
@@ -34,10 +29,7 @@ test('long file trees preserve the vault name and can be collapsed', async () =>
   const app = await launch(info.outputPath('settings'))
   try {
     const window = await app.firstWindow()
-    await app.evaluate(({ dialog }, path) => {
-      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
-    }, vault)
-    await window.getByRole('button', { name: '打开笔记库' }).click()
+    await openVault(app, window, vault)
     const tree = window.getByRole('tree', { name: '文件树' })
     const build = tree.getByRole('treeitem', { name: 'build', exact: true })
     const first = tree.getByRole('treeitem', { name: 'file-0', exact: true })
@@ -80,10 +72,7 @@ test('edits preserve source bytes, save on navigation and quit, and the vault re
   const app = await launch(settings)
   try {
     const window = await app.firstWindow()
-    await app.evaluate(({ dialog }, path) => {
-      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
-    }, vault)
-    await window.getByRole('button', { name: '打开笔记库' }).click()
+    await openVault(app, window, vault)
     const tree = window.getByRole('tree', { name: '文件树' })
     const note = (name: string): Locator => tree.getByRole('treeitem', { name, exact: true })
     await expect(note('.隐藏')).toHaveCount(0)
@@ -128,10 +117,7 @@ test('external saves refresh clean notes and keep both sides of a conflict', asy
   const app = await launch(info.outputPath('settings'))
   try {
     const window = await app.firstWindow()
-    await app.evaluate(({ dialog }, path) => {
-      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
-    }, vault)
-    await window.getByRole('button', { name: '打开笔记库' }).click()
+    await openVault(app, window, vault)
     await window.getByRole('treeitem', { name: '欢迎', exact: true }).click()
     const editor = window.getByRole('textbox', { name: '编辑器' })
     await expect(editor).toContainText('这是 mote 的验证笔记库。')
@@ -170,10 +156,7 @@ test('quick open ranks notes like Obsidian and lists recent notes for an empty q
   const app = await launch(info.outputPath('settings'))
   try {
     const window = await app.firstWindow()
-    await app.evaluate(({ dialog }, path) => {
-      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
-    }, vault)
-    await window.getByRole('button', { name: '打开笔记库' }).click()
+    await openVault(app, window, vault)
     await expect(window.getByRole('tree', { name: '文件树' })).toBeVisible()
     const dialog = window.getByRole('dialog', { name: '快速打开' })
     const options = dialog.getByRole('option')
@@ -217,10 +200,7 @@ test('the backlinks pane lists links to the open note and jumps to them', async 
   const app = await launch(info.outputPath('settings'))
   try {
     const window = await app.firstWindow()
-    await app.evaluate(({ dialog }, path) => {
-      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
-    }, vault)
-    await window.getByRole('button', { name: '打开笔记库' }).click()
+    await openVault(app, window, vault)
     const pane = window.getByRole('complementary', { name: '反向链接' })
     const hits = pane.locator('button.hit')
     const editor = window.getByRole('textbox', { name: '编辑器' })
@@ -263,10 +243,7 @@ test('search finds notes by body and file name, jumps to matches, and follows ch
   const app = await launch(info.outputPath('settings'))
   try {
     const window = await app.firstWindow()
-    await app.evaluate(({ dialog }, path) => {
-      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
-    }, vault)
-    await window.getByRole('button', { name: '打开笔记库' }).click()
+    await openVault(app, window, vault)
     await expect(window.getByRole('tree', { name: '文件树' })).toBeVisible()
     const box = window.getByRole('searchbox', { name: '搜索' })
     const summary = window.getByRole('status', { name: '搜索结果数' })
