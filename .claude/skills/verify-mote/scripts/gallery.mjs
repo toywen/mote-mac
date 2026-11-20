@@ -237,19 +237,25 @@ function vm(run, ...args) {
 
 const js = (value) => JSON.stringify(value)
 
-// Waits until the open note's images have loaded and the editor DOM has been still for 250 ms.
+// Waits up to 2 s until the images in view have loaded and the editor DOM has been still for
+// 250 ms. Returns how many images in view were still loading, so the page can say so.
 const SETTLE_JS = `new Promise((resolve) => {
   const root = document.querySelector('.cm-editor')
+  const view = root.querySelector('.cm-scroller').getBoundingClientRect()
   const started = performance.now()
   let still = started
   const observer = new MutationObserver(() => { still = performance.now() })
   observer.observe(root, { childList: true, subtree: true, attributes: true, characterData: true })
+  const loading = () => [...root.querySelectorAll('img')].filter((img) => {
+    const box = img.getBoundingClientRect()
+    return !img.complete && box.bottom > view.top && box.top < view.bottom
+  }).length
   const tick = () => {
     const now = performance.now()
-    const loaded = [...root.querySelectorAll('img')].every((img) => img.complete)
-    if ((loaded && now - still > 250) || now - started > 4000) {
+    const pending = loading()
+    if ((!pending && now - still > 250) || now - started > 2000) {
       observer.disconnect()
-      resolve(Math.round(now - started))
+      resolve(pending)
     } else setTimeout(tick, 50)
   }
   tick()
@@ -332,24 +338,24 @@ function session(planFile) {
           for (const [i, view] of shot.views.entries()) {
             if (view.repeat || (phase.views === 'light' && !view.top && !view.densest)) continue
             const scrolled = JSON.parse(vm(run, 'scroll', '--line', String(view.line)))
-            // A short note cannot scroll to a later view; keep only the first of equal views.
-            const same = shot.views.find(
-              (v, j) =>
-                j < i &&
-                !v.repeat &&
-                v.shots[`${phase.mode}-${phase.scheme}`]?.scrollTop === scrolled.scrollTop
-            )
-            if (same && phase === PHASES[0]) {
+            // Near the end of a note the editor cannot scroll the view's line to the top. A view
+            // that adds less than a third of a screen to the one before it is left out.
+            const before = shot.views.findLast((v, j) => j < i && !v.repeat)?.shots[
+              `${phase.mode}-${phase.scheme}`
+            ]?.visibleLines
+            const [first, last] = scrolled.visibleLines
+            if (phase === PHASES[0] && before && last - before[1] < (before[1] - before[0]) / 3) {
               view.repeat = true
               continue
             }
-            vm(run, 'eval', '--js', SETTLE_JS)
+            const loading = Number(vm(run, 'eval', '--js', SETTLE_JS))
             const name = `gallery-${n}-${i}-${phase.mode}-${phase.scheme}`
             const png = vm(run, 'screenshot', '--out', name)
             view.shots[`${phase.mode}-${phase.scheme}`] = {
               png,
               scrollTop: scrolled.scrollTop,
-              visibleLines: scrolled.visibleLines
+              visibleLines: [first, last],
+              loading
             }
           }
         }
@@ -408,7 +414,10 @@ function figure(vault, shot, mode, scheme) {
   if (!shot)
     return `<figure class="missing"><div>没有截图</div><figcaption>${caption}</figcaption></figure>`
   const [from, to] = shot.visibleLines
-  return `<figure><a href="${esc(shot.jpg)}" target="_blank"><img loading="lazy" src="${esc(shot.jpg)}" width="${shot.width}" height="${shot.height}" alt="${esc(caption)}"></a><figcaption>${caption} · 第 ${from}–${to} 行</figcaption></figure>`
+  const loading = shot.loading
+    ? ` · <span class="bad">${shot.loading} 张图片 2 秒内没加载完</span>`
+    : ''
+  return `<figure><a href="${esc(shot.jpg)}" target="_blank"><img loading="lazy" src="${esc(shot.jpg)}" width="${shot.width}" height="${shot.height}" alt="${esc(caption)}"></a><figcaption>${caption} · 第 ${from}–${to} 行${loading}</figcaption></figure>`
 }
 
 function noteBlock(vault, note, id) {
