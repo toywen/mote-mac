@@ -1,6 +1,6 @@
 ---
 name: verify-mote
-description: Launch a disposable mote (Electron desktop app) on a copy of a vault, drive its window like a user, and capture proof, including a byte-level diff of the vault. Use whenever you must prove a mote change works in the real app, reproduce a mote bug, or check an acceptance item from docs/mvp.md.
+description: Launch a disposable mote (Electron desktop app) on a copy of a vault, drive its window like a user, and capture proof, including a byte-level diff of the vault. Use whenever you must prove a mote change works in the real app, reproduce a mote bug, or check an acceptance item from docs/features.md.
 ---
 
 # Verify mote

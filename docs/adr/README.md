@@ -1,0 +1,20 @@
+# 架构决策记录
+
+ADR（Architecture Decision Record）是架构决策记录。每个文件记一个决策：背景、决定和理由。
+
+规则：
+
+- 写完不再改内容。只能改"状态"一行。
+- 推翻一个决策时，新写一篇，状态写"替代 NNNN"。再把旧的那篇状态改成"被 NNNN 替代"。
+- 文件名是 `NNNN-短标题.md`，编号递增。
+- 状态有三种：已接受、已实现、被 NNNN 替代。"已接受"表示定了但还没写代码。
+
+| 编号 | 决策 | 状态 |
+| --- | --- | --- |
+| [0001](0001-tech-stack.md) | 技术选型 | 已实现 |
+| [0002](0002-one-parser.md) | 编辑器、索引和阅读模式只用一个解析器 | 已接受 |
+| [0003](0003-link-resolution-matches-obsidian.md) | 链接解析以 Obsidian 的结果为准 | 已接受 |
+| [0004](0004-substring-search.md) | 全文搜索用内存子串匹配 | 已接受 |
+| [0005](0005-own-sync-service.md) | 同步用 mote 自己的服务，不用 git | 已接受 |
+| [0006](0006-rename-journal.md) | 改名和移动用 journal 保证可以重跑 | 已接受 |
+| [0007](0007-mote-file-protocol.md) | 图片通过 `mote-file://` 协议读取 | 已接受 |

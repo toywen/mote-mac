@@ -33,7 +33,7 @@ This directory is the maintained source for verifying mote's user-facing behavio
 
 ## Status and handle contract
 
-The app shell, step 1, and the quick open part of step 2 of `docs/tech-stack.md` are implemented. The roles and names in these recipes match the desktop window.
+Which features are implemented, and which recipe proves each, is tracked in `docs/features.md`. The roles and names in these recipes match the desktop window.
 
 ## Features
 

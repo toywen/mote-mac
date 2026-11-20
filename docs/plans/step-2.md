@@ -1,6 +1,6 @@
 # 第 2 步实现计划
 
-本计划实现 [技术栈文档](../tech-stack.md) 开发顺序第 2 步。完成标准是 [MVP 验收清单](../mvp.md#验收清单) 第 2 条：在 5 个笔记库副本里，mote 解析出的每个链接目标都和 Obsidian 的 `resolvedLinks` 一致。
+本计划实现 [功能列表](../features.md#开发顺序) 开发顺序第 2 步。完成标准是 [验收清单](../features.md#验收清单) 第 2 条：在 5 个笔记库副本里，mote 解析出的每个链接目标都和 Obsidian 的 `resolvedLinks` 一致。
 
 本文用到的词：
 
@@ -52,13 +52,13 @@ A 和 B 改的文件不重叠，可以同时做。B 等你跑完导出就能开�
 require('fs').writeFileSync(app.vault.adapter.basePath + '.obsidian-links.json', JSON.stringify({ files: app.vault.getFiles().map((f) => f.path), resolved: app.metadataCache.resolvedLinks, unresolved: app.metadataCache.unresolvedLinks }))
 ```
 
-这行命令把导出文件写到副本旁边，例如 `~/mote-link-check/life-os-copy.obsidian-links.json`。它比技术栈文档里的命令多导出一份文件列表。对照工具用这份列表确认两边看到的文件相同。如果 `require` 报错，改用 `copy(...)` 包住同样的对象，再在终端运行 `pbpaste > ~/mote-link-check/<副本>.obsidian-links.json`。
+这行命令把导出文件写到副本旁边，例如 `~/mote-link-check/life-os-copy.obsidian-links.json`。它比 ADR 0003 里的命令多导出一份文件列表。对照工具用这份列表确认两边看到的文件相同。如果 `require` 报错，改用 `copy(...)` 包住同样的对象，再在终端运行 `pbpaste > ~/mote-link-check/<副本>.obsidian-links.json`。
 
 PR B 末尾还需要一次导出，对象是测试笔记库 `links` 的副本。到时我会给出路径。
 
 ## 数据结构
 
-这些类型放在 `src/core/model.ts`，技术栈文档同步更新。
+这些类型放在 `src/core/model.ts`。
 
 ```ts
 type LinkRef = {
@@ -139,7 +139,7 @@ type ResolvedLinks = {
 ## PR B：解析器、链接解析和对照工具
 
 - [ ] 依赖：无，从 main 开分支。需要 5 个导出文件。
-- [ ] 改动文件：`src/core/model.ts`、`text.ts`、`markdown.ts`、`resolve.ts`（均为新）、`src/main/notes.ts`（新，从 `vault.ts` 抽出扫描和读取）、`vault.ts`、`NoteEditor.tsx`（规范化函数移到 `src/core/text.ts`）、`tools/compare-links.mjs`（新）、`tests/fixtures/vaults/links/`（新）、`package.json`、`tsconfig*.json`、`docs/tech-stack.md`、`verify-mote` 的 `features/links.md`。
+- [ ] 改动文件：`src/core/model.ts`、`text.ts`、`markdown.ts`、`resolve.ts`（均为新）、`src/main/notes.ts`（新，从 `vault.ts` 抽出扫描和读取）、`vault.ts`、`NoteEditor.tsx`（规范化函数移到 `src/core/text.ts`）、`tools/compare-links.mjs`（新）、`tests/fixtures/vaults/links/`（新）、`package.json`、`tsconfig*.json`、`docs/features.md`、`ARCHITECTURE.md`、`verify-mote` 的 `features/links.md`。
 - [ ] 做的一件事：mote 能从笔记里提取链接，并按 Obsidian 的规则解析目标。
 - [ ] 你会看到：对照工具在 5 个副本上的输出：总数、一致数、不一致 0 处。
 
@@ -221,7 +221,7 @@ type ResolvedLinks = {
 - [ ] 真实窗口，`workspace-copy`：搜索一个常见中文词，例如“笔记”。显示的匹配总数等于 `grep -rFo --include='*.md' --exclude-dir='.*' 笔记 . | wc -l` 的结果，命中的笔记数等于 `grep -rlF` 的行数加上只有文件名命中的笔记数。
 - [ ] 真实窗口，外部修改：用 shell 新建一篇含“外部新增搜索词”的笔记，搜索结果出现它；删掉后结果消失。
 - [ ] `vault-diff --expect-unchanged` 输出 `unchanged`。
-- [ ] 性能：用 node 计时 `search`，输入是 `workspace-copy` 的笔记复制成 1 万篇，查询“的”和一个 4 字词。超过 200 毫秒算失败，这是技术栈文档的目标。main 上没有这个功能，没有基线。
+- [ ] 性能：用 node 计时 `search`，输入是 `workspace-copy` 的笔记复制成 1 万篇，查询“的”和一个 4 字词。超过 200 毫秒算失败，这是 features.md 性能目标里的数。main 上没有这个功能，没有基线。
 
 ## 还证明不了的
 

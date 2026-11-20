@@ -4,12 +4,25 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What mote is
 
-mote is an Electron app that replaces Obsidian on the Mac for any existing Obsidian vault. `~/life-os` is the main test vault, not the target. The two design docs are the source of truth, and both are written in Chinese:
+mote is an Electron app that replaces Obsidian on the Mac for any existing Obsidian vault. `~/life-os` is the main test vault, not the target. The docs are written in Chinese. Each has one job:
 
-- `docs/mvp.md` defines the P0, P1, and out-of-scope features and the acceptance checklist.
-- `docs/tech-stack.md` defines the stack, the core types, the IPC contract, and the development order (steps 0 to 7).
+- `CONTEXT.md` is the glossary. Use its terms in docs, code, and replies. Add a new term there before a doc uses it.
+- `ARCHITECTURE.md` is the module map, the state owners, and the invariants.
+- `docs/features.md` is the only list of features, with status, evidence, development order (steps 0 to 7), performance targets, and the acceptance checklist.
+- `docs/adr/` holds architecture decision records. Never edit a decision; write a new ADR that replaces it.
+- `docs/plans/step-N.md` is the implementation plan for one step.
+- `docs/mvp.md` is frozen. It records the original goal and why the scope was drawn that way. Do not update it.
 
-Read both before changing scope or architecture. If code and docs disagree, update the doc in the same change.
+Types and the IPC contract live only in code (`src/core/ipc.ts`). Do not copy them into docs.
+
+Read `docs/features.md` and `ARCHITECTURE.md` before changing scope or architecture. If code and docs disagree, update the doc in the same change.
+
+## Keeping docs current
+
+- When a change adds or changes a feature, update its row in `docs/features.md` in the same change: status, evidence, and notes.
+- Mark a feature 已实现 only with evidence: an e2e test name or a `verify-mote` feature file. Otherwise mark it 部分 and say what is missing.
+- When scope changes, edit `docs/features.md` and record the reason and date in the notes column.
+- When a change makes a new architecture decision, add an ADR. When an ADR gets implemented, change its status line.
 
 ## Commands
 
@@ -33,7 +46,7 @@ Electron with three build targets from `electron.vite.config.ts`:
 - `src/main` is the main process. It owns the disk, file watching, and the vault index.
 - `src/preload` exposes one object, `window.mote`, through `contextBridge`. The renderer runs with `sandbox: true`, `contextIsolation: true`, and `nodeIntegration: false`. It reaches the disk only through `window.mote`.
 - `src/renderer` is React. It owns the text of open notes and a read-only copy of the note path list that main pushes.
-- `src/core` is planned in `docs/tech-stack.md`. It holds pure TypeScript shared by main and renderer: the `@lezer/markdown` parser config, link resolution, and the core types. It must not import Electron.
+- `src/core` holds pure TypeScript shared by main and renderer: the `@lezer/markdown` parser config, link resolution, and the core types. It must not import Electron.
 
 Each piece of state has one owner. Do not add a second copy that both sides write.
 
@@ -50,4 +63,4 @@ Each piece of state has one owner. Do not add a second copy that both sides writ
 
 ## Current status
 
-Step 1 of the development order is implemented. Step 2 is in progress; its plan is `docs/plans/step-2.md`, and quick open (`Cmd+O`) is done. The Electron tests cover opening a vault, preserving note bytes during edits, saving on switch and quit, reopening the last vault, and handling external changes. Use `verify-mote` to check an entire disposable vault in the real window.
+See `docs/features.md`. Use `verify-mote` to check an entire disposable vault in the real window.
