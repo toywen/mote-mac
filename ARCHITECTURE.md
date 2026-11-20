@@ -30,7 +30,7 @@
 | `src/core/` | 纯 TypeScript，主进程和渲染进程共用。不能引用 Electron |
 | `src/core/ipc.ts` | 库内路径、笔记库配置、`MoteApi` 接口和 IPC 通道名。IPC 的唯一定义 |
 | `src/core/text.ts` | 规范化文本：去掉 BOM，换行统一成 `\n`。链接位置都指向规范化文本 |
-| `src/core/markdown.ts` | 唯一的解析器配置（`@lezer/markdown` 加双链、嵌入、属性块），从笔记里提取链接 |
+| `src/core/markdown.ts` | 唯一的解析器配置（`@lezer/markdown` 加双链、嵌入、属性块），从笔记里提取链接。`calloutHeader` 判断一个引用是不是 callout，读出类型和标题 |
 | `src/core/resolve.ts` | 链接解析，照搬 Obsidian 的 `getLinkpathDest` |
 | `src/core/linkText.ts` | 新链接的文字，照搬 Obsidian 的 `fileToLinktext` 和它 `[[` 列表插入的文字。按笔记库配置选双链或 Markdown 链接，以及最短、相对、绝对路径 |
 | `src/core/linkDest.ts` | 链接去向：一个链接点击后去哪里。上色和点击都读它。不存在的笔记的新建路径照搬 Obsidian 的 `openLinkText`。外部网址的白名单也在这里 |
@@ -56,6 +56,11 @@
 | `src/renderer/src/editor/preview.css` | 实时预览的样式。颜色只用 `main.css` 里的变量 |
 | `src/renderer/src/editor/complete.ts`、`complete.css` | 双链补全：输入 `[[` 后列出笔记，候选用快速打开的 `quickOpenMatch.ts` 排序，插入 `linkText.ts` 生成的链接。笔记列表、最近打开和笔记库配置从 `completeContext` 读 |
 | `src/renderer/src/editor/follow.ts`、`follow.css` | 点击链接：在编辑器的元素上先于 CodeMirror 接住鼠标，按链接去向交给 `workspace.follow`。部件里画的链接也接得到 |
+| `src/renderer/src/editor/inline.ts`、`headings.ts`、`links.ts`、`lists.ts`、`quotes.ts`、`code.ts` | 各种元素的渲染函数。`inline.ts` 的 `inlineStyles` 是行内样式表，表格单元格也读它 |
+| `src/renderer/src/editor/preview.css` | 实时预览的样式。颜色只用 `main.css` 里的变量 |
+| `src/renderer/src/editor/callouts.ts`、`callouts.css` | callout 的渲染函数。占 `Blockquote` 的位置，不是 callout 的引用交给 `quotes.ts`。callout 的种类、别名、颜色和图标是一张表，照搬 Obsidian 1.15.1 的 `app.css`。颜色变量的浅色值和深色值在 `callouts.css` |
+| `src/renderer/src/editor/tables.ts`、`tables.css` | 表格画成一个块级组件。单元格按语法节点画，行内样式读 `inlineStyles`，链接读 `linkTarget` |
+| `src/renderer/src/editor/tasks.ts`、`tasks.css` | 任务的复选框。点击只改方括号里的 1 个字符。`editorLocked` 是 mote 忙时锁住编辑器的输入 |
 | `src/renderer/src/FileTree.tsx` | 文件树 |
 | `src/renderer/src/QuickOpen.tsx`、`quickOpenMatch.ts` | 快速打开窗口和照搬 Obsidian 的匹配打分 |
 | `src/renderer/src/HitList.tsx` | 按笔记分组列出命中位置，点一处打开笔记并选中。反向链接面板和搜索共用 |
