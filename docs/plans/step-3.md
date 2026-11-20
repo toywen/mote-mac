@@ -448,21 +448,96 @@ callout 的类型和颜色放在一张表里，别名也在表里，例如 `tip`
 
 ## PR G：双链补全
 
-- [ ] 依赖：PR B。
-- [ ] 改动文件：`package.json`（加 `@codemirror/autocomplete`）、`src/core/linkText.ts`（新）、`src/renderer/src/editor/complete.ts`（新）、`NoteEditor.tsx`、`tools/obsidian-export.mjs`、`tools/compare-links.mjs`、`tests/e2e/complete.spec.ts`（新）、`features/link-complete.md`、`docs/features.md`。
-- [ ] 做的一件事：输入 `[[` 后弹出笔记名列表。选中后按笔记库配置的格式插入链接。
-- [ ] 你会看到：输入 `[[计`，列表第一项是 `计划`。按回车，插入 `[[计划]]`。笔记库配置要求 Markdown 链接时，插入 `[计划](项目/计划.md)`。
+- [x] 依赖：PR B。
+- [x] 改动文件：`package.json`（加 `@codemirror/autocomplete`）、`src/core/linkText.ts`（新）、`src/core/resolve.ts`、`src/renderer/src/editor/complete.ts` 和 `complete.css`（新）、`quickOpenMatch.ts`、`NoteEditor.tsx`、`App.tsx`、`tools/obsidian-export.mjs`、`tools/check-linktext.mjs`（新）、`tests/fixtures/vaults/links.obsidian-linktext.json`（新）、`tests/e2e/complete.spec.ts`（新）、`features/link-complete.md`、`ARCHITECTURE.md`、`docs/features.md`。
+- [x] 做的一件事：输入 `[[` 后弹出笔记名列表。选中后按笔记库配置的格式插入链接。
+- [x] 你会看到：输入 `[[计`，列表第一项是 `计划`。按回车，插入 `[[计划]]`。笔记库配置要求 Markdown 链接和相对路径时，插入 `[计划](项目/计划.md)`。最短路径下插入 `[计划](计划.md)`，因为 `计划` 不重名。
 
-候选的匹配和排序用快速打开的 `quickOpenMatch.ts`，不写第二套。链接文字的规则照搬 Obsidian 1.15.1 的 `generateMarkdownLink` 和 `fileToLinktext`，覆盖最短、相对、绝对 3 种格式。
+候选的匹配和排序用快速打开的 `quickOpenMatch.ts`，不写第二套。链接文字的规则照搬 Obsidian 1.15.1 的 `fileToLinktext` 和 `[[` 列表插入文字的函数，覆盖最短、相对、绝对 3 种格式。原计划写的是 `generateMarkdownLink`，但 Obsidian 的 `[[` 列表不调用它，见下面的结果。
 
 验证：
 
-- [ ] 单元：Vitest 测 `linkText` 的 3 种格式和重名笔记。再测一条性质：5 个副本里任取源笔记和目标，`linkText` 生成的文字用 `resolveLink` 解析后回到同一个目标。
-- [ ] 对照：`obsidian-export.mjs` 导出 `links` 副本里每对笔记的 `fileToLinktext`，和 `linkText` 完全相同。
-- [ ] 单元：e2e 测试 `typing [[ completes note names in the vault's link format`。
-- [ ] 真实窗口，输入法：输入 `[[` 后用 `ime` 输入“计划”，选字期间按回车不插入链接。上屏后列表第一项是 `计划`。
-- [ ] 真实窗口：选中后等自动保存，`vault-diff` 只列出这篇笔记，新增的字节就是这个链接。
-- [ ] 性能：`workspace-copy` 的路径复制成 1 万条，补全每次按键的匹配时间用 `tools/bench-quick-open.mjs` 量。中位数超过 16 毫秒算失败。
+- [x] 单元：Vitest 测 `linkText` 的 3 种格式和重名笔记。再测一条性质：5 个副本里任取源笔记和目标，`linkText` 生成的文字用 `resolveLink` 解析后回到同一个目标。
+- [x] 对照：`obsidian-export.mjs` 导出 `links` 副本里每对笔记的 `fileToLinktext`，和 `linkText` 完全相同。
+- [x] 单元：e2e 测试 `typing [[ completes note names in the vault's link format`。
+- [x] 真实窗口，输入法：输入 `[[` 后用 `ime` 输入“计划”，选字期间按回车不插入链接。上屏后列表第一项是 `计划`。
+- [x] 真实窗口：选中后等自动保存，`vault-diff` 只列出这篇笔记，新增的字节就是这个链接。
+- [x] 性能：`workspace-copy` 的路径复制成 1 万条，补全每次按键的匹配时间用 `tools/bench-quick-open.mjs` 量。中位数超过 16 毫秒算失败。
+
+### 结果
+
+2026-11-20 实测。
+
+**照搬的函数。** 读自 Obsidian 1.15.1 的 `app.js`。
+
+| 函数 | 做什么 | mote 里的位置 |
+| --- | --- | --- |
+| `fileToLinktext` | 一个文件从某篇笔记看的链接路径。最短格式下，文件名只指向这个文件时只写文件名，否则写全路径 | `linkText.ts` 的 `fileToLinktext` |
+| `PR` | `[[` 列表选中一个文件后插入的文字。双链的路径里有 `/` 时加上文件名作别名。光标后面到下一个 `]]` 的文字一起替换，其中的 `\|别名` 保留 | `linkText.ts` 的 `linkText` |
+| `getLinkpathDest` | 链接路径能指向的所有文件。`fileToLinktext` 要知道是不是只有一个 | `resolve.ts` 的 `linkpathDest`，`resolveLink` 取第一个 |
+| `onTrigger`、`getSuggestions` | 光标前同一行最后一个 `[[` 之后、没有 `]` 的文字是查询词，去掉首尾空格 | `complete.ts` |
+| `Rt`、`he`、`Ci`、`tt`、`pe`、`pi`、`Qu`、`Vt` | 文件名、扩展名、父文件夹、去掉 `#`、Markdown 链接的编码、图片扩展名 | `linkText.ts` |
+
+原计划写照搬 `generateMarkdownLink`。Obsidian 的 `[[` 列表不调用它，调用的是 `PR`。在 `links` 测试笔记库的 540 次调用里，两者有 166 次结果不同。例如双链下 `generateMarkdownLink` 给 `[[b/重名]]`，`[[` 列表插入 `[[b/重名|重名]]`。用户在 Obsidian 里输入 `[[` 看到的是后者，所以 mote 照搬 `PR`。导出文件里仍记下 `generateMarkdownLink` 的结果，方便比较。
+
+**对照 Obsidian。** `obsidian-export.mjs --linktext` 在临时副本里打开 Obsidian，把 6 种配置（双链或 Markdown 链接，乘最短、相对、绝对）挨个写进 `.obsidian/app.json`。对每篇源笔记和每个目标文件，它调用 `fileToLinktext` 和 `generateMarkdownLink`。它还让 Obsidian 的 `[[` 列表真的选中这个文件。编辑器换成只记录改动的替身，所以不写任何笔记。光标后面放 5 种文字：空、`]]`、`|别名]]`、` 尾]] 后`、` [[下]]`。
+
+| 笔记库 | 源笔记 × 文件 | `fileToLinktext` | 插入的文字、替换范围、光标位置 | 不同 |
+| --- | --- | --- | --- | --- |
+| `links`，提交为 `links.obsidian-linktext.json` | 9 × 10 | 540 | 2700 | 0 |
+| 临时笔记库，含 `instructions.md.md` 和带 `%` 的文件名 | 6 × 6 | 216 | 1080 | 0 |
+
+默认导出模式没有变。在 `links` 的新副本上跑，输出和提交的 `links.obsidian-links.json` 逐字节相同。
+
+**解析回目标。** `tools/check-linktext.mjs` 对每篇源笔记和每个文件，在 6 种配置下生成链接，用共享的解析器解析，再用 `resolveLink` 解析。
+
+| 副本 | 笔记 | 文件 | 链接数 | 不回到目标 |
+| --- | --- | --- | --- | --- |
+| `Pesemic-copy` | 15 | 15 | 1,350 | 0 |
+| `knowledge-base-copy` | 68 | 68 | 27,744 | 0 |
+| `life-os-copy` | 113 | 129 | 87,462 | 0 |
+| `wiki-copy` | 11 | 11 | 726 | 0 |
+| `workspace-copy` | 603 | 776 | 2,807,568 | 5,427 |
+
+5,427 个都来自 3 个文件名：
+
+- `instructions.md.md` 的双链。去掉 `.md` 后是 `instructions.md`，正好是旁边另一篇笔记的名字。603 篇 × 3 种格式。
+- 两篇文件名带 `%` 的笔记的 Markdown 链接。`%20` 之外的 `%` 不编码，解码失败。603 篇 × 3 种格式 × 2 篇。
+
+临时笔记库里放了同样的文件名。Obsidian 插入的文字和 mote 相同，它自己的 `resolvedLinks` 也解析不回这些链接。所以这是照搬的结果，不是 mote 的错。另外，Obsidian 把解码失败的 Markdown 链接整个忽略，mote 把它算成不存在的链接，这是解析器已有的差异，main 上也一样。
+
+**真实窗口，`basic`。** 证据在 `verify-artifacts/` 下。
+
+- `20261120-132334-f3bc`：打开 `欢迎`，在 `这是 mote 的验证笔记库。` 后面输入 ` [[计`。列表只有一行：`计划`，后面是 `项目`，已选中。按回车。`vault-diff` 只列出 `欢迎.md`，新增的字节是 ` [[计划]]`，没有删除。截图 `complete-list.png`。
+- `20261120-133925-5e0c`：在同一行后面输入 ` [[`，再 `ime --text 计划 --commit 计划 --hold 400`。回车的 keydown 是 `isComposing: true`、key code 13。选字期间，列表第一项是 `计划`，光标前是 `[[计划`，没有插入链接。上屏后仍是 `[[计划`，列表第一项是 `计划`。再按回车，变成 `[[计划]]`。CDP 的 key code 13 回车让 Chromium 在光标后加了 2 个换行。对照：同一个 `ime` 命令用在没有 `[[` 的行尾，也加了 2 个换行，所以和补全无关。真实的 macOS 输入法回车是 key code 229，不加换行。e2e 测试发的就是 229，检查整行文字只多了链接。
+- `20261120-134152-acde`：新启动，`walk-notes` 打开 5 篇，`errorCount` 0。`vault-diff --expect-unchanged` 输出 `unchanged`。
+
+**性能，匹配。** 命令：`node tools/bench-quick-open.mjs ~/mote-link-check/workspace-copy --bench 10000 <查询>`，每个查询 100 次的中位数，单位毫秒。补全每次按键调用的就是这个 `suggest`。
+
+| 查询 | 改前，3 轮 | 改后，3 轮 |
+| --- | --- | --- |
+| `计`、`计划` | 6.4 到 6.6 | 6.5 到 6.7 |
+| `d` | 12.0 到 12.2 | 8.0 到 8.2 |
+| `dai` | 18.0 到 20.3 | 13.5 到 13.7 |
+| `daily` | 16.9 到 18.5 | 14.5 到 14.8 |
+| `wechat` | 14.2 到 16.7 | 12.1 到 12.5 |
+
+改前，英文查询超过 16 毫秒。`dai` 在 1 万条里命中几千条，原来的代码把命中的全部排序再取前 20。现在边扫描边保留前 20 条。18 个查询、3 种条数上限下，新旧结果逐条相同。剩下的时间在匹配本身：CPU 剖析里 `matchInOrder` 和 `matchTarget` 占 74%，它们对每条路径做 `toLowerCase` 和 `indexOf`。量的时候 1 分钟负载 5 到 7，新旧版本交替跑。
+
+**性能，输入。** 命令：`$V launch --vault ~/mote-link-check/Pesemic-copy`，打开 `compute/compute_mvp_spec.md`，`bench-typing --chars 200 --where end` 连跑 2 次。
+
+| 版本 | 第 1 次每键中位数 | 第 2 次 | p95 | 空闲中位数 |
+| --- | --- | --- | --- | --- |
+| PR B（`de6e554`） | 7.18 | 7.20 | 10.30、9.19 | 0.24、0.14 |
+| PR G | 6.39 | 6.96 | 9.28、9.22 | 0.16、0.15 |
+
+PR G 没有比 PR B 慢，上限是 PR B 的 1.2 倍。补全在每个键上只看光标前的一行，没有 `[[` 就返回。两边都比 PR B 之前 main 的 4.94 毫秒高，那是 PR B 的实时预览带来的。
+
+**和 Obsidian 不同的地方。**
+
+- Obsidian 的列表还有笔记的别名、不存在的链接和附件。mote 只列笔记。
+- 查询为空时，Obsidian 按修改时间列出所有文件，不预先选中。mote 列出最近打开的 10 篇，选中第一篇，和快速打开一样。
+- 查询里有 `^` 时，Obsidian 补全块引用。mote 不弹列表，和 `#`、`|` 一样。
 
 ## PR H：5 个副本验收
 
