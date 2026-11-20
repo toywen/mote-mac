@@ -69,14 +69,15 @@ function ids(node: SyntaxNode, text: string, skipLists: boolean): string[] {
   return found
 }
 
-type Block = { id: string; from: number }
+type Range = { from: number; to: number }
+type Block = Range & { id: string }
 
 // Every item of a top-level list, nested ones included, with the first block id of its own text.
 function listItems(list: SyntaxNode, text: string, items: Block[]): void {
   for (let item = list.firstChild; item; item = item.nextSibling) {
     if (item.name !== 'ListItem') continue
     const [id] = ids(item, text, true)
-    if (id) items.push({ id, from: item.from })
+    if (id) items.push({ id, from: item.from, to: item.to })
     for (let child = item.firstChild; child; child = child.nextSibling)
       if (isList(child)) listItems(child, text, items)
   }
@@ -84,7 +85,7 @@ function listItems(list: SyntaxNode, text: string, items: Block[]): void {
 
 type Outline = {
   headings: { text: string; level: number; from: number }[]
-  blocks: Map<string, number>
+  blocks: Map<string, Range>
 }
 
 // The top-level headings and the block ids of a note, as worker.js gs puts them in the cache.
@@ -100,41 +101,50 @@ function outline(text: string): Outline {
     const own = /^\^([a-zA-Z0-9-]+)$/.exec(text.slice(node.from, node.to))
     const after = text.slice(node.to, node.to + 2)
     if (node.name === 'Paragraph' && own && (after === '' || after === '\n' || after === '\n\n')) {
-      if (previous) sections.push({ id: own[1], from: previous.from })
+      if (previous) sections.push({ id: own[1], from: previous.from, to: previous.to })
       continue
     }
     if (isList(node)) listItems(node, text, items)
     else {
       const found = ids(node, text, false)
-      if (found.length) sections.push({ id: found[found.length - 1], from: node.from })
+      if (found.length) sections.push({ id: found[found.length - 1], from: node.from, to: node.to })
     }
     previous = node
   }
   // Items come after sections, so an item's id wins over a section's, as in gs.
-  const blocks = new Map<string, number>()
-  for (const { id, from } of [...sections, ...items]) blocks.set(id.toLowerCase(), from)
+  const blocks = new Map<string, Range>()
+  for (const { id, from, to } of [...sections, ...items]) blocks.set(id.toLowerCase(), { from, to })
   return { headings, blocks }
 }
 
-// Where #heading, #parent#child or #^block lands in a note's normalized text: the offset where
-// that heading or block starts. Null when the note has no such heading or block.
-export function resolveSubpath(text: string, subpath: string): number | null {
+// The part of a note's normalized text that #heading, #parent#child or #^block names. A heading's
+// part runs to the next heading of the same or a higher level, without the blank lines before it.
+// A block's part is that block. Null when the note has no such heading or block.
+export function subpathRange(text: string, subpath: string): Range | null {
   const parts = subpath.split('#').filter(Boolean)
   if (parts.length === 0) return null
   const { headings, blocks } = outline(text)
   if (parts.length === 1 && parts[0].startsWith('^')) {
     const block = blocks.get(parts[0].slice(1).toLowerCase())
-    if (block !== undefined) return block
+    if (block) return block
   }
   // Each part matches a later heading that is deeper than the one before it.
   let matched = 0
   let level = 0
-  for (const heading of headings) {
+  for (const [i, heading] of headings.entries()) {
     if (heading.level <= level) continue
     if (normalize(heading.text).toLowerCase() !== normalize(parts[matched]).toLowerCase()) continue
     matched++
     level = heading.level
-    if (matched === parts.length) return heading.from
+    if (matched < parts.length) continue
+    const next = headings.slice(i + 1).find((later) => later.level <= heading.level)
+    return { from: heading.from, to: text.slice(0, next?.from ?? text.length).trimEnd().length }
   }
   return null
+}
+
+// Where #heading, #parent#child or #^block lands in a note's normalized text: the offset where
+// that heading or block starts. Null when the note has no such heading or block.
+export function resolveSubpath(text: string, subpath: string): number | null {
+  return subpathRange(text, subpath)?.from ?? null
 }

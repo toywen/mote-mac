@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { resolveSubpath } from './subpath.ts'
+import { resolveSubpath, subpathRange } from './subpath.ts'
 
 // The 0-based line where a subpath lands, as Obsidian reports start.line, or null.
 function line(text: string, subpath: string): number | null {
@@ -85,5 +85,48 @@ describe('resolveSubpath', () => {
     expect(line('紧贴的段落^p2\n\n公式 x^2\n', '#^p2')).toBe(null)
     expect(line('紧贴的段落^p2\n\n公式 x^2\n', '#^2')).toBe(null)
     expect(line('段落\n^p3\n', '#^p3')).toBe(0)
+  })
+})
+
+// The 0-based lines a subpath's range starts and ends on.
+function lines(text: string, subpath: string): [number, number] | null {
+  const range = subpathRange(text, subpath)
+  if (!range) return null
+  const lineOf = (at: number): number => text.slice(0, at).split('\n').length - 1
+  return [lineOf(range.from), lineOf(range.to)]
+}
+
+// The text of a subpath's range.
+function part(text: string, subpath: string): string | null {
+  const range = subpathRange(text, subpath)
+  return range && text.slice(range.from, range.to)
+}
+
+describe('subpathRange', () => {
+  it('runs a heading to the next heading of the same or a higher level', () => {
+    expect(lines(note, '#一级')).toEqual([3, 21])
+    expect(lines(note, '#二级：带标点')).toEqual([5, 21])
+    expect(lines(note, '#一级#三级')).toEqual([9, 21])
+    expect(lines(note, '#Setext 标题')).toEqual([23, 23])
+    expect(lines(note, '#另一个')).toEqual([24, 28])
+    expect(lines(note, '#title ^h2')).toEqual([28, 28])
+  })
+
+  it('leaves out the blank lines before the next heading', () => {
+    expect(part(note, '#二级：带标点')?.endsWith('\n^after')).toBe(true)
+    expect(part(note, '#Setext 标题')).toBe('# Setext 标题')
+  })
+
+  it('covers just the block of a block id', () => {
+    expect(part(note, '#^p1')).toBe('段落 ^p1')
+    expect(part(note, '#^li')).toBe('- 嵌套项 ^li')
+    expect(part(note, '#^after')).toBe('表格前的段落')
+    expect(lines(note, '#^q1')).toEqual([15, 17])
+  })
+
+  it('gives null where resolveSubpath does', () => {
+    expect(subpathRange(note, '#不存在')).toBe(null)
+    expect(subpathRange(note, '#^nope')).toBe(null)
+    expect(subpathRange(note, '')).toBe(null)
   })
 })
