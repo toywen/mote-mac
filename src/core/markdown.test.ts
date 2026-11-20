@@ -65,8 +65,72 @@ describe('markdownParser', () => {
       expect(nodes(text, 'Tag'), text).toEqual([])
   })
 
-  it('parses a bare URL as a URL node', () => {
+  it('parses a bare http or https URL as a URL node, and no other bare address', () => {
     expect(nodes('看 https://example.com/a#b 吧', 'URL')).toEqual(['https://example.com/a#b'])
+    expect(nodes('看http://e.com。', 'URL')).toEqual(['http://e.com'])
+    expect(nodes('www.example.com 和 a@example.com', 'URL')).toEqual([])
+  })
+})
+
+// Notes written to probe edge cases, with what Obsidian 1.15.1 reports for them in
+// metadataCache.getFileCache: tags, and each link's path and display text.
+describe('agreement with Obsidian on edge cases', () => {
+  const boundary =
+    "# 边界\n\n| 列 | 值 |\n| --- | --- |\n| 转义 | [[欢迎\\|别名]] |\n| 普通 | [[欢迎]] |\n| 未转义 | [[欢迎|别名二]] |\n| 标题 | [[欢迎#标题\\|节]] |\n\n==[[欢迎]]== ~~[[欢迎]]~~\n\n#标签 [[欢迎]] [[欢迎]]#紧跟 **粗**#粗后 ==高==#高后 a#b #123 #1a #a/b/c #中文，后面 x\n\n#行首\n\n- [ ] 任务 #待办\n> 引用 #引用中\n\nhttps://example.com/a [[欢迎]] https://example.com/[[欢迎]] https://e.com/#frag\n\n`#code` [x](#h) \\#esc #a-b_c #emoji🎉 #a.b #a'b #x—y\n## 标题里 #头\n#尾\n"
+  const escapes =
+    '正文 [[欢迎\\|别名]] 和 [[欢迎\\\\|双]] 和 [[a\\b]] 和 [[欢迎\\]]\n\n| 列 | 值 |\n| --- | --- |\n| 双反斜杠 | [[欢迎\\\\|双表]] |\n| 尾 | [[欢迎\\]] |\n'
+
+  it('finds the same tags', () => {
+    expect(nodes(boundary, 'Tag')).toEqual([
+      '#标签',
+      '#紧跟',
+      '#粗后',
+      '#高后',
+      '#1a',
+      '#a/b/c',
+      '#中文，后面',
+      '#行首',
+      '#待办',
+      '#引用中',
+      '#a-b_c',
+      '#emoji🎉',
+      '#a',
+      '#a',
+      '#x',
+      '#头',
+      '#尾'
+    ])
+    expect(nodes(escapes, 'Tag')).toEqual([])
+  })
+
+  it('finds the same link paths', () => {
+    const paths = (text: string): string[] =>
+      extractLinks(text).map((l) => l.target + (l.subpath ?? ''))
+    expect(paths(boundary)).toEqual([
+      '欢迎',
+      '欢迎',
+      '欢迎#标题',
+      '欢迎',
+      '欢迎',
+      '欢迎',
+      '欢迎',
+      '欢迎',
+      '#h'
+    ])
+    expect(paths(escapes)).toEqual(['欢迎', '欢迎\\', 'a\\b', '欢迎', '欢迎'])
+  })
+
+  // Known difference. Obsidian lets a URL run to the next space, as the GFM spec says, so the
+  // wikilink below is part of the URL. @lezer/markdown ends a URL with no path at its domain.
+  it.fails('takes no link from a wikilink glued to a URL that has no path', () => {
+    expect(extractLinks('https://example.com[[欢迎]]')).toEqual([])
+  })
+
+  it('finds the same aliases', () => {
+    const aliases = (text: string): string[] =>
+      extractLinks(text).flatMap((l) => (l.alias === null ? [] : [l.alias]))
+    expect(aliases(boundary)).toEqual(['别名', '节', 'x'])
+    expect(aliases(escapes)).toEqual(['别名', '双'])
   })
 })
 

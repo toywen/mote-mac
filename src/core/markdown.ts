@@ -17,6 +17,7 @@ const BANG = 33
 const HASH = 35
 const EQUALS = 61
 const BRACKET = 91
+const LOWER_H = 104
 
 const wikiLink: InlineParser = {
   name: 'WikiLink',
@@ -87,6 +88,17 @@ const tag: InlineParser = {
   }
 }
 
+// GFM Autolink tests a regex at every character and also links `www.` hosts and email
+// addresses. mote links only http and https URLs, so GFM's parser runs only where one starts.
+const gfmAutolink = (Autolink.parseInline ?? [])[0]
+const bareUrl: InlineParser = {
+  name: 'Autolink',
+  parse(cx, next, pos) {
+    if (next !== LOWER_H || !/^https?:\/\//.test(cx.slice(pos, pos + 8))) return -1
+    return gfmAutolink.parse(cx, next, pos)
+  }
+}
+
 const frontmatter: BlockParser = {
   name: 'Frontmatter',
   before: 'HorizontalRule',
@@ -109,7 +121,6 @@ export const markdownParser = commonmark.configure([
   Table,
   TaskList,
   Strikethrough,
-  Autolink,
   {
     defineNodes: [
       'WikiLink',
@@ -119,7 +130,7 @@ export const markdownParser = commonmark.configure([
       'Tag',
       { name: 'Frontmatter', block: true }
     ],
-    parseInline: [wikiLink, highlight, tag],
+    parseInline: [wikiLink, highlight, tag, bareUrl],
     parseBlock: [frontmatter]
   }
 ])
