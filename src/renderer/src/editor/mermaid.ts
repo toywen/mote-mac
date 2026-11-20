@@ -99,17 +99,15 @@ class MermaidWidget extends WidgetType {
       const scheme = currentScheme()
       const entry = drawing(this.code, scheme)
       wanted = scheme
-      if (entry.done) {
-        fill(box, entry.done, this.code)
-        box.style.minHeight = ''
-        return
-      }
-      // The old drawing stays until the new one is ready.
-      void entry.promise.then((done) => {
-        if (wanted !== scheme || !box.isConnected) return
+      const draw = (done: Drawing): void => {
         fill(box, done, this.code)
         box.style.minHeight = ''
         view.requestMeasure()
+      }
+      if (entry.done) return draw(entry.done)
+      // The old drawing stays until the new one is ready.
+      void entry.promise.then((done) => {
+        if (wanted === scheme) draw(done)
       })
     }
     show()

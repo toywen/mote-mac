@@ -22,10 +22,14 @@
   text-decoration: underline;
 }
 
-.mote-embed-content .cm-editor {
+/* The nested view sits inside the main editor, so it undoes the main editor's page layout. */
+.editor-content .mote-embed-content .cm-editor {
+  height: auto;
   background: transparent;
 }
 
-.mote-embed-content .cm-content {
+.editor-content .mote-embed-content .cm-content {
+  max-width: none;
+  margin: 0;
   padding: 0;
 }
