@@ -34,11 +34,13 @@
 | `src/core/resolve.ts` | 链接解析，照搬 Obsidian 的 `getLinkpathDest` |
 | `src/core/linkText.ts` | 新链接的文字，照搬 Obsidian 的 `fileToLinktext` 和它 `[[` 列表插入的文字。按笔记库配置选双链或 Markdown 链接，以及最短、相对、绝对路径 |
 | `src/core/model.ts` | 链接和解析结果的类型 |
+| `src/core/fileUrl.ts` | `mote-file://` 地址的唯一定义：库内路径和地址互转，哪些扩展名算图片 |
 | `src/core/search.ts` | 全文搜索：分词、引号短语、不分大小写的子串匹配、按文件名排序 |
 | `src/core/hits.ts` | 命中位置的预览行和按笔记分组 |
 | `src/core/noteIndex.ts` | 笔记索引：每篇笔记的规范化文本和链接，反向链接查询。不缓存反向链接，每次查询重新解析 |
 | `src/main/index.ts` | 窗口、IPC 处理、mote 自己的设置（`~/Library/Application Support/mote/settings.json`） |
 | `src/main/vault.ts` | 打开笔记库、读取笔记库配置、监听外部修改、按哈希读写笔记 |
+| `src/main/fileProtocol.ts` | `mote-file://` 的处理函数。只返回当前笔记库里的图片文件 |
 | `src/main/notes.ts` | 扫描文件和读取笔记。不引用 Electron，`tools/` 里的脚本也直接用它 |
 | `src/preload/` | 用 `contextBridge` 暴露 `window.mote` |
 | `src/renderer/src/workspace.ts` | 渲染进程的状态：当前笔记库、打开的笔记和它的状态机 |
@@ -48,6 +50,7 @@
 | `src/renderer/src/editor/preview.ts` | 实时预览的数据结构：一个元素的显示源码范围、一直生效的装饰、隐藏源码时才生效的装饰 |
 | `src/renderer/src/editor/renderers.ts` | 语法节点名到渲染函数的注册表。加一种元素，就加一个文件，在这里注册一行 |
 | `src/renderer/src/editor/inline.ts`、`headings.ts`、`links.ts`、`lists.ts`、`quotes.ts`、`code.ts` | 各种元素的渲染函数。`inline.ts` 的 `inlineStyles` 是行内样式表，表格单元格以后也读它 |
+| `src/renderer/src/editor/images.ts` | 图片和嵌入的渲染函数。图片放在源码下面，不是图片的嵌入显示为链接。样式在旁边的 `images.css` |
 | `src/renderer/src/editor/preview.css` | 实时预览的样式。颜色只用 `main.css` 里的变量 |
 | `src/renderer/src/editor/complete.ts`、`complete.css` | 双链补全：输入 `[[` 后列出笔记，候选用快速打开的 `quickOpenMatch.ts` 排序，插入 `linkText.ts` 生成的链接。笔记列表、最近打开和笔记库配置从 `completeContext` 读 |
 | `src/renderer/src/FileTree.tsx` | 文件树 |
@@ -121,4 +124,6 @@
 
 **安全**
 - `contextIsolation: true`，`nodeIntegration: false`，`sandbox: true`。
-- 渲染进程只能通过 `window.mote` 访问磁盘。
+- 渲染进程只能通过 `window.mote` 和 `mote-file://` 访问磁盘。`mote-file://` 只读图片，笔记只走 `window.mote`。
+- `mote-file://vault/<库内路径>` 只返回当前笔记库里的图片文件。它拒绝 `..` 和以 `.` 开头的部分、符号链接、笔记、别的主机和非 GET 请求，拒绝时不返回任何字节。见 ADR 0007。
+- 内容安全策略只放开图片：`img-src` 允许 `mote-file:` 和 `https:`，不允许 `http:`。
