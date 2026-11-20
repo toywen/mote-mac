@@ -198,12 +198,9 @@ function percentile(values, p) {
 
 const round = (ms) => Math.round(ms * 100) / 100
 
-async function walkNotes(page, vault, exportFile) {
-  const started = performance.now()
-  const noteMs = []
-  const expectedBacklinks = exportFile ? obsidianBacklinks(exportFile) : null
-  const backlinkMismatches = []
-  let backlinkCount = 0
+// Expands every folder of the file tree and returns its note rows and their paths, in tree order.
+// Fails unless the tree shows exactly the notes on disk.
+async function showAllNotes(page, vault) {
   const tree = page.getByRole('tree', { name: '文件树' })
   await tree.waitFor()
   const expected = fs
@@ -228,18 +225,24 @@ async function walkNotes(page, vault, exportFile) {
       `visible tree notes (${paths.length}) differ from the vault (${expected.length})`
     )
   }
-  const errors = []
-  page.on('pageerror', (error) => errors.push(error.message))
-  for (const note of paths) {
-    const row = rows.and(page.locator(`[data-path=${JSON.stringify(note)}]`))
-    // Times the open inside the page: Playwright's click and waitFor add about 60 ms of their own.
-    await page.evaluate((note) => {
+  return { rows, paths }
+}
+
+// Times the next click inside the page: Playwright's click and waitFor add about 60 ms of their
+// own. The clock starts at the click event and stops when the editor shows the note at path, or,
+// with leaving, any note other than path. Read the result from window.__moteOpenMs.
+function armOpenTimer(page, path, leaving = false) {
+  return page.evaluate(
+    ([path, leaving]) => {
+      window.__moteOpenWatch?.disconnect()
       window.__moteOpenMs = new Promise((resolve) => {
         let clickedAt = null
-        const editor = `.cm-content[data-note-path="${CSS.escape(note)}"]`
         const observer = new MutationObserver(() => check())
+        window.__moteOpenWatch = observer
         const check = () => {
-          if (clickedAt === null || !document.querySelector(editor)) return
+          const editor = document.querySelector('.cm-content[aria-label="编辑器"]')
+          const shown = editor?.getAttribute('data-note-path')
+          if (clickedAt === null || !shown || (shown === path) === leaving) return
           observer.disconnect()
           resolve(performance.now() - clickedAt)
         }
@@ -251,7 +254,23 @@ async function walkNotes(page, vault, exportFile) {
         addEventListener('click', onClick, { capture: true, once: true })
         observer.observe(document.body, { childList: true, subtree: true, attributes: true })
       })
-    }, note)
+    },
+    [path, leaving]
+  )
+}
+
+async function walkNotes(page, vault, exportFile) {
+  const started = performance.now()
+  const noteMs = []
+  const expectedBacklinks = exportFile ? obsidianBacklinks(exportFile) : null
+  const backlinkMismatches = []
+  let backlinkCount = 0
+  const { rows, paths } = await showAllNotes(page, vault)
+  const errors = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  for (const note of paths) {
+    const row = rows.and(page.locator(`[data-path=${JSON.stringify(note)}]`))
+    await armOpenTimer(page, note)
     await row.click()
     await page
       .getByRole('textbox', { name: '编辑器' })
@@ -284,12 +303,285 @@ async function walkNotes(page, vault, exportFile) {
   }
   return {
     opened: paths.length,
-    expected: expected.length,
+    expected: paths.length,
     errorCount: errors.length,
     durationMs: round(performance.now() - started),
     medianNoteMs: round(percentile(noteMs, 50)),
     ...(expectedBacklinks ? { backlinks: backlinkCount, backlinkMismatches } : {}),
     paths
+  }
+}
+
+const importSource = (file) => import(pathToFileURL(path.join(REPO, file)).href)
+const countOf = (counts) => Object.values(counts ?? {}).reduce((a, b) => a + b, 0)
+
+// What a click walk should reach in each note: Obsidian's resolved targets and its count of
+// unresolved links, less the links this walk cannot click. Those are embeds and property links,
+// which the editor does not draw as links yet; mote's parser lists them, and the walk reports
+// how many it took away.
+async function expectedClicks(vault, exported) {
+  const { scanVault, readNoteFiles } = await importSource('src/main/notes.ts')
+  const { extractLinks, markdownParser } = await importSource('src/core/markdown.ts')
+  const { buildLinkIndex, resolveLink } = await importSource('src/core/resolve.ts')
+  const { sourceText } = await importSource('src/core/text.ts')
+  const entries = [...(await scanVault(vault)).values()]
+  const index = buildLinkIndex(entries.filter((e) => e.kind !== 'folder').map((e) => e.path))
+  const notes = entries.filter((e) => e.kind === 'note').map((e) => e.path)
+  const versions = await readNoteFiles(vault, notes)
+  const expected = {}
+  notes.forEach((note, i) => {
+    const { text } = sourceText(versions[i]?.text ?? '')
+    const first = markdownParser.parse(text).topNode.firstChild
+    const propertiesEnd = first?.name === 'Frontmatter' ? first.to : 0
+    const resolved = { ...exported.resolved[note] }
+    let missing = countOf(exported.unresolved[note])
+    let subtracted = 0
+    for (const link of extractLinks(text)) {
+      if (!link.embed && link.range.from >= propertiesEnd) continue
+      subtracted++
+      const dest = resolveLink(index, link.target, note)
+      if (dest) resolved[dest] = (resolved[dest] ?? 0) - 1
+      else missing--
+    }
+    for (const [target, count] of Object.entries(resolved)) if (!count) delete resolved[target]
+    expected[note] = { resolved, missing, subtracted }
+  })
+  return expected
+}
+
+// Replaces shell.openPath and shell.openExternal in the main process with recorders, so a click
+// on a file or an address opens no program. They stay for the rest of the run.
+const recordShell = (state) =>
+  mainEval(
+    state,
+    `(() => {
+      const record = (globalThis.__moteShell ??= { opened: [], external: [] })
+      electron.shell.openPath = async (file) => (record.opened.push(file), '')
+      electron.shell.openExternal = async (url) => void record.external.push(url)
+      return record
+    })()`
+  )
+const shellRecord = (state) => mainEval(state, 'globalThis.__moteShell')
+
+const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms))
+
+// Waits until the editor has scrolled and drawn the lines it scrolled to.
+async function settle(page) {
+  let last = -1
+  for (let i = 0; i < 20; i++) {
+    const top = await page.evaluate(
+      () =>
+        new Promise((resolve) =>
+          requestAnimationFrame(() =>
+            requestAnimationFrame(() => resolve(document.querySelector('.cm-scroller').scrollTop))
+          )
+        )
+    )
+    if (top === last) return top
+    last = top
+  }
+  return last
+}
+
+// Every link the editor draws in the open note, by where its node starts: its class, and the
+// scroll position at which it was first drawn. Scrolls from the top to the bottom with the wheel.
+async function drawnLinks(page) {
+  const found = new Map()
+  const box = await page.locator('.cm-scroller').boundingBox()
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  for (;;) {
+    const seen = await page.evaluate(() => {
+      const scroller = document.querySelector('.cm-scroller')
+      return {
+        top: scroller.scrollTop,
+        end: scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2,
+        links: [...document.querySelectorAll('.cm-content [data-link-from]')].map((element) => [
+          Number(element.getAttribute('data-link-from')),
+          element.className
+        ])
+      }
+    })
+    for (const [from, className] of seen.links)
+      if (!found.has(from)) found.set(from, { className, top: seen.top })
+    if (seen.end) break
+    await page.mouse.wheel(0, box.height * 0.8)
+    if ((await settle(page)) === seen.top) break
+  }
+  return found
+}
+
+// Scrolls with the wheel until the link that starts at from is drawn.
+async function reach(page, from, top) {
+  const link = page.locator(`.cm-content [data-link-from="${from}"]`).first()
+  const box = await page.locator('.cm-scroller').boundingBox()
+  await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
+  for (let tries = 0; tries < 10 && !(await link.count()); tries++) {
+    const now = await page.evaluate(() => document.querySelector('.cm-scroller').scrollTop)
+    await page.mouse.wheel(0, top - now)
+    await settle(page)
+  }
+  return (await link.count()) ? link : null
+}
+
+const editorPath = (page) =>
+  page.evaluate(() =>
+    document.querySelector('.cm-content[aria-label="编辑器"]')?.getAttribute('data-note-path')
+  )
+
+// Where a click went: another note, a file handed to the default app, an address handed to the
+// browser, or nowhere visible, which a link to the open note itself does.
+async function clickOutcome(page, state, note, before, vaultReal) {
+  const quiet = Date.now() + 600
+  for (const deadline = Date.now() + 5000; Date.now() < deadline; await sleep(40)) {
+    const shown = await editorPath(page)
+    if (shown && shown !== note) return { kind: 'note', path: shown }
+    const now = await shellRecord(state)
+    if (now.opened.length > before.opened.length)
+      return { kind: 'file', path: path.relative(vaultReal, now.opened.at(-1)) }
+    if (now.external.length > before.external.length)
+      return { kind: 'external', url: now.external.at(-1) }
+    if (Date.now() > quiet) return { kind: 'stay', path: note }
+  }
+  return { kind: 'timeout' }
+}
+
+// Clicks every drawn link that resolves, in every note, records where each click went, and goes
+// back. Each note passes when the notes and files reached equal Obsidian's resolved targets for
+// it, and its links drawn as missing equal Obsidian's unresolved count, less embeds and property
+// links. --limit stops after that many clicks that open another note; --bench then opens the
+// same notes from the file tree and times both.
+async function walkLinks(page, state, opts) {
+  const started = performance.now()
+  const exported = JSON.parse(fs.readFileSync(opts.obsidian, 'utf8'))
+  const expected = await expectedClicks(state.vault, exported)
+  await recordShell(state)
+  const vaultReal = fs.realpathSync(state.vault)
+  const limit = opts.limit ? Number(opts.limit) : Infinity
+  const { rows, paths } = await showAllNotes(page, state.vault)
+  const errors = []
+  page.on('pageerror', (error) => errors.push(error.message))
+  const editorAt = (note) =>
+    page
+      .getByRole('textbox', { name: '编辑器' })
+      .and(page.locator(`[data-note-path=${JSON.stringify(note)}]`))
+  const totals = { notes: 0, clicked: 0, note: 0, file: 0, stay: 0, missing: 0, subtracted: 0 }
+  const follows = []
+  const mismatches = []
+  const notes = []
+  for (const note of paths) {
+    if (follows.length >= limit) break
+    await rows.and(page.locator(`[data-path=${JSON.stringify(note)}]`)).click()
+    await editorAt(note).waitFor({ timeout: 5000 })
+    const drawn = await drawnLinks(page)
+    const reached = {}
+    const clicks = []
+    let missing = 0
+    let partial = false
+    for (const [from, { className, top }] of drawn) {
+      if (/mote-link-missing/.test(className)) missing++
+      if (/mote-link-(missing|external)/.test(className)) continue
+      if (follows.length >= limit) {
+        partial = true
+        break
+      }
+      const link = await reach(page, from, top)
+      if (!link) {
+        clicks.push({ from, kind: 'not drawn' })
+        continue
+      }
+      const before = await shellRecord(state)
+      await armOpenTimer(page, note, true)
+      await link.click({ timeout: 5000 })
+      const outcome = await clickOutcome(page, state, note, before, vaultReal)
+      clicks.push({ from, ...outcome })
+      if (outcome.path) reached[outcome.path] = (reached[outcome.path] ?? 0) + 1
+      if (outcome.kind in totals) totals[outcome.kind]++
+      totals.clicked++
+      if (outcome.kind === 'note') {
+        const ms = await page.evaluate(() => window.__moteOpenMs)
+        follows.push({ from: note, to: outcome.path, ms })
+        await page.keyboard.press('Meta+Alt+ArrowLeft')
+        await editorAt(note).waitFor({ timeout: 5000 })
+      }
+      const alerts = await page.getByRole('alert').allTextContents()
+      if (errors.length || alerts.length)
+        throw new Error(`${note} @${from}: ${[...errors, ...alerts].join('; ')}`)
+    }
+    // A note the limit cut short is not compared.
+    if (partial) break
+    const want = expected[note] ?? { resolved: {}, missing: 0, subtracted: 0 }
+    totals.notes++
+    totals.missing += missing
+    totals.subtracted += want.subtracted
+    const targets = new Set([...Object.keys(want.resolved), ...Object.keys(reached)])
+    const differ = [...targets].filter((t) => (want.resolved[t] ?? 0) !== (reached[t] ?? 0))
+    if (differ.length || want.missing !== missing)
+      mismatches.push({
+        note,
+        targets: differ.map((t) => ({
+          target: t,
+          obsidian: want.resolved[t] ?? 0,
+          mote: reached[t] ?? 0
+        })),
+        missing: { obsidian: want.missing, mote: missing },
+        clicks
+      })
+    notes.push({ note, clicks, missing })
+  }
+  const result = {
+    ...totals,
+    expected: {
+      resolved: Object.values(expected).reduce((sum, e) => sum + countOf(e.resolved), 0),
+      missing: Object.values(expected).reduce((sum, e) => sum + e.missing, 0)
+    },
+    errorCount: errors.length,
+    durationMs: round(performance.now() - started),
+    medianFollowMs: follows.length
+      ? round(
+          percentile(
+            follows.map((f) => f.ms),
+            50
+          )
+        )
+      : null,
+    mismatches,
+    walked: notes
+  }
+  if (opts.bench) result.bench = await benchFollow(page, rows, follows.slice(0, Number(opts.bench)))
+  return result
+}
+
+// Opens the notes that the timed clicks opened, from the file tree, each from the note its click
+// started in, and compares the two medians.
+async function benchFollow(page, rows, follows) {
+  const row = (note) => rows.and(page.locator(`[data-path=${JSON.stringify(note)}]`))
+  const editorAt = (note) =>
+    page
+      .getByRole('textbox', { name: '编辑器' })
+      .and(page.locator(`[data-note-path=${JSON.stringify(note)}]`))
+  const tree = []
+  for (const { from, to } of follows) {
+    await row(from).click()
+    await editorAt(from).waitFor({ timeout: 5000 })
+    await armOpenTimer(page, to)
+    await row(to).click()
+    await editorAt(to).waitFor({ timeout: 5000 })
+    tree.push(await page.evaluate(() => window.__moteOpenMs))
+  }
+  const link = round(
+    percentile(
+      follows.map((f) => f.ms),
+      50
+    )
+  )
+  const fromTree = round(percentile(tree, 50))
+  return {
+    samples: follows.length,
+    medianFollowMs: link,
+    medianTreeMs: fromTree,
+    ratio: round(link / fromTree),
+    followMs: follows.map((f) => round(f.ms)),
+    treeMs: tree.map(round)
   }
 }
 
@@ -611,6 +903,20 @@ async function main() {
         result.backlinkMismatches = opened.backlinkMismatches
         if (opened.backlinkMismatches.length) process.exitCode = 1
       }
+      break
+    }
+    case 'walk-links': {
+      if (!opts.obsidian) throw new UsageError('give --obsidian <export file>')
+      const walked = await act((page) => walkLinks(page, state, opts))
+      if (opts.out)
+        fs.writeFileSync(evidencePath(state, opts, '.json'), JSON.stringify(walked, null, 2) + '\n')
+      const { walked: notes, mismatches, ...summary } = walked
+      result = {
+        ...summary,
+        walkedNotes: notes.length,
+        mismatches: mismatches.map(({ note, targets, missing }) => ({ note, targets, missing }))
+      }
+      if (mismatches.length || walked.errorCount) process.exitCode = 1
       break
     }
     case 'theme': {
