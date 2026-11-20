@@ -58,6 +58,25 @@ test("typing [[ completes note names in the vault's link format", async () => {
     // The cursor sits after the link, so typing goes on after it.
     await window.keyboard.type('。')
 
+    // A macOS input method composes 计划 after [[. Its Enter arrives as key code 229 while the
+    // composition is open: it commits the composition and picks nothing.
+    await window.keyboard.type(' [[')
+    const ime = await window.context().newCDPSession(window)
+    await ime.send('Input.imeSetComposition', { text: '计划', selectionStart: 2, selectionEnd: 2 })
+    await expect(rows).toHaveText(['计划项目'])
+    await ime.send('Input.dispatchKeyEvent', {
+      type: 'rawKeyDown',
+      key: 'Enter',
+      code: 'Enter',
+      windowsVirtualKeyCode: 229
+    })
+    await ime.send('Input.insertText', { text: '计划' })
+    const edited = editor.locator('.cm-line').filter({ hasText: line })
+    await expect(edited).toHaveText(`${line} 计划。 [[计划`)
+    await expect(rows).toHaveText(['计划项目'])
+    await window.keyboard.press('Enter')
+    await expect(edited).toHaveText(`${line} 计划。 [[计划]]`)
+
     // Inside a code block, [[ completes nothing.
     await window.keyboard.press('Meta+ArrowDown')
     await window.keyboard.type('```')
@@ -68,7 +87,7 @@ test("typing [[ completes note names in the vault's link format", async () => {
 
     await expect
       .poll(() => readFile(join(vault, '欢迎.md'), 'utf8'))
-      .toBe(original.replace(line, `${line} [[计划]]。`) + '```\n[[计')
+      .toBe(original.replace(line, `${line} [[计划]]。 [[计划]]`) + '```\n[[计')
   } finally {
     await wiki.app.close()
   }
