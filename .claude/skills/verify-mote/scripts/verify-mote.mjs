@@ -316,14 +316,24 @@ const importSource = (file) => import(pathToFileURL(path.join(REPO, file)).href)
 const countOf = (counts) => Object.values(counts ?? {}).reduce((a, b) => a + b, 0)
 
 // What a click walk should reach in each note: Obsidian's resolved targets and its count of
-// unresolved links, less the links this walk cannot click. Those are embeds and property links,
-// which the editor does not draw as links yet; mote's parser lists them, and the walk reports
-// how many it took away.
+// unresolved links, less the links the editor does not draw as links. Those are property links,
+// which only Cmd+click follows, embeds drawn as images (every `![](path)` and a `![[file]]` with
+// an image extension), and a `![[note]]` drawn as that note's content. Any other embed is drawn
+// as a link. mote's parser lists them, and the walk reports how many it took away.
 async function expectedClicks(vault, exported) {
   const { scanVault, readNoteFiles } = await importSource('src/main/notes.ts')
   const { extractLinks, markdownParser } = await importSource('src/core/markdown.ts')
   const { buildLinkIndex, resolveLink } = await importSource('src/core/resolve.ts')
   const { sourceText } = await importSource('src/core/text.ts')
+  const { imageType } = await importSource('src/core/fileUrl.ts')
+  const drawnAsImage = (link) =>
+    link.embed && (link.syntax === 'markdown' || imageType(link.target))
+  // A note that embeds itself whole is drawn as a link, so the embed does not nest forever.
+  const drawnAsNote = (link, dest, note) =>
+    link.embed &&
+    link.syntax === 'wiki' &&
+    /\.md$/i.test(dest ?? '') &&
+    (dest !== note || link.subpath)
   const entries = [...(await scanVault(vault)).values()]
   const index = buildLinkIndex(entries.filter((e) => e.kind !== 'folder').map((e) => e.path))
   const notes = entries.filter((e) => e.kind === 'note').map((e) => e.path)
@@ -337,9 +347,10 @@ async function expectedClicks(vault, exported) {
     let missing = countOf(exported.unresolved[note])
     let subtracted = 0
     for (const link of extractLinks(text)) {
-      if (!link.embed && link.range.from >= propertiesEnd) continue
-      subtracted++
       const dest = resolveLink(index, link.target, note)
+      const drawn = !drawnAsImage(link) && !drawnAsNote(link, dest, note)
+      if (drawn && link.range.from >= propertiesEnd) continue
+      subtracted++
       if (dest) resolved[dest] = (resolved[dest] ?? 0) - 1
       else missing--
     }
@@ -400,10 +411,10 @@ async function drawnLinks(page) {
       return {
         top: scroller.scrollTop,
         end: scroller.scrollTop + scroller.clientHeight >= scroller.scrollHeight - 2,
-        links: [...document.querySelectorAll('.cm-content [data-link-from]')].map((element) => [
-          Number(element.getAttribute('data-link-from')),
-          element.className
-        ])
+        // A link inside an embedded note belongs to that note, not to the open one.
+        links: [
+          ...document.querySelectorAll('.cm-content [data-link-from]:not(.mote-embed *)')
+        ].map((element) => [Number(element.getAttribute('data-link-from')), element.className])
       }
     })
     for (const [from, className] of seen.links)
@@ -415,17 +426,61 @@ async function drawnLinks(page) {
   return found
 }
 
-// Scrolls with the wheel until the link that starts at from is drawn.
-async function reach(page, from, top) {
-  const link = page.locator(`.cm-content [data-link-from="${from}"]`).first()
-  const box = await page.locator('.cm-scroller').boundingBox()
+// Scrolls with the wheel until the link that starts at from is drawn. The editor draws only the
+// lines near the screen, and which lines those are changes when an image above loads, so the
+// wheel aims at where the editor says the link's line is now.
+async function reach(page, from) {
+  const link = page.locator(`.cm-content [data-link-from="${from}"]:not(.mote-embed *)`).first()
+  const box = await page.locator('.cm-scroller').first().boundingBox()
   await page.mouse.move(box.x + box.width / 2, box.y + box.height / 2)
-  for (let tries = 0; tries < 10 && !(await link.count()); tries++) {
-    const now = await page.evaluate(() => document.querySelector('.cm-scroller').scrollTop)
-    await page.mouse.wheel(0, top - now)
+  for (let tries = 0; tries < 12; tries++) {
+    const delta = await page.evaluate((from) => {
+      const content = document.querySelector('.cm-content[aria-label="编辑器"]')
+      const scroller = content.closest('.cm-scroller')
+      const line = content.cmTile.root.view.lineBlockAt(from)
+      const wanted = Math.max(0, line.top - scroller.clientHeight / 3)
+      return Math.round(wanted - scroller.scrollTop)
+    }, from)
+    if ((await link.count()) && Math.abs(delta) < box.height / 2) break
+    if (delta === 0) break
+    await page.mouse.wheel(0, delta)
     await settle(page)
   }
   return (await link.count()) ? link : null
+}
+
+// Waits until the images on screen have loaded or failed, so the layout stops moving.
+async function imagesSettled(page) {
+  await page
+    .waitForFunction(
+      () =>
+        [...document.querySelectorAll('.cm-content img')].every((image) => {
+          const box = image.getBoundingClientRect()
+          return image.complete || box.bottom < 0 || box.top > innerHeight
+        }),
+      null,
+      { timeout: 4000 }
+    )
+    .catch(() => {})
+  await settle(page)
+}
+
+// The middle of the link's widest box, checked to be on the link itself. A link that wraps has
+// two boxes, and the middle of both together may be other text.
+async function clickPoint(page, link, from) {
+  for (let tries = 0; tries < 5; tries++) {
+    await link.scrollIntoViewIfNeeded({ timeout: 5000 })
+    await imagesSettled(page)
+    const point = await link.evaluate((element, from) => {
+      const [box] = [...element.getClientRects()].sort((a, b) => b.width - a.width)
+      const x = box.x + box.width / 2
+      const y = box.y + box.height / 2
+      const under = document.elementFromPoint(x, y)?.closest('[data-link-from]')
+      return { x, y, onLink: under?.getAttribute('data-link-from') === String(from) }
+    }, from)
+    if (point.onLink) return point
+  }
+  return null
 }
 
 const editorPath = (page) =>
@@ -459,8 +514,8 @@ async function clickOutcome(page, state, note, before, vaultReal, point) {
 
 // Clicks every drawn link that resolves, in every note, records where each click went, and goes
 // back. Each note passes when the notes and files reached equal Obsidian's resolved targets for
-// it, and its links drawn as missing equal Obsidian's unresolved count, less embeds and property
-// links. --limit stops after that many clicks that open another note; --bench then opens the
+// it, and its links drawn as missing equal Obsidian's unresolved count, less property links and
+// image embeds. --limit stops after that many clicks that open another note; --bench then opens the
 // same notes from the file tree and times both.
 async function walkLinks(page, state, opts) {
   const started = performance.now()
@@ -489,25 +544,20 @@ async function walkLinks(page, state, opts) {
     const clicks = []
     let missing = 0
     let partial = false
-    for (const [from, { className, top }] of drawn) {
+    for (const [from, { className }] of drawn) {
       if (/mote-link-missing/.test(className)) missing++
       if (/mote-link-(missing|external)/.test(className)) continue
       if (follows.length >= limit) {
         partial = true
         break
       }
-      const link = await reach(page, from, top)
-      if (!link) {
-        clicks.push({ from, kind: 'not drawn' })
+      const link = await reach(page, from)
+      const point = link && (await clickPoint(page, link, from))
+      if (!point) {
+        clicks.push({ from, kind: link ? 'covered' : 'not drawn' })
         continue
       }
       const before = await shellRecord(state)
-      // A link that wraps has two boxes; the middle of both together may be other text.
-      await link.scrollIntoViewIfNeeded({ timeout: 5000 })
-      const point = await link.evaluate((element) => {
-        const [box] = [...element.getClientRects()].sort((a, b) => b.width - a.width)
-        return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
-      })
       await armOpenTimer(page, note, true)
       await page.mouse.click(point.x, point.y)
       const outcome = await clickOutcome(page, state, note, before, vaultReal, point)
