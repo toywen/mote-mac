@@ -29,7 +29,7 @@ Steps:
 
 - **Diagram.** `$V click --role treeitem --name 图表 --exact`, `$V press --key Meta+E`. `$V eval --js "[...document.querySelectorAll('.mote-mermaid')].map(d => [!!d.querySelector('svg'), d.textContent.slice(0, 60)])"` shows an `svg` for the first block and the error text for the second. `$V screenshot --out mermaid-dark`.
 - **Color scheme.** `$V theme --scheme light`, then `$V screenshot --out mermaid-light`. The diagram redraws with light colors. `$V theme --scheme dark` switches back.
-- **No library without a diagram.** On a fresh launch, open notes without a diagram, then `$V eval --js "performance.getEntriesByType('resource').map(r => r.name).filter(n => /mermaid/i.test(n))"` prints `[]`.
+- **No library without a diagram.** On a fresh launch, run `walk-notes` on a vault with no diagram, such as `~/mote-link-check/wiki-copy`. Then `node .claude/skills/verify-mote/scripts/loaded-scripts.mjs $($V paths | node -pe 'JSON.parse(require("fs").readFileSync(0)).cdpPort')` prints `lazyChunks: []`. After a note with a diagram opens, it lists the Mermaid chunks. Its `problems` list shows console errors and CSP violations; Mermaid adds none.
 - **Embed.** Open `嵌入`. `$V read --selector ".mote-embed >> nth=0"` prints `计划` and its text. The second embed has `只属于目标这一节` and `目标下面的细节`, and no `风险`.
 - **External change.** `printf '\n外部写入的一行。\n' >> "$VAULT/项目/计划.md"`. Within a second the first embed's text ends with `外部写入的一行。`
 - **Nesting and cycles.** In `嵌入`, `深三的正文` shows and `深四` is a link. `循环乙` shows inside `循环甲`, and the `循环甲` inside it is a link. `$V eval --js "document.querySelectorAll('.mote-embed').length"` stays the same after a second.
@@ -39,5 +39,8 @@ Steps:
 ## Gotchas
 
 - A diagram draws asynchronously. Read the `svg` after a moment, or `$V wait --selector ".mote-mermaid svg"`.
-- The embed's nested editor has its own `.cm-line` elements inside the main editor. Scope a selector to `.mote-embed` when you mean the embed.
+- The embed's nested editor has its own `.cm-content` and `.cm-line` elements inside the main editor, and each is a textbox named after its note. `.mote-embed .cm-content` matches one per embed, so `wait` on it fails Playwright's strict mode. Scope a selector to one embed, or read the main editor's lines with `.cm-content[aria-label=编辑器] > .cm-line`.
+- In zsh scripts, do not name a variable `LINES` or `COLUMNS`. They are integer parameters, and assigning a string ends the script.
+- In live preview, Up and Down skip a diagram or an embed, as CodeMirror does for every block widget. To see the source, click it, or press Home then Left on the line below.
+- A press inside an embed only follows links. The note keeps the focus, and text inside the embed cannot be selected.
 - The diagram cache holds drawings by code text and color scheme, so a second note with the same diagram draws at once.

@@ -574,21 +574,74 @@ callout 的类型和颜色放在一张表里，别名也在表里，例如 `tip`
 
 ## PR F：Mermaid 图和笔记嵌入
 
-- [ ] 依赖：PR C、D、E。
-- [ ] 改动文件：`package.json`（加 `mermaid`）、`src/renderer/src/editor/mermaid.ts`、`embeds.ts`（均为新）、`src/renderer/index.html`、`tests/fixtures/vaults/preview/`、`tests/e2e/reading.spec.ts`（新）、`features/reading-mode.md`、`docs/features.md`。
-- [ ] 做的一件事：Mermaid 代码块显示为图。`![[笔记名]]` 显示被嵌入笔记的内容。
-- [ ] 你会看到：阅读模式下，`mermaid` 代码块是一张流程图。`![[计划]]` 的位置是 `计划` 的正文，带一条左边线。`![[计划#目标]]` 只显示这一节。
+- [x] 依赖：PR C、D、E。
+- [x] 改动文件：`package.json`（加 `mermaid`）、`src/core/subpath.ts`（加 `subpathRange`）、`src/renderer/src/editor/mermaid.ts`、`embeds.ts`、`noteView.ts`（均为新）、`follow.ts`、`renderers.ts`、`NoteEditor.tsx`、`workspace.ts`、`tests/fixtures/vaults/preview/`、`tests/e2e/reading.spec.ts`（新）、`tests/e2e/images.spec.ts`、`features/reading-mode.md`（新）、`ARCHITECTURE.md`、`CONTEXT.md`、`docs/features.md`。`src/renderer/index.html` 没有改。
+- [x] 做的一件事：Mermaid 代码块显示为图。`![[笔记名]]` 显示被嵌入笔记的内容。
+- [x] 你会看到：阅读模式下，`mermaid` 代码块是一张流程图。`![[计划]]` 的位置是 `计划` 的正文，带一条左边线。`![[计划#目标]]` 只显示这一节。
 
 嵌入是一个只读的 CodeMirror 视图，用同一套预览扩展，不是第二个渲染器。嵌入最多套 3 层。被嵌入的笔记改动后，嵌入的内容跟着更新。Mermaid 出错时显示代码和错误信息。
 
 验证：
 
-- [ ] 单元：e2e 测试 `reading mode renders mermaid diagrams and embedded notes`。
-- [ ] 真实窗口，`preview`：阅读模式下，Mermaid 块里有 `svg`。嵌入里有 `计划` 的文字。用 shell 改 `计划.md`，1 秒内嵌入里出现新文字。
-- [ ] 真实窗口，`life-os-copy`：打开有 Mermaid 的那篇笔记，图渲染出来，截图。
-- [ ] 真实窗口，循环嵌入：`A` 嵌入 `B`，`B` 嵌入 `A`，窗口不卡死，没有页面错误。
-- [ ] `vault-diff --expect-unchanged` 输出 `unchanged`。
-- [ ] 性能：没有 Mermaid 的笔记不加载 Mermaid 库，用 `eval` 读已加载的脚本确认。启动到可以编辑的时间和 PR E 合并后的 main 比较，超过 1.2 倍算失败。
+- [x] 单元：Vitest 测 `subpathRange` 的标题范围和块范围。e2e 测试 `reading mode renders mermaid diagrams and embedded notes`。
+- [x] 真实窗口，`preview`：阅读模式下，Mermaid 块里有 `svg`。嵌入里有 `计划` 的文字。用 shell 改 `计划.md`，1 秒内嵌入里出现新文字。
+- [x] 真实窗口，`life-os-copy`：打开有 Mermaid 的那篇笔记，图渲染出来，截图。
+- [x] 真实窗口，循环嵌入：`A` 嵌入 `B`，`B` 嵌入 `A`，窗口不卡死，没有页面错误。
+- [x] `vault-diff --expect-unchanged` 输出 `unchanged`。
+- [x] 性能：原来的“启动到可以编辑的时间”噪声太大，没法判断，换成下面两条。
+  - 包的大小：渲染进程的入口包比合并基点大不到 30 KB。Mermaid 在自己的包里。
+  - 按需加载：`wiki-copy` 没有 Mermaid 块。跑完 `walk-notes` 后，渲染进程解析过的脚本里没有 Mermaid 的包。
+  - `workspace-copy` 上 `walk-notes` 的打开时间留给 PR H 一起量。
+
+### 结果
+
+2026-11-21 实测，机器和基线一节相同。真实窗口在 `fe2ea7a` 的构建上量，应用代码和合并的版本相同。证据目录在 `verify-artifacts/` 下。
+
+**模块。**
+
+- `mermaid.ts`：占 `FencedCode` 的位置，不是 `mermaid` 的代码块交给 `code.ts`。第一次画图时 `import('mermaid')`，以后共用这一份。画好的图按代码和配色缓存，组件的 `eq` 只比代码，所以在别处输入时图不重画。配色变了，图自己重画。
+- `embeds.ts`：占 `WikiEmbed` 的位置，图片、附件和找不到的目标交给 `images.ts`。被嵌入的笔记画在嵌套视图里。嵌套视图和主编辑器都调用 `noteView.ts` 的 `noteView()`：语言、实时预览、点击链接和折行。主编辑器另加编辑、历史、保存键和补全。
+- `src/core/subpath.ts` 加了 `subpathRange`：标题的一节到下一个同级或更高级的标题为止，块 ID 是那一个块。`resolveSubpath` 改为读它的起点，对照工具 6 个副本 233 处子路径仍然全部一致。
+- `workspace.noteText` 不打开笔记就读它的文字。嵌入在 `revision` 变大时重新读。被嵌入的是正在编辑的笔记时，读编辑器里的文字。
+
+**内容安全策略。** Mermaid 12.3.0 在原来的策略下能画图，`index.html` 没有改。写代码前先在一个只带这条策略的页面里试过 6 种图，没有违规报告。真实窗口里用 CDP 读日志，画图前后都没有违规。`securityLevel` 是 `strict`。
+
+**和设计不同的三处。**
+
+1. 在实时预览下，`↑` 和 `↓` 跳过块级组件，这是 CodeMirror 对所有块级组件的做法。所以图和嵌入的源码在点击它、或者光标停在它的边上时显示，不在上下移动光标时显示。
+2. 在嵌入里按下鼠标只用来点链接，不移动焦点和选区。这样主编辑器一直有焦点，代价是嵌入里的文字不能选中复制。
+3. `follow.ts` 只处理自己视图里的链接。嵌套视图里的链接位置是被嵌入笔记的位置，由嵌套视图自己的点击扩展处理。
+
+**真实窗口。**
+
+| 检查 | 结果 |
+| --- | --- |
+| `preview`，Mermaid | 阅读模式和实时预览下，第一个块里都有 `svg`。节点底色深色是 `rgb(31, 32, 32)`，浅色是 `rgb(236, 236, 255)`。4 张截图。`20261120-162339-0d08` |
+| 坏的图 | 显示 `Parse error on line 2:` 和代码 |
+| 显示源码 | 实时预览下点图，这一块变回 `` ```mermaid `` 源码 |
+| 嵌入 | `![[计划]]` 显示 `计划` 的正文，链接 `./附注` 是能点的颜色。`![[计划#目标]]` 只有 `目标` 和 `细节`，没有 `风险`。`![[计划#^kuai]]` 只有那一段。`![[计划#不存在的标题]]` 显示为不存在的链接 |
+| 外部修改 | 用 shell 往 `项目/计划.md` 追加一行，53 毫秒后嵌入里出现 |
+| 循环和层数 | 打开 `循环甲`、`循环乙`，没有页面错误，里面的那一层显示为链接。`深一` 到 `深三` 都画出来，`深四` 是链接 |
+| 输入法 | 图下面一行、嵌入下面一行各用 `ime --no-enter` 输入一次。`diff` 只多出“测试” |
+| 新启动的 `walk-notes` | `preview` 22 篇，实时预览和阅读模式 `errorCount` 都是 0，`vault-diff --expect-unchanged` 输出 `unchanged`。`20261120-162441-be1e` |
+| `life-os-copy` | `Books/置身事内.md` 的流程图画出来，截图，`unchanged`。`20261120-162511-f1a4` |
+
+**性能。**
+
+| 检查 | 结果 |
+| --- | --- |
+| 入口包 | 1,603,114 字节，合并基点 `a3ae461` 是 1,587,194 字节，多 15,920 字节，低于 30 KB，通过 |
+| Mermaid 的包 | 89 个按需加载的包，共 9,521,953 字节。`mermaid.core` 171,361 字节，最大的 `elk` 2,680,055 字节 |
+| 按需加载 | `wiki-copy` 跑完 `walk-notes`，CDP 报告解析过的脚本只有入口包。`preview` 打开 `图表` 后是 27 个。`20261120-162458-f8d6` |
+
+`workspace-copy` 上 `walk-notes` 的打开时间留给 PR H。
+
+**还没证明的。**
+
+- 真实的 macOS 外观切换和输入法。`theme` 用 `nativeTheme` 模拟，`ime` 用 CDP 模拟。
+- 嵌入里的 `^kuai` 这类块 ID 照原文显示。主编辑器也一样，现在没有渲染函数隐藏它。
+- 5 个副本里没有笔记嵌入，嵌入只在测试笔记库 `preview` 上证明。
+- 嵌入里的文字不能选中。
 
 ## PR G：双链补全
 

@@ -78,6 +78,8 @@ With one live run, commands pick it. With several, pass `--run <id>` or set `MOT
 | `vault-diff [--out name] [--expect-unchanged]`   | Diffs the vault copy against `vault-before.txt`.                        |
 | `paths`                                          | Prints the run's state: vault, scratch, evidence, ports.                |
 
+`node .claude/skills/verify-mote/scripts/loaded-scripts.mjs <cdpPort>` reads the window over CDP: the renderer chunks parsed so far, and the console errors and CSP violations logged so far. Get the port from `$V paths`. `performance.getEntriesByType('resource')` does not list chunks loaded from `file://`, so use this to prove a chunk did or did not load.
+
 A locator is one of `--role R [--name N]`, `--text T`, `--label L`, or `--selector CSS`. Add `--exact` for an exact name match. Prefer `--role` with `--name`. Playwright is strict: a locator that matches two elements fails. Make the handle unique; do not fall back to position.
 
 To act like Obsidian or git changing a note, write the file under the vault copy with the shell. Get the path from `$V paths`.
