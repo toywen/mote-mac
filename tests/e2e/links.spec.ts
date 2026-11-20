@@ -103,6 +103,14 @@ test('clicking a link opens its target and Cmd+Option+Left goes back', async () 
     await window.keyboard.press('Meta+Alt+ArrowLeft')
     await expect(editor).toHaveAttribute('data-note-path', '起点.md')
 
+    // Opened again from the file tree, that note starts at the top.
+    await window.getByRole('treeitem', { name: '长笔记', exact: true }).click()
+    await expect(editor).toHaveAttribute('data-note-path', '长笔记.md')
+    await window.waitForTimeout(500)
+    expect(await scroller.evaluate((node) => node.scrollTop)).toBe(0)
+    await window.keyboard.press('Meta+Alt+ArrowLeft')
+    await expect(editor).toHaveAttribute('data-note-path', '起点.md')
+
     // A file opens in the default app and an address in the browser. The note stays open.
     await links.getByText('图片.png', { exact: true }).click()
     await links.getByText('网站', { exact: true }).click()
