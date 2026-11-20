@@ -65,6 +65,7 @@ With one live run, commands pick it. With several, pass `--run <id>` or set `MOT
 | `theme --scheme dark\|light\|system`             | Sets the app's color scheme, waits until the window follows, and prints the scheme in effect. |
 | `bench-typing [--chars 200] [--gap 50] [--where end\|start]` | Types into the open note one key at a time and prints the main-thread work per key. See Measure. |
 | `screenshot --out name`                          | Saves a PNG of the window to the evidence dir.                          |
+| `scroll --line N`                                | Turns the mouse wheel over the editor until source line N of the open note is at the top, or the note ends. Prints the lines in view. |
 | `click <locator>`                                | Clicks.                                                                 |
 | `fill <locator> --value V`                       | Replaces an input's text.                                               |
 | `press --key Meta+O`                             | Presses a key or chord in the window.                                   |
