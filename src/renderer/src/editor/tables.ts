@@ -6,7 +6,7 @@ import { inlineStyles } from './inline'
 import type { LinkContext, Renderer } from './preview'
 import './tables.css'
 
-// A header or body row, measured in the real window. Rows that wrap are taller.
+// About the height of a one-line row in the real window. Rows that wrap are taller.
 const rowHeight = 30
 
 type Draw = { read: ReadText; links: LinkContext | null }
