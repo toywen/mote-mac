@@ -80,4 +80,10 @@ describe('resolveSubpath', () => {
     expect(line(note, '#')).toBe(null)
     expect(line(note, '')).toBe(null)
   })
+
+  it('needs whitespace before a block id, as Obsidian does', () => {
+    expect(line('紧贴的段落^p2\n\n公式 x^2\n', '#^p2')).toBe(null)
+    expect(line('紧贴的段落^p2\n\n公式 x^2\n', '#^2')).toBe(null)
+    expect(line('段落\n^p3\n', '#^p3')).toBe(0)
+  })
 })

@@ -44,11 +44,13 @@ const inlineBlocks = new Set(['Paragraph', 'Task', 'TableCell', ...Object.keys(h
 const isList = (node: SyntaxNode): boolean =>
   node.name === 'BulletList' || node.name === 'OrderedList'
 
-// Ao: `^id` that ends a paragraph, heading or table cell, where no inline element took the `^`.
+// Ao: `^id` after whitespace that ends a paragraph, heading or table cell, where no inline
+// element took the `^`. The export shows that `段落^id` and `x^2` name no block.
 function trailingId(node: SyntaxNode, text: string): string | null {
-  const match = /\^([a-zA-Z0-9-]+)$/.exec(text.slice(node.from, contentEnd(node)).trimEnd())
-  if (!match || node.resolveInner(node.from + match.index, 1) !== node) return null
-  return match[1]
+  const match = /(?:^|\s)\^([a-zA-Z0-9-]+)$/.exec(text.slice(node.from, contentEnd(node)).trimEnd())
+  if (!match) return null
+  const caret = node.from + match.index + match[0].length - match[1].length - 1
+  return node.resolveInner(caret, 1) === node ? match[1] : null
 }
 
 // Block ids under node in document order. A list item leaves out its nested lists.
