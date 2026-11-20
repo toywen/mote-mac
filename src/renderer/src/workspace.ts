@@ -7,6 +7,7 @@ import type {
   VaultInfo,
   VaultPath
 } from '../../core/ipc'
+import type { EditorMode } from './editor/preview'
 
 type Draft = { path: VaultPath; text: string; source: { text: string } }
 type DirtyDoc = Draft & { kind: 'dirty'; baseHash: ContentHash }
@@ -30,6 +31,8 @@ type WorkspaceState = {
   selection: Selection | null
   // Goes up whenever note contents may have changed: a vault change or a save.
   revision: number
+  // One mode for the window. Opening another note keeps it.
+  mode: EditorMode
 }
 
 const AUTOSAVE_MS = 750
@@ -44,7 +47,8 @@ class Workspace {
     error: '',
     backlinks: null,
     selection: null,
-    revision: 0
+    revision: 0,
+    mode: 'live'
   }
   private readonly listeners = new Set<() => void>()
   private timer?: number
@@ -105,6 +109,10 @@ class Workspace {
       offChange()
       offClose()
     }
+  }
+
+  toggleMode(): void {
+    this.set({ mode: this.state.mode === 'live' ? 'reading' : 'live' })
   }
 
   async chooseVault(): Promise<void> {

@@ -1,7 +1,8 @@
-import { FolderOpen, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { BookOpen, FolderOpen, PanelLeftClose, PanelLeftOpen, PencilLine } from 'lucide-react'
+import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
 import { FileTree } from './FileTree'
 import { groupHits } from '../../core/hits'
+import { buildLinkIndex } from '../../core/resolve'
 import { HitList } from './HitList'
 import { NoteEditor } from './NoteEditor'
 import { QuickOpen } from './QuickOpen'
@@ -9,9 +10,19 @@ import { SearchPanel } from './SearchPanel'
 import { workspace } from './workspace'
 
 function App(): React.JSX.Element {
-  const { vault, doc, busy, error, backlinks, selection } = useSyncExternalStore(
+  const { vault, doc, busy, error, backlinks, selection, mode } = useSyncExternalStore(
     workspace.subscribe,
     workspace.snapshot
+  )
+  const modeAction = mode === 'live' ? '切换到阅读模式' : '切换到实时预览'
+  // The editor resolves links against the same file list, in the same order, as main.
+  const entries = vault?.entries
+  const links = useMemo(
+    () =>
+      entries
+        ? buildLinkIndex(entries.filter((e) => e.kind !== 'folder').map((e) => e.path))
+        : null,
+    [entries]
   )
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const sidebarAction = sidebarOpen ? '收起文件树' : '展开文件树'
@@ -35,6 +46,9 @@ function App(): React.JSX.Element {
         setSidebarOpen(true)
         setSidebarView('search')
         setSearchFocus((id) => id + 1)
+      } else if (event.metaKey && !event.shiftKey && !event.altKey && event.code === 'KeyE') {
+        event.preventDefault()
+        workspace.toggleMode()
       }
     }
     window.addEventListener('keydown', keyDown, true)
@@ -115,11 +129,24 @@ function App(): React.JSX.Element {
               <h1>编辑器</h1>
             )}
           </div>
-          {doc && doc.kind !== 'missing' && doc.kind !== 'conflict' && (
-            <span className="save-state" role="status">
-              {doc.kind === 'dirty' ? '未保存' : doc.kind === 'saving' ? '保存中' : '已保存'}
-            </span>
-          )}
+          <div className="editor-actions">
+            {doc && doc.kind !== 'missing' && doc.kind !== 'conflict' && (
+              <span className="save-state" role="status">
+                {doc.kind === 'dirty' ? '未保存' : doc.kind === 'saving' ? '保存中' : '已保存'}
+              </span>
+            )}
+            {doc && (
+              <button
+                className="icon-button"
+                type="button"
+                title={`${modeAction}（⌘E）`}
+                aria-label={modeAction}
+                onClick={() => workspace.toggleMode()}
+              >
+                {mode === 'live' ? <BookOpen size={17} /> : <PencilLine size={17} />}
+              </button>
+            )}
+          </div>
         </header>
         {error && (
           <div className="notice" role="alert">
@@ -155,6 +182,8 @@ function App(): React.JSX.Element {
             source={doc.source}
             locked={busy}
             selection={selection}
+            mode={mode}
+            links={links}
           />
         ) : (
           <div className="empty">

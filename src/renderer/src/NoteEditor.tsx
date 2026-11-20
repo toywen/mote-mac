@@ -10,7 +10,11 @@ import {
 import { EditorView, keymap } from '@codemirror/view'
 import { useLayoutEffect, useRef } from 'react'
 import type { VaultPath } from '../../core/ipc'
+import type { LinkIndex } from '../../core/resolve'
 import { sourceText, type LineFormat } from '../../core/text'
+import { editorMode, linkContext, livePreview } from './editor/livePreview'
+import { markdown } from './editor/markdown'
+import type { EditorMode } from './editor/preview'
 import { workspace, type Selection } from './workspace'
 
 const replaceFormat = StateEffect.define<LineFormat>()
@@ -46,16 +50,22 @@ export function NoteEditor({
   path,
   source,
   locked,
-  selection
+  selection,
+  mode,
+  links
 }: {
   path: VaultPath
   source: { text: string }
   locked: boolean
   selection: Selection | null
+  mode: EditorMode
+  links: LinkIndex | null
 }): React.JSX.Element {
   const host = useRef<HTMLDivElement>(null)
   const editor = useRef<EditorView>(null)
-  const readOnly = useRef(new Compartment())
+  const access = useRef(new Compartment())
+  const resolve = useRef(new Compartment())
+  const shownMode = useRef(mode)
 
   useLayoutEffect(() => {
     if (!host.current) return
@@ -63,7 +73,10 @@ export function NoteEditor({
       parent: host.current,
       extensions: [
         lineFormat,
-        readOnly.current.of(EditorState.readOnly.of(false)),
+        access.current.of([]),
+        resolve.current.of([]),
+        markdown,
+        livePreview,
         history(),
         keymap.of([
           {
@@ -101,6 +114,30 @@ export function NoteEditor({
     }
   }, [path])
 
+  // Runs before the text arrives, so the first preview already has the mode and the links.
+  useLayoutEffect(() => {
+    const view = editor.current
+    if (!view) return
+    view.dispatch({
+      effects: access.current.reconfigure([
+        editorMode.of(mode),
+        EditorView.editable.of(mode === 'live'),
+        EditorState.readOnly.of(locked || mode === 'reading')
+      ])
+    })
+    // Back in live preview, typing goes on where it stopped, unless another control has focus.
+    const active = document.activeElement
+    if (shownMode.current === 'reading' && mode === 'live' && (active === document.body || !active))
+      view.focus()
+    shownMode.current = mode
+  }, [path, locked, mode])
+
+  useLayoutEffect(() => {
+    editor.current?.dispatch({
+      effects: resolve.current.reconfigure(links ? linkContext.of({ index: links, path }) : [])
+    })
+  }, [path, links])
+
   useLayoutEffect(() => {
     const view = editor.current
     if (!view || serialize(view.state.doc, view.state.field(lineFormat)) === source.text) return
@@ -120,12 +157,6 @@ export function NoteEditor({
       annotations: Transaction.addToHistory.of(false)
     })
   }, [path, source])
-
-  useLayoutEffect(() => {
-    editor.current?.dispatch({
-      effects: readOnly.current.reconfigure(EditorState.readOnly.of(locked))
-    })
-  }, [path, locked])
 
   useLayoutEffect(() => {
     const view = editor.current
