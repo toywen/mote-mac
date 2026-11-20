@@ -71,8 +71,8 @@
 | 链接-2 | 目标不存在的双链用不同颜色显示。点击它，新建这篇笔记 | 3 | 未实现 | | |
 | 链接-3 | 链接目标不是笔记时，用 macOS 的默认程序打开 | 3 | 未实现 | | |
 | 链接-4 | 输入 `[[` 后弹出笔记名补全。插入的链接格式按笔记库配置决定 | 3 | 未实现 | | |
-| 链接-5 | 支持 `[[笔记\|别名]]` | 2 | 未实现 | | 计划见 [step-2.md](plans/step-2.md) PR B |
-| 链接-6 | 链接解析和 Obsidian 一致 | 2 | 未实现 | | 计划见 step-2.md PR B，规则见 ADR 0003 |
+| 链接-5 | 支持 `[[笔记\|别名]]` | 2 | 部分 | Vitest：splits wikilinks into target, subpath and alias | 解析器已拆出别名，显示别名属于第 3 步 |
+| 链接-6 | 链接解析和 Obsidian 一致 | 2 | 已实现 | `npm test`（links 测试笔记库对照）；`node tools/compare-links.mjs ~/mote-link-check/*-copy`，5 个副本 2171 处 0 不一致，输出在 `docs/plans/compare-log/` | 2026-11-20。规则照搬 Obsidian 1.15.1，见 ADR 0003、0008、0009。还没有界面用到解析结果 |
 | 链接-7 | 右侧面板列出当前笔记的反向链接，两种链接都算 | 2 | 未实现 | | 计划见 step-2.md PR C |
 | 链接-8 | `Cmd+Option+←` 后退，`Cmd+Option+→` 前进 | 3 | 未实现 | | |
 
@@ -80,7 +80,7 @@
 
 | 编号 | 功能 | 步骤 | 状态 | 证据 | 备注 |
 | --- | --- | --- | --- | --- | --- |
-| 查找-1 | `Cmd+O` 按文件名快速打开笔记 | 2 | 已实现 | 测试：quick open ranks notes like Obsidian and lists recent notes for an empty query；verify：quick-open | 在 `quick-open` 分支，未合并。计划见 step-2.md PR A |
+| 查找-1 | `Cmd+O` 按文件名快速打开笔记 | 2 | 已实现 | 测试：quick open ranks notes like Obsidian and lists recent notes for an empty query；verify：quick-open | 已合并（PR #1）。计划见 step-2.md PR A |
 | 查找-2 | `Cmd+Shift+F` 全文搜索。点击结果，跳到匹配的位置 | 2 | 未实现 | | 计划见 step-2.md PR D，做法见 ADR 0004 |
 | 查找-3 | 快速打开和全文搜索都支持中文 | 2 | 部分 | 测试：quick open ranks notes like Obsidian… | 快速打开已支持，全文搜索未做 |
 
@@ -104,7 +104,7 @@
 
 | 操作 | 目标 | 状态 |
 | --- | --- | --- |
-| 打开笔记库到可以编辑 | 2 秒以内 | 未测 |
+| 打开笔记库到可以编辑 | 2 秒以内 | 未测。读取并解析 `workspace-copy` 的 603 篇笔记：中位数 483 毫秒（`compare-links.mjs --bench 9`，2026-11-20 实测），其中 lezer 解析约 310 毫秒。按字符数线性外推，1 万篇约 8 秒（推断），第 5 步要处理 |
 | 全文搜索 | 200 毫秒以内 | 未测 |
 | 快速打开，每次按键 | 16 毫秒以内 | 用 `tools/bench-quick-open.mjs` 测，结果记在 quick-open 的 PR 里 |
 | 改名一篇有 100 个反向链接的笔记 | 1 秒以内 | 未测 |
@@ -160,7 +160,7 @@
 | 编号 | 检查 | 状态 |
 | --- | --- | --- |
 | 验收-1 | 打开 5 个本机笔记库的每篇笔记，没有报错。打开前后用脚本对比全部文件的哈希值，全部不变 | 未记录 |
-| 验收-2 | 5 个笔记库里的每个双链和 Markdown 链接，在 mote 里跳到的目标和在 Obsidian 里相同 | 未通过 |
+| 验收-2 | 5 个笔记库里的每个双链和 Markdown 链接，在 mote 里跳到的目标和在 Obsidian 里相同 | 部分通过：解析目标在 5 个副本上和 Obsidian 完全一致（2026-11-20）。点击跳转属于第 3 步 |
 | 验收-3 | 在 `~/life-os` 和 `~/workspace/Pesemic` 里，各改名或移动一篇有链接进出的笔记。用 `diff -r` 对比操作前的副本，只有这次移动和相关链接有变化 | 未通过 |
 | 验收-4 | mote 开着一篇笔记时，在 Obsidian 里修改这篇笔记。mote 立即显示新内容，两边都不丢字 | 未记录 |
 | 验收-5 | 在 `~/life-os` 里按 `Cmd+Shift+D`，日记路径符合 `daily-notes.json`。在没有日记配置的笔记库里，日记是根目录下的 `YYYY-MM-DD.md` | 未通过 |

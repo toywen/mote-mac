@@ -30,6 +30,7 @@ Read `docs/features.md` and `ARCHITECTURE.md` before changing scope or architect
 npm run dev          # electron-vite dev server with HMR
 npm run typecheck    # tsc for the node side (main, preload) and the web side (renderer)
 npm run lint         # eslint + prettier
+npm test             # Vitest for src/core, then compare-links on the links fixture vault
 npm run test:e2e     # build, then run the Playwright Electron tests in tests/e2e
 npx playwright test -g "three panes"   # one e2e test by name; run `npx electron-vite build` first
 npm run build:mac    # unsigned local .app in dist/
@@ -37,6 +38,8 @@ npm run build:mac    # unsigned local .app in dist/
 node tools/vault-audit.mjs <vault> [...]   # count Obsidian features a vault uses; scope decisions come from this
 node tools/hash-vault.mjs <vault> > a.txt  # hash every file; diff two runs to prove mote changed no bytes
 node tools/bench-quick-open.mjs <vault> <query>   # quick-open results in Node; add --bench N to time N paths
+node tools/obsidian-export.mjs <copy>       # Obsidian's resolvedLinks for a vault copy, via an isolated Obsidian
+node tools/compare-links.mjs <copy>...      # mote's link resolution vs that export; --bench N times it
 ```
 
 ## Architecture
@@ -46,7 +49,7 @@ Electron with three build targets from `electron.vite.config.ts`:
 - `src/main` is the main process. It owns the disk, file watching, and the vault index.
 - `src/preload` exposes one object, `window.mote`, through `contextBridge`. The renderer runs with `sandbox: true`, `contextIsolation: true`, and `nodeIntegration: false`. It reaches the disk only through `window.mote`.
 - `src/renderer` is React. It owns the text of open notes and a read-only copy of the note path list that main pushes.
-- `src/core` holds pure TypeScript shared by main and renderer: the `@lezer/markdown` parser config, link resolution, and the core types. It must not import Electron.
+- `src/core` holds pure TypeScript shared by main and renderer: the `@lezer/markdown` parser config, link resolution, and the core types. It must not import Electron. It and `src/main/notes.ts` use only type syntax Node can strip, and relative imports end in `.ts`, so `tools/*.mjs` import them directly.
 
 Each piece of state has one owner. Do not add a second copy that both sides write.
 

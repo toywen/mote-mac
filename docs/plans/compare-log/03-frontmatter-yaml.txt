@@ -1,0 +1,21 @@
+== Pesemic-copy
+files: same
+links: total 89, agree 89, mismatches 0, mote total 89
+== knowledge-base-copy
+files: same
+links: total 306, agree 306, mismatches 0, mote total 306
+== life-os-copy
+files: same
+links: total 125, agree 125, mismatches 0, mote total 125
+== wiki-copy
+files: same
+links: total 20, agree 20, mismatches 0, mote total 20
+== workspace-copy
+files: same
+links: total 1631, agree 1631, mismatches 0, mote total 1631
+== summary
+Pesemic-copy: total 89, agree 89, mismatches 0
+knowledge-base-copy: total 306, agree 306, mismatches 0
+life-os-copy: total 125, agree 125, mismatches 0
+wiki-copy: total 20, agree 20, mismatches 0
+workspace-copy: total 1631, agree 1631, mismatches 0
