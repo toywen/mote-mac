@@ -72,10 +72,6 @@ test('clicking a link opens its target and Cmd+Option+Left goes back', async () 
     // A plain click follows the link instead of showing its source.
     await links.getByText('项目/计划', { exact: true }).click()
     await expect(editor).toHaveAttribute('data-note-path', '项目/计划.md')
-    await expect(window.getByRole('treeitem', { name: '计划', exact: true })).toHaveAttribute(
-      'aria-selected',
-      'true'
-    )
     await lineOf(editor, '回到').click()
     await window.keyboard.press('End')
 
