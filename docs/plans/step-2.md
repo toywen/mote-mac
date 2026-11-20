@@ -207,17 +207,17 @@ type ResolvedLinks = {
 
 - [ ] 单元：e2e 测试在 `basic` 上检查 `欢迎` 的反向链接，并点击跳转。
 - [ ] 真实窗口，逐篇对照：给 `walk-notes` 加 `--obsidian <导出文件>` 选项。它点开每篇笔记，读出反向链接面板，和导出文件反推的结果比较。比较内容是每篇来源笔记和它的链接数。5 个副本都要 0 处差异。
-- [ ] 真实窗口，外部修改：用 shell 新建一篇链接到 `欢迎` 的笔记，1 秒内出现在面板里；删掉它，它从面板消失。
+- [x] 真实窗口，外部修改：用 shell 新建一篇链接到 `欢迎` 的笔记，1 秒内出现在面板里；删掉它，它从面板消失。
 - [ ] 真实窗口，自己保存：在 `计划` 里输入 `[[带BOM]]`，等自动保存，打开 `带BOM`，面板里有 `计划`。再撤销这次输入并等自动保存，`计划.md` 回到原来的字节。
 - [ ] 最后一步 `vault-diff --expect-unchanged` 输出 `unchanged`。
 - [ ] 性能：在 `workspace-copy` 上分别计时 main 和这个分支的打开笔记库耗时。main 是基线，要先测。超过 2 秒算失败。再用 node 计时被链接最多的笔记的反向链接查询，超过 50 毫秒算失败。50 毫秒是我定的数，文档里没有。
 
 ## PR D：全文搜索
 
-- [ ] 依赖：PR C。
-- [ ] 改动文件：`src/core/search.ts`（新）、`src/core/ipc.ts`、`src/main/index.ts`、`src/preload/index.ts`、`App.tsx`、`src/renderer/src/SearchPanel.tsx`（新）、`main.css`、`tests/e2e/`、`features/search.md`。
-- [ ] 做的一件事：按 `Cmd+Shift+F`，左侧栏切到搜索，在全部笔记里找子串。
-- [ ] 你会看到：左侧栏顶部有“文件”和“搜索”两个按钮。输入“验证笔记库”，结果里有 `欢迎` 和匹配的那一行，关键词高亮。点它，编辑器跳到那里并选中这几个字。
+- [x] 依赖：PR C。已合并，从 main 开分支。
+- [x] 改动文件：`src/core/search.ts`、`src/core/hits.ts`（新）、`src/core/ipc.ts`、`src/main/index.ts`、`src/preload/index.ts`、`App.tsx`、`src/renderer/src/SearchPanel.tsx`（新）、`main.css`、`tests/e2e/`、`features/search.md`。
+- [x] 做的一件事：按 `Cmd+Shift+F`，左侧栏切到搜索，在全部笔记里找子串。
+- [x] 你会看到：左侧栏顶部有“文件”和“搜索”两个按钮。输入“验证笔记库”，结果里有 `欢迎` 和匹配的那一行，关键词高亮。点它，编辑器跳到那里并选中这几个字。
 
 规则照 Obsidian 的搜索：
 
@@ -228,17 +228,45 @@ type ResolvedLinks = {
 - **结果**：按笔记分组，默认按文件名 A 到 Z 排序。每组列出正文里每一处匹配。点一处结果，编辑器跳到那里并选中匹配的文字。
 - **这一步不做**：`path:`、`tag:`、正则、`OR` 和 `-`。
 
-新增 IPC `search(dir, query): Promise<{ groups: { path: VaultPath; hits: Hit[] }[]; total: number }>`。匹配用转义后的词构造带 `iu` 标志的正则，这样不分大小写，位置也不会偏。停止输入 150 毫秒后开始搜索，输入法选字期间不搜索。
+新增 IPC `search(dir, query, limit): Promise<SearchResult>`，类型见 `src/core/ipc.ts`。只有前 `limit` 组带命中位置，`total` 和 `notes` 统计全部，这样“的”这种词不会一次传几十万处。界面每次显示 50 篇，点“显示更多”再加 50 篇。排序照搬 Obsidian 1.15.1 的 `ve`：`Intl.Collator(undefined, { sensitivity: 'base', numeric: true })` 比较不带扩展名的文件名。匹配用转义后的词构造带 `iu` 标志的正则，这样不分大小写，位置也不会偏。停止输入 150 毫秒后开始搜索，输入法选字期间不搜索。
 
 验证：
 
-- [ ] 单元：Vitest 测 `search` 的分词、引号短语、多词同篇、文件名命中、大小写和位置。e2e 测试在 `basic` 上搜索并点击跳转。
-- [ ] 真实窗口，`basic`：`press --key Meta+Shift+F`，`type --text 验证笔记库`，结果只有 `欢迎` 一处。点它后，`eval` 读出的选中文本是 `验证笔记库`。
-- [ ] 真实窗口，选中文字：在编辑器里选中一段含空格的文字，按 `Meta+Shift+F`，搜索框里是加了引号的这段文字。
-- [ ] 真实窗口，`workspace-copy`：搜索一个常见中文词，例如“笔记”。显示的匹配总数等于 `grep -rFo --include='*.md' --exclude-dir='.*' 笔记 . | wc -l` 的结果，命中的笔记数等于 `grep -rlF` 的行数加上只有文件名命中的笔记数。
-- [ ] 真实窗口，外部修改：用 shell 新建一篇含“外部新增搜索词”的笔记，搜索结果出现它；删掉后结果消失。
-- [ ] `vault-diff --expect-unchanged` 输出 `unchanged`。
-- [ ] 性能：用 node 计时 `search`，输入是 `workspace-copy` 的笔记复制成 1 万篇，查询“的”和一个 4 字词。超过 200 毫秒算失败，这是 features.md 性能目标里的数。main 上没有这个功能，没有基线。
+- [x] 单元：Vitest 测 `search` 的分词、引号短语、多词同篇、文件名命中、大小写和位置。e2e 测试在 `basic` 上搜索并点击跳转。
+- [x] 真实窗口，`basic`：`press --key Meta+Shift+F`，`type --text 验证笔记库`，结果只有 `欢迎` 一处。点它后，`eval` 读出的选中文本是 `验证笔记库`。
+- [x] 真实窗口，选中文字：在编辑器里选中一段含空格的文字，按 `Meta+Shift+F`，搜索框里是加了引号的这段文字。
+- [x] 真实窗口，`workspace-copy`：搜索一个常见中文词，例如“笔记”。显示的匹配总数等于 `grep -rFo --include='*.md' --exclude-dir='.*' 笔记 . | wc -l` 的结果，命中的笔记数等于 `grep -rlF` 的行数加上只有文件名命中的笔记数。
+- [x] 真实窗口，外部修改：用 shell 新建一篇含“外部新增搜索词”的笔记，搜索结果出现它；删掉后结果消失。
+- [x] `vault-diff --expect-unchanged` 输出 `unchanged`。
+- [x] 性能：用 node 计时 `search`，输入是 `workspace-copy` 的笔记复制成 1 万篇，查询“的”和一个 4 字词。超过 200 毫秒算失败，这是 features.md 性能目标里的数。main 上没有这个功能，没有基线。
+
+### 结果
+
+- 单元：Vitest 12 个通过。e2e：search finds notes by body and file name, jumps to matches, and follows changes。
+- 真实窗口，`basic`：
+  - 输入法选字时保持 500 毫秒，期间输入框是“验证”，没有搜索结果。上屏“验证笔记库”后，结果是 1 篇笔记 1 处。
+  - 点击后选中文本是 `验证笔记库`。
+  - 选中 `# CRLF 笔记` 后按快捷键，搜索框是 `"# CRLF 笔记"`。
+  - 外部新增后显示 1 篇 1 处，删掉后回到 0 篇 0 处。
+  - `vault-diff` 输出 `unchanged`。
+- 真实窗口，`workspace-copy`，和 grep 对照：
+
+  | 查询 | grep 笔记数 | grep 匹配数 | mote |
+  | --- | --- | --- | --- |
+  | 笔记 | 19 | 44 | 19 篇笔记，44 处 |
+  | 学习 | 29 | 78 | 29 篇笔记，78 处 |
+  | 的 | 322 | 10565 | 322 篇笔记，10565 处 |
+  | bbc（grep -i） | 193 | 580 | 193 篇笔记，580 处 |
+
+  4 个查询都没有只有文件名命中的笔记，这种情况由 e2e 的 `BOM.md` 覆盖。“的”先显示 50 篇，点“显示更多”后显示 100 篇。`vault-diff` 输出 `unchanged`。
+- 性能（实测，node，`workspace-copy` 复制成 1 万篇，共 3140 万字符，20 次中位数，不含 IPC）：
+
+  | 查询 | 命中笔记 | 匹配数 | 中位数 | 最慢 |
+  | --- | --- | --- | --- | --- |
+  | 的 | 5361 | 176972 | 76.3 毫秒 | 117.1 毫秒 |
+  | 学习笔记 | 0 | 0 | 14.0 毫秒 | 14.7 毫秒 |
+  | bbc | 3203 | 9632 | 33.2 毫秒 | 36.7 毫秒 |
+  | "英语 学习" | 0 | 0 | 23.9 毫秒 | 26.2 毫秒 |
 
 ## 还证明不了的
 

@@ -81,8 +81,8 @@
 | 编号 | 功能 | 步骤 | 状态 | 证据 | 备注 |
 | --- | --- | --- | --- | --- | --- |
 | 查找-1 | `Cmd+O` 按文件名快速打开笔记 | 2 | 已实现 | 测试：quick open ranks notes like Obsidian and lists recent notes for an empty query；verify：quick-open | 已合并（PR #1）。计划见 step-2.md PR A |
-| 查找-2 | `Cmd+Shift+F` 全文搜索。点击结果，跳到匹配的位置 | 2 | 未实现 | | 计划见 step-2.md PR D，做法见 ADR 0004 |
-| 查找-3 | 快速打开和全文搜索都支持中文 | 2 | 部分 | 测试：quick open ranks notes like Obsidian… | 快速打开已支持，全文搜索未做 |
+| 查找-2 | `Cmd+Shift+F` 全文搜索。点击结果，跳到匹配的位置 | 2 | 已实现 | 测试：search finds notes by body and file name, jumps to matches, and follows changes；verify：search（`workspace-copy` 4 个查询和 grep 计数一致） | 2026-11-20。规则见 step-2.md PR D，做法见 ADR 0004。不做 `path:`、`tag:`、正则、`OR`、`-` |
+| 查找-3 | 快速打开和全文搜索都支持中文 | 2 | 已实现 | 测试：quick open ranks notes like Obsidian…；search finds notes by body and file name… | 2026-11-20。全文搜索用子串匹配，输入法选字期间不搜索 |
 
 ### 日记
 
@@ -105,7 +105,7 @@
 | 操作 | 目标 | 状态 |
 | --- | --- | --- |
 | 打开笔记库到可以编辑 | 2 秒以内 | 未测 1 万篇。真实窗口打开 `workspace-copy`（603 篇，含读入笔记索引）：`chooseVault` 中位数 402 毫秒（5 次，2026-11-20 实测）。读取并解析 `workspace-copy` 的 603 篇笔记：中位数 483 毫秒（`compare-links.mjs --bench 9`，2026-11-20 实测），其中 lezer 解析约 310 毫秒。按字符数线性外推，1 万篇约 8 秒（推断），第 5 步要处理 |
-| 全文搜索 | 200 毫秒以内 | 未测 |
+| 全文搜索 | 200 毫秒以内 | `workspace-copy` 复制成 1 万篇（3140 万字符），node 里查询“的”中位数 76 毫秒、最慢 117 毫秒（2026-11-20 实测，不含 IPC）。用 gen-vault 生成的笔记库还没测 |
 | 快速打开，每次按键 | 16 毫秒以内 | 用 `tools/bench-quick-open.mjs` 测，结果记在 quick-open 的 PR 里 |
 | 改名一篇有 100 个反向链接的笔记 | 1 秒以内 | 未测 |
 | 外部修改到编辑器显示 | 100 毫秒以内 | 未测 |
@@ -146,7 +146,7 @@
 | --- | --- | --- | --- |
 | 0 | 骨架、`tools/hash-vault.mjs` | 空窗口能启动 | 已完成 |
 | 1 | 打开笔记库、文件树、纯文本编辑、保存、外部修改 | 验收第 1 条和第 4 条 | 已完成，个别条目见上表的"部分" |
-| 2 | 解析器、索引、链接解析、反向链接、快速打开、搜索 | 验收第 2 条 | 进行中，计划见 [step-2.md](plans/step-2.md) |
+| 2 | 解析器、索引、链接解析、反向链接、快速打开、搜索 | 验收第 2 条 | 已完成（2026-11-20），计划见 [step-2.md](plans/step-2.md)。验收第 2 条的点击跳转在第 3 步 |
 | 3 | 实时预览和阅读模式的全部组件、深色模式 | 用 5 个笔记库人工检查 | 未开始 |
 | 4 | 改名和移动 | 验收第 3 条 | 未开始 |
 | 5 | 日记、性能 | 验收第 5 条和第 6 条 | 未开始 |

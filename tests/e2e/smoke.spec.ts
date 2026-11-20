@@ -13,7 +13,7 @@ test('the main window shows the three panes', async () => {
   const app = await launch(info.outputPath('settings'))
   try {
     const window = await app.firstWindow()
-    await expect(window.getByRole('complementary', { name: '文件树' })).toBeVisible()
+    await expect(window.getByRole('complementary', { name: '侧栏' })).toBeVisible()
     await expect(window.getByRole('main', { name: '编辑器' })).toBeVisible()
     await expect(window.getByRole('complementary', { name: '反向链接' })).toBeVisible()
     await expect(window.getByRole('button', { name: '打开笔记库' })).toBeVisible()
@@ -251,6 +251,70 @@ test('the backlinks pane lists links to the open note and jumps to them', async 
     await window.keyboard.insertText('\n自己 [[欢迎]]')
     await expect(pane.locator('.hit-group[data-path="欢迎.md"]')).toBeVisible()
     await expect(window.getByRole('status', { name: '反向链接数' })).toHaveText('2')
+  } finally {
+    await app.close()
+  }
+})
+
+test('search finds notes by body and file name, jumps to matches, and follows changes', async () => {
+  const info = test.info()
+  const vault = info.outputPath('vault')
+  await cp('tests/fixtures/vaults/basic', vault, { recursive: true })
+  const app = await launch(info.outputPath('settings'))
+  try {
+    const window = await app.firstWindow()
+    await app.evaluate(({ dialog }, path) => {
+      dialog.showOpenDialog = async () => ({ canceled: false, filePaths: [path] })
+    }, vault)
+    await window.getByRole('button', { name: '打开笔记库' }).click()
+    await expect(window.getByRole('tree', { name: '文件树' })).toBeVisible()
+    const box = window.getByRole('searchbox', { name: '搜索' })
+    const summary = window.getByRole('status', { name: '搜索结果数' })
+    const groups = window.getByRole('list', { name: '搜索结果' }).locator('.hit-group')
+    const hits = window.getByRole('list', { name: '搜索结果' }).locator('button.hit')
+    const editor = window.getByRole('textbox', { name: '编辑器' })
+    const selected = (): Promise<string> =>
+      window.evaluate(() => window.getSelection()?.toString() ?? '')
+
+    await window.keyboard.press('Meta+Shift+F')
+    await expect(box).toBeFocused()
+    await window.keyboard.insertText('笔记')
+    await expect(summary).toHaveText('2 篇笔记，3 处')
+    await expect(groups).toHaveCount(2)
+    expect(await groups.evaluateAll((nodes) => nodes.map((n) => n.dataset.path))).toEqual([
+      'CRLF笔记.md',
+      '欢迎.md'
+    ])
+
+    await box.fill('crlf 换行')
+    await expect(summary).toHaveText('1 篇笔记，3 处')
+    await expect(hits.locator('mark')).toHaveText(['CRLF', 'CRLF', '换行'])
+
+    await box.fill('BOM.md')
+    await expect(summary).toHaveText('1 篇笔记，0 处')
+    await expect(groups).toHaveAttribute('data-path', '带BOM.md')
+
+    await box.fill('验证笔记库')
+    await expect(summary).toHaveText('1 篇笔记，1 处')
+    await hits.first().click()
+    await expect(editor).toHaveAttribute('data-note-path', '欢迎.md')
+    await expect.poll(selected).toBe('验证笔记库')
+
+    await window.getByRole('button', { name: '文件', exact: true }).click()
+    await window.getByRole('treeitem', { name: 'CRLF笔记', exact: true }).click()
+    await editor.click()
+    await window.keyboard.press('Meta+ArrowUp')
+    await window.keyboard.press('Shift+End')
+    await window.keyboard.press('Meta+Shift+F')
+    await expect(box).toHaveValue('"# CRLF 笔记"')
+    await expect(summary).toHaveText('1 篇笔记，1 处')
+
+    await box.fill('外部新增搜索词')
+    await expect(summary).toHaveText('0 篇笔记，0 处')
+    await writeFile(join(vault, '外部.md'), '外部新增搜索词')
+    await expect(summary).toHaveText('1 篇笔记，1 处')
+    await rm(join(vault, '外部.md'))
+    await expect(summary).toHaveText('0 篇笔记，0 处')
   } finally {
     await app.close()
   }

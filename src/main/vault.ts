@@ -5,6 +5,7 @@ import {
   parseVaultPath,
   type ContentHash,
   type Hit,
+  type SearchResult,
   type NoteVersion,
   type VaultChange,
   type VaultConfig,
@@ -14,6 +15,7 @@ import {
   type WriteResult
 } from '../core/ipc'
 import { NoteIndex } from '../core/noteIndex'
+import { search } from '../core/search'
 import { hash, kind, missing, noteVersion, readNoteFile, readNoteFiles, scanVault } from './notes'
 
 async function readConfig(root: string): Promise<VaultConfig> {
@@ -117,6 +119,10 @@ export class Vault {
       if (version) this.index.set(path, version.text)
       else this.index.delete(path)
     })
+  }
+
+  search(query: string, limit: number): SearchResult {
+    return search(this.index.entries(), String(query), Math.max(1, Math.floor(Number(limit) || 50)))
   }
 
   // Every link in the vault that resolves to path, ordered by source note and position.

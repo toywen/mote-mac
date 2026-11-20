@@ -2,6 +2,7 @@ import type {
   ContentHash,
   Hit,
   NoteVersion,
+  SearchResult,
   VaultChange,
   VaultInfo,
   VaultPath
@@ -27,6 +28,8 @@ type WorkspaceState = {
   backlinks: { path: VaultPath; hits: Hit[] } | null
   // A range the editor should select, in the note's normalized text.
   selection: Selection | null
+  // Goes up whenever note contents may have changed: a vault change or a save.
+  revision: number
 }
 
 const AUTOSAVE_MS = 750
@@ -40,7 +43,8 @@ class Workspace {
     busy: true,
     error: '',
     backlinks: null,
-    selection: null
+    selection: null,
+    revision: 0
   }
   private readonly listeners = new Set<() => void>()
   private timer?: number
@@ -158,6 +162,11 @@ class Workspace {
     }
   }
 
+  search(query: string, limit: number): Promise<SearchResult> | null {
+    const { vault } = this.state
+    return vault ? window.mote.search(vault.dir, query, limit) : null
+  }
+
   recent(): VaultPath[] {
     const { vault } = this.state
     if (!vault) return []
@@ -248,6 +257,7 @@ class Workspace {
       const kind = current.text === doc.text ? 'clean' : 'dirty'
       this.set({ doc: { ...current, kind, baseHash: result.hash }, error: '' })
       if (kind === 'dirty') this.scheduleSave()
+      this.set({ revision: this.state.revision + 1 })
       void this.loadBacklinks()
       return this.refresh()
     } catch (error) {
@@ -281,6 +291,7 @@ class Workspace {
     const { vault, doc } = this.state
     if (vault?.dir !== change.dir) return
     if (change.entries) this.set({ vault: { ...vault, entries: change.entries } })
+    this.set({ revision: this.state.revision + 1 })
     void this.loadBacklinks()
     if (doc && (change.changed.includes(doc.path) || change.removed.includes(doc.path))) {
       void this.refresh()

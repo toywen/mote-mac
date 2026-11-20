@@ -41,6 +41,17 @@ export type Hit = {
   preview: { text: string; from: number; to: number }
 }
 
+// Hits in one note. count can exceed hits.length when hits were left out.
+export type HitGroup = { path: VaultPath; count: number; hits: Hit[] }
+
+// Notes that match a search. Only the first groups carry hits; count is that note's body
+// matches, total and notes cover every matching note.
+export type SearchResult = {
+  groups: HitGroup[]
+  total: number
+  notes: number
+}
+
 export type VaultChange = {
   dir: string
   entries?: VaultEntry[]
@@ -60,6 +71,7 @@ export interface MoteApi {
   ): Promise<WriteResult>
   openWithDefaultApp(dir: string, path: VaultPath): Promise<void>
   backlinks(dir: string, path: VaultPath): Promise<Hit[]>
+  search(dir: string, query: string, limit: number): Promise<SearchResult>
   onVaultChanged(callback: (change: VaultChange) => void): () => void
   onCloseRequested(callback: () => void): () => void
   respondToClose(ready: boolean): void
@@ -72,6 +84,7 @@ export const channels = {
   writeNote: 'mote:write-note',
   openWithDefaultApp: 'mote:open-with-default-app',
   backlinks: 'mote:backlinks',
+  search: 'mote:search',
   vaultChanged: 'mote:vault-changed',
   closeRequested: 'mote:close-requested',
   respondToClose: 'mote:respond-to-close'
