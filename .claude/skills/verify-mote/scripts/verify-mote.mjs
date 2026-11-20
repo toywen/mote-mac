@@ -429,8 +429,9 @@ const editorPath = (page) =>
   )
 
 // Where a click went: another note, a file handed to the default app, an address handed to the
-// browser, or nowhere visible, which a link to the open note itself does.
-async function clickOutcome(page, state, note, before, vaultReal) {
+// browser, or nowhere visible, which a link to the open note itself does. A click that only put
+// the cursor where it landed did not follow the link.
+async function clickOutcome(page, state, note, before, vaultReal, point) {
   const quiet = Date.now() + 600
   for (const deadline = Date.now() + 5000; Date.now() < deadline; await sleep(40)) {
     const shown = await editorPath(page)
@@ -440,7 +441,13 @@ async function clickOutcome(page, state, note, before, vaultReal) {
       return { kind: 'file', path: path.relative(vaultReal, now.opened.at(-1)) }
     if (now.external.length > before.external.length)
       return { kind: 'external', url: now.external.at(-1) }
-    if (Date.now() > quiet) return { kind: 'stay', path: note }
+    if (Date.now() > quiet) {
+      const placed = await page.evaluate(({ x, y }) => {
+        const view = document.querySelector('.cm-content').cmTile.root.view
+        return view.hasFocus && view.state.selection.main.head === view.posAtCoords({ x, y })
+      }, point)
+      return placed ? { kind: 'not followed' } : { kind: 'stay', path: note }
+    }
   }
   return { kind: 'timeout' }
 }
@@ -490,9 +497,15 @@ async function walkLinks(page, state, opts) {
         continue
       }
       const before = await shellRecord(state)
+      // A link that wraps has two boxes; the middle of both together may be other text.
+      await link.scrollIntoViewIfNeeded({ timeout: 5000 })
+      const point = await link.evaluate((element) => {
+        const [box] = [...element.getClientRects()].sort((a, b) => b.width - a.width)
+        return { x: box.x + box.width / 2, y: box.y + box.height / 2 }
+      })
       await armOpenTimer(page, note, true)
-      await link.click({ timeout: 5000 })
-      const outcome = await clickOutcome(page, state, note, before, vaultReal)
+      await page.mouse.click(point.x, point.y)
+      const outcome = await clickOutcome(page, state, note, before, vaultReal, point)
       clicks.push({ from, ...outcome })
       if (outcome.path) reached[outcome.path] = (reached[outcome.path] ?? 0) + 1
       if (outcome.kind in totals) totals[outcome.kind]++
