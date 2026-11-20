@@ -468,6 +468,8 @@ callout 的类型和颜色放在一张表里，别名也在表里，例如 `tip`
 
 2026-11-20 实测。
 
+**每个 PR 都要过的检查。** `npm run typecheck`、`npm run lint` 通过。`npm test`：Vitest 40 个通过，1 个预期失败。`npm run test:e2e`：11 个通过。`compare-links` 在 5 个副本上 0 处不一致。`links-copy` 上有 2 处，来自 PR C 正在往这个副本里加的 `子路径/` 文件夹，main 的代码在同一个副本上也是这 2 处。
+
 **照搬的函数。** 读自 Obsidian 1.15.1 的 `app.js`。
 
 | 函数 | 做什么 | mote 里的位置 |
@@ -510,6 +512,7 @@ callout 的类型和颜色放在一张表里，别名也在表里，例如 `tip`
 
 - `20261120-132334-f3bc`：打开 `欢迎`，在 `这是 mote 的验证笔记库。` 后面输入 ` [[计`。列表只有一行：`计划`，后面是 `项目`，已选中。按回车。`vault-diff` 只列出 `欢迎.md`，新增的字节是 ` [[计划]]`，没有删除。截图 `complete-list.png`。
 - `20261120-133925-5e0c`：在同一行后面输入 ` [[`，再 `ime --text 计划 --commit 计划 --hold 400`。回车的 keydown 是 `isComposing: true`、key code 13。选字期间，列表第一项是 `计划`，光标前是 `[[计划`，没有插入链接。上屏后仍是 `[[计划`，列表第一项是 `计划`。再按回车，变成 `[[计划]]`。CDP 的 key code 13 回车让 Chromium 在光标后加了 2 个换行。对照：同一个 `ime` 命令用在没有 `[[` 的行尾，也加了 2 个换行，所以和补全无关。真实的 macOS 输入法回车是 key code 229，不加换行。e2e 测试发的就是 229，检查整行文字只多了链接。
+- `20261120-142305-3d70`：同样输入 ` [[`，再 `ime --text 计划 --commit 计划 --no-enter --hold 400`。选字期间和上屏后，光标前都是 `[[计划`，列表第一项是 `计划`。按回车后变成 `[[计划]]`。`vault-diff` 只列出 `欢迎.md`，新增的字节是 ` [[计划]]`，没有删除。
 - `20261120-134152-acde`：新启动，`walk-notes` 打开 5 篇，`errorCount` 0。`vault-diff --expect-unchanged` 输出 `unchanged`。
 
 **性能，匹配。** 命令：`node tools/bench-quick-open.mjs ~/mote-link-check/workspace-copy --bench 10000 <查询>`，每个查询 100 次的中位数，单位毫秒。补全每次按键调用的就是这个 `suggest`。
@@ -524,14 +527,14 @@ callout 的类型和颜色放在一张表里，别名也在表里，例如 `tip`
 
 改前，英文查询超过 16 毫秒。`dai` 在 1 万条里命中几千条，原来的代码把命中的全部排序再取前 20。现在边扫描边保留前 20 条。18 个查询、3 种条数上限下，新旧结果逐条相同。剩下的时间在匹配本身：CPU 剖析里 `matchInOrder` 和 `matchTarget` 占 74%，它们对每条路径做 `toLowerCase` 和 `indexOf`。量的时候 1 分钟负载 5 到 7，新旧版本交替跑。
 
-**性能，输入。** 命令：`$V launch --vault ~/mote-link-check/Pesemic-copy`，打开 `compute/compute_mvp_spec.md`，`bench-typing --chars 200 --where end` 连跑 2 次。
+**性能，输入。** 命令：`$V launch --vault ~/mote-link-check/Pesemic-copy`，打开 `compute/compute_mvp_spec.md`，`bench-typing --chars 200 --where end`。基线用 PR B 记下的数：每键中位数 7.38 毫秒（3 次 7.58、7.38、6.51）。上限是它的 1.2 倍，8.9 毫秒。
 
-| 版本 | 第 1 次每键中位数 | 第 2 次 | p95 | 空闲中位数 |
-| --- | --- | --- | --- | --- |
-| PR B（`de6e554`） | 7.18 | 7.20 | 10.30、9.19 | 0.24、0.14 |
-| PR G | 6.39 | 6.96 | 9.28、9.22 | 0.16、0.15 |
+| 版本 | 每键中位数，2 次 | p95 | 空闲中位数 |
+| --- | --- | --- | --- |
+| PR B（`de6e554`，同一时段另量） | 7.18、7.20 | 10.30、9.19 | 0.24、0.14 |
+| PR G | 6.39、6.96 | 9.28、9.22 | 0.16、0.15 |
 
-PR G 没有比 PR B 慢，上限是 PR B 的 1.2 倍。补全在每个键上只看光标前的一行，没有 `[[` 就返回。两边都比 PR B 之前 main 的 4.94 毫秒高，那是 PR B 的实时预览带来的。
+PR G 低于上限，也不比同一时段量的 PR B 慢。补全在每个键上只看光标前的一行，没有 `[[` 就返回。两边都比 PR B 之前 main 的 4.94 毫秒高，那是 PR B 的实时预览带来的。
 
 **和 Obsidian 不同的地方。**
 
