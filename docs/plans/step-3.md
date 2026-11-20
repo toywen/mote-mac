@@ -150,19 +150,55 @@ e2e 测试按 PR 分文件，放在 `tests/e2e/` 下。`docs/features.md` 里“
 
 ## PR A：解析器扩展
 
-- [ ] 依赖：无，从 main 开分支。
-- [ ] 改动文件：`src/core/markdown.ts`、`src/core/markdown.test.ts`、`tests/fixtures/vaults/links/`、`tests/fixtures/vaults/links.obsidian-links.json`。
-- [ ] 做的一件事：解析器配置加上 GFM 表格、任务、删除线，以及 `==高亮==` 和标签。链接提取结果不变。
-- [ ] 你会看到：界面没有变化。对照工具的输出仍是 0 处不一致。
+- [x] 依赖：无，从 main 开分支。
+- [x] 改动文件：`src/core/markdown.ts`、`src/core/markdown.test.ts`、`tests/fixtures/vaults/links/`、`tests/fixtures/vaults/links.obsidian-links.json`、`eslint.config.mjs`。
+- [x] 做的一件事：解析器配置加上 GFM 表格、任务、删除线、裸网址，以及 `==高亮==` 和标签。链接提取结果不变。
+- [x] 你会看到：界面没有变化。对照工具的输出仍是 0 处不一致。
 
-标签的规则读自 Obsidian 1.15.1 的 `app.js`，不靠猜。`links` 测试笔记库加上这几种写法，再用 `tools/obsidian-export.mjs` 导出一次：表格里的 `[[笔记\|别名]]`、表格里的 `[[笔记]]`、`==[[笔记]]==`。
+标签的规则读自 Obsidian 1.15.1 的源码，不靠猜。`links` 测试笔记库加上这几种写法，再用 `tools/obsidian-export.mjs` 导出一次：表格里的 `[[笔记\|别名]]`、表格里的 `[[笔记]]`、`==[[笔记]]==`。
 
 验证：
 
-- [ ] 单元：Vitest 对每种新节点各测一条。再测表格里 `[[笔记\|别名]]` 的目标和别名。
-- [ ] 对照：`links` 副本和 5 个副本都是 0 处不一致。
-- [ ] 真实窗口：`basic` 上 `walk-notes`，`vault-diff` 输出 `unchanged`。
-- [ ] 性能：`node tools/compare-links.mjs --bench 9 ~/mote-link-check/workspace-copy`。main 的基线是 486.4 毫秒。中位数超过 560 毫秒算失败。
+- [x] 单元：Vitest 对每种新节点各测一条。再测表格里 `[[笔记\|别名]]` 的目标和别名。
+- [x] 对照：`links` 副本和 5 个副本都是 0 处不一致。
+- [x] 真实窗口：`basic` 上 `walk-notes`，`vault-diff` 输出 `unchanged`。
+- [ ] 性能：`node tools/compare-links.mjs --bench 9 ~/mote-link-check/workspace-copy`。main 的基线是 486.4 毫秒。中位数超过 560 毫秒算失败。这一条没有证明，原因见下面的结果。
+
+### 结果
+
+2026-11-20 实测。
+
+规则读自 Obsidian 1.15.1 的 `worker.js`，它是 Obsidian 建索引用的解析器：
+
+| 写法 | 读的函数 | 规则 |
+| --- | --- | --- |
+| 标签 | `yo`、`ei`、`bo`、`Mo` | `#` 前面是空白、行首，或者紧跟上一个元素的结尾，例如 `[[a]]#b`。标签名不能全是数字。标点结束标签名，但全角标点不算，所以 `#中文，后面` 是一个标签 |
+| 高亮 | `go` | `==` 后面不能是空白。到后面第一个前面不是空白的 `==` 结束。高亮不嵌套 |
+| 表格里的别名 | `It` | 链接路径结尾的一个 `\` 会去掉，所以 `[[笔记\|别名]]` 指向 `笔记` |
+
+裸网址只认 `http://` 和 `https://` 开头的。`www.` 开头的和邮箱地址不算。
+
+检查结果：
+
+- 单元：Vitest 25 个通过。其中 3 个把两篇边界笔记的结果钉在 Obsidian 的 `metadataCache` 上：17 个标签、14 个链接路径和别名，全部相同。
+- 对照：6 个副本 2202 处链接、1949 处反向链接，0 处不一致。
+- 标签对照：`workspace-copy` 里 Obsidian 认出 38 个标签，mote 认出同样的 38 个，位置相同。其余 4 个副本的正文里没有标签。
+- e2e：7 个通过。
+- 真实窗口，`basic`：`walk-notes` 打开 5 篇，`errorCount` 0，`vault-diff` 输出 `unchanged`。
+
+一处已知的差异。`https://example.com[[笔记]]` 这种写法，Obsidian 把双链算进网址，不算链接。mote 算链接。原因是 `@lezer/markdown` 认为没有路径的网址到域名就结束。6 个副本里没有这种写法。它记成一个预期失败的测试，修好后测试会提醒删掉这条。
+
+性能没有按原计划证明。量的时候另外两个工作区在跑 Electron，同一条命令在 main 上的中位数在 707 到 941 毫秒之间跳，560 毫秒这条线没法判断。我换了一个量法：同一个进程里交替跑两个版本，只量提取链接，不读文件。
+
+| 版本 | 提取 `workspace-copy` 603 篇的链接，15 轮最小值 | 相对 main |
+| --- | --- | --- |
+| main | 615.2 毫秒 | — |
+| 直接用 GFM 的 `Autolink` | 842.3 毫秒 | +37% |
+| 只在 `http` 开头处才跑网址解析（合并的版本） | 704.9 毫秒 | +15% |
+
+`Autolink` 在每个字符上都跑一次正则，中文笔记里每个字都要跑。改成先看是不是 `http` 开头后，多出的时间少了一半多。剩下的 15% 分散在 4 个新的行内解析器和表格上，逐个去掉后各省 15 到 30 毫秒，没有哪一个特别慢。
+
+按解析占整条命令约 64% 推算，安静的机器上中位数约 530 毫秒，低于 560 毫秒（推断）。PR H 在安静的机器上重跑原命令。
 
 ## PR B：实时预览的骨架和行内元素
 
@@ -291,6 +327,7 @@ callout 的类型和颜色放在一张表里，别名也在表里，例如 `tip`
 - [ ] 逐篇打开：5 个副本在两种编辑器模式下 `walk-notes`，`errorCount` 是 0，`vault-diff` 输出 `unchanged`。
 - [ ] 截图页：每个副本挑 6 篇元素最多的笔记，在实时预览、阅读模式、深色、浅色下各截一张，汇总成 `verify-artifacts/step-3-gallery/index.html`。你看这一页。
 - [ ] 性能：重跑 PR B 的两项性能检查，和 PR A 之前的 main 比较。
+- [ ] 性能：在没有其他任务的机器上重跑 PR A 的 `--bench 9`。中位数超过 560 毫秒算失败。
 
 ## 还证明不了的
 
