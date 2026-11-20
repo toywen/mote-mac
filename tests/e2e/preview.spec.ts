@@ -88,6 +88,22 @@ test('live preview hides syntax away from the selection and shows it at the sele
     await expect
       .poll(() => readFile(join(vault, '列表.md'), 'utf8'))
       .toContain('- 第三项\n- 第四项\n\n1. 有序一')
+
+    // Properties are a monospace block of plain YAML. Its --- lines show at the selection.
+    const properties = await openNote(window, '属性')
+    const opening = properties.locator('.cm-line').first()
+    const title = lineOf(properties, 'title: 属性示例')
+    await expect(opening).toHaveText('')
+    expect(await style(title, 'font-family')).toContain('Mono')
+    await title.click()
+    await expect(opening).toHaveText('---')
+    await window.keyboard.press('End')
+    await window.keyboard.insertText('二')
+    await expect
+      .poll(() => readFile(join(vault, '属性.md'), 'utf8'))
+      .toBe(
+        '---\ntitle: 属性示例二\ntags: [测试, mote]\nrelated: "[[目标]]"\n---\n# 属性\n\n正文。\n'
+      )
   } finally {
     await app.close()
   }
