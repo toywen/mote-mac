@@ -148,6 +148,83 @@ const inlineStyles: Record<string, { class: string; mark: string }>
 
 e2e 测试按 PR 分文件，放在 `tests/e2e/` 下。`docs/features.md` 里“测试：xxx”改为指这个目录下的同名测试。
 
+## 基线：PR B 之前的 main
+
+2026-11-20 实测。后面的 PR 用同样的命令量，和这里比。`$V` 是 `.claude/skills/verify-mote/scripts/verify-mote.mjs`。
+
+机器：MacBook Pro，Intel Core i5-8259U，4 核 8 线程，macOS 15.7.4。内置 Retina 屏，刷新率 60 Hz，由 Electron 的 `screen.getAllDisplays()` 读出。macOS 是深色外观。量的时候开着 Claude、Chrome、飞书和 VS Code，`uptime` 的 1 分钟负载在 5 到 17 之间。每次量之前用 `pgrep` 查过，没有别的 mote Electron 和 `compare-links` 在跑。
+
+窗口被别的窗口挡住时，Chromium 不再画帧，点击会一直等。`launch` 现在带 `--disable-backgrounding-occluded-windows`，下面的数都在这个开关下量。
+
+### 配色：`theme`
+
+量在 `ab712d1` 的应用代码上。`main.css` 在 `f4aa01d` 上没有变。
+
+命令：`$V launch`，用默认的 `basic`。然后每种配色跑 `$V theme --scheme <配色>`，用 `eval` 读 `body` 的计算颜色，再 `$V screenshot --out theme-<配色>`。
+
+| 命令 | 生效的配色 | `body` 背景 | `body` 文字 | `main.css` 的变量 | 对比度 |
+| --- | --- | --- | --- | --- | --- |
+| `theme --scheme dark` | dark | `rgb(30, 30, 30)` | `rgb(220, 221, 222)` | `#1e1e1e`、`#dcddde` | 12.26 |
+| `theme --scheme light` | light | `rgb(255, 255, 255)` | `rgb(34, 34, 34)` | `#ffffff`、`#222222` | 15.91 |
+| `theme --scheme system` | dark | `rgb(30, 30, 30)` | `rgb(220, 221, 222)` | 跟随 macOS | — |
+
+两种配色的颜色不同，和 `--background`、`--text` 一致。`defaults read -g AppleInterfaceStyle` 在命令前后都是 `Dark`，`theme` 没有改 macOS 的设置。
+
+### 输入：`bench-typing`
+
+量在 `ab712d1` 的应用代码上。`f4aa01d` 只改了 `src/core/markdown.ts`，编辑器不用它，所以这组数对 `f4aa01d` 也成立。
+
+命令：`$V launch --vault ~/mote-link-check/Pesemic-copy`，打开 `compute/compute_mvp_spec.md`。它是这个副本最大的笔记，63,375 字节，51,751 个字符。然后在同一次启动里交替跑 `$V bench-typing --chars 200 --where end` 和 `--where start`，各 3 次。每次跑完，文档多 200 个字符。
+
+它量的是一个键引起的渲染进程主线程工作，也就是 `TaskDuration` 的差值。它不量按键到画面的时间，所以不受 60 Hz 的限制。它是主线程任务的墙钟时间，机器忙时会偏大。合成线程、GPU 和主进程的工作不在里面。单位是毫秒。
+
+| 次 | 位置 | 开始时文档长度 | 每键中位数 | p95 | 最大 | 脚本均值 | 布局均值 | 样式均值 | 空闲中位数 |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| 1 | end | 52,151 | 4.94 | 7.60 | 21.22 | 2.38 | 0.29 | 0.08 | 5.59 |
+| 2 | start | 52,351 | 5.18 | 6.24 | 18.22 | 2.26 | 0.30 | 0.07 | 0.17 |
+| 3 | end | 52,551 | 5.00 | 6.19 | 20.50 | 2.19 | 0.29 | 0.07 | 0.19 |
+| 4 | start | 52,751 | 4.88 | 5.68 | 19.15 | 2.04 | 0.34 | 0.07 | 0.16 |
+| 5 | end | 52,951 | 4.76 | 5.73 | 18.30 | 2.05 | 0.29 | 0.07 | 0.16 |
+| 6 | start | 53,151 | 5.18 | 6.21 | 19.44 | 2.09 | 0.43 | 0.07 | 0.16 |
+
+基线：`end` 每键中位数 4.94 毫秒，3 次在 4.76 到 5.00 之间。`start` 每键中位数 5.18 毫秒，3 次在 4.88 到 5.18 之间。
+
+重复性：在这 6 次之前，同一条 `end` 命令连跑两次，中位数是 5.19 和 4.79 毫秒，差 8%。
+
+每次都输入了 200 个字符。命令读编辑器的长度和插入的文字，不对就失败。跑完 `vault-diff` 列出这篇笔记，这是预期的。
+
+限制它的东西。另跑一次 100 个键的 CPU 剖析，不计入上表。每键的 JS 自身时间约 2.8 毫秒。最大的两项是垃圾回收 0.40 毫秒，和 `NoteEditor.tsx` 的 `serialize` 0.38 毫秒。每个键都把整篇文档转成字符串，交给 `workspace.edit`。这部分随文档变长而变大（推断）。`TaskDuration` 里约 2.5 毫秒不属于脚本、布局和样式，这个指标不再细分。
+
+没有查明的两点：
+
+- 每次的最大值都在 18 到 21 毫秒。
+- 第 1 次的空闲中位数是 5.59 毫秒，其他 5 次是 0.16 到 0.19。同一次的每键中位数没有变大。我又连跑 5 次 20 个键，都没有复现。
+
+PR B 的计划写的是在笔记中间输入，量按键到画面更新。这个探针按任务要求改成了主线程工作量，位置是开头和结尾。
+
+### 打开：`walk-notes`
+
+量在 `f4aa01d` 上。
+
+命令：`$V launch --vault ~/mote-link-check/workspace-copy`，打开笔记库。在同一次启动里跑 3 次 `$V walk-notes --out walk-<次>`，最后跑 `$V vault-diff --expect-unchanged`。
+
+| 次 | 打开篇数 | `errorCount` | `durationMs` | `medianNoteMs` |
+| --- | --- | --- | --- | --- |
+| 1 | 603 | 0 | 161,183 | 78.2 |
+| 2 | 603 | 0 | 140,050 | 78.9 |
+| 3 | 603 | 0 | 132,551 | 78.2 |
+| 中位数 | | | 140,050 | 78.2 |
+
+`vault-diff --expect-unchanged` 输出 `unchanged`。
+
+`medianNoteMs` 在页面里计时。从文件树那一行的 `click` 事件开始，到这篇笔记的编辑器出现在 DOM 里为止。首次布局和绘制不在里面。
+
+`durationMs` 是整个遍历的墙钟时间，含 Playwright 的点击和等待。平均每篇约 232 毫秒，其中约 150 毫秒花在测试工具上：点击、等待和每篇之后的检查（推断）。3 次相差 22%。比较打开速度时看 `medianNoteMs`，它 3 次只差 1%。
+
+限制它的东西。另跑一次，在 41 篇笔记上做 CPU 剖析，不计入上表。这些笔记的中位数大小只有约 2 KB。每次打开，React 同步渲染和提交约 72 毫秒的 JS。自身时间最多的是 CodeMirror 读选区的 `eq`（12.9 毫秒）、React 改 DOM 属性（6.8 毫秒）和建 lucide 图标节点（5.6 毫秒）。所以时间花在每次打开都重画的界面上，不随笔记大小变化（推断）。
+
+rebase 到 `f4aa01d` 之前，在 `ab712d1` 的应用代码上也跑过 3 次。`durationMs` 是 146,325、166,549、135,605。当时 `medianNoteMs` 从 Node 计时，含 Playwright 的时间，是 194.37、198.99、193.88，和上表不能比。另跑一次对比，同样 120 篇笔记，页面里计时的中位数 30.5 毫秒，Node 里计时的中位数 93.7 毫秒。所以改成了页面里计时。
+
 ## PR A：解析器扩展
 
 - [x] 依赖：无，从 main 开分支。
