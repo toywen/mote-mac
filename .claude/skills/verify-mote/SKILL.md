@@ -59,7 +59,7 @@ With one live run, commands pick it. With several, pass `--run <id>` or set `MOT
 | Command                                          | Does                                                                    |
 | ------------------------------------------------ | ----------------------------------------------------------------------- |
 | `snapshot [--out name]`                          | Prints the window's ARIA tree. Read it to find handles.                 |
-| `walk-notes [--out name] [--obsidian export]`    | Clicks every visible note and checks the full path and editor state. With `--obsidian`, also checks each note's backlinks pane against the export. Prints `durationMs` for the whole walk and `medianNoteMs`, the median time from click to editor ready. |
+| `walk-notes [--out name] [--obsidian export]`    | Clicks every visible note and checks the full path and editor state. With `--obsidian`, also checks each note's backlinks pane against the export. Prints `durationMs` for the whole walk and `medianNoteMs`, the median time from click to editor ready. See Measure. |
 | `theme --scheme dark\|light\|system`             | Sets the app's color scheme, waits until the window follows, and prints the scheme in effect. |
 | `bench-typing [--chars 200] [--gap 50] [--where end\|start]` | Types into the open note one key at a time and prints the main-thread work per key. See Measure. |
 | `screenshot --out name`                          | Saves a PNG of the window to the evidence dir.                          |
@@ -104,6 +104,8 @@ The metric counts work, not time to the next frame, so the display refresh rate 
 The gap must stay below mote's 750 ms autosave delay, so no save runs during the measurement. The run leaves the note edited. mote saves it after the run, and `vault-diff` will list that note.
 
 Run every number at least twice in a row. If two medians differ by more than 30 percent, find out why before you record one.
+
+`walk-notes` times each note inside the page. The clock starts at the row's `click` event and stops when the editor for that note is in the DOM. It leaves out the first layout and paint, and Playwright's own click and wait, which add about 60 ms per note. `durationMs` is the wall time of the whole walk, Playwright included.
 
 ## Evidence
 
