@@ -1,0 +1,58 @@
+import { Decoration, WidgetType } from '@codemirror/view'
+import { lineAt, type Renderer } from './preview'
+
+class MarkerWidget extends WidgetType {
+  constructor(readonly text: string) {
+    super()
+  }
+
+  eq(other: MarkerWidget): boolean {
+    return other.text === this.text
+  }
+
+  toDOM(): HTMLElement {
+    const span = document.createElement('span')
+    span.className = 'mote-list-marker'
+    span.textContent = this.text
+    return span
+  }
+}
+
+const bullet = Decoration.replace({ widget: new MarkerWidget('•') })
+const prefix = Decoration.mark({ class: 'mote-list-prefix' })
+const depthLines: Decoration[] = []
+
+// The line of a list item at this depth. Its wrapped lines start where its text starts.
+function depthLine(depth: number): Decoration {
+  return (depthLines[depth] ??= Decoration.line({
+    class: 'mote-list',
+    attributes: { style: `--mote-list-depth: ${depth}` }
+  }))
+}
+
+// A list item's marker with the indentation before it and the space after it. Hidden, the
+// marker becomes a bullet or the item's number, indented by depth instead of by spaces.
+const listMark: Renderer = (node, cx) => {
+  const { doc } = cx.state
+  const line = lineAt(cx, node.from)
+  let depth = 0
+  for (let parent = node.node.parent; parent; parent = parent.parent)
+    if (parent.name === 'BulletList' || parent.name === 'OrderedList') depth++
+  const from = /^[ \t]*$/.test(doc.sliceString(line.from, node.from)) ? line.from : node.from
+  const to = /[ \t]/.test(doc.sliceString(node.to, node.to + 1)) ? node.to + 1 : node.to
+  const ordered = node.node.parent?.parent?.name === 'OrderedList'
+  const marker = ordered
+    ? Decoration.replace({ widget: new MarkerWidget(doc.sliceString(node.from, node.to)) })
+    : bullet
+  return [
+    {
+      reveal: line,
+      always: [depthLine(depth).range(line.from), prefix.range(from, to)],
+      concealed: [marker.range(from, to)]
+    }
+  ]
+}
+
+export const listRenderers: Record<string, Renderer> = {
+  ListMark: listMark
+}
