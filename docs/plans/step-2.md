@@ -1,6 +1,6 @@
 # 第 2 步实现计划
 
-本计划实现 [功能列表](../features.md#开发顺序) 开发顺序第 2 步。完成标准是 [验收清单](../features.md#验收清单) 第 2 条：在 5 个笔记库副本里，mote 解析出的每个链接目标都和 Obsidian 的 `resolvedLinks` 一致。
+本计划实现 [功能列表](../features.md#进度一览) 里的第 2 步。完成标准是 [验收清单](../features.md#验收清单) 第 2 条：在 5 个笔记库副本里，mote 解析出的每个链接目标都和 Obsidian 的 `resolvedLinks` 一致。
 
 本文用到的词：
 
