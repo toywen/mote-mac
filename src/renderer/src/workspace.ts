@@ -263,6 +263,16 @@ class Workspace {
     return vault ? window.mote.search(vault.dir, query, limit) : null
   }
 
+  // A note's text for an embed, read without opening the note: the editor's text for the open
+  // note, the disk's for any other. Null when the note is gone. Like the backlinks, the result
+  // is a read-only query; ask again when revision goes up.
+  async noteText(path: VaultPath): Promise<string | null> {
+    const { vault, doc } = this.state
+    if (!vault) return null
+    if (doc?.path === path && doc.kind !== 'missing') return doc.text
+    return (await window.mote.readNote(vault.dir, path))?.text ?? null
+  }
+
   recent(): VaultPath[] {
     const { vault } = this.state
     if (!vault) return []
