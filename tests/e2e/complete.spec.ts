@@ -103,6 +103,9 @@ test("typing [[ completes note names in the vault's link format", async () => {
     await window.keyboard.press('End')
     await window.keyboard.type(' [[计')
     await expect(rows).toHaveText(['计划项目'])
+    // CodeMirror ignores Enter for 75 ms after the list opens, so that a key aimed at the text
+    // does not pick a row. A person cannot press it that soon; the test waits it out.
+    await window.waitForTimeout(150)
     await window.keyboard.press('Enter')
     await window.keyboard.type('。')
     await expect
