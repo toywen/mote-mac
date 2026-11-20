@@ -54,7 +54,7 @@ Each piece of state has one owner. Do not add a second copy that both sides writ
 
 ## Rules that are easy to break
 
-- Never write into the vault except to save a note the user edited, or to apply a rename or move. Never write `.obsidian`. Read vault config from `.obsidian` read only, and fall back to Obsidian defaults.
+- Never write into the vault except to save a note the user edited, to apply a rename or move, or to create the empty note that a click on a link to a missing note asks for. Never write `.obsidian`. Read vault config from `.obsidian` read only, and fall back to Obsidian defaults.
 - Store mote's own settings and journals in `~/Library/Application Support/mote`, never in the vault.
 - Opening a note without editing it must leave its bytes unchanged. Keep the file's line separator (CodeMirror joins lines with `\n` by default) and write only when the note is dirty.
 - Every save compares the disk hash with the hash the note was opened at. On mismatch, enter the conflict state instead of overwriting.
