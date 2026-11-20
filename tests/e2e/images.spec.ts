@@ -86,12 +86,16 @@ test('images load from the vault and nothing outside it', async () => {
       'http://example.com/a.png'
     ])
 
-    // An embed that is not an image is a link to its target, marked where its node starts.
-    const found = editor.locator('.mote-link', { hasText: '嵌入目标' })
+    // An embed of a note shows the note (tests/e2e/reading.spec.ts). An embed whose target does
+    // not exist is a link to it, marked where its node starts.
+    const embed = editor.locator('.mote-embed')
     const missing = editor.locator('.mote-link', { hasText: '缺失的嵌入' })
-    await expect(lineOf(editor, '嵌入目标')).toHaveText('嵌入目标')
-    await expect(found).toHaveAttribute('data-link-from', String(original.indexOf('![[嵌入目标]]')))
-    await expect(found).not.toHaveClass(/mote-link-missing/)
+    await expect(embed.locator('.mote-embed-title')).toHaveText('嵌入目标')
+    await expect(embed).toContainText('被嵌入的笔记。')
+    await expect(missing).toHaveAttribute(
+      'data-link-from',
+      String(original.indexOf('![[缺失的嵌入]]'))
+    )
     await expect(missing).toHaveClass(/mote-link-missing/)
 
     // A click on the image shows its source with the image under it. Typing elsewhere keeps the
