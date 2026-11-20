@@ -20,3 +20,6 @@ ADR（Architecture Decision Record）是架构决策记录。每个文件记一�
 | [0007](0007-mote-file-protocol.md) | 图片通过 `mote-file://` 协议读取 | 已实现 |
 | [0008](0008-isolated-obsidian-export.md) | 用隔离的 Obsidian 自动导出解析结果 | 已实现，替代 0003 的导出方法 |
 | [0009](0009-frontmatter-yaml.md) | 属性用 yaml 包解析，和 Obsidian 同一个库 | 已实现 |
+| [0010](0010-one-preview-field.md) | 实时预览用一个字段和一张注册表 | 已实现 |
+| [0011](0011-create-note-on-click.md) | 点击指向不存在笔记的链接时，新建这篇笔记 | 已实现 |
+| [0012](0012-remote-images.md) | 编辑器加载笔记里的 https 图片 | 已实现 |
