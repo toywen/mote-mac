@@ -32,6 +32,7 @@
 | `src/core/text.ts` | 规范化文本：去掉 BOM，换行统一成 `\n`。链接位置都指向规范化文本 |
 | `src/core/markdown.ts` | 唯一的解析器配置（`@lezer/markdown` 加双链、嵌入、属性块），从笔记里提取链接 |
 | `src/core/resolve.ts` | 链接解析，照搬 Obsidian 的 `getLinkpathDest` |
+| `src/core/linkText.ts` | 新链接的文字，照搬 Obsidian 的 `fileToLinktext` 和它 `[[` 列表插入的文字。按笔记库配置选双链或 Markdown 链接，以及最短、相对、绝对路径 |
 | `src/core/model.ts` | 链接和解析结果的类型 |
 | `src/core/search.ts` | 全文搜索：分词、引号短语、不分大小写的子串匹配、按文件名排序 |
 | `src/core/hits.ts` | 命中位置的预览行和按笔记分组 |
@@ -48,6 +49,7 @@
 | `src/renderer/src/editor/renderers.ts` | 语法节点名到渲染函数的注册表。加一种元素，就加一个文件，在这里注册一行 |
 | `src/renderer/src/editor/inline.ts`、`headings.ts`、`links.ts`、`lists.ts`、`quotes.ts`、`code.ts` | 各种元素的渲染函数。`inline.ts` 的 `inlineStyles` 是行内样式表，表格单元格以后也读它 |
 | `src/renderer/src/editor/preview.css` | 实时预览的样式。颜色只用 `main.css` 里的变量 |
+| `src/renderer/src/editor/complete.ts`、`complete.css` | 双链补全：输入 `[[` 后列出笔记，候选用快速打开的 `quickOpenMatch.ts` 排序，插入 `linkText.ts` 生成的链接。笔记列表、最近打开和笔记库配置从 `completeContext` 读 |
 | `src/renderer/src/FileTree.tsx` | 文件树 |
 | `src/renderer/src/QuickOpen.tsx`、`quickOpenMatch.ts` | 快速打开窗口和照搬 Obsidian 的匹配打分 |
 | `src/renderer/src/HitList.tsx` | 按笔记分组列出命中位置，点一处打开笔记并选中。反向链接面板和搜索共用 |

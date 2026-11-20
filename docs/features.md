@@ -74,7 +74,7 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | ⬜ 未实现 | 链接-1 | 点击双链或 Markdown 链接，跳到目标。带 `#标题` 时跳到这个标题 | | |
 | 🟡 部分 | 链接-2 | 目标不存在的双链用不同颜色显示。点击它，新建这篇笔记 | 测试：live preview hides syntax away from the selection and shows it at the selection | 2026-11-20 第 3 步 PR B 做了颜色，Markdown 链接也算。点击新建在 PR C |
 | ⬜ 未实现 | 链接-3 | 链接目标不是笔记时，用 macOS 的默认程序打开 | | |
-| ⬜ 未实现 | 链接-4 | 输入 `[[` 后弹出笔记名补全。插入的链接格式按笔记库配置决定 | | |
+| ✅ 已实现 | 链接-4 | 输入 `[[` 后弹出笔记名补全。插入的链接格式按笔记库配置决定 | 测试：typing [[ completes note names in the vault's link format；verify：link-complete；`npm test` 对照 Obsidian 导出的 `links.obsidian-linktext.json` | 2026-11-20。链接文字照搬 Obsidian 1.15.1 的 `fileToLinktext` 和 `[[` 列表插入的文字（`PR`），`links` 测试笔记库 540 对、2700 次插入和 Obsidian 完全相同。5 个副本 2,924,850 个链接用 `check-linktext.mjs` 解析回目标，5427 个不回。不回的是 3 篇文件名特殊的笔记，Obsidian 插入同样的文字，自己也解析不回，见 PR G 的结果。不补全标题、别名和附件 |
 | ⬜ 未实现 | 链接-8 | `Cmd+Option+←` 后退，`Cmd+Option+→` 前进 | | |
 
 ## 第 4 步：新建、改名、移动和删除
@@ -135,7 +135,7 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | --- | --- | --- | --- |
 | 🟡 部分，推断超标 | 打开笔记库到可以编辑 | 2 秒以内 | 未测 1 万篇。真实窗口打开 `workspace-copy`（603 篇，含读入笔记索引）：`chooseVault` 中位数 402 毫秒（5 次，2026-11-20 实测）。读取并解析 `workspace-copy` 的 603 篇笔记：中位数 483 毫秒（`compare-links.mjs --bench 9`，2026-11-20 实测），其中 lezer 解析约 310 毫秒。按字符数线性外推，1 万篇约 8 秒（推断），第 5 步要处理 |
 | 🟡 部分 | 全文搜索 | 200 毫秒以内 | `workspace-copy` 复制成 1 万篇（3140 万字符），node 里查询“的”中位数 76 毫秒、最慢 117 毫秒（2026-11-20 实测，不含 IPC）。用 gen-vault 生成的笔记库还没测 |
-| 🟡 部分 | 快速打开，每次按键 | 16 毫秒以内 | `workspace-copy` 的路径复制成 1 万条，node 里 4 个查询的中位数 6.4 到 6.8 毫秒（`tools/bench-quick-open.mjs`，100 次，2026-11-20 实测，不含窗口渲染） |
+| 🟡 部分 | 快速打开，每次按键 | 16 毫秒以内 | `workspace-copy` 的路径复制成 1 万条，node 里 4 个查询的中位数 6.4 到 6.8 毫秒（`tools/bench-quick-open.mjs`，100 次，2026-11-20 实测，不含窗口渲染）。PR G 加了英文查询：改成边扫描边保留前 20 条后，`d` 到 `daily` 等 9 个查询的中位数最高 14.8 毫秒（3 轮，改前最高 20.3 毫秒） |
 | ⬜ 未测 | 改名一篇有 100 个反向链接的笔记 | 1 秒以内 | |
 | ⬜ 未测 | 外部修改到编辑器显示 | 100 毫秒以内 | |
 
