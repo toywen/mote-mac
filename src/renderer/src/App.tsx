@@ -15,15 +15,16 @@ function App(): React.JSX.Element {
     workspace.snapshot
   )
   const modeAction = mode === 'live' ? '切换到阅读模式' : '切换到实时预览'
-  // The editor resolves links against the same file list, in the same order, as main.
+  // The editor resolves links against the same file list, in the same order, as main. Folders
+  // and the vault config say where a click on a missing link creates the note.
   const entries = vault?.entries
-  const links = useMemo(
-    () =>
-      entries
-        ? buildLinkIndex(entries.filter((e) => e.kind !== 'folder').map((e) => e.path))
-        : null,
-    [entries]
-  )
+  const config = vault?.config
+  const links = useMemo(() => {
+    if (!entries || !config) return null
+    const files = entries.filter((e) => e.kind !== 'folder').map((e) => e.path)
+    const folders = entries.filter((e) => e.kind === 'folder').map((e) => e.path)
+    return { index: buildLinkIndex(files, folders), config }
+  }, [entries, config])
   const [sidebarOpen, setSidebarOpen] = useState(true)
   const sidebarAction = sidebarOpen ? '收起文件树' : '展开文件树'
   const [quickOpen, setQuickOpen] = useState(false)
@@ -49,6 +50,16 @@ function App(): React.JSX.Element {
       } else if (event.metaKey && !event.shiftKey && !event.altKey && event.code === 'KeyE') {
         event.preventDefault()
         workspace.toggleMode()
+      } else if (
+        event.metaKey &&
+        event.altKey &&
+        !event.shiftKey &&
+        (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
+      ) {
+        // The editor never sees the key, so the cursor does not also move by a word.
+        event.preventDefault()
+        event.stopPropagation()
+        void (event.key === 'ArrowLeft' ? workspace.back() : workspace.forward())
       }
     }
     window.addEventListener('keydown', keyDown, true)

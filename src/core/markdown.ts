@@ -224,8 +224,9 @@ const external = /^[a-z][a-z0-9+.-]*:/i
 const markdownValue = /^\[([^\]]*)\]\((.*)\)$/
 
 // Ported from Obsidian 1.15.1 QK: a property value is a link only when the whole string is one.
-// Frontmatter that the yaml package rejects yields no links, as in Obsidian.
-function frontmatterLinks(block: string, offset: number): LinkRef[] {
+// Frontmatter that the yaml package rejects yields no links, as in Obsidian. block is the text of
+// a Frontmatter node that starts at offset.
+export function frontmatterLinks(block: string, offset: number): LinkRef[] {
   const body = block.slice(block.indexOf('\n') + 1, block.lastIndexOf('\n'))
   let data: unknown
   try {

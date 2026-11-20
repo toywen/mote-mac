@@ -10,12 +10,12 @@ import {
 import { EditorView, keymap } from '@codemirror/view'
 import { useLayoutEffect, useMemo, useRef } from 'react'
 import type { VaultInfo, VaultPath } from '../../core/ipc'
-import type { LinkIndex } from '../../core/resolve'
 import { sourceText, type LineFormat } from '../../core/text'
 import { completeContext, linkCompletion } from './editor/complete'
+import { followLinks } from './editor/follow'
 import { editorMode, linkContext, livePreview } from './editor/livePreview'
 import { markdown } from './editor/markdown'
-import type { EditorMode } from './editor/preview'
+import type { EditorMode, LinkContext } from './editor/preview'
 import { workspace, type Selection } from './workspace'
 
 const replaceFormat = StateEffect.define<LineFormat>()
@@ -61,7 +61,7 @@ export function NoteEditor({
   locked: boolean
   selection: Selection | null
   mode: EditorMode
-  links: LinkIndex | null
+  links: Omit<LinkContext, 'path'> | null
   vault: VaultInfo | null
 }): React.JSX.Element {
   const host = useRef<HTMLDivElement>(null)
@@ -89,6 +89,7 @@ export function NoteEditor({
         livePreview,
         linkCompletion,
         complete.current.of([]),
+        followLinks((dest) => void workspace.follow(dest)),
         history(),
         keymap.of([
           {
@@ -108,6 +109,10 @@ export function NoteEditor({
           spellcheck: 'false'
         }),
         EditorView.updateListener.of((update) => {
+          if (update.selectionSet) {
+            const { anchor, head } = update.state.selection.main
+            workspace.cursor(path, { from: anchor, to: head })
+          }
           if (
             update.docChanged &&
             !update.transactions.some((transaction) =>
@@ -146,7 +151,7 @@ export function NoteEditor({
 
   useLayoutEffect(() => {
     editor.current?.dispatch({
-      effects: resolve.current.reconfigure(links ? linkContext.of({ index: links, path }) : [])
+      effects: resolve.current.reconfigure(links ? linkContext.of({ ...links, path }) : [])
     })
   }, [path, links])
 
@@ -182,12 +187,11 @@ export function NoteEditor({
     const view = editor.current
     if (!view || selection?.path !== path) return
     const length = view.state.doc.length
+    const anchor = Math.min(selection.from, length)
     view.dispatch({
-      selection: {
-        anchor: Math.min(selection.from, length),
-        head: Math.min(selection.to, length)
-      },
-      scrollIntoView: true
+      selection: { anchor, head: Math.min(selection.to, length) },
+      // A heading or block a link points at goes to the top of the editor.
+      effects: EditorView.scrollIntoView(anchor, { y: selection.top ? 'start' : 'nearest' })
     })
     view.focus()
   }, [path, selection])

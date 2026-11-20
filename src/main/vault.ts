@@ -1,5 +1,5 @@
 import { constants, watch, type FSWatcher } from 'node:fs'
-import { lstat, open, readFile, realpath, stat } from 'node:fs/promises'
+import { lstat, mkdir, open, readFile, realpath, stat } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import {
   parseVaultPath,
@@ -227,6 +227,34 @@ export class Vault {
       if (missing(error)) return null
       throw error
     }
+  }
+
+  // Creates an empty note for a link to a missing one. Missing folders are made one at a time
+  // from the vault root, and an existing one must be a real folder, so nothing passes through a
+  // symlink. A note that exists by then is left as it is. The entries and the index update before
+  // the renderer is told.
+  createNote(path: VaultPath): Promise<void> {
+    return this.run(async () => {
+      const note = parseVaultPath(path)
+      if (this.closed || kind(note) !== 'note') throw new Error('笔记库已切换或路径无效')
+      let dir = this.dir
+      for (const part of note.split('/').slice(0, -1)) {
+        dir = join(dir, part)
+        await mkdir(dir).catch((error: unknown) => {
+          if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+        })
+        if (!(await lstat(dir)).isDirectory()) throw new Error('无法在这里新建笔记')
+      }
+      try {
+        const flags =
+          constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW
+        await (await open(join(this.dir, note), flags)).close()
+        this.ownWrites.set(note, hash(Buffer.alloc(0)))
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
+      }
+      await this.refresh(new Set([note]), false)
+    })
   }
 
   writeNote(path: VaultPath, text: string, baseHash: ContentHash | null): Promise<WriteResult> {

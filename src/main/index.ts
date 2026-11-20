@@ -5,6 +5,7 @@ import { optimizer, is } from '@electron-toolkit/utils'
 import { fileScheme } from '../core/fileUrl'
 import { channels, type ContentHash, type VaultPath } from '../core/ipc'
 import { serveFile } from './fileProtocol'
+import { isAllowedExternal } from '../core/linkDest'
 import { Vault } from './vault'
 
 let window: BrowserWindow | undefined
@@ -84,6 +85,14 @@ ipcMain.handle(channels.openWithDefaultApp, async (_event, dir: string, path: Va
   if (!(await lstat(file)).isFile()) throw new Error('无法打开该文件')
   const error = await shell.openPath(file)
   if (error) throw new Error(error)
+})
+ipcMain.handle(channels.createNote, (_event, dir: string, path: VaultPath) =>
+  currentVault(dir).createNote(path)
+)
+// Main is the boundary, so it checks the address again before the system opens it.
+ipcMain.handle(channels.openExternal, async (_event, url: string) => {
+  if (typeof url !== 'string' || !isAllowedExternal(url)) throw new Error('无法打开该地址')
+  await shell.openExternal(url)
 })
 
 ipcMain.on(channels.respondToClose, (event, ready: boolean) => {

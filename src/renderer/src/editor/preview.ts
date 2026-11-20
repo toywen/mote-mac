@@ -1,7 +1,7 @@
 import type { EditorState, Range } from '@codemirror/state'
 import { Decoration } from '@codemirror/view'
 import type { SyntaxNodeRef } from '@lezer/common'
-import type { VaultPath } from '../../../core/ipc'
+import type { VaultConfig, VaultPath } from '../../../core/ipc'
 import type { LinkIndex } from '../../../core/resolve'
 
 export type EditorMode = 'live' | 'reading'
@@ -18,8 +18,9 @@ export type PreviewItem = {
   block?: true
 }
 
-// Links resolve against the vault's files, as seen from the open note.
-export type LinkContext = { index: LinkIndex; path: VaultPath }
+// Links resolve against the vault's files, as seen from the open note. The config says where a
+// missing note would be created.
+export type LinkContext = { index: LinkIndex; path: VaultPath; config: VaultConfig }
 
 export type PreviewContext = { state: EditorState; links: LinkContext | null }
 
