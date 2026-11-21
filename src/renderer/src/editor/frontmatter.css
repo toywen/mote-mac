@@ -1,0 +1,145 @@
+/* Sidenote Foldable Properties Card */
+.fm-foldable-card {
+  display: block;
+  background: var(--sidebar);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin: 8px 0 24px;
+  overflow: hidden;
+  font-family: var(--font-hei);
+  font-size: 12px;
+  user-select: none;
+  -webkit-user-select: none;
+  box-sizing: border-box;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.fm-foldable-card:hover {
+  border-color: color-mix(in srgb, var(--accent) 30%, var(--border));
+}
+
+.fm-card-summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 6px 12px;
+  min-height: 32px;
+  cursor: pointer;
+  background: transparent;
+}
+
+.fm-card-badges {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 6px;
+  min-width: 0;
+}
+
+.fm-toggle-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  border: 0;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-hei);
+  font-size: 11px;
+  font-weight: 500;
+  padding: 2px 6px;
+  border-radius: 4px;
+  cursor: pointer;
+  transition: all 120ms ease;
+}
+
+.fm-toggle-btn:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.fm-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border-radius: 4px;
+  font-size: 11.5px;
+  font-weight: 500;
+  line-height: 1.3;
+}
+
+.fm-chip-link {
+  background: var(--accent-bg);
+  color: var(--accent);
+}
+
+.fm-chip-tag {
+  background: var(--tag-background);
+  color: var(--tag-text);
+}
+
+.fm-chip-status {
+  background: var(--tag-background);
+  color: var(--tag-text);
+  font-weight: 600;
+}
+
+.fm-status-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.fm-chip-date {
+  color: var(--muted);
+  font-size: 11px;
+}
+
+.fm-card-body {
+  padding: 10px 14px;
+  border-top: 1px dashed var(--border);
+  background: var(--background);
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 8px 16px;
+}
+
+.fm-card-body[hidden] {
+  display: none;
+}
+
+.fm-grid-item {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  min-width: 0;
+}
+
+.fm-grid-key {
+  width: 72px;
+  flex-shrink: 0;
+  font-size: 11px;
+  color: var(--t3);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.fm-grid-val {
+  flex: 1;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px;
+  color: var(--text);
+  word-break: break-word;
+}

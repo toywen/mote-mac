@@ -2,6 +2,7 @@ import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import {
   channels,
   type FontMode,
+  type MenuAction,
   type MoteApi,
   type ThemeSource,
   type ThemeState,
@@ -16,6 +17,10 @@ const mote: MoteApi = {
   writeNote: (dir, path, text, baseHash) =>
     ipcRenderer.invoke(channels.writeNote, dir, path, text, baseHash),
   openWithDefaultApp: (dir, path) => ipcRenderer.invoke(channels.openWithDefaultApp, dir, path),
+  saveAttachment: (dir, notePath, fileName, data) =>
+    ipcRenderer.invoke(channels.saveAttachment, dir, notePath, fileName, data),
+  chooseAndSaveImage: (dir, notePath) =>
+    ipcRenderer.invoke(channels.chooseAndSaveImage, dir, notePath),
   createNote: (dir, path) => ipcRenderer.invoke(channels.createNote, dir, path),
   openExternal: (url) => ipcRenderer.invoke(channels.openExternal, url),
   createNoteInVault: (dir, folder, name) =>
@@ -63,6 +68,11 @@ const mote: MoteApi = {
     const listener = (_event: IpcRendererEvent, status: UpdateStatus): void => callback(status)
     ipcRenderer.on(channels.updateStatus, listener)
     return () => ipcRenderer.off(channels.updateStatus, listener)
+  },
+  onMenuAction: (callback) => {
+    const listener = (_event: IpcRendererEvent, action: MenuAction): void => callback(action)
+    ipcRenderer.on(channels.menuAction, listener)
+    return () => ipcRenderer.off(channels.menuAction, listener)
   }
 }
 

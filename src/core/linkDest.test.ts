@@ -16,6 +16,7 @@ const config = (overrides: Partial<VaultConfig> = {}): VaultConfig => ({
   alwaysUpdateLinks: false,
   newFileLocation: 'root',
   newFileFolderPath: '',
+  attachmentFolderPath: '',
   daily: { folder: '', format: 'YYYY-MM-DD' },
   ...overrides
 })

@@ -20,9 +20,11 @@ export function UpdateNotification(): React.JSX.Element | null {
 
   if (!status || dismissed) return null
 
-  const { state, release, progress, error } = status
+  const { state, release, progress } = status
 
-  if (state === 'idle' || state === 'not-available') {
+  // 静默更新策略：仅在检测到可用更新、下载中或准备就绪时提示用户，
+  // 检查中、最新版本、错误状态（如无发布Release）均不侵扰用户界面
+  if (state === 'idle' || state === 'not-available' || state === 'checking' || state === 'error') {
     return null
   }
 
@@ -39,7 +41,6 @@ export function UpdateNotification(): React.JSX.Element | null {
       <div className="update-banner-header">
         <div className="update-banner-title">
           <Sparkles size={16} />
-          {state === 'checking' && <span>正在检查新版本...</span>}
           {state === 'available' && (
             <span>
               发现新版本 <span className="update-banner-badge">v{release?.version}</span>
@@ -48,7 +49,6 @@ export function UpdateNotification(): React.JSX.Element | null {
           {state === 'downloading' && <span>正在下载更新...</span>}
           {state === 'downloaded' && <span>新版本已准备就绪</span>}
           {state === 'installing' && <span>正在重启并应用更新...</span>}
-          {state === 'error' && <span>更新提示</span>}
         </div>
 
         <div className="update-banner-actions">
@@ -109,8 +109,6 @@ export function UpdateNotification(): React.JSX.Element | null {
       )}
 
       {showNotes && release?.body && <div className="update-release-body">{release.body}</div>}
-
-      {state === 'error' && error && <div className="update-error-text">{error}</div>}
     </div>
   )
 }

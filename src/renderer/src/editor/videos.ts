@@ -87,6 +87,10 @@ class VideoWidget extends WidgetType {
     super()
   }
 
+  get estimatedHeight(): number {
+    return this.size.height ?? 300
+  }
+
   eq(other: VideoWidget): boolean {
     return (
       other.src === this.src &&
@@ -129,6 +133,10 @@ class YouTubeWidget extends WidgetType {
     super()
   }
 
+  get estimatedHeight(): number {
+    return this.info.height ?? 315
+  }
+
   eq(other: YouTubeWidget): boolean {
     return (
       other.info.videoId === this.info.videoId &&
@@ -138,18 +146,28 @@ class YouTubeWidget extends WidgetType {
     )
   }
 
-  toDOM(): HTMLElement {
+  toDOM(view: EditorView): HTMLElement {
     const box = document.createElement('span')
     box.className = 'mote-youtube'
     const iframe = document.createElement('iframe')
     let embedUrl = `https://www.youtube-nocookie.com/embed/${this.info.videoId}`
     if (this.info.start !== null) embedUrl += `?start=${this.info.start}`
     iframe.src = embedUrl
-    iframe.width = String(this.info.width ?? 560)
-    iframe.height = String(this.info.height ?? 315)
+    const width = this.info.width ?? 560
+    const height = this.info.height ?? 315
+    iframe.width = String(width)
+    iframe.height = String(height)
+    if (this.info.width) {
+      iframe.style.width = `${this.info.width}px`
+      iframe.style.maxWidth = '100%'
+    }
+    if (this.info.height) {
+      iframe.style.height = `${this.info.height}px`
+    }
     iframe.allow =
       'accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture'
     iframe.allowFullscreen = true
+    iframe.addEventListener('load', () => view.requestMeasure())
     box.append(iframe)
     return box
   }

@@ -52,7 +52,7 @@
 /* Headings. The editor's own rules use two classes, so these use three. */
 .cm-content .cm-line.mote-h {
   font-family: var(--font-heading);
-  color: var(--accent);
+  color: var(--text);
   font-weight: 700;
   line-height: 1.35;
   letter-spacing: -0.015em;

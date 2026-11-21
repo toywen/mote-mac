@@ -16,6 +16,8 @@ import { editorMode, linkContext } from './editor/livePreview'
 import { noteView } from './editor/noteView'
 import type { EditorMode, LinkContext } from './editor/preview'
 import { editorLocked } from './editor/tasks'
+import { formatKeymap } from './editor/formatting'
+import { attachmentContext, imagePasteAndDrop } from './editor/attachments'
 import { workspace, type Selection } from './workspace'
 
 const replaceFormat = StateEffect.define<LineFormat>()
@@ -69,6 +71,7 @@ export function NoteEditor({
   const access = useRef(new Compartment())
   const resolve = useRef(new Compartment())
   const complete = useRef(new Compartment())
+  const attachment = useRef(new Compartment())
   const shownMode = useRef(mode)
   const entries = vault?.entries
   const notes = useMemo(
@@ -88,6 +91,8 @@ export function NoteEditor({
         noteView(),
         linkCompletion,
         complete.current.of([]),
+        attachment.current.of([]),
+        imagePasteAndDrop,
         history(),
         keymap.of([
           {
@@ -97,6 +102,7 @@ export function NoteEditor({
               return true
             }
           },
+          ...formatKeymap,
           ...defaultKeymap,
           ...historyKeymap
         ]),
@@ -163,6 +169,16 @@ export function NoteEditor({
       )
     })
   }, [notes, format])
+
+  useLayoutEffect(() => {
+    editor.current?.dispatch({
+      effects: attachment.current.reconfigure(
+        vault && mode === 'live' && !locked
+          ? attachmentContext.of({ dir: vault.dir, notePath: path })
+          : []
+      )
+    })
+  }, [vault, path, mode, locked])
 
   useLayoutEffect(() => {
     const view = editor.current

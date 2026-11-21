@@ -18,6 +18,10 @@ export class NoteIndex {
     this.links = buildLinkIndex(files)
   }
 
+  getLinkIndex(): LinkIndex {
+    return this.links
+  }
+
   set(path: VaultPath, raw: string, links?: LinkRef[]): void {
     const { text } = sourceText(raw)
     let cached: LinkRef[] | null = links ?? null

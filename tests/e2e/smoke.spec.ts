@@ -3,14 +3,13 @@ import { cp, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
 import { launch, openVault } from './app'
 
-test('the main window shows the three panes', async () => {
+test('the main window shows the panes', async () => {
   const info = test.info()
   const app = await launch(info.outputPath('settings'))
   try {
     const window = await app.firstWindow()
     await expect(window.getByRole('complementary', { name: '侧栏' })).toBeVisible()
     await expect(window.getByRole('main', { name: '编辑器' })).toBeVisible()
-    await expect(window.getByRole('complementary', { name: '反向链接' })).toBeVisible()
     await expect(window.getByRole('button', { name: '打开笔记库' })).toBeVisible()
     await window.screenshot({ path: info.outputPath('smoke.png') })
   } finally {
@@ -208,6 +207,9 @@ test('the backlinks pane lists links to the open note and jumps to them', async 
       window.evaluate(() => window.getSelection()?.toString() ?? '')
 
     await window.getByRole('treeitem', { name: '欢迎', exact: true }).click()
+    const badge = window.locator('.title-relation-badge')
+    await expect(badge).toBeVisible()
+    await badge.click()
     await expect(pane.locator('[data-note-path="欢迎.md"]')).toBeVisible()
     await expect(hits).toHaveText(['回到 [[欢迎]]。'])
     await expect(hits.locator('mark')).toHaveText(['[[欢迎]]'])

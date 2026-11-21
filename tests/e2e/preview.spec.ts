@@ -92,14 +92,15 @@ test('live preview hides syntax away from the selection and shows it at the sele
       .poll(() => readFile(join(vault, '列表.md'), 'utf8'))
       .toContain('- 第三项\n- 第四项\n\n1. 有序一')
 
-    // Properties are a monospace block of plain YAML. Its --- lines show at the selection.
+    // Properties are presented as a foldable card when concealed. Clicking reveals editable YAML.
     const properties = await openNote(window, '属性')
+    const card = properties.locator('.fm-foldable-card')
+    await expect(card).toBeVisible()
+    await card.click()
     const opening = properties.locator('.cm-line').first()
-    const title = lineOf(properties, 'title: 属性示例')
-    await expect(opening).toHaveText('')
-    expect(await style(title, 'font-family')).toContain('Mono')
-    await title.click()
     await expect(opening).toHaveText('---')
+    const title = lineOf(properties, 'title: 属性示例')
+    await title.click()
     await window.keyboard.press('End')
     await window.keyboard.insertText('二')
     await expect
@@ -254,25 +255,11 @@ test('clicking theme toggle switches between dark and light scheme', async () =>
   }
 })
 
-test('clicking font toggle switches between kai and hei typography', async () => {
+test('Cmd+Shift+K shortcut switches between kai and hei typography', async () => {
   const { app, window } = await start('行内')
   try {
     await openNote(window, '行内')
-    const fontBtn = window.locator('.font-toggle')
-    await expect(fontBtn).toBeVisible()
 
-    await expect
-      .poll(() => window.evaluate(() => document.documentElement.dataset.font))
-      .toBe('kai')
-
-    // Click toggle button
-    await fontBtn.click()
-    await expect
-      .poll(() => window.evaluate(() => document.documentElement.dataset.font))
-      .toBe('hei')
-
-    // Click toggle button again
-    await fontBtn.click()
     await expect
       .poll(() => window.evaluate(() => document.documentElement.dataset.font))
       .toBe('kai')
@@ -282,6 +269,12 @@ test('clicking font toggle switches between kai and hei typography', async () =>
     await expect
       .poll(() => window.evaluate(() => document.documentElement.dataset.font))
       .toBe('hei')
+
+    // Toggle back via Cmd+Shift+K shortcut
+    await window.keyboard.press('Meta+Shift+KeyK')
+    await expect
+      .poll(() => window.evaluate(() => document.documentElement.dataset.font))
+      .toBe('kai')
   } finally {
     await app.close()
   }

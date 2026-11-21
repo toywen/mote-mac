@@ -52,7 +52,7 @@
 
 | 术语     | 英文名               | 定义                                                                                  |
 | -------- | -------------------- | ------------------------------------------------------------------------------------- |
-| 步骤     | step                 | 开发顺序里的一步，编号 0 到 8，见 [features.md](docs/features.md#进度一览)            |
-| 验收清单 | acceptance checklist | 判断第一版能否替换 Obsidian 的 10 条检查，见 [features.md](docs/features.md#验收清单) |
+| 步骤     | step                 | 开发顺序里的一步，编号 0 到 9，见 [features.md](docs/features.md#进度一览)            |
+| 验收清单 | acceptance checklist | 判断第一版能否替换 Obsidian 的 12 条检查，见 [features.md](docs/features.md#验收清单) |
 | 副本     | copy                 | 笔记库的冻结拷贝，用来测试。原始笔记库从不用来测试                                    |
 | 真实窗口 | real window          | 用 `verify-mote` skill 启动并驱动的 mote 窗口                                         |

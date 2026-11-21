@@ -1,5 +1,6 @@
 import { Decoration } from '@codemirror/view'
 import type { Range } from '@codemirror/state'
+import { frontmatterRenderer } from './frontmatter'
 import { marks, type PreviewContext, type PreviewItem, type Renderer } from './preview'
 
 function lineClasses(extra: string): Record<'only' | 'first' | 'middle' | 'last', Decoration> {
@@ -85,8 +86,14 @@ const properties: Renderer = (node, cx) => {
   ]
 }
 
+const frontmatter: Renderer = (node, cx) => {
+  const card = frontmatterRenderer(node, cx)
+  if (card.length > 0) return card
+  return properties(node, cx)
+}
+
 export const codeRenderers: Record<string, Renderer> = {
   FencedCode: fencedCode,
   CodeBlock: indentedCode,
-  Frontmatter: properties
+  Frontmatter: frontmatter
 }

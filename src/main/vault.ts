@@ -12,8 +12,14 @@ import {
   type VaultEntry,
   type VaultInfo,
   type VaultPath,
-  type WriteResult
+  type WriteResult,
+  type SavedAttachment
 } from '../core/ipc.ts'
+import {
+  formatImageEmbed,
+  nextAvailableAttachmentPath,
+  resolveAttachmentFolder
+} from '../core/attachments.ts'
 import { NoteIndex } from '../core/noteIndex.ts'
 import { search } from '../core/search.ts'
 import { buildRenameMapping, rewriteNoteLinks } from '../core/rename.ts'
@@ -67,6 +73,8 @@ async function readConfig(root: string): Promise<VaultConfig> {
         ? app.newFileLocation
         : 'root',
     newFileFolderPath: typeof app.newFileFolderPath === 'string' ? app.newFileFolderPath : '',
+    attachmentFolderPath:
+      typeof app.attachmentFolderPath === 'string' ? app.attachmentFolderPath : '',
     daily: {
       folder: typeof daily.folder === 'string' ? daily.folder : '',
       format: typeof daily.format === 'string' && daily.format ? daily.format : 'YYYY-MM-DD'
@@ -335,6 +343,57 @@ export class Vault {
         removed: []
       })
       return candidatePath
+    })
+  }
+
+  saveAttachment(notePath: VaultPath, fileName: string, data: Buffer): Promise<SavedAttachment> {
+    return this.run(async () => {
+      const folder = resolveAttachmentFolder(this.config.attachmentFolderPath, notePath)
+      const targetPath = nextAvailableAttachmentPath(folder, fileName, (p) => this.entries.has(p))
+
+      if (folder) {
+        let sub = ''
+        for (const part of folder.split('/')) {
+          sub = sub ? `${sub}/${part}` : part
+          const vp = parseVaultPath(sub)
+          const dir = join(this.dir, sub)
+          await mkdir(dir).catch((err: unknown) => {
+            if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err
+          })
+          if (!this.entries.has(vp)) {
+            this.entries.set(vp, { path: vp, kind: 'folder' })
+          }
+        }
+      }
+
+      const full = join(this.dir, targetPath)
+      const flags = constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW
+      const handle = await open(full, flags, 0o666)
+      try {
+        await handle.writeFile(data)
+      } finally {
+        await handle.close()
+      }
+
+      this.ownWrites.set(targetPath, hash(data))
+      this.entries.set(targetPath, { path: targetPath, kind: 'file' })
+      this.indexFiles()
+
+      this.notify({
+        dir: this.dir,
+        entries: [...this.entries.values()],
+        changed: [targetPath],
+        removed: []
+      })
+
+      const embedText = formatImageEmbed(
+        this.index.getLinkIndex(),
+        targetPath,
+        notePath,
+        this.config
+      )
+
+      return { path: targetPath, embedText }
     })
   }
 

@@ -1,5 +1,5 @@
 import { app, shell, BrowserWindow, dialog, ipcMain, nativeTheme, protocol, Menu } from 'electron'
-import { join } from 'path'
+import { basename, join } from 'path'
 import { lstat, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { optimizer, is } from '@electron-toolkit/utils'
 import { fileScheme } from '../core/fileUrl'
@@ -15,6 +15,7 @@ import { serveFile } from './fileProtocol'
 import { isAllowedExternal } from '../core/linkDest'
 import { Vault, type JournalHandler, type RenameJournal } from './vault'
 import { registerUpdaterIpc, Updater } from './updater'
+import { buildApplicationMenu } from './menu'
 
 app.setName('mote')
 
@@ -152,6 +153,30 @@ ipcMain.handle(channels.openWithDefaultApp, async (_event, dir: string, path: Va
   if (!(await lstat(file)).isFile()) throw new Error('无法打开该文件')
   const error = await shell.openPath(file)
   if (error) throw new Error(error)
+})
+ipcMain.handle(
+  channels.saveAttachment,
+  (_event, dir: string, notePath: VaultPath, fileName: string, data: Uint8Array) =>
+    currentVault(dir).saveAttachment(notePath, fileName, Buffer.from(data))
+)
+ipcMain.handle(channels.chooseAndSaveImage, async (_event, dir: string, notePath: VaultPath) => {
+  const win = BrowserWindow.getFocusedWindow() ?? window
+  if (!win) return null
+  const result = await dialog.showOpenDialog(win, {
+    title: '插入图片',
+    properties: ['openFile'],
+    filters: [
+      {
+        name: '图片',
+        extensions: ['png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'bmp', 'avif']
+      }
+    ]
+  })
+  if (result.canceled || result.filePaths.length === 0) return null
+  const filePath = result.filePaths[0]
+  const fileName = basename(filePath)
+  const data = await readFile(filePath)
+  return currentVault(dir).saveAttachment(notePath, fileName, data)
 })
 ipcMain.handle(channels.createNote, (_event, dir: string, path: VaultPath) =>
   currentVault(dir).createNote(path)
@@ -310,36 +335,7 @@ app.whenReady().then(async () => {
   } catch {
     // An unavailable vault can be selected again in the window.
   }
-  if (process.platform === 'darwin') {
-    Menu.setApplicationMenu(
-      Menu.buildFromTemplate([
-        {
-          label: app.name,
-          submenu: [
-            { role: 'about', label: '关于 mote' },
-            {
-              label: '检查更新...',
-              click: () => {
-                void Updater.getInstance().checkForUpdates()
-              }
-            },
-            { type: 'separator' },
-            { role: 'services' },
-            { type: 'separator' },
-            { role: 'hide', label: '隐藏 mote' },
-            { role: 'hideOthers', label: '隐藏其他' },
-            { role: 'unhide', label: '全部显示' },
-            { type: 'separator' },
-            { role: 'quit', label: '退出 mote' }
-          ]
-        },
-        { role: 'fileMenu' },
-        { role: 'editMenu' },
-        { role: 'viewMenu' },
-        { role: 'windowMenu' }
-      ])
-    )
-  }
+  Menu.setApplicationMenu(buildApplicationMenu())
   registerUpdaterIpc()
   protocol.handle(fileScheme, (request) => serveFile(vault, request))
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))

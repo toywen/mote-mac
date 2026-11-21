@@ -3,14 +3,17 @@ import {
   FilePlus,
   FolderOpen,
   FolderPlus,
+  FolderTree,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
   PencilLine,
+  Search,
   Sun,
-  Type
+  X
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { EditorView } from '@codemirror/view'
 import { FileTree, type FileTreeHandle } from './FileTree'
 import { type FontMode } from '../../core/ipc'
 import { groupHits } from '../../core/hits'
@@ -20,6 +23,7 @@ import { NoteEditor } from './NoteEditor'
 import { QuickOpen } from './QuickOpen'
 import { SearchPanel } from './SearchPanel'
 import { UpdateNotification } from './UpdateNotification'
+import { executeFormatting, type FormatAction } from './editor/formatting'
 import { workspace } from './workspace'
 
 function App(): React.JSX.Element {
@@ -44,6 +48,7 @@ function App(): React.JSX.Element {
   const [sidebarView, setSidebarView] = useState<'files' | 'search'>('files')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocus, setSearchFocus] = useState(0)
+  const [backlinksOpen, setBacklinksOpen] = useState(false)
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -123,6 +128,14 @@ function App(): React.JSX.Element {
         }
       } else if (
         event.metaKey &&
+        !event.shiftKey &&
+        !event.altKey &&
+        (event.key === '\\' || event.code === 'Backslash')
+      ) {
+        event.preventDefault()
+        setSidebarOpen((open) => !open)
+      } else if (
+        event.metaKey &&
         event.altKey &&
         !event.shiftKey &&
         (event.key === 'ArrowLeft' || event.key === 'ArrowRight')
@@ -137,6 +150,92 @@ function App(): React.JSX.Element {
     return () => window.removeEventListener('keydown', keyDown, true)
   }, [])
 
+  useEffect(() => {
+    if (!window.mote?.onMenuAction) return
+    const offMenu = window.mote.onMenuAction((action) => {
+      switch (action) {
+        case 'new-note':
+          setSidebarOpen(true)
+          setSidebarView('files')
+          void fileTreeRef.current?.createNote()
+          break
+        case 'quick-open':
+          setQuickOpen(true)
+          break
+        case 'save':
+          void workspace.save()
+          break
+        case 'search': {
+          const inEditor = document.activeElement?.closest('.cm-content')
+          const selected = inEditor ? (document.getSelection()?.toString() ?? '') : ''
+          const query = /\s/.test(selected) ? `"${selected}"` : selected
+          if (query) setSearchQuery(query)
+          setSidebarOpen(true)
+          setSidebarView('search')
+          setSearchFocus((id) => id + 1)
+          break
+        }
+        case 'choose-vault':
+          void workspace.chooseVault()
+          break
+        case 'show-in-folder':
+          if (doc && vault) void window.mote.showInFolder(vault.dir, doc.path)
+          break
+        case 'open-with-default-app':
+          if (doc && vault) void window.mote.openWithDefaultApp(vault.dir, doc.path)
+          break
+        case 'insert-image':
+          if (vault && doc && mode === 'live' && !busy) {
+            void (async () => {
+              const saved = await window.mote.chooseAndSaveImage(vault.dir, doc.path)
+              if (saved) {
+                const cmEl = document.querySelector('.cm-editor')
+                if (cmEl) {
+                  const view = EditorView.findFromDOM(cmEl as HTMLElement)
+                  if (view) {
+                    const { from, to } = view.state.selection.main
+                    view.dispatch({
+                      changes: { from, to, insert: saved.embedText },
+                      selection: { anchor: from + saved.embedText.length },
+                      scrollIntoView: true
+                    })
+                  }
+                }
+              }
+            })()
+          }
+          break
+        case 'toggle-mode':
+          workspace.toggleMode()
+          break
+        case 'toggle-sidebar':
+          setSidebarOpen((open) => !open)
+          break
+        case 'toggle-font':
+          if (window.mote?.toggleFont) {
+            void window.mote.toggleFont()
+          } else {
+            setFontMode((f) => (f === 'kai' ? 'hei' : 'kai'))
+          }
+          break
+        case 'toggle-theme':
+          void window.mote?.toggleTheme?.()
+          break
+        case 'format-bold':
+        case 'format-italic':
+        case 'format-strike':
+        case 'format-highlight':
+        case 'format-code':
+        case 'format-link':
+        case 'format-codeblock':
+        case 'format-quote':
+          executeFormatting(action as FormatAction)
+          break
+      }
+    })
+    return () => offMenu()
+  }, [doc, vault, mode, busy])
+
   return (
     <div className={sidebarOpen ? 'layout' : 'layout sidebar-hidden'}>
       <aside id="file-sidebar" className="pane sidebar" aria-label="侧栏" hidden={!sidebarOpen}>
@@ -146,29 +245,21 @@ function App(): React.JSX.Element {
               type="button"
               aria-pressed={sidebarView === 'files'}
               onClick={() => setSidebarView('files')}
+              title="文件列表"
             >
-              文件
+              <FolderTree size={13} />
+              <span>文件</span>
             </button>
             <button
               type="button"
               aria-pressed={sidebarView === 'search'}
               onClick={() => setSidebarView('search')}
+              title="搜索（⌘⇧F）"
             >
-              搜索
+              <Search size={13} />
+              <span>搜索</span>
             </button>
           </div>
-          {vault && (
-            <button
-              className="icon-button"
-              type="button"
-              title="打开笔记库"
-              aria-label="打开笔记库"
-              disabled={busy}
-              onClick={() => void workspace.chooseVault()}
-            >
-              <FolderOpen size={17} />
-            </button>
-          )}
         </header>
         {vault && sidebarView === 'search' && (
           <SearchPanel
@@ -192,7 +283,7 @@ function App(): React.JSX.Element {
                   aria-label="新建笔记"
                   onClick={() => void fileTreeRef.current?.createNote()}
                 >
-                  <FilePlus size={16} />
+                  <FilePlus size={15} />
                 </button>
                 <button
                   className="icon-button"
@@ -201,7 +292,17 @@ function App(): React.JSX.Element {
                   aria-label="新建文件夹"
                   onClick={() => void fileTreeRef.current?.createFolder()}
                 >
-                  <FolderPlus size={16} />
+                  <FolderPlus size={15} />
+                </button>
+                <button
+                  className="icon-button"
+                  type="button"
+                  title="打开笔记库"
+                  aria-label="打开笔记库"
+                  disabled={busy}
+                  onClick={() => void workspace.chooseVault()}
+                >
+                  <FolderOpen size={15} />
                 </button>
               </div>
             </div>
@@ -245,18 +346,27 @@ function App(): React.JSX.Element {
                 ) : (
                   doc.path.slice(0, -3)
                 )}
+                {backlinks?.path === doc.path && backlinks.hits.length > 0 && (
+                  <button
+                    type="button"
+                    className="title-relation-badge"
+                    onClick={() => setBacklinksOpen((open) => !open)}
+                    title={`反向链接 (${backlinks.hits.length})`}
+                    aria-expanded={backlinksOpen}
+                  >
+                    🔗{' '}
+                    <span className="hit-count" role="status" aria-label="反向链接数">
+                      {backlinks.hits.length}
+                    </span>{' '}
+                    处引用 {backlinksOpen ? '▴' : '▾'}
+                  </button>
+                )}
               </h1>
             ) : (
               <h1>编辑器</h1>
             )}
           </div>
           <div className="editor-actions">
-            {doc && doc.kind !== 'missing' && doc.kind !== 'conflict' && (
-              <span className={`save-state save-${doc.kind}`} role="status">
-                <i className="save-dot" />
-                {doc.kind === 'dirty' ? '未保存' : doc.kind === 'saving' ? '保存中' : '已保存'}
-              </span>
-            )}
             {doc && (
               <button
                 className="icon-button"
@@ -268,25 +378,6 @@ function App(): React.JSX.Element {
                 {mode === 'live' ? <BookOpen size={17} /> : <PencilLine size={17} />}
               </button>
             )}
-            <button
-              className="icon-button font-toggle"
-              type="button"
-              title={
-                fontMode === 'kai'
-                  ? '当前：文雅楷体（点击或 ⌘⇧K 切换为现代黑体）'
-                  : '当前：现代黑体（点击或 ⌘⇧K 切换为文雅楷体）'
-              }
-              aria-label={fontMode === 'kai' ? '切换为现代黑体' : '切换为文雅楷体'}
-              onClick={() => {
-                if (window.mote?.toggleFont) {
-                  void window.mote.toggleFont()
-                } else {
-                  setFontMode((f) => (f === 'kai' ? 'hei' : 'kai'))
-                }
-              }}
-            >
-              <Type size={17} />
-            </button>
             <button
               className="icon-button theme-toggle"
               type="button"
@@ -353,16 +444,24 @@ function App(): React.JSX.Element {
           </div>
         )}
       </main>
-      <aside className="pane backlinks" aria-label="反向链接">
-        <header className="pane-header">
-          <h2>反向链接</h2>
-          {doc && backlinks?.path === doc.path && (
-            <span className="hit-count" role="status" aria-label="反向链接数">
-              {backlinks.hits.length}
-            </span>
-          )}
-        </header>
-        {doc && backlinks?.path === doc.path && (
+      {backlinksOpen && doc && backlinks?.path === doc.path && (
+        <aside
+          className="pane backlinks relation-popover"
+          role="complementary"
+          aria-label="反向链接"
+        >
+          <header className="relation-popover-header">
+            <h2>反向链接 ({backlinks.hits.length})</h2>
+            <button
+              type="button"
+              className="icon-button"
+              title="关闭反向链接浮窗"
+              aria-label="关闭"
+              onClick={() => setBacklinksOpen(false)}
+            >
+              <X size={15} />
+            </button>
+          </header>
           <div className="hit-scroll" data-note-path={doc.path}>
             {backlinks.hits.length ? (
               <HitList groups={groupHits(backlinks.hits)} label="反向链接列表" />
@@ -370,8 +469,8 @@ function App(): React.JSX.Element {
               <div className="hit-empty">没有反向链接</div>
             )}
           </div>
-        )}
-      </aside>
+        </aside>
+      )}
       {quickOpen && vault && (
         <QuickOpen entries={vault.entries} onClose={() => setQuickOpen(false)} />
       )}

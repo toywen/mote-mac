@@ -22,6 +22,7 @@ export type VaultConfig = {
   alwaysUpdateLinks: boolean
   newFileLocation: 'root' | 'current' | 'folder'
   newFileFolderPath: string
+  attachmentFolderPath: string
   daily: { folder: string; format: string }
 }
 
@@ -70,6 +71,33 @@ export type ThemeState = {
 
 export type FontMode = 'kai' | 'hei'
 
+export type SavedAttachment = {
+  path: VaultPath
+  embedText: string
+}
+
+export type MenuAction =
+  | 'new-note'
+  | 'quick-open'
+  | 'save'
+  | 'search'
+  | 'choose-vault'
+  | 'show-in-folder'
+  | 'open-with-default-app'
+  | 'insert-image'
+  | 'toggle-mode'
+  | 'toggle-sidebar'
+  | 'toggle-theme'
+  | 'toggle-font'
+  | 'format-bold'
+  | 'format-italic'
+  | 'format-strike'
+  | 'format-highlight'
+  | 'format-code'
+  | 'format-link'
+  | 'format-codeblock'
+  | 'format-quote'
+
 export interface MoteApi {
   getVault(): Promise<VaultInfo | null>
   chooseVault(): Promise<VaultInfo | null>
@@ -81,6 +109,13 @@ export interface MoteApi {
     baseHash: ContentHash | null
   ): Promise<WriteResult>
   openWithDefaultApp(dir: string, path: VaultPath): Promise<void>
+  saveAttachment(
+    dir: string,
+    notePath: VaultPath,
+    fileName: string,
+    data: Uint8Array
+  ): Promise<SavedAttachment>
+  chooseAndSaveImage(dir: string, notePath: VaultPath): Promise<SavedAttachment | null>
   // Creates an empty note, and any folders it needs, for a link to a missing note. A note that
   // exists by then is left as it is. Resolves after the vault change is sent.
   createNote(dir: string, path: VaultPath): Promise<void>
@@ -110,6 +145,7 @@ export interface MoteApi {
   installUpdate(): Promise<void>
   getAppVersion(): Promise<string>
   onUpdateStatus(callback: (status: UpdateStatus) => void): () => void
+  onMenuAction(callback: (action: MenuAction) => void): () => void
 }
 
 export const channels = {
@@ -118,6 +154,8 @@ export const channels = {
   readNote: 'mote:read-note',
   writeNote: 'mote:write-note',
   openWithDefaultApp: 'mote:open-with-default-app',
+  saveAttachment: 'mote:save-attachment',
+  chooseAndSaveImage: 'mote:choose-and-save-image',
   createNote: 'mote:create-note',
   openExternal: 'mote:open-external',
   createNoteInVault: 'mote:create-note-in-vault',
@@ -143,5 +181,6 @@ export const channels = {
   downloadUpdate: 'mote:download-update',
   installUpdate: 'mote:install-update',
   getAppVersion: 'mote:get-app-version',
-  updateStatus: 'mote:update-status'
+  updateStatus: 'mote:update-status',
+  menuAction: 'mote:menu-action'
 } as const
