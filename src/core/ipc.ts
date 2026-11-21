@@ -59,6 +59,13 @@ export type VaultChange = {
   removed: VaultPath[]
 }
 
+export type ThemeSource = 'system' | 'light' | 'dark'
+
+export type ThemeState = {
+  source: ThemeSource
+  shouldUseDarkColors: boolean
+}
+
 export interface MoteApi {
   getVault(): Promise<VaultInfo | null>
   chooseVault(): Promise<VaultInfo | null>
@@ -79,18 +86,17 @@ export interface MoteApi {
   createFolder(dir: string, parentFolder?: VaultPath, initialName?: string): Promise<VaultPath>
   deleteEntry(dir: string, path: VaultPath): Promise<void>
   showInFolder(dir: string, path: VaultPath): Promise<void>
-  renameOrMove(
-    dir: string,
-    from: VaultPath,
-    to: VaultPath,
-    updateLinks: boolean
-  ): Promise<void>
+  renameOrMove(dir: string, from: VaultPath, to: VaultPath, updateLinks: boolean): Promise<void>
   countInboundLinks(dir: string, path: VaultPath): Promise<number>
   backlinks(dir: string, path: VaultPath): Promise<Hit[]>
   search(dir: string, query: string, limit: number): Promise<SearchResult>
   onVaultChanged(callback: (change: VaultChange) => void): () => void
   onCloseRequested(callback: () => void): () => void
   respondToClose(ready: boolean): void
+  getTheme(): Promise<ThemeState>
+  setTheme(theme: ThemeSource): Promise<ThemeState>
+  toggleTheme(): Promise<ThemeState>
+  onThemeChanged(callback: (state: ThemeState) => void): () => void
 }
 
 export const channels = {
@@ -111,5 +117,9 @@ export const channels = {
   search: 'mote:search',
   vaultChanged: 'mote:vault-changed',
   closeRequested: 'mote:close-requested',
-  respondToClose: 'mote:respond-to-close'
+  respondToClose: 'mote:respond-to-close',
+  getTheme: 'mote:get-theme',
+  setTheme: 'mote:set-theme',
+  toggleTheme: 'mote:toggle-theme',
+  themeChanged: 'mote:theme-changed'
 } as const

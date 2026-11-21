@@ -14,12 +14,12 @@
 
 按合并顺序排列：
 
-| PR | 内容 | 依赖 | 证明 |
-| --- | --- | --- | --- |
-| A | 快速打开（`Cmd+O`），照 Obsidian 的匹配和打分 | 无 | 真实窗口，中文关键词 |
-| B | 解析器、链接解析、对照工具 | 无 | 对照工具在 5 个副本上 0 处不一致 |
-| C | 主进程索引、反向链接面板 | B | 真实窗口逐篇对照 Obsidian |
-| D | 全文搜索（`Cmd+Shift+F`） | C | 真实窗口，中文关键词，grep 计数对照 |
+| PR  | 内容                                          | 依赖 | 证明                                |
+| --- | --------------------------------------------- | ---- | ----------------------------------- |
+| A   | 快速打开（`Cmd+O`），照 Obsidian 的匹配和打分 | 无   | 真实窗口，中文关键词                |
+| B   | 解析器、链接解析、对照工具                    | 无   | 对照工具在 5 个副本上 0 处不一致    |
+| C   | 主进程索引、反向链接面板                      | B    | 真实窗口逐篇对照 Obsidian           |
+| D   | 全文搜索（`Cmd+Shift+F`）                     | C    | 真实窗口，中文关键词，grep 计数对照 |
 
 ```
 main ──┬── A 快速打开
@@ -32,13 +32,13 @@ A 和 B 改的文件不重叠，可以同时做。B 等你跑完导出就能开�
 
 副本已经建好。拷贝时跳过了 `.git`，关掉了全部社区插件和 Sync 核心插件。笔记字节和原始笔记库一致，已用 `tools/hash-vault.mjs` 对比过。
 
-| 副本 | 原始笔记库 | 笔记数 |
-| --- | --- | --- |
-| `~/mote-link-check/life-os-copy` | `~/life-os` | 113 |
-| `~/mote-link-check/wiki-copy` | `~/wiki` | 11 |
-| `~/mote-link-check/Pesemic-copy` | `~/workspace/Pesemic` | 15 |
-| `~/mote-link-check/workspace-copy` | `~/Downloads/workspace` | 603 |
-| `~/mote-link-check/knowledge-base-copy` | `~/Downloads/workspace/knowledge-base` | 68 |
+| 副本                                    | 原始笔记库                             | 笔记数 |
+| --------------------------------------- | -------------------------------------- | ------ |
+| `~/mote-link-check/life-os-copy`        | `~/life-os`                            | 113    |
+| `~/mote-link-check/wiki-copy`           | `~/wiki`                               | 11     |
+| `~/mote-link-check/Pesemic-copy`        | `~/workspace/Pesemic`                  | 15     |
+| `~/mote-link-check/workspace-copy`      | `~/Downloads/workspace`                | 603    |
+| `~/mote-link-check/knowledge-base-copy` | `~/Downloads/workspace/knowledge-base` | 68     |
 
 导出用 `tools/obsidian-export.mjs`，不用手动操作 Obsidian。做法见 ADR 0008。
 
@@ -54,26 +54,26 @@ node tools/obsidian-export.mjs ~/mote-link-check/*-copy
 
 ```ts
 type LinkRef = {
-	syntax: 'wiki' | 'markdown'
-	embed: boolean                     // ![[x]] 或 ![](x)
-	target: string                     // 链接路径。Markdown 链接已解码，不含 #子路径 和 |别名
-	subpath: string | null             // #标题 或 #^块
-	alias: string | null
-	range: { from: number; to: number } // 在规范化文本里的位置
+  syntax: 'wiki' | 'markdown'
+  embed: boolean // ![[x]] 或 ![](x)
+  target: string // 链接路径。Markdown 链接已解码，不含 #子路径 和 |别名
+  subpath: string | null // #标题 或 #^块
+  alias: string | null
+  range: { from: number; to: number } // 在规范化文本里的位置
 }
 
 // 一处可以跳转的位置。反向链接和搜索结果都用它
 type Hit = {
-	path: VaultPath
-	from: number                       // 在规范化文本里的位置，编辑器直接用
-	to: number
-	preview: { text: string; from: number; to: number } // 所在行的片段和高亮范围
+  path: VaultPath
+  from: number // 在规范化文本里的位置，编辑器直接用
+  to: number
+  preview: { text: string; from: number; to: number } // 所在行的片段和高亮范围
 }
 
 // 和 Obsidian 的 resolvedLinks、unresolvedLinks 同形，对照工具直接比较
 type ResolvedLinks = {
-	resolved: Record<VaultPath, Record<VaultPath, number>>
-	unresolved: Record<VaultPath, Record<string, number>>
+  resolved: Record<VaultPath, Record<VaultPath, number>>
+  unresolved: Record<VaultPath, Record<string, number>>
 }
 ```
 
@@ -141,16 +141,16 @@ type ResolvedLinks = {
 
 我用正则扫了 5 个副本，下面这些写法都出现了，对照工具会逐一检验。数字是 5 个副本分别统计再相加，`workspace-copy` 包含 `knowledge-base`，所以有重复。
 
-| 写法 | 次数 |
-| --- | --- |
-| 代码块里的 `[[` | 29 |
-| 行内代码里的 `[[` | 15 |
-| 重名的笔记文件名 | 47 |
-| `[[../x]]` 相对双链 | 10 |
-| `%20` 编码的 Markdown 链接 | 11 |
-| `](../` 和 `](./` 相对路径 | 37 |
-| `![](本地图片)` | 74 |
-| 属性里含双链的行 | 354 |
+| 写法                       | 次数 |
+| -------------------------- | ---- |
+| 代码块里的 `[[`            | 29   |
+| 行内代码里的 `[[`          | 15   |
+| 重名的笔记文件名           | 47   |
+| `[[../x]]` 相对双链        | 10   |
+| `%20` 编码的 Markdown 链接 | 11   |
+| `](../` 和 `](./` 相对路径 | 37   |
+| `![](本地图片)`            | 74   |
+| 属性里含双链的行           | 354  |
 
 收敛后，把每条规则写成测试笔记库 `tests/fixtures/vaults/links/` 里的一个例子。你在它的副本上再导出一次，导出文件提交进仓库。之后 `npm test` 跑对照工具，用 Obsidian 的结果做回归测试，不依赖你的私人笔记库。
 
@@ -163,22 +163,21 @@ type ResolvedLinks = {
 - [x] 真实窗口：这个 PR 不改界面，所以窗口只做回归检查。在 5 个副本上分别 `launch --vault`，跑 `walk-notes`。在 `basic` 上重跑编辑保存的步骤，用 `xxd` 确认 CRLF、BOM、无结尾换行三篇笔记的字节不变，因为规范化函数换了位置。链接解析在真实窗口里的证明放在 PR C。
 - [x] `vault-diff --expect-unchanged` 输出 `unchanged`。
 - [x] 性能：用 node 计时读取并解析 `workspace-copy` 的全部笔记，取 5 次中位数。超过 500 毫秒算失败。这是我定的数，用来给打开笔记库的 2 秒目标留余量。
-  结果（实测）：逐篇顺序读取时中位数 608 毫秒，失败。改成 32 路并发读取后，9 次中位数 483 毫秒，通过，但余量只有 17 毫秒。其中 lezer 解析约 310 毫秒，是单一解析器的成本。
+      结果（实测）：逐篇顺序读取时中位数 608 毫秒，失败。改成 32 路并发读取后，9 次中位数 483 毫秒，通过，但余量只有 17 毫秒。其中 lezer 解析约 310 毫秒，是单一解析器的成本。
 
 ### 结果
 
 规则从对照结果收敛，每一轮的完整输出在 `docs/plans/compare-log/`：
 
-| 轮次 | 改了什么 | 不一致 |
-| --- | --- | --- |
-| [01](compare-log/01-direct-rules.txt) | 最直接的规则：完整路径，再按文件名取第一个 | 428 |
-| [02](compare-log/02-obsidian-lookup.txt) | 照搬 Obsidian 的 `getLinkpathDest`：自链接、相对路径、后缀匹配、同文件夹优先、按路径长度排序；未解析的键去掉 `.md` | 18 |
-| [03](compare-log/03-frontmatter-yaml.txt) | 属性用 `yaml` 包解析，只认整串是链接的字符串值（ADR 0009） | 0 |
+| 轮次                                      | 改了什么                                                                                                           | 不一致 |
+| ----------------------------------------- | ------------------------------------------------------------------------------------------------------------------ | ------ |
+| [01](compare-log/01-direct-rules.txt)     | 最直接的规则：完整路径，再按文件名取第一个                                                                         | 428    |
+| [02](compare-log/02-obsidian-lookup.txt)  | 照搬 Obsidian 的 `getLinkpathDest`：自链接、相对路径、后缀匹配、同文件夹优先、按路径长度排序；未解析的键去掉 `.md` | 18     |
+| [03](compare-log/03-frontmatter-yaml.txt) | 属性用 `yaml` 包解析，只认整串是链接的字符串值（ADR 0009）                                                         | 0      |
 
 查找顺序和计数规则读自 Obsidian 1.15.1 的 `app.js`：`getLinkpathDest`、`aJ`、`pi`、`wR`、`Ps`、`QK`。源码只用来解释对照里的不一致，每条规则都由对照结果确认。
 
 测试笔记库 `tests/fixtures/vaults/links/` 每条规则一个例子。它的导出文件是 `tests/fixtures/vaults/links.obsidian-links.json`，由 `obsidian-export.mjs` 生成。
-
 
 ## PR C：反向链接
 
@@ -251,22 +250,23 @@ type ResolvedLinks = {
   - `vault-diff` 输出 `unchanged`。
 - 真实窗口，`workspace-copy`，和 grep 对照：
 
-  | 查询 | grep 笔记数 | grep 匹配数 | mote |
-  | --- | --- | --- | --- |
-  | 笔记 | 19 | 44 | 19 篇笔记，44 处 |
-  | 学习 | 29 | 78 | 29 篇笔记，78 处 |
-  | 的 | 322 | 10565 | 322 篇笔记，10565 处 |
-  | bbc（grep -i） | 193 | 580 | 193 篇笔记，580 处 |
+  | 查询           | grep 笔记数 | grep 匹配数 | mote                 |
+  | -------------- | ----------- | ----------- | -------------------- |
+  | 笔记           | 19          | 44          | 19 篇笔记，44 处     |
+  | 学习           | 29          | 78          | 29 篇笔记，78 处     |
+  | 的             | 322         | 10565       | 322 篇笔记，10565 处 |
+  | bbc（grep -i） | 193         | 580         | 193 篇笔记，580 处   |
 
   4 个查询都没有只有文件名命中的笔记，这种情况由 e2e 的 `BOM.md` 覆盖。“的”先显示 50 篇，点“显示更多”后显示 100 篇。`vault-diff` 输出 `unchanged`。
+
 - 性能（实测，node，`workspace-copy` 复制成 1 万篇，共 3140 万字符，20 次中位数，不含 IPC）：
 
-  | 查询 | 命中笔记 | 匹配数 | 中位数 | 最慢 |
-  | --- | --- | --- | --- | --- |
-  | 的 | 5361 | 176972 | 76.3 毫秒 | 117.1 毫秒 |
-  | 学习笔记 | 0 | 0 | 14.0 毫秒 | 14.7 毫秒 |
-  | bbc | 3203 | 9632 | 33.2 毫秒 | 36.7 毫秒 |
-  | "英语 学习" | 0 | 0 | 23.9 毫秒 | 26.2 毫秒 |
+  | 查询        | 命中笔记 | 匹配数 | 中位数    | 最慢       |
+  | ----------- | -------- | ------ | --------- | ---------- |
+  | 的          | 5361     | 176972 | 76.3 毫秒 | 117.1 毫秒 |
+  | 学习笔记    | 0        | 0      | 14.0 毫秒 | 14.7 毫秒  |
+  | bbc         | 3203     | 9632   | 33.2 毫秒 | 36.7 毫秒  |
+  | "英语 学习" | 0        | 0      | 23.9 毫秒 | 26.2 毫秒  |
 
 ## 还证明不了的
 

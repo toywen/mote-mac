@@ -219,3 +219,37 @@ test('the window follows the system color scheme', async () => {
     await app.close()
   }
 })
+
+test('clicking theme toggle switches between dark and light scheme', async () => {
+  const { app, window } = await start('行内')
+  try {
+    await openNote(window, '行内')
+    await window.emulateMedia({ colorScheme: null })
+    const themeBtn = window.locator('.theme-toggle')
+    await expect(themeBtn).toBeVisible()
+
+    const initialIsDark = await window.evaluate(
+      () => matchMedia('(prefers-color-scheme: dark)').matches
+    )
+
+    // Click toggle button
+    await themeBtn.click()
+    await expect
+      .poll(() => window.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches))
+      .toBe(!initialIsDark)
+
+    // Click toggle button again
+    await themeBtn.click()
+    await expect
+      .poll(() => window.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches))
+      .toBe(initialIsDark)
+
+    // Toggle via Cmd+Shift+D shortcut
+    await window.keyboard.press('Meta+Shift+KeyD')
+    await expect
+      .poll(() => window.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches))
+      .toBe(!initialIsDark)
+  } finally {
+    await app.close()
+  }
+})

@@ -18,7 +18,15 @@ import { NoteIndex } from '../core/noteIndex.ts'
 import { search } from '../core/search.ts'
 import { buildRenameMapping, rewriteNoteLinks } from '../core/rename.ts'
 import { extractLinks } from '../core/markdown.ts'
-import { hash, kind, missing, noteVersion, readNoteFile, readNoteFiles, scanVault } from './notes.ts'
+import {
+  hash,
+  kind,
+  missing,
+  noteVersion,
+  readNoteFile,
+  readNoteFiles,
+  scanVault
+} from './notes.ts'
 
 export type RenameJournal = {
   dir: string
@@ -81,11 +89,7 @@ export class Vault {
   private readonly config: VaultConfig
   private readonly notify: (event: VaultChange) => void
 
-  private constructor(
-    dir: string,
-    config: VaultConfig,
-    notify: (event: VaultChange) => void
-  ) {
+  private constructor(dir: string, config: VaultConfig, notify: (event: VaultChange) => void) {
     this.dir = dir
     this.config = config
     this.notify = notify
@@ -316,8 +320,7 @@ export class Vault {
       }
 
       const full = join(this.dir, candidatePath)
-      const flags =
-        constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW
+      const flags = constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW
       const handle = await open(full, flags, 0o666)
       await handle.close()
 
@@ -528,7 +531,7 @@ export class Vault {
               constants.O_RDWR | constants.O_NOFOLLOW | constants.O_NONBLOCK
             )
             try {
-              for (let offset = 0; offset < bytes.length; ) {
+              for (let offset = 0; offset < bytes.length;) {
                 const { bytesWritten } = await file.write(
                   bytes,
                   offset,

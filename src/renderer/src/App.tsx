@@ -3,9 +3,11 @@ import {
   FilePlus,
   FolderOpen,
   FolderPlus,
+  Moon,
   PanelLeftClose,
   PanelLeftOpen,
-  PencilLine
+  PencilLine,
+  Sun
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { FileTree, type FileTreeHandle } from './FileTree'
@@ -39,8 +41,32 @@ function App(): React.JSX.Element {
   const [sidebarView, setSidebarView] = useState<'files' | 'search'>('files')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocus, setSearchFocus] = useState(0)
+  const [isDark, setIsDark] = useState<boolean>(() => {
+    if (typeof window !== 'undefined' && window.matchMedia) {
+      return window.matchMedia('(prefers-color-scheme: dark)').matches
+    }
+    return false
+  })
   const fileTreeRef = useRef<FileTreeHandle>(null)
   useEffect(() => workspace.connect(), [])
+  useEffect(() => {
+    const media = window.matchMedia?.('(prefers-color-scheme: dark)')
+    const updateMedia = (): void => setIsDark(media.matches)
+    media?.addEventListener('change', updateMedia)
+
+    const offTheme = window.mote?.onThemeChanged?.((state) => {
+      setIsDark(state.shouldUseDarkColors)
+    })
+
+    void window.mote?.getTheme?.().then((state) => {
+      setIsDark(state.shouldUseDarkColors)
+    })
+
+    return () => {
+      media?.removeEventListener('change', updateMedia)
+      offTheme?.()
+    }
+  }, [])
   useEffect(() => {
     function keyDown(event: KeyboardEvent): void {
       if (event.metaKey && !event.shiftKey && !event.altKey && event.code === 'KeyN') {
@@ -64,6 +90,9 @@ function App(): React.JSX.Element {
       } else if (event.metaKey && !event.shiftKey && !event.altKey && event.code === 'KeyE') {
         event.preventDefault()
         workspace.toggleMode()
+      } else if (event.metaKey && event.shiftKey && !event.altKey && event.code === 'KeyD') {
+        event.preventDefault()
+        void window.mote?.toggleTheme?.()
       } else if (
         event.metaKey &&
         event.altKey &&
@@ -171,14 +200,32 @@ function App(): React.JSX.Element {
               </button>
             )}
             {doc ? (
-              <h1 title={doc.path}>{doc.path.split('/').pop()?.slice(0, -3)}</h1>
+              <h1 title={doc.path} className="editor-heading">
+                {doc.path.includes('/') ? (
+                  <span className="crumb-wrap">
+                    {doc.path
+                      .slice(0, doc.path.lastIndexOf('/'))
+                      .split('/')
+                      .map((seg, i) => (
+                        <span key={i} className="crumb-seg">
+                          {seg}
+                          <span className="crumb-sep">›</span>
+                        </span>
+                      ))}
+                    <b className="crumb-active">{doc.path.split('/').pop()?.slice(0, -3)}</b>
+                  </span>
+                ) : (
+                  doc.path.slice(0, -3)
+                )}
+              </h1>
             ) : (
               <h1>编辑器</h1>
             )}
           </div>
           <div className="editor-actions">
             {doc && doc.kind !== 'missing' && doc.kind !== 'conflict' && (
-              <span className="save-state" role="status">
+              <span className={`save-state save-${doc.kind}`} role="status">
+                <i className="save-dot" />
                 {doc.kind === 'dirty' ? '未保存' : doc.kind === 'saving' ? '保存中' : '已保存'}
               </span>
             )}
@@ -193,6 +240,15 @@ function App(): React.JSX.Element {
                 {mode === 'live' ? <BookOpen size={17} /> : <PencilLine size={17} />}
               </button>
             )}
+            <button
+              className="icon-button theme-toggle"
+              type="button"
+              title={isDark ? '切换到浅色外观（⌘⇧D）' : '切换到深色外观（⌘⇧D）'}
+              aria-label={isDark ? '切换到浅色外观' : '切换到深色外观'}
+              onClick={() => void window.mote?.toggleTheme?.()}
+            >
+              {isDark ? <Sun size={17} /> : <Moon size={17} />}
+            </button>
           </div>
         </header>
         {error && (

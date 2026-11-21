@@ -16,27 +16,19 @@ describe('rewriteNoteLinks', () => {
     const text = 'Here is a link: [[old-note]] and another [[old-note]].'
     const links = extractLinks(text)
 
-    const updated = rewriteNoteLinks(
-      source,
-      source,
-      text,
-      links,
-      mapping,
-      { useMarkdownLinks: false, newLinkFormat: 'shortest' }
-    )
+    const updated = rewriteNoteLinks(source, source, text, links, mapping, {
+      useMarkdownLinks: false,
+      newLinkFormat: 'shortest'
+    })
 
     expect(updated).toBe('Here is a link: [[new-note]] and another [[new-note]].')
 
     // Idempotent: re-running on updated text yields null
     const links2 = extractLinks(updated!)
-    const reUpdated = rewriteNoteLinks(
-      source,
-      source,
-      updated!,
-      links2,
-      mapping,
-      { useMarkdownLinks: false, newLinkFormat: 'shortest' }
-    )
+    const reUpdated = rewriteNoteLinks(source, source, updated!, links2, mapping, {
+      useMarkdownLinks: false,
+      newLinkFormat: 'shortest'
+    })
     expect(reUpdated).toBeNull()
   })
 
@@ -52,14 +44,10 @@ describe('rewriteNoteLinks', () => {
     const text = 'Check [[old#Heading|Custom Alias]] and ![[old#^block123]]'
     const links = extractLinks(text)
 
-    const updated = rewriteNoteLinks(
-      source,
-      source,
-      text,
-      links,
-      mapping,
-      { useMarkdownLinks: false, newLinkFormat: 'shortest' }
-    )
+    const updated = rewriteNoteLinks(source, source, text, links, mapping, {
+      useMarkdownLinks: false,
+      newLinkFormat: 'shortest'
+    })
 
     expect(updated).toBe('Check [[new#Heading|Custom Alias]] and ![[new#^block123]]')
   })
@@ -76,14 +64,10 @@ describe('rewriteNoteLinks', () => {
     const text = 'Link: [Read this](my%20old%20file.md#intro)'
     const links = extractLinks(text)
 
-    const updated = rewriteNoteLinks(
-      source,
-      source,
-      text,
-      links,
-      mapping,
-      { useMarkdownLinks: true, newLinkFormat: 'shortest' }
-    )
+    const updated = rewriteNoteLinks(source, source, text, links, mapping, {
+      useMarkdownLinks: true,
+      newLinkFormat: 'shortest'
+    })
 
     expect(updated).toBe('Link: [Read this](my%20new%20file.md#intro)')
   })
@@ -103,14 +87,10 @@ describe('rewriteNoteLinks', () => {
     const text = 'See [Target](target.md)'
     const links = extractLinks(text)
 
-    const updated = rewriteNoteLinks(
-      currentSource,
-      oldSource,
-      text,
-      links,
-      mapping,
-      { useMarkdownLinks: true, newLinkFormat: 'relative' }
-    )
+    const updated = rewriteNoteLinks(currentSource, oldSource, text, links, mapping, {
+      useMarkdownLinks: true,
+      newLinkFormat: 'relative'
+    })
 
     // Now from folderB, relative link to folderA/target.md is ../folderA/target.md
     expect(updated).toBe('See [Target](../folderA/target.md)')
@@ -129,14 +109,10 @@ describe('rewriteNoteLinks', () => {
     const text = 'Unrelated link: [[other]] and https://example.com'
     const links = extractLinks(text)
 
-    const updated = rewriteNoteLinks(
-      source,
-      source,
-      text,
-      links,
-      mapping,
-      { useMarkdownLinks: false, newLinkFormat: 'shortest' }
-    )
+    const updated = rewriteNoteLinks(source, source, text, links, mapping, {
+      useMarkdownLinks: false,
+      newLinkFormat: 'shortest'
+    })
 
     expect(updated).toBeNull()
   })
@@ -158,14 +134,10 @@ describe('rewriteNoteLinks', () => {
     const text = 'Notes: [[folderA/note1]] and [[folderA/sub/note2]]'
     const links = extractLinks(text)
 
-    const updated = rewriteNoteLinks(
-      source,
-      source,
-      text,
-      links,
-      mapping,
-      { useMarkdownLinks: false, newLinkFormat: 'relative' }
-    )
+    const updated = rewriteNoteLinks(source, source, text, links, mapping, {
+      useMarkdownLinks: false,
+      newLinkFormat: 'relative'
+    })
 
     expect(updated).toBe('Notes: [[folderB/note1]] and [[folderB/sub/note2]]')
   })
@@ -182,14 +154,10 @@ describe('rewriteNoteLinks', () => {
     const text = 'Link: [[folderA/unique-note]]'
     const links = extractLinks(text)
 
-    const updated = rewriteNoteLinks(
-      source,
-      source,
-      text,
-      links,
-      mapping,
-      { useMarkdownLinks: false, newLinkFormat: 'shortest' }
-    )
+    const updated = rewriteNoteLinks(source, source, text, links, mapping, {
+      useMarkdownLinks: false,
+      newLinkFormat: 'shortest'
+    })
 
     // With shortest format, unique name simplifies to unique-note
     expect(updated).toBe('Link: [[unique-note]]')
@@ -208,14 +176,10 @@ describe('rewriteNoteLinks', () => {
     const text = 'Link: [[folderA/dup]]'
     const links = extractLinks(text)
 
-    const updated = rewriteNoteLinks(
-      source,
-      source,
-      text,
-      links,
-      mapping,
-      { useMarkdownLinks: false, newLinkFormat: 'shortest' }
-    )
+    const updated = rewriteNoteLinks(source, source, text, links, mapping, {
+      useMarkdownLinks: false,
+      newLinkFormat: 'shortest'
+    })
 
     // Because dup.md exists in folderC, shortest must keep folderB/dup
     expect(updated).toBe('Link: [[folderB/dup]]')

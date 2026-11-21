@@ -13,7 +13,12 @@ mote 要替换 Obsidian，同一个链接在两边必须跳到同一个目标。
 - 规则不靠猜。`tools/compare-links.mjs` 拿 Obsidian 自己的解析结果做对照。导出方法是在 Obsidian 里按 `Cmd+Option+I` 打开控制台，运行：
 
 ```js
-copy(JSON.stringify({ resolved: app.metadataCache.resolvedLinks, unresolved: app.metadataCache.unresolvedLinks }))
+copy(
+  JSON.stringify({
+    resolved: app.metadataCache.resolvedLinks,
+    unresolved: app.metadataCache.unresolvedLinks
+  })
+)
 ```
 
 具体的导出和对照流程见 [step-2.md](../plans/step-2.md)。

@@ -1,12 +1,20 @@
-import { app, shell, BrowserWindow, dialog, ipcMain, nativeTheme, protocol } from 'electron'
+import { app, shell, BrowserWindow, dialog, ipcMain, nativeTheme, protocol, Menu } from 'electron'
 import { join } from 'path'
 import { lstat, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { optimizer, is } from '@electron-toolkit/utils'
 import { fileScheme } from '../core/fileUrl'
-import { channels, type ContentHash, type VaultPath } from '../core/ipc'
+import {
+  channels,
+  type ContentHash,
+  type ThemeSource,
+  type ThemeState,
+  type VaultPath
+} from '../core/ipc'
 import { serveFile } from './fileProtocol'
 import { isAllowedExternal } from '../core/linkDest'
 import { Vault, type JournalHandler, type RenameJournal } from './vault'
+
+app.setName('mote')
 
 let window: BrowserWindow | undefined
 let vault: Vault | undefined
@@ -27,6 +35,28 @@ function currentVault(dir: string): Vault {
 
 const settingsFile = (): string => join(app.getPath('userData'), 'settings.json')
 const journalFile = (): string => join(app.getPath('userData'), 'journal.json')
+
+type AppSettings = {
+  lastVault?: string
+  theme?: ThemeSource
+}
+
+async function readSettings(): Promise<AppSettings> {
+  try {
+    return JSON.parse(await readFile(settingsFile(), 'utf8')) as AppSettings
+  } catch {
+    return {}
+  }
+}
+
+async function writeSettings(update: Partial<AppSettings>): Promise<void> {
+  const current = await readSettings()
+  const next = { ...current, ...update }
+  await mkdir(app.getPath('userData'), { recursive: true })
+  const tmp = settingsFile() + '.tmp'
+  await writeFile(tmp, JSON.stringify(next))
+  await rename(tmp, settingsFile())
+}
 
 const journalHandler: JournalHandler = {
   async read() {
@@ -49,7 +79,7 @@ const journalHandler: JournalHandler = {
 }
 
 // The --background of src/renderer/src/assets/main.css, so a dark window never flashes white.
-const windowBackground = (): string => (nativeTheme.shouldUseDarkColors ? '#1e1e1e' : '#ffffff')
+const windowBackground = (): string => (nativeTheme.shouldUseDarkColors ? '#1c1b18' : '#fcfbf8')
 
 function openVault(dir: string): Promise<Vault> {
   return Vault.open(
@@ -76,9 +106,7 @@ ipcMain.handle(channels.chooseVault, async (event) => {
     if (choice.canceled || !dir) return null
     const next = await openVault(dir)
     try {
-      await mkdir(app.getPath('userData'), { recursive: true })
-      await writeFile(settingsFile() + '.tmp', JSON.stringify({ lastVault: next.dir }))
-      await rename(settingsFile() + '.tmp', settingsFile())
+      await writeSettings({ lastVault: next.dir })
     } catch (error) {
       next.close()
       throw error
@@ -149,6 +177,30 @@ ipcMain.handle(channels.openExternal, async (_event, url: string) => {
   await shell.openExternal(url)
 })
 
+ipcMain.handle(channels.getTheme, (): ThemeState => ({
+  source: nativeTheme.themeSource,
+  shouldUseDarkColors: nativeTheme.shouldUseDarkColors
+}))
+
+ipcMain.handle(channels.setTheme, async (_event, theme: ThemeSource): Promise<ThemeState> => {
+  nativeTheme.themeSource = theme
+  await writeSettings({ theme })
+  return {
+    source: nativeTheme.themeSource,
+    shouldUseDarkColors: nativeTheme.shouldUseDarkColors
+  }
+})
+
+ipcMain.handle(channels.toggleTheme, async (): Promise<ThemeState> => {
+  const next: ThemeSource = nativeTheme.shouldUseDarkColors ? 'light' : 'dark'
+  nativeTheme.themeSource = next
+  await writeSettings({ theme: next })
+  return {
+    source: nativeTheme.themeSource,
+    shouldUseDarkColors: nativeTheme.shouldUseDarkColors
+  }
+})
+
 ipcMain.on(channels.respondToClose, (event, ready: boolean) => {
   if (!closing || window?.webContents !== event.sender) return
   closing = false
@@ -168,6 +220,7 @@ app.on('before-quit', (event) => {
 
 function createWindow(): void {
   const mainWindow = new BrowserWindow({
+    title: 'mote',
     width: 1200,
     height: 800,
     show: false,
@@ -216,14 +269,34 @@ function createWindow(): void {
 
 app.whenReady().then(async () => {
   try {
-    const { lastVault } = JSON.parse(await readFile(settingsFile(), 'utf8'))
-    if (typeof lastVault === 'string') vault = await openVault(lastVault)
+    const settings = await readSettings()
+    if (typeof settings.lastVault === 'string') vault = await openVault(settings.lastVault)
+    if (settings.theme === 'light' || settings.theme === 'dark' || settings.theme === 'system') {
+      nativeTheme.themeSource = settings.theme
+    }
   } catch {
     // An unavailable vault can be selected again in the window.
   }
+  if (process.platform === 'darwin') {
+    Menu.setApplicationMenu(
+      Menu.buildFromTemplate([
+        { role: 'appMenu' },
+        { role: 'fileMenu' },
+        { role: 'editMenu' },
+        { role: 'viewMenu' },
+        { role: 'windowMenu' }
+      ])
+    )
+  }
   protocol.handle(fileScheme, (request) => serveFile(vault, request))
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
-  nativeTheme.on('updated', () => window?.setBackgroundColor(windowBackground()))
+  nativeTheme.on('updated', () => {
+    window?.setBackgroundColor(windowBackground())
+    window?.webContents.send(channels.themeChanged, {
+      source: nativeTheme.themeSource,
+      shouldUseDarkColors: nativeTheme.shouldUseDarkColors
+    })
+  })
   createWindow()
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()

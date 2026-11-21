@@ -1,11 +1,4 @@
-import {
-  ChevronDown,
-  ChevronRight,
-  File,
-  FileText,
-  Folder,
-  FolderOpen
-} from 'lucide-react'
+import { ChevronDown, ChevronRight, File, FileText, Folder, FolderOpen } from 'lucide-react'
 import {
   forwardRef,
   useImperativeHandle,
@@ -454,14 +447,11 @@ export const FileTree = forwardRef<
             <h2 className="modal-title">更新内部链接</h2>
             <p className="modal-message">
               检测到 {confirmLinkUpdate.count} 处链接引用此
-              {confirmLinkUpdate.oldPath.endsWith('.md') ? '笔记' : '文件夹'}。是否自动更新内部链接？
+              {confirmLinkUpdate.oldPath.endsWith('.md') ? '笔记' : '文件夹'}
+              。是否自动更新内部链接？
             </p>
             <div className="modal-actions">
-              <button
-                type="button"
-                className="button"
-                onClick={() => setConfirmLinkUpdate(null)}
-              >
+              <button type="button" className="button" onClick={() => setConfirmLinkUpdate(null)}>
                 取消
               </button>
               <button
@@ -502,11 +492,7 @@ export const FileTree = forwardRef<
               确定要将文件夹 “{confirmDeleteFolder.name}” 及其所有内容移入废纸篓吗？
             </p>
             <div className="modal-actions">
-              <button
-                type="button"
-                className="button"
-                onClick={() => setConfirmDeleteFolder(null)}
-              >
+              <button type="button" className="button" onClick={() => setConfirmDeleteFolder(null)}>
                 取消
               </button>
               <button

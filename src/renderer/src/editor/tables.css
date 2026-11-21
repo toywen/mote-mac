@@ -2,25 +2,29 @@
 
 .mote-table-wrap {
   overflow-x: auto;
-  padding: 4px 0;
+  padding: 8px 0;
 }
 
 .mote-table {
   border-collapse: collapse;
-  font-size: inherit;
-  line-height: 1.5;
+  font-size: 13.5px;
+  line-height: 1.6;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 0 0 1px var(--border);
 }
 
 .mote-table th,
 .mote-table td {
   border: 1px solid var(--border);
-  padding: 4px 10px;
+  padding: 6px 12px;
   text-align: left;
   vertical-align: top;
   white-space: pre-wrap;
 }
 
 .mote-table th {
-  font-weight: 700;
+  font-weight: 600;
   background: var(--code-background);
+  color: var(--text);
 }

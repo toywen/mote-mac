@@ -4,7 +4,7 @@ Reading mode draws everything as rendered. Two elements need more than styled te
 
 ## Sub-features
 
-- `mermaid-diagram`: a ```` ```mermaid ```` block that starts its line shows as an `svg`. The Mermaid library loads the first time a note with a diagram opens. A note without one never loads it.
+- `mermaid-diagram`: a ` ```mermaid ` block that starts its line shows as an `svg`. The Mermaid library loads the first time a note with a diagram opens. A note without one never loads it.
 - `mermaid-error`: a diagram that fails to parse shows its code and Mermaid's error message.
 - `mermaid-scheme`: the diagram uses Mermaid's dark theme in the dark color scheme, and redraws when the scheme changes.
 - `mermaid-source`: in live preview the block shows its source while the selection touches it.

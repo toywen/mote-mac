@@ -44,7 +44,7 @@ test('callouts, tables and task checkboxes render, and a checkbox click changes 
   try {
     // Callouts: the [!type] marks hide, the title shows, and each kind has Obsidian's color.
     const callouts = await openNote(window, 'callout')
-    expect(await callouts.innerText()).not.toContain('[!')
+    await expect.poll(() => callouts.innerText()).not.toContain('[!')
     const titles = ['笔记', '信息', '提示', '重要', '注意', '危险', '示例', '引言']
     const border: Record<string, string> = {}
     for (const title of titles) {

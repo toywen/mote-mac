@@ -1,5 +1,11 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
-import { channels, type MoteApi, type VaultChange } from '../core/ipc'
+import {
+  channels,
+  type MoteApi,
+  type ThemeSource,
+  type ThemeState,
+  type VaultChange
+} from '../core/ipc'
 
 const mote: MoteApi = {
   getVault: () => ipcRenderer.invoke(channels.getVault),
@@ -12,8 +18,7 @@ const mote: MoteApi = {
   openExternal: (url) => ipcRenderer.invoke(channels.openExternal, url),
   createNoteInVault: (dir, folder, name) =>
     ipcRenderer.invoke(channels.createNoteInVault, dir, folder, name),
-  createFolder: (dir, parent, name) =>
-    ipcRenderer.invoke(channels.createFolder, dir, parent, name),
+  createFolder: (dir, parent, name) => ipcRenderer.invoke(channels.createFolder, dir, parent, name),
   deleteEntry: (dir, path) => ipcRenderer.invoke(channels.deleteEntry, dir, path),
   showInFolder: (dir, path) => ipcRenderer.invoke(channels.showInFolder, dir, path),
   renameOrMove: (dir, from, to, updateLinks) =>
@@ -31,7 +36,15 @@ const mote: MoteApi = {
     ipcRenderer.on(channels.closeRequested, listener)
     return () => ipcRenderer.off(channels.closeRequested, listener)
   },
-  respondToClose: (ready) => ipcRenderer.send(channels.respondToClose, ready)
+  respondToClose: (ready) => ipcRenderer.send(channels.respondToClose, ready),
+  getTheme: () => ipcRenderer.invoke(channels.getTheme),
+  setTheme: (theme: ThemeSource) => ipcRenderer.invoke(channels.setTheme, theme),
+  toggleTheme: () => ipcRenderer.invoke(channels.toggleTheme),
+  onThemeChanged: (callback) => {
+    const listener = (_event: IpcRendererEvent, state: ThemeState): void => callback(state)
+    ipcRenderer.on(channels.themeChanged, listener)
+    return () => ipcRenderer.off(channels.themeChanged, listener)
+  }
 }
 
 contextBridge.exposeInMainWorld('mote', mote)

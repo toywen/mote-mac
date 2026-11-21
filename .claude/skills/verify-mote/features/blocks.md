@@ -29,6 +29,7 @@ Steps:
   ```
 
   The 8 types `笔记 信息 提示 重要 注意 危险 示例 引言` give 6 colors: 提示 and 重要 match, 笔记 and 信息 match. Dark and light give different values. Take `$V screenshot --out callouts-<scheme>`.
+
 - **Callout source.** `$V click --text 注意 --exact`. `$V read --selector ".cm-line.mote-callout-title >> nth=4"` prints `> [!warning] 注意`.
 - **Table cells.** `$V click --role treeitem --name 表格 --exact`. Count the first table's cells against the source:
 
@@ -37,6 +38,7 @@ Steps:
   ```
 
   The source has 4 header cells and 3 rows of 4, so it prints `[4, 12]`.
+
 - **Table source.** `$V click --text 斜体 --exact`. `$V read --role textbox --name 编辑器` contains `| :--- |`. `$V click --text 表格下面一行。 --exact`, and the same `read` has no `| :--- |`.
 - **Task click.** `$V click --role treeitem --name 任务 --exact`, then `$V click --role checkbox --name 待办任务`. After 2 s, `$V vault-diff` lists only `任务.md`, and `cmp -l tests/fixtures/vaults/preview/任务.md "$VAULT/任务.md"` prints one line: a space (`40`) became `x` (`170`).
 - **Input method.** Click the line below a table or the body line of a callout, press `End`, and run `$V ime --text 测试 --commit 测试 --no-enter`. After 2 s, `diff` against the fixture shows only `测试` added on that line.

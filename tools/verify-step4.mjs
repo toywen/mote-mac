@@ -14,9 +14,13 @@ const SCRATCH = path.join(os.tmpdir(), 'mote-verify-step4')
 
 async function runDiff(originalDir, testDir) {
   try {
-    const diff = execFileSync('diff', ['-r', '-u', '-x', '.git', '-x', '.obsidian', originalDir, testDir], {
-      encoding: 'utf8'
-    })
+    const diff = execFileSync(
+      'diff',
+      ['-r', '-u', '-x', '.git', '-x', '.obsidian', originalDir, testDir],
+      {
+        encoding: 'utf8'
+      }
+    )
     return diff
   } catch (err) {
     if (err.stdout) return err.stdout
@@ -77,7 +81,8 @@ async function verifyLifeOs() {
   // English/Weekly/2026-W31.md (deleted/moved to 2026-W31-renamed.md)
   // Plus inbound references in Weekly / Vocabulary notes
   const nonRenameOrInbound = changedFiles.filter((f) => {
-    if (f === 'English/Weekly/2026-W31.md' || f === 'English/Weekly/2026-W31-renamed.md') return false
+    if (f === 'English/Weekly/2026-W31.md' || f === 'English/Weekly/2026-W31-renamed.md')
+      return false
     return !f.startsWith('English/')
   })
 

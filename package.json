@@ -1,5 +1,6 @@
 {
   "name": "mote",
+  "productName": "mote",
   "version": "1.0.0",
   "description": "A Markdown notes app compatible with Obsidian vaults",
   "main": "./out/main/index.js",
@@ -13,7 +14,7 @@
     "start": "electron-vite preview",
     "dev": "electron-vite dev",
     "build": "npm run typecheck && electron-vite build",
-    "postinstall": "install-electron && electron-builder install-app-deps",
+    "postinstall": "install-electron && electron-builder install-app-deps && node tools/patch-electron-plist.mjs",
     "build:unpack": "npm run build && electron-builder --dir",
     "build:mac": "npm run build && electron-builder --mac --dir",
     "test": "vitest run && node tools/compare-links.mjs tests/fixtures/vaults/links",
