@@ -21,6 +21,13 @@ describe('fileUrl and parseFileUrl', () => {
     )
   })
 
+  it('allows .mote/attachments paths and rejects other dot paths', () => {
+    const valid = 'mote-file://vault/.mote/attachments/photo.png'
+    expect(parseFileUrl(valid)).toBe('.mote/attachments/photo.png')
+    expect(() => parseFileUrl('mote-file://vault/.mote/settings.json')).toThrow()
+    expect(() => parseFileUrl('mote-file://vault/.mote/attachments/.hidden.png')).toThrow()
+  })
+
   it('reject .. and dot segments, also when percent-encoded', () => {
     for (const url of [
       'mote-file://vault/../secret.png',

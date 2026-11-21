@@ -1,3 +1,4 @@
+import { ArrowLeft } from 'lucide-react'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { SearchResult } from '../../core/ipc'
 import { parseQuery } from '../../core/search'
@@ -13,11 +14,13 @@ const PAGE = 50
 export function SearchPanel({
   query,
   onQuery,
-  focusId
+  focusId,
+  onClose
 }: {
   query: string
   onQuery: (query: string) => void
   focusId: number
+  onClose?: () => void
 }): React.JSX.Element {
   const { revision } = useSyncExternalStore(workspace.subscribe, workspace.snapshot)
   // More pages only for the query they were asked for.
@@ -55,6 +58,19 @@ export function SearchPanel({
 
   return (
     <div className="search-panel">
+      {onClose && (
+        <div className="search-header">
+          <button
+            type="button"
+            className="search-back-button"
+            onClick={onClose}
+            title="返回文件列表（Esc）"
+          >
+            <ArrowLeft size={13} />
+            <span>文件</span>
+          </button>
+        </div>
+      )}
       <input
         ref={input}
         type="search"
@@ -63,6 +79,12 @@ export function SearchPanel({
         value={query}
         spellCheck={false}
         onChange={(event) => onQuery(event.target.value)}
+        onKeyDown={(event) => {
+          if (event.key === 'Escape') {
+            event.preventDefault()
+            onClose?.()
+          }
+        }}
         onCompositionStart={() => setComposing(true)}
         onCompositionEnd={() => setComposing(false)}
       />

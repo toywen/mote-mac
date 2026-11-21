@@ -31,6 +31,28 @@ async function start(
   return { app, window, vault }
 }
 
+test('cursor height scales with heading font size', async () => {
+  const { app, window } = await start('行内')
+  try {
+    const editor = await openNote(window, '行内')
+    await editor.click()
+    await window.keyboard.press('Meta+A')
+    await window.keyboard.type('## ')
+
+    const metrics = await window.evaluate(() => {
+      const cursor = document.querySelector('.cm-cursor')
+      const line = document.querySelector('.cm-line.mote-h2')
+      return {
+        cursorHeight: cursor?.getBoundingClientRect().height,
+        fontSize: line ? Number.parseFloat(getComputedStyle(line).fontSize) : 0
+      }
+    })
+    expect(metrics.cursorHeight).toBeGreaterThan(25)
+  } finally {
+    await app.close()
+  }
+})
+
 test('live preview hides syntax away from the selection and shows it at the selection', async () => {
   const { app, window, vault } = await start('行内')
   try {

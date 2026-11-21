@@ -3,12 +3,10 @@ import {
   FilePlus,
   FolderOpen,
   FolderPlus,
-  FolderTree,
   Moon,
   PanelLeftClose,
   PanelLeftOpen,
   PencilLine,
-  Search,
   Sun,
   X
 } from 'lucide-react'
@@ -238,35 +236,15 @@ function App(): React.JSX.Element {
 
   return (
     <div className={sidebarOpen ? 'layout' : 'layout sidebar-hidden'}>
-      <aside id="file-sidebar" className="pane sidebar" aria-label="侧栏" hidden={!sidebarOpen}>
-        <header className="pane-header">
-          <div className="sidebar-views" role="group" aria-label="侧栏视图">
-            <button
-              type="button"
-              aria-pressed={sidebarView === 'files'}
-              onClick={() => setSidebarView('files')}
-              title="文件列表"
-            >
-              <FolderTree size={13} />
-              <span>文件</span>
-            </button>
-            <button
-              type="button"
-              aria-pressed={sidebarView === 'search'}
-              onClick={() => setSidebarView('search')}
-              title="搜索（⌘⇧F）"
-            >
-              <Search size={13} />
-              <span>搜索</span>
-            </button>
-          </div>
-        </header>
+      <aside id="file-sidebar" className="pane sidebar" aria-label="侧栏">
+        <header className="pane-header" />
         {vault && sidebarView === 'search' && (
           <SearchPanel
             key={vault.dir}
             query={searchQuery}
             onQuery={setSearchQuery}
             focusId={searchFocus}
+            onClose={() => setSidebarView('files')}
           />
         )}
         {vault && sidebarView === 'files' && (

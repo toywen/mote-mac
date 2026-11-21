@@ -4,7 +4,14 @@ import { fileUrl, imageType } from '../../../core/fileUrl'
 import { linkTarget, type ReadText } from '../../../core/markdown'
 import { resolveLink } from '../../../core/resolve'
 import { linkClass, linkMark } from './links'
-import { hidden, marks, type PreviewContext, type PreviewItem, type Renderer } from './preview'
+import {
+  hidden,
+  marks,
+  syntax,
+  type PreviewContext,
+  type PreviewItem,
+  type Renderer
+} from './preview'
 import './images.css'
 
 type Size = { width: number | null; height: number | null; alt: string }
@@ -81,18 +88,70 @@ class ImageWidget extends WidgetType {
   }
 }
 
+export function decorateEmbedSource(
+  item: PreviewItem,
+  node: SyntaxNodeRef,
+  cx: PreviewContext
+): void {
+  const className = linkClass(node.node, cx) ?? 'mote-link'
+  if (node.name === 'WikiEmbed') {
+    const text = cx.state.doc.sliceString(node.from, node.to)
+    if (text.startsWith('![[') && text.endsWith(']]') && text.length >= 5) {
+      const inner = text.slice(3, -2)
+      const bar = inner.indexOf('|')
+      const targetStr = bar < 0 ? inner : inner.slice(0, bar)
+      const targetFrom = node.from + 3
+      const targetTo = targetFrom + targetStr.length
+
+      item.always.push(syntax.range(node.from, targetFrom))
+      if (targetFrom < targetTo) {
+        linkMark(item, className, node.from, targetFrom, targetTo)
+      }
+      if (targetTo < node.to) {
+        item.always.push(syntax.range(targetTo, node.to))
+      }
+      return
+    }
+  } else if (node.name === 'Image') {
+    const url = node.node.getChild('URL')
+    if (url) {
+      if (node.from < url.from) {
+        item.always.push(syntax.range(node.from, url.from))
+      }
+      if (url.from < url.to) {
+        linkMark(item, className, node.from, url.from, url.to)
+      }
+      if (url.to < node.to) {
+        item.always.push(syntax.range(url.to, node.to))
+      }
+      return
+    }
+  }
+  if (node.from < node.to) {
+    linkMark(item, className, node.from, node.from, node.to)
+  }
+}
+
 // The image goes after the source. While the source is hidden, only the image shows.
-function image(node: SyntaxNodeRef, src: string | null, name: string, title: string): PreviewItem {
+function image(
+  node: SyntaxNodeRef,
+  src: string | null,
+  name: string,
+  title: string,
+  cx: PreviewContext
+): PreviewItem {
   const widget = Decoration.widget({
     widget: new ImageWidget(src, name, imageSize(title)),
     side: 1
   })
-  return {
+  const item: PreviewItem = {
     reveal: { from: node.from, to: node.to },
     always: [widget.range(node.to)],
     concealed: [hidden.range(node.from, node.to)],
     block: true
   }
+  decorateEmbedSource(item, node, cx)
+  return item
 }
 
 // The URL of a vault image, or null when the target does not resolve to one.
@@ -108,8 +167,8 @@ const markdownImage: Renderer = (node, cx) => {
   if (!link) return []
   const [open, close] = node.node.getChildren('LinkMark')
   const alt = read(open.to, close.from)
-  if (link.kind === 'external') return [image(node, link.url, link.url, alt)]
-  return [image(node, vaultImage(cx, link.ref.target), link.ref.target, alt)]
+  if (link.kind === 'external') return [image(node, link.url, link.url, alt, cx)]
+  return [image(node, vaultImage(cx, link.ref.target), link.ref.target, alt, cx)]
 }
 
 // ![[图片.png|300]] is an image. Any other embed shows its target as a link for now.
@@ -117,7 +176,7 @@ const wikiEmbed: Renderer = (node, cx) => {
   const link = linkTarget(node.node, (from, to) => cx.state.doc.sliceString(from, to))
   if (link?.kind !== 'vault') return []
   const { target, subpath, alias } = link.ref
-  if (imageType(target)) return [image(node, vaultImage(cx, target), target, alias ?? '')]
+  if (imageType(target)) return [image(node, vaultImage(cx, target), target, alias ?? '', cx)]
   const className = linkClass(node.node, cx)
   if (!className) return []
   const item: PreviewItem = { reveal: { from: node.from, to: node.to }, always: [], concealed: [] }

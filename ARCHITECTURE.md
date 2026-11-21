@@ -111,11 +111,13 @@
 
 **笔记库**
 
-- 只在三种情况下写笔记库：保存你编辑过的笔记，执行改名或移动，点击指向不存在的笔记的链接时新建这篇笔记。
+- 遵循 mote 独立笔记库规范，使用库内 `.mote/` 专属目录组织配置与资源。见 ADR 0017。
+- 粘贴、拖拽或插入的新附件，集中保存到 `.mote/attachments/`，保证笔记库根目录与用户目录整洁。
+- 库级配置保存在 `.mote/settings.json`，工作区状态保存在 `.mote/workspace.json`。从不写 `.obsidian`。
+- mote 机器级全局设置和 journal 存在 `~/Library/Application Support/mote`。
+- 只在四种情况下写笔记库：保存你编辑过的笔记，执行改名或移动，点击指向不存在的笔记的链接时新建这篇笔记，以及存入新附件。
 - 新建笔记只建空的 `.md` 文件，路径要通过 `parseVaultPath`。缺的文件夹从笔记库根目录起逐级新建，已有的必须是真的文件夹，不穿过符号链接。文件用 `O_CREAT | O_EXCL` 新建，已经存在就直接打开，不覆盖。主进程先更新条目和索引，再通知渲染进程。
-- 从不写 `.obsidian`。只读笔记库配置，缺的字段用 Obsidian 的默认值。
-- mote 自己的设置和 journal 存在 `~/Library/Application Support/mote`，不存在笔记库里。
-- 忽略所有以 `.` 开头的文件和文件夹。`parseVaultPath` 拒绝这类路径。
+- 除 `.mote/attachments/` 外，忽略所有以 `.` 开头的文件和文件夹。`parseVaultPath` 拒绝其他以 `.` 开头的路径。文件树对用户自动隐藏 `.mote/`。
 
 **字节不变**
 
@@ -147,7 +149,7 @@
 
 - `contextIsolation: true`，`nodeIntegration: false`，`sandbox: true`。
 - 渲染进程只能通过 `window.mote` 和 `mote-file://` 访问磁盘。`mote-file://` 只读图片，笔记只走 `window.mote`。
-- `mote-file://vault/<库内路径>` 只返回当前笔记库里的图片文件。它拒绝 `..` 和以 `.` 开头的部分、符号链接、笔记、别的主机和非 GET 请求，拒绝时不返回任何字节。见 ADR 0007。
+- `mote-file://vault/<库内路径>` 只返回当前笔记库里的图片文件。它拒绝 `..` 和除 `.mote/attachments/` 外以 `.` 开头的部分、符号链接、笔记、别的主机和非 GET 请求，拒绝时不返回任何字节。见 ADR 0007、0017。
 - 内容安全策略只放开图片：`img-src` 允许 `mote-file:` 和 `https:`，不允许 `http:`。
 - `mote-file://` 的每个响应都带 `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox` 和 `nosniff`。SVG 是文档，这样它即使被当成页面打开，里面的脚本也不运行。
 - 窗口只显示 mote 自己的页面。主进程拦下所有去别的地址的跳转，因为跳到的页面会拿到 `window.mote`。`window.open` 也只把白名单里的网址交给系统。

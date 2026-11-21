@@ -16,11 +16,17 @@ export function resolveAttachmentFolder(
   const trimmed = (attachmentFolderPath ?? '').trim()
   const noteDir = notePath.includes('/') ? notePath.slice(0, notePath.lastIndexOf('/')) : ''
 
-  if (!trimmed || trimmed === '/' || trimmed === '.') {
+  if (!trimmed) {
+    return '.mote/attachments'
+  }
+  if (trimmed === '/' || trimmed === '.') {
     return ''
   }
   if (trimmed === './') {
     return noteDir
+  }
+  if (trimmed === './.mote/attachments' || trimmed === '.mote/attachments') {
+    return '.mote/attachments'
   }
   if (trimmed.startsWith('./')) {
     const sub = trimmed.slice(2).replace(/^\/+|\/+$/g, '')

@@ -9,15 +9,19 @@ import {
 import { buildLinkIndex } from './resolve.ts'
 
 describe('resolveAttachmentFolder', () => {
-  it('resolves root folder when config is empty, slash, or dot', () => {
-    expect(resolveAttachmentFolder('', '欢迎.md')).toBe('')
-    expect(resolveAttachmentFolder('  ', '欢迎.md')).toBe('')
+  it('resolves default .mote/attachments when config is empty or undefined', () => {
+    expect(resolveAttachmentFolder('', '欢迎.md')).toBe('.mote/attachments')
+    expect(resolveAttachmentFolder('  ', '欢迎.md')).toBe('.mote/attachments')
+    expect(resolveAttachmentFolder(undefined, '项目/计划.md')).toBe('.mote/attachments')
+  })
+
+  it('resolves root folder when config is slash or dot', () => {
     expect(resolveAttachmentFolder('/', '欢迎.md')).toBe('')
     expect(resolveAttachmentFolder('.', '欢迎.md')).toBe('')
-    expect(resolveAttachmentFolder(undefined, '项目/计划.md')).toBe('')
   })
 
   it('resolves fixed folder relative to vault root', () => {
+    expect(resolveAttachmentFolder('.mote/attachments', '欢迎.md')).toBe('.mote/attachments')
     expect(resolveAttachmentFolder('attachments', '欢迎.md')).toBe('attachments')
     expect(resolveAttachmentFolder('attachments', '项目/计划.md')).toBe('attachments')
     expect(resolveAttachmentFolder('/attachments/', '项目/计划.md')).toBe('attachments')

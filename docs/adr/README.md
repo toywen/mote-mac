@@ -26,3 +26,5 @@ ADR（Architecture Decision Record）是架构决策记录。每个文件记一�
 | [0013](0013-video-playback-and-youtube-embeds.md)              | 本地视频播放与 YouTube 视频嵌入          | 已实现                       |
 | [0014](0014-github-actions-packaging-and-updater.md)           | GitHub Actions 打包与 Releases 自动更新  | 已实现                       |
 | [0015](0015-native-application-menu-and-markdown-shortcuts.md) | 原生应用菜单与 Markdown 格式化快捷键     | 已实现                       |
+| [0016](0016-paste-and-drop-image-attachments.md)              | 粘贴与拖拽图片按配置自动存入附件文件夹   | 被 0017 替代（附件存储部分） |
+| [0017](0017-mote-vault-spec-and-dot-mote.md)                   | mote 独立笔记库规范与 .mote 目录         | 已实现                       |

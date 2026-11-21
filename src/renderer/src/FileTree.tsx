@@ -18,6 +18,7 @@ function buildTree(entries: VaultEntry[]): TreeNode[] {
   const roots: TreeNode[] = []
   const nodes = new Map<VaultPath, TreeNode>()
   for (const entry of entries) {
+    if (entry.path.startsWith('.')) continue
     const leaf = entry.path.slice(entry.path.lastIndexOf('/') + 1)
     nodes.set(entry.path, {
       ...entry,

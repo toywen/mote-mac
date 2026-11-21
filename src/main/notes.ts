@@ -31,7 +31,7 @@ export function kind(name: string): 'note' | 'file' {
   return extname(name).toLowerCase() === '.md' ? 'note' : 'file'
 }
 
-// Depth first in readdir order. Skips every entry whose name starts with a dot, like Obsidian.
+// Depth first in readdir order. Skips every entry whose name starts with a dot, except .mote/attachments.
 export async function scanVault(root: string): Promise<Map<VaultPath, VaultEntry>> {
   const result = new Map<VaultPath, VaultEntry>()
   async function visit(dir: string, prefix: string): Promise<void> {
@@ -51,6 +51,27 @@ export async function scanVault(root: string): Promise<Map<VaultPath, VaultEntry
     }
   }
   await visit(root, '')
+
+  const moteAttachments = join(root, '.mote', 'attachments')
+  async function visitAttachments(dir: string, prefix: string): Promise<void> {
+    const entries = await readdir(dir, { withFileTypes: true }).catch(() => [])
+    for (const entry of entries) {
+      if (entry.name.startsWith('.')) continue
+      try {
+        const path = parseVaultPath(prefix + entry.name)
+        if (entry.isDirectory()) {
+          result.set(path, { path, kind: 'folder' })
+          await visitAttachments(join(dir, entry.name), path + '/')
+        } else if (entry.isFile()) {
+          result.set(path, { path, kind: 'file' })
+        }
+      } catch {
+        // ignore invalid entries
+      }
+    }
+  }
+  await visitAttachments(moteAttachments, '.mote/attachments/')
+
   return result
 }
 

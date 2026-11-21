@@ -3,7 +3,7 @@ import type { SyntaxNodeRef } from '@lezer/common'
 import { fileUrl, videoType } from '../../../core/fileUrl'
 import { linkTarget, type ReadText } from '../../../core/markdown'
 import { resolveLink } from '../../../core/resolve'
-import { imageRenderers } from './images'
+import { imageRenderers, decorateEmbedSource } from './images'
 import { hidden, type PreviewItem, type PreviewContext, type Renderer } from './preview'
 import './videos.css'
 
@@ -181,31 +181,36 @@ function videoItem(
   node: SyntaxNodeRef,
   src: string | null,
   name: string,
-  title: string
+  title: string,
+  cx?: PreviewContext
 ): PreviewItem {
   const widget = Decoration.widget({
     widget: new VideoWidget(src, name, parseVideoSize(title)),
     side: 1
   })
-  return {
+  const item: PreviewItem = {
     reveal: { from: node.from, to: node.to },
     always: [widget.range(node.to)],
     concealed: [hidden.range(node.from, node.to)],
     block: true
   }
+  if (cx) decorateEmbedSource(item, node, cx)
+  return item
 }
 
-function youtubeItem(node: SyntaxNodeRef, info: YouTubeInfo): PreviewItem {
+function youtubeItem(node: SyntaxNodeRef, info: YouTubeInfo, cx?: PreviewContext): PreviewItem {
   const widget = Decoration.widget({
     widget: new YouTubeWidget(info),
     side: 1
   })
-  return {
+  const item: PreviewItem = {
     reveal: { from: node.from, to: node.to },
     always: [widget.range(node.to)],
     concealed: [hidden.range(node.from, node.to)],
     block: true
   }
+  if (cx) decorateEmbedSource(item, node, cx)
+  return item
 }
 
 function vaultVideo(cx: PreviewContext, target: string): string | null {
@@ -222,8 +227,8 @@ const markdownVideoOrImage: Renderer = (node, cx) => {
 
   if (link.kind === 'external') {
     const yt = parseYouTubeUrl(link.url, parseVideoSize(alt))
-    if (yt) return [youtubeItem(node, yt)]
-    if (videoType(link.url)) return [videoItem(node, link.url, link.url, alt)]
+    if (yt) return [youtubeItem(node, yt, cx)]
+    if (videoType(link.url)) return [videoItem(node, link.url, link.url, alt, cx)]
   } else {
     let target = link.ref.target
     let sizeTitle = alt
@@ -233,7 +238,7 @@ const markdownVideoOrImage: Renderer = (node, cx) => {
       target = target.slice(0, bar)
     }
     if (videoType(target)) {
-      return [videoItem(node, vaultVideo(cx, target), target, sizeTitle)]
+      return [videoItem(node, vaultVideo(cx, target), target, sizeTitle, cx)]
     }
   }
 
@@ -251,9 +256,9 @@ export const videoWikiEmbed: Renderer = (node, cx) => {
       target = target.slice(0, bar)
     }
     const yt = parseYouTubeUrl(target, parseVideoSize(alias ?? ''))
-    if (yt) return [youtubeItem(node, yt)]
+    if (yt) return [youtubeItem(node, yt, cx)]
     if (videoType(target)) {
-      return [videoItem(node, vaultVideo(cx, target), target, alias ?? '')]
+      return [videoItem(node, vaultVideo(cx, target), target, alias ?? '', cx)]
     }
   }
   return imageRenderers.WikiEmbed(node, cx)

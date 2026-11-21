@@ -2,7 +2,14 @@ import { Decoration } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
 import { linkDest, type LinkDest } from '../../../core/linkDest'
 import { linkTarget } from '../../../core/markdown'
-import { marks, type PreviewContext, type PreviewItem, type Renderer } from './preview'
+import {
+  hidden,
+  marks,
+  syntax,
+  type PreviewContext,
+  type PreviewItem,
+  type Renderer
+} from './preview'
 
 const kindClass: Record<LinkDest['kind'], string> = {
   note: 'mote-link',
@@ -54,6 +61,13 @@ const wikiLink: Renderer = (node, cx) => {
     return [item]
   }
   linkMark(item, className, node.from, textFrom, textTo)
+  if (bar >= 0) {
+    const targetFrom = node.from + 2
+    const targetTo = node.from + 2 + bar
+    if (targetFrom < targetTo) {
+      linkMark(item, className, node.from, targetFrom, targetTo)
+    }
+  }
   return [
     marks(item, [
       { from: node.from, to: textFrom },
@@ -68,11 +82,30 @@ const markdownLink: Renderer = (node, cx) => {
   const [open, close] = node.node.getChildren('LinkMark')
   if (!className || !close) return []
   const item: PreviewItem = { reveal: { from: node.from, to: node.to }, always: [], concealed: [] }
+  const url = node.node.getChild('URL')
+
   if (open.to >= close.from) {
+    if (url) {
+      if (node.from < url.from) item.always.push(syntax.range(node.from, url.from))
+      linkMark(item, className, node.from, url.from, url.to)
+      if (url.to < node.to) item.always.push(syntax.range(url.to, node.to))
+      return [item]
+    }
     linkMark(item, className, node.from, node.from, node.to)
     return [item]
   }
+
   linkMark(item, className, node.from, open.to, close.from)
+  if (url) {
+    item.concealed.push(hidden.range(node.from, open.to))
+    item.concealed.push(hidden.range(close.from, node.to))
+    item.always.push(syntax.range(node.from, open.to))
+    if (close.from < url.from) item.always.push(syntax.range(close.from, url.from))
+    linkMark(item, className, node.from, url.from, url.to)
+    if (url.to < node.to) item.always.push(syntax.range(url.to, node.to))
+    return [item]
+  }
+
   return [
     marks(item, [
       { from: node.from, to: open.to },

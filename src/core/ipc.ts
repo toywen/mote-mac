@@ -4,12 +4,22 @@ export type VaultPath = string & { readonly __brand: 'VaultPath' }
 export type ContentHash = string & { readonly __brand: 'ContentHash' }
 
 export function parseVaultPath(path: string): VaultPath {
-  if (
-    !path ||
-    path.split('/').some((part) => !part || part.startsWith('.')) ||
-    path.includes('\0')
-  ) {
+  if (!path || path.includes('\0')) {
     throw new Error('无效的笔记库路径')
+  }
+  const parts = path.split('/')
+  for (let i = 0; i < parts.length; i++) {
+    const part = parts[i]
+    if (!part) throw new Error('无效的笔记库路径')
+    if (part.startsWith('.')) {
+      if (i === 0 && part === '.mote' && parts.length > 1 && parts[1] === 'attachments') {
+        continue
+      }
+      if (i === 1 && parts[0] === '.mote' && part === 'attachments') {
+        continue
+      }
+      throw new Error('无效的笔记库路径')
+    }
   }
   return path as VaultPath
 }

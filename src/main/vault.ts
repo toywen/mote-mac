@@ -49,10 +49,11 @@ export interface JournalHandler {
 }
 
 async function readConfig(root: string): Promise<VaultConfig> {
+  const moteSettings = join(root, '.mote', 'settings.json')
   const obsidian = join(root, '.obsidian')
-  async function configFile(name: string): Promise<Record<string, unknown>> {
+
+  async function readJson(file: string): Promise<Record<string, unknown>> {
     try {
-      const file = join(obsidian, name)
       if ((await realpath(file)) !== file || !(await lstat(file)).isFile()) return {}
       const value: unknown = JSON.parse(await readFile(file, 'utf8'))
       return value && typeof value === 'object' ? (value as Record<string, unknown>) : {}
@@ -60,24 +61,55 @@ async function readConfig(root: string): Promise<VaultConfig> {
       return {}
     }
   }
-  const [app, daily] = await Promise.all([configFile('app.json'), configFile('daily-notes.json')])
+
+  const mote = await readJson(moteSettings)
+  const [app, daily] = await Promise.all([
+    readJson(join(obsidian, 'app.json')),
+    readJson(join(obsidian, 'daily-notes.json'))
+  ])
+
+  const dailySettings =
+    mote.daily && typeof mote.daily === 'object' ? (mote.daily as Record<string, unknown>) : daily
+
   return {
-    useMarkdownLinks: app.useMarkdownLinks === true,
+    useMarkdownLinks:
+      typeof mote.useMarkdownLinks === 'boolean'
+        ? mote.useMarkdownLinks
+        : app.useMarkdownLinks === true,
     newLinkFormat:
-      app.newLinkFormat === 'relative' || app.newLinkFormat === 'absolute'
-        ? app.newLinkFormat
-        : 'shortest',
-    alwaysUpdateLinks: app.alwaysUpdateLinks === true,
+      mote.newLinkFormat === 'relative' || mote.newLinkFormat === 'absolute'
+        ? mote.newLinkFormat
+        : app.newLinkFormat === 'relative' || app.newLinkFormat === 'absolute'
+          ? app.newLinkFormat
+          : 'shortest',
+    alwaysUpdateLinks:
+      typeof mote.alwaysUpdateLinks === 'boolean'
+        ? mote.alwaysUpdateLinks
+        : app.alwaysUpdateLinks !== false,
     newFileLocation:
-      app.newFileLocation === 'current' || app.newFileLocation === 'folder'
-        ? app.newFileLocation
-        : 'root',
-    newFileFolderPath: typeof app.newFileFolderPath === 'string' ? app.newFileFolderPath : '',
+      mote.newFileLocation === 'current' || mote.newFileLocation === 'folder'
+        ? mote.newFileLocation
+        : app.newFileLocation === 'current' || app.newFileLocation === 'folder'
+          ? app.newFileLocation
+          : 'root',
+    newFileFolderPath:
+      typeof mote.newFileFolderPath === 'string'
+        ? mote.newFileFolderPath
+        : typeof app.newFileFolderPath === 'string'
+          ? app.newFileFolderPath
+          : '',
     attachmentFolderPath:
-      typeof app.attachmentFolderPath === 'string' ? app.attachmentFolderPath : '',
+      typeof mote.attachmentFolderPath === 'string'
+        ? mote.attachmentFolderPath
+        : typeof app.attachmentFolderPath === 'string' && app.attachmentFolderPath
+          ? app.attachmentFolderPath
+          : '.mote/attachments',
     daily: {
-      folder: typeof daily.folder === 'string' ? daily.folder : '',
-      format: typeof daily.format === 'string' && daily.format ? daily.format : 'YYYY-MM-DD'
+      folder: typeof dailySettings.folder === 'string' ? dailySettings.folder : '',
+      format:
+        typeof dailySettings.format === 'string' && dailySettings.format
+          ? dailySettings.format
+          : 'YYYY-MM-DD'
     }
   }
 }
@@ -183,9 +215,16 @@ export class Vault {
   }
 
   private schedule(name: string | null): void {
-    if (this.closed || (name && name.split('/').some((part) => part.startsWith('.')))) return
-    if (name) this.pending.add(parseVaultPath(name))
-    else this.rescan = true
+    if (this.closed) return
+    if (name) {
+      try {
+        this.pending.add(parseVaultPath(name))
+      } catch {
+        return
+      }
+    } else {
+      this.rescan = true
+    }
     this.timer ??= setTimeout(() => {
       this.timer = undefined
       const paths = new Set(this.pending)
@@ -316,13 +355,15 @@ export class Vault {
         let sub = ''
         for (const part of folder.split('/')) {
           sub = sub ? `${sub}/${part}` : part
-          const vp = parseVaultPath(sub)
           const dir = join(this.dir, sub)
           await mkdir(dir).catch((err: unknown) => {
             if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err
           })
-          if (!this.entries.has(vp)) {
-            this.entries.set(vp, { path: vp, kind: 'folder' })
+          if (!sub.startsWith('.')) {
+            const vp = parseVaultPath(sub)
+            if (!this.entries.has(vp)) {
+              this.entries.set(vp, { path: vp, kind: 'folder' })
+            }
           }
         }
       }
@@ -355,13 +396,15 @@ export class Vault {
         let sub = ''
         for (const part of folder.split('/')) {
           sub = sub ? `${sub}/${part}` : part
-          const vp = parseVaultPath(sub)
           const dir = join(this.dir, sub)
           await mkdir(dir).catch((err: unknown) => {
             if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err
           })
-          if (!this.entries.has(vp)) {
-            this.entries.set(vp, { path: vp, kind: 'folder' })
+          if (!sub.startsWith('.')) {
+            const vp = parseVaultPath(sub)
+            if (!this.entries.has(vp)) {
+              this.entries.set(vp, { path: vp, kind: 'folder' })
+            }
           }
         }
       }
