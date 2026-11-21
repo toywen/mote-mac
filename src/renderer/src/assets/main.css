@@ -167,12 +167,156 @@ button:focus-visible {
   border-color: var(--accent);
 }
 
+.vault-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 12px 6px;
+  flex-shrink: 0;
+}
+
 .vault-name {
   flex-shrink: 0;
-  padding: 14px 12px 8px;
   color: var(--muted);
   font-size: 12px;
   font-weight: 600;
+}
+
+.vault-actions {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.vault-actions .icon-button {
+  width: 24px;
+  height: 24px;
+}
+
+.tree-input {
+  flex: 1;
+  min-width: 0;
+  font: inherit;
+  font-size: 13px;
+  color: var(--text);
+  background: var(--background);
+  border: 1px solid var(--accent);
+  border-radius: 3px;
+  padding: 1px 4px;
+  outline: none;
+}
+
+.context-menu-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+}
+
+.context-menu {
+  position: fixed;
+  z-index: 1001;
+  min-width: 150px;
+  background: var(--sidebar);
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  box-shadow: 0 4px 14px rgba(0, 0, 0, 0.16);
+  padding: 4px;
+  list-style: none;
+  margin: 0;
+}
+
+.context-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 5px 8px;
+  font-size: 13px;
+  color: var(--text);
+  border: 0;
+  background: transparent;
+  border-radius: 4px;
+  text-align: left;
+}
+
+.context-menu-item:hover,
+.context-menu-item:focus-visible {
+  background: var(--hover);
+  outline: none;
+}
+
+.context-menu-item.danger {
+  color: #cf222e;
+}
+
+.context-menu-separator {
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 2000;
+  background: rgba(0, 0, 0, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.modal-box {
+  width: 400px;
+  max-width: 90vw;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.modal-title {
+  margin: 0;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--text);
+}
+
+.modal-message {
+  margin: 0;
+  font-size: 13px;
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.button {
+  padding: 5px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  border: 1px solid var(--border);
+  background: var(--sidebar);
+  color: var(--text);
+}
+
+.button.primary {
+  background: var(--accent);
+  color: #ffffff;
+  border-color: var(--accent);
+}
+
+.button.danger {
+  background: #cf222e;
+  color: #ffffff;
+  border-color: #cf222e;
 }
 
 .tree-scroll {

@@ -1,6 +1,14 @@
-import { BookOpen, FolderOpen, PanelLeftClose, PanelLeftOpen, PencilLine } from 'lucide-react'
-import { useEffect, useMemo, useState, useSyncExternalStore } from 'react'
-import { FileTree } from './FileTree'
+import {
+  BookOpen,
+  FilePlus,
+  FolderOpen,
+  FolderPlus,
+  PanelLeftClose,
+  PanelLeftOpen,
+  PencilLine
+} from 'lucide-react'
+import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { FileTree, type FileTreeHandle } from './FileTree'
 import { groupHits } from '../../core/hits'
 import { buildLinkIndex } from '../../core/resolve'
 import { HitList } from './HitList'
@@ -31,10 +39,16 @@ function App(): React.JSX.Element {
   const [sidebarView, setSidebarView] = useState<'files' | 'search'>('files')
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocus, setSearchFocus] = useState(0)
+  const fileTreeRef = useRef<FileTreeHandle>(null)
   useEffect(() => workspace.connect(), [])
   useEffect(() => {
     function keyDown(event: KeyboardEvent): void {
-      if (event.metaKey && !event.shiftKey && !event.altKey && event.code === 'KeyO') {
+      if (event.metaKey && !event.shiftKey && !event.altKey && event.code === 'KeyN') {
+        event.preventDefault()
+        setSidebarOpen(true)
+        setSidebarView('files')
+        void fileTreeRef.current?.createNote()
+      } else if (event.metaKey && !event.shiftKey && !event.altKey && event.code === 'KeyO') {
         event.preventDefault()
         setQuickOpen(true)
       } else if (event.metaKey && event.shiftKey && !event.altKey && event.code === 'KeyF') {
@@ -109,11 +123,33 @@ function App(): React.JSX.Element {
         )}
         {vault && sidebarView === 'files' && (
           <>
-            <div className="vault-name" title={vault.dir}>
-              {vault.dir.split('/').pop() || '/'}
+            <div className="vault-header">
+              <div className="vault-name" title={vault.dir}>
+                {vault.dir.split('/').pop() || '/'}
+              </div>
+              <div className="vault-actions">
+                <button
+                  className="icon-button"
+                  type="button"
+                  title="新建笔记（⌘N）"
+                  aria-label="新建笔记"
+                  onClick={() => void fileTreeRef.current?.createNote()}
+                >
+                  <FilePlus size={16} />
+                </button>
+                <button
+                  className="icon-button"
+                  type="button"
+                  title="新建文件夹"
+                  aria-label="新建文件夹"
+                  onClick={() => void fileTreeRef.current?.createFolder()}
+                >
+                  <FolderPlus size={16} />
+                </button>
+              </div>
             </div>
             <nav className="tree-scroll" aria-label="笔记库">
-              <FileTree key={vault.dir} entries={vault.entries} selected={doc?.path} />
+              <FileTree ref={fileTreeRef} vault={vault} selected={doc?.path} />
             </nav>
           </>
         )}
