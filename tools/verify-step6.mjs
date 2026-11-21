@@ -34,10 +34,22 @@ const builderConfig = parseYaml(builderRaw)
 assert('appId 配置正确', builderConfig.appId === 'com.mote.app')
 assert('productName 为 mote', builderConfig.productName === 'mote')
 assert(
-  'mac 构建目标包含 dmg 与 zip',
+  'mac 构建目标包含 dmg 与 zip，且覆盖 arm64、x64 与 universal',
   Array.isArray(builderConfig.mac?.target) &&
-    builderConfig.mac.target.some((t) => t.target === 'dmg') &&
-    builderConfig.mac.target.some((t) => t.target === 'zip')
+    builderConfig.mac.target.some(
+      (t) =>
+        t.target === 'dmg' &&
+        t.arch?.includes('arm64') &&
+        t.arch?.includes('x64') &&
+        t.arch?.includes('universal')
+    ) &&
+    builderConfig.mac.target.some(
+      (t) =>
+        t.target === 'zip' &&
+        t.arch?.includes('arm64') &&
+        t.arch?.includes('x64') &&
+        t.arch?.includes('universal')
+    )
 )
 assert(
   'dmg contents 包含 /Applications 软链接',
@@ -77,8 +89,10 @@ assert(
   steps.some((s) => s.run?.includes('npm run build'))
 )
 assert(
-  '包含 electron-builder 打包 dmg 与 zip 步骤',
-  steps.some((s) => s.run?.includes('electron-builder') && s.run?.includes('dmg'))
+  '包含 electron-builder 打包 dmg 与 zip 步骤（覆盖 arm64/x64/universal）',
+  steps.some(
+    (s) => s.run?.includes('electron-builder') && s.run?.includes('dmg') && s.run?.includes('x64')
+  )
 )
 assert(
   '包含 action-gh-release 自动发布产物步骤',

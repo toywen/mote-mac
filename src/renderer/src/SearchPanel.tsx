@@ -66,7 +66,7 @@ export function SearchPanel({
             onClick={onClose}
             title="返回文件列表（Esc）"
           >
-            <ArrowLeft size={13} />
+            <ArrowLeft size={13} strokeWidth={1.5} />
             <span>文件</span>
           </button>
         </div>

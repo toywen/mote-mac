@@ -314,9 +314,14 @@ export const FileTree = forwardRef<
             }}
           >
             <span className="tree-caret" aria-hidden="true">
-              {folder && (expanded ? <ChevronDown size={13} /> : <ChevronRight size={13} />)}
+              {folder &&
+                (expanded ? (
+                  <ChevronDown size={12} strokeWidth={1.6} />
+                ) : (
+                  <ChevronRight size={12} strokeWidth={1.6} />
+                ))}
             </span>
-            <Icon size={15} aria-hidden="true" />
+            <Icon size={14} strokeWidth={1.5} className="tree-icon" aria-hidden="true" />
             {isRenaming ? (
               <RenameInput
                 initialValue={node.name}

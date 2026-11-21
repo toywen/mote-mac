@@ -34,8 +34,8 @@ jobs:
       - name: Build application
         run: npm run build
 
-      - name: Package macOS DMG and ZIP
-        run: npx electron-builder --mac dmg zip
+      - name: Package macOS DMG and ZIP (arm64, x64, universal)
+        run: npx electron-builder --mac dmg zip --arm64 --x64 --universal
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -46,6 +46,7 @@ jobs:
           path: |
             dist/*.dmg
             dist/*.zip
+            dist/*.blockmap
 
       - name: Publish GitHub Release
         if: startsWith(github.ref, 'refs/tags/v')
@@ -54,6 +55,7 @@ jobs:
           files: |
             dist/*.dmg
             dist/*.zip
+            dist/*.blockmap
           generate_release_notes: true
           draft: false
           prerelease: false

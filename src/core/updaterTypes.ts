@@ -86,15 +86,21 @@ export function pickBestAsset(
   assets: ReleaseAsset[],
   targetArch: string = process.arch
 ): ReleaseAsset | null {
+  const isArm = targetArch === 'arm64'
+  const archMatch = isArm ? 'arm64' : 'x64'
+  const oppositeArch = isArm ? 'x64' : 'arm64'
+
   const macAssets = assets.filter((a) => {
     const name = a.name.toLowerCase()
-    return name.endsWith('.dmg') || name.endsWith('.zip')
+    if (!name.endsWith('.dmg') && !name.endsWith('.zip')) return false
+    // Intel Macs (x64) cannot run arm64 binaries
+    if (!isArm && (name.includes('arm64') || name.includes('aarch64'))) {
+      return false
+    }
+    return true
   })
 
   if (macAssets.length === 0) return null
-
-  const isArm = targetArch === 'arm64'
-  const archMatch = isArm ? 'arm64' : 'x64'
 
   // 1. Exact arch zip
   const exactZip = macAssets.find((a) => {
@@ -110,20 +116,48 @@ export function pickBestAsset(
   })
   if (exactDmg) return exactDmg
 
-  // 3. Universal/generic mac zip
+  // 3. Universal zip
+  const universalZip = macAssets.find((a) => {
+    const name = a.name.toLowerCase()
+    return name.endsWith('.zip') && name.includes('universal')
+  })
+  if (universalZip) return universalZip
+
+  // 4. Universal dmg
+  const universalDmg = macAssets.find((a) => {
+    const name = a.name.toLowerCase()
+    return name.endsWith('.dmg') && name.includes('universal')
+  })
+  if (universalDmg) return universalDmg
+
+  // 5. Generic mac zip (not tagged with opposite architecture)
   const genericZip = macAssets.find((a) => {
     const name = a.name.toLowerCase()
     return (
       name.endsWith('.zip') &&
-      (name.includes('mac') || name.includes('darwin') || name.includes('universal'))
+      !name.includes(oppositeArch) &&
+      (name.includes('mac') || name.includes('darwin'))
     )
   })
   if (genericZip) return genericZip
 
-  // 4. Any mac zip
-  const anyZip = macAssets.find((a) => a.name.toLowerCase().endsWith('.zip'))
-  if (anyZip) return anyZip
+  // 6. Generic mac dmg (not tagged with opposite architecture)
+  const genericDmg = macAssets.find((a) => {
+    const name = a.name.toLowerCase()
+    return (
+      name.endsWith('.dmg') &&
+      !name.includes(oppositeArch) &&
+      (name.includes('mac') || name.includes('darwin'))
+    )
+  })
+  if (genericDmg) return genericDmg
 
-  // 5. Any dmg
-  return macAssets.find((a) => a.name.toLowerCase().endsWith('.dmg')) || macAssets[0]
+  // 7. On arm64 only: fallback to any zip/dmg (Rosetta 2 translation supported)
+  if (isArm) {
+    const anyZip = macAssets.find((a) => a.name.toLowerCase().endsWith('.zip'))
+    if (anyZip) return anyZip
+    return macAssets.find((a) => a.name.toLowerCase().endsWith('.dmg')) || macAssets[0]
+  }
+
+  return null
 }

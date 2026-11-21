@@ -1,11 +1,13 @@
 import {
   BookOpen,
+  ChevronDown,
+  ChevronUp,
   FilePlus,
   FolderOpen,
   FolderPlus,
+  Link2,
   Moon,
-  PanelLeftClose,
-  PanelLeftOpen,
+  PanelLeft,
   PencilLine,
   Sun,
   X
@@ -285,7 +287,7 @@ function App(): React.JSX.Element {
                   aria-label="新建笔记"
                   onClick={() => void fileTreeRef.current?.createNote()}
                 >
-                  <FilePlus size={15} />
+                  <FilePlus size={14} strokeWidth={1.5} />
                 </button>
                 <button
                   className="icon-button"
@@ -294,7 +296,7 @@ function App(): React.JSX.Element {
                   aria-label="新建文件夹"
                   onClick={() => void fileTreeRef.current?.createFolder()}
                 >
-                  <FolderPlus size={15} />
+                  <FolderPlus size={14} strokeWidth={1.5} />
                 </button>
                 <button
                   className="icon-button"
@@ -304,7 +306,7 @@ function App(): React.JSX.Element {
                   disabled={busy}
                   onClick={() => void workspace.chooseVault()}
                 >
-                  <FolderOpen size={15} />
+                  <FolderOpen size={14} strokeWidth={1.5} />
                 </button>
               </div>
             </div>
@@ -319,7 +321,7 @@ function App(): React.JSX.Element {
           <div className="editor-title">
             {vault && (
               <button
-                className="icon-button"
+                className={`icon-button ${sidebarOpen ? 'is-active' : ''}`}
                 type="button"
                 title={sidebarAction}
                 aria-label={sidebarAction}
@@ -327,7 +329,7 @@ function App(): React.JSX.Element {
                 aria-controls="file-sidebar"
                 onClick={() => setSidebarOpen((open) => !open)}
               >
-                {sidebarOpen ? <PanelLeftClose size={17} /> : <PanelLeftOpen size={17} />}
+                <PanelLeft size={16} strokeWidth={1.5} />
               </button>
             )}
             {vault ? (
@@ -354,11 +356,16 @@ function App(): React.JSX.Element {
                 title={`反向链接 (${backlinks.hits.length})`}
                 aria-expanded={backlinksOpen}
               >
-                🔗{' '}
+                <Link2 size={12} strokeWidth={1.6} />
                 <span className="hit-count" role="status" aria-label="反向链接数">
                   {backlinks.hits.length}
-                </span>{' '}
-                处引用 {backlinksOpen ? '▴' : '▾'}
+                </span>
+                <span>处引用</span>
+                {backlinksOpen ? (
+                  <ChevronUp size={11} strokeWidth={1.8} />
+                ) : (
+                  <ChevronDown size={11} strokeWidth={1.8} />
+                )}
               </button>
             )}
             {doc && (
@@ -369,7 +376,11 @@ function App(): React.JSX.Element {
                 aria-label={modeAction}
                 onClick={() => workspace.toggleMode()}
               >
-                {mode === 'live' ? <BookOpen size={17} /> : <PencilLine size={17} />}
+                {mode === 'live' ? (
+                  <BookOpen size={16} strokeWidth={1.5} />
+                ) : (
+                  <PencilLine size={16} strokeWidth={1.5} />
+                )}
               </button>
             )}
             <button
@@ -379,7 +390,7 @@ function App(): React.JSX.Element {
               aria-label={isDark ? '切换到浅色外观' : '切换到深色外观'}
               onClick={() => void window.mote?.toggleTheme?.()}
             >
-              {isDark ? <Sun size={17} /> : <Moon size={17} />}
+              {isDark ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
             </button>
           </div>
         </header>
@@ -430,7 +441,7 @@ function App(): React.JSX.Element {
                 type="button"
                 onClick={() => void workspace.chooseVault()}
               >
-                <FolderOpen size={18} />
+                <FolderOpen size={16} strokeWidth={1.5} />
                 打开笔记库
               </button>
             )}
@@ -453,7 +464,7 @@ function App(): React.JSX.Element {
               aria-label="关闭"
               onClick={() => setBacklinksOpen(false)}
             >
-              <X size={15} />
+              <X size={14} strokeWidth={1.5} />
             </button>
           </header>
           <div className="hit-scroll" data-note-path={doc.path}>

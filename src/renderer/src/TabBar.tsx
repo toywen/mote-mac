@@ -23,7 +23,7 @@ export function TabBar({
           aria-label="新建标签页"
           onClick={onNewTab}
         >
-          <Plus size={14} />
+          <Plus size={13} strokeWidth={1.5} />
         </button>
       </div>
     )
@@ -71,7 +71,7 @@ export function TabBar({
                   void workspace.closeTab(path)
                 }}
               >
-                <X size={12} />
+                <X size={11} strokeWidth={1.6} />
               </button>
             </div>
           )
@@ -84,7 +84,7 @@ export function TabBar({
         aria-label="新建标签页"
         onClick={onNewTab}
       >
-        <Plus size={14} />
+        <Plus size={13} strokeWidth={1.5} />
       </button>
     </div>
   )

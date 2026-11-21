@@ -92,4 +92,41 @@ describe('updaterTypes - pickBestAsset', () => {
     ]
     expect(pickBestAsset(winAssets, 'arm64')).toBeNull()
   })
+
+  it('rejects arm64 assets when target is x64 and returns null if only arm64 assets exist', () => {
+    const armOnly: ReleaseAsset[] = [
+      {
+        name: 'mote-1.0.0-arm64.dmg',
+        browserDownloadUrl: 'https://example.com/arm64.dmg',
+        size: 100,
+        contentType: 'application/octet-stream'
+      },
+      {
+        name: 'mote-1.0.0-arm64-mac.zip',
+        browserDownloadUrl: 'https://example.com/arm64-mac.zip',
+        size: 100,
+        contentType: 'application/zip'
+      }
+    ]
+    expect(pickBestAsset(armOnly, 'x64')).toBeNull()
+  })
+
+  it('picks universal asset when target is x64 or arm64 and universal is provided', () => {
+    const universalAssets: ReleaseAsset[] = [
+      {
+        name: 'mote-1.0.1-universal.dmg',
+        browserDownloadUrl: 'https://example.com/universal.dmg',
+        size: 200,
+        contentType: 'application/octet-stream'
+      },
+      {
+        name: 'mote-1.0.1-universal-mac.zip',
+        browserDownloadUrl: 'https://example.com/universal.zip',
+        size: 200,
+        contentType: 'application/zip'
+      }
+    ]
+    expect(pickBestAsset(universalAssets, 'x64')?.name).toBe('mote-1.0.1-universal-mac.zip')
+    expect(pickBestAsset(universalAssets, 'arm64')?.name).toBe('mote-1.0.1-universal-mac.zip')
+  })
 })

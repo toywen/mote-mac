@@ -33,19 +33,20 @@ main ── A 打包与CI/CD ── B 检查与下载核心 ── C 平滑安�
 
 ## PR A：打包配置与 GitHub Actions CI/CD 工作流
 
-- 目标：配置 `electron-builder` 输出 macOS `.dmg` 与 `.zip` 安装包，编写 GitHub Actions 自动构建工作流。
+- 目标：配置 `electron-builder` 输出 macOS `.dmg` 与 `.zip` 安装包（覆盖 Apple Silicon arm64、Intel x64 与 Universal 通用双架构），编写 GitHub Actions 自动构建工作流。
 - 核心变更：
   - `electron-builder.yml`：
-    - 配置 `mac.target` 支持 `dmg` 与 `zip`（覆盖 `x64` 和 `arm64`）；
+    - 配置 `mac.target` 支持 `dmg` 与 `zip`，覆盖 `arm64`、`x64` 与 `universal` 双架构；
     - 配置 `dmg` 挂载窗口大小、图标位置、`/Applications` 软链接；
     - 配置 `publish` 提供商为 `github`（`owner: toywen`，`repo: mote-mac`）；
   - `package.json`：
     - 增加 `"build:dmg": "npm run build && electron-builder --mac dmg"`；
-    - 增加 `"build:release": "npm run build && electron-builder --mac dmg zip"`；
+    - 增加 `"build:dmg:all": "npm run build && electron-builder --mac dmg --arm64 --x64 --universal"`；
+    - 增加 `"build:release": "npm run build && electron-builder --mac dmg zip --arm64 --x64 --universal"`；
   - `.github/workflows/release.yml`：
     - 触发条件：推送 `v*` tag（如 `v1.0.1`）以及手动 `workflow_dispatch`；
     - 运行环境：`macos-latest`；
-    - 步骤：拉取代码、配置 Node 22、`npm ci`、运行测试（`npm test`）、执行构建打包，并通过 `softprops/action-gh-release` 自动创建 Release 发布产物。
+    - 步骤：拉取代码、配置 Node 22、`npm ci`、运行测试（`npm test`）、执行构建打包（显式指定 `--arm64 --x64 --universal` 构建全架构安装包），并通过 `softprops/action-gh-release` 自动创建并发布全架构 Release 产物。
 
 ---
 

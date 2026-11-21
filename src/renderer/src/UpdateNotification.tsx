@@ -40,7 +40,7 @@ export function UpdateNotification(): React.JSX.Element | null {
     <div className="update-banner" role="status" aria-live="polite">
       <div className="update-banner-header">
         <div className="update-banner-title">
-          <Sparkles size={16} />
+          <Sparkles size={15} strokeWidth={1.5} />
           {state === 'available' && (
             <span>
               发现新版本 <span className="update-banner-badge">v{release?.version}</span>
@@ -68,7 +68,7 @@ export function UpdateNotification(): React.JSX.Element | null {
                 className="update-btn update-btn-primary"
                 onClick={handleDownload}
               >
-                <Download size={13} />
+                <Download size={13} strokeWidth={1.5} />
                 下载更新
               </button>
             </>
@@ -76,7 +76,7 @@ export function UpdateNotification(): React.JSX.Element | null {
 
           {state === 'downloaded' && (
             <button type="button" className="update-btn update-btn-primary" onClick={handleInstall}>
-              <RefreshCw size={13} />
+              <RefreshCw size={13} strokeWidth={1.5} />
               立即重启更新
             </button>
           )}
@@ -88,7 +88,7 @@ export function UpdateNotification(): React.JSX.Element | null {
             aria-label="关闭提示"
             onClick={() => setDismissed(true)}
           >
-            <X size={14} />
+            <X size={13} strokeWidth={1.5} />
           </button>
         </div>
       </div>

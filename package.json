@@ -19,7 +19,8 @@
     "build:unpack": "npm run build && electron-builder --dir",
     "build:mac": "npm run build && electron-builder --mac --dir",
     "build:dmg": "npm run build && electron-builder --mac dmg",
-    "build:release": "npm run build && electron-builder --mac dmg zip",
+    "build:dmg:all": "npm run build && electron-builder --mac dmg --arm64 --x64 --universal",
+    "build:release": "npm run build && electron-builder --mac dmg zip --arm64 --x64 --universal",
     "test": "vitest run && node tools/compare-links.mjs tests/fixtures/vaults/links",
     "test:e2e": "electron-vite build && playwright test"
   },
