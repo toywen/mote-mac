@@ -16,11 +16,32 @@ const imageTypes = new Map([
   ['avif', 'image/avif']
 ])
 
+// The video types supported for inline playback.
+const videoTypes = new Map([
+  ['mp4', 'video/mp4'],
+  ['webm', 'video/webm'],
+  ['mov', 'video/quicktime'],
+  ['m4v', 'video/mp4'],
+  ['ogv', 'video/ogg']
+])
+
 // The MIME type of an image path, or null when its extension is not an image type.
 export function imageType(path: string): string | null {
   const name = path.slice(path.lastIndexOf('/') + 1)
   const dot = name.lastIndexOf('.')
   return dot < 0 ? null : (imageTypes.get(name.slice(dot + 1).toLowerCase()) ?? null)
+}
+
+// The MIME type of a video path, or null when its extension is not a video type.
+export function videoType(path: string): string | null {
+  const name = path.slice(path.lastIndexOf('/') + 1)
+  const dot = name.lastIndexOf('.')
+  return dot < 0 ? null : (videoTypes.get(name.slice(dot + 1).toLowerCase()) ?? null)
+}
+
+// The MIME type of any supported media path (image or video), or null.
+export function mediaType(path: string): string | null {
+  return imageType(path) ?? videoType(path)
 }
 
 export function fileUrl(path: VaultPath): string {

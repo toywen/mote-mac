@@ -66,6 +66,8 @@ export type ThemeState = {
   shouldUseDarkColors: boolean
 }
 
+export type FontMode = 'kai' | 'hei'
+
 export interface MoteApi {
   getVault(): Promise<VaultInfo | null>
   chooseVault(): Promise<VaultInfo | null>
@@ -97,6 +99,10 @@ export interface MoteApi {
   setTheme(theme: ThemeSource): Promise<ThemeState>
   toggleTheme(): Promise<ThemeState>
   onThemeChanged(callback: (state: ThemeState) => void): () => void
+  getFont(): Promise<FontMode>
+  setFont(font: FontMode): Promise<FontMode>
+  toggleFont(): Promise<FontMode>
+  onFontChanged(callback: (font: FontMode) => void): () => void
 }
 
 export const channels = {
@@ -121,5 +127,9 @@ export const channels = {
   getTheme: 'mote:get-theme',
   setTheme: 'mote:set-theme',
   toggleTheme: 'mote:toggle-theme',
-  themeChanged: 'mote:theme-changed'
+  themeChanged: 'mote:theme-changed',
+  getFont: 'mote:get-font',
+  setFont: 'mote:set-font',
+  toggleFont: 'mote:toggle-font',
+  fontChanged: 'mote:font-changed'
 } as const

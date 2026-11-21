@@ -7,10 +7,12 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
   PencilLine,
-  Sun
+  Sun,
+  Type
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { FileTree, type FileTreeHandle } from './FileTree'
+import { type FontMode } from '../../core/ipc'
 import { groupHits } from '../../core/hits'
 import { buildLinkIndex } from '../../core/resolve'
 import { HitList } from './HitList'
@@ -47,8 +49,26 @@ function App(): React.JSX.Element {
     }
     return false
   })
+  const [fontMode, setFontMode] = useState<FontMode>('kai')
   const fileTreeRef = useRef<FileTreeHandle>(null)
   useEffect(() => workspace.connect(), [])
+  useEffect(() => {
+    document.documentElement.dataset.font = fontMode
+  }, [fontMode])
+  useEffect(() => {
+    document.documentElement.dataset.theme = isDark ? 'dark' : 'light'
+  }, [isDark])
+  useEffect(() => {
+    const offFont = window.mote?.onFontChanged?.((font) => {
+      setFontMode(font)
+    })
+    void window.mote?.getFont?.().then((font) => {
+      if (font) setFontMode(font)
+    })
+    return () => {
+      offFont?.()
+    }
+  }, [])
   useEffect(() => {
     const media = window.matchMedia?.('(prefers-color-scheme: dark)')
     const updateMedia = (): void => setIsDark(media.matches)
@@ -93,6 +113,13 @@ function App(): React.JSX.Element {
       } else if (event.metaKey && event.shiftKey && !event.altKey && event.code === 'KeyD') {
         event.preventDefault()
         void window.mote?.toggleTheme?.()
+      } else if (event.metaKey && event.shiftKey && !event.altKey && event.code === 'KeyK') {
+        event.preventDefault()
+        if (window.mote?.toggleFont) {
+          void window.mote.toggleFont()
+        } else {
+          setFontMode((f) => (f === 'kai' ? 'hei' : 'kai'))
+        }
       } else if (
         event.metaKey &&
         event.altKey &&
@@ -240,6 +267,25 @@ function App(): React.JSX.Element {
                 {mode === 'live' ? <BookOpen size={17} /> : <PencilLine size={17} />}
               </button>
             )}
+            <button
+              className="icon-button font-toggle"
+              type="button"
+              title={
+                fontMode === 'kai'
+                  ? '当前：文雅楷体（点击或 ⌘⇧K 切换为现代黑体）'
+                  : '当前：现代黑体（点击或 ⌘⇧K 切换为文雅楷体）'
+              }
+              aria-label={fontMode === 'kai' ? '切换为现代黑体' : '切换为文雅楷体'}
+              onClick={() => {
+                if (window.mote?.toggleFont) {
+                  void window.mote.toggleFont()
+                } else {
+                  setFontMode((f) => (f === 'kai' ? 'hei' : 'kai'))
+                }
+              }}
+            >
+              <Type size={17} />
+            </button>
             <button
               className="icon-button theme-toggle"
               type="button"

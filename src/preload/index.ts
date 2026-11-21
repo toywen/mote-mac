@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import {
   channels,
+  type FontMode,
   type MoteApi,
   type ThemeSource,
   type ThemeState,
@@ -44,6 +45,14 @@ const mote: MoteApi = {
     const listener = (_event: IpcRendererEvent, state: ThemeState): void => callback(state)
     ipcRenderer.on(channels.themeChanged, listener)
     return () => ipcRenderer.off(channels.themeChanged, listener)
+  },
+  getFont: () => ipcRenderer.invoke(channels.getFont),
+  setFont: (font: FontMode) => ipcRenderer.invoke(channels.setFont, font),
+  toggleFont: () => ipcRenderer.invoke(channels.toggleFont),
+  onFontChanged: (callback) => {
+    const listener = (_event: IpcRendererEvent, font: FontMode): void => callback(font)
+    ipcRenderer.on(channels.fontChanged, listener)
+    return () => ipcRenderer.off(channels.fontChanged, listener)
   }
 }
 

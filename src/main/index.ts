@@ -6,6 +6,7 @@ import { fileScheme } from '../core/fileUrl'
 import {
   channels,
   type ContentHash,
+  type FontMode,
   type ThemeSource,
   type ThemeState,
   type VaultPath
@@ -22,10 +23,19 @@ let choosingVault = false
 let closing = false
 let quitting = false
 
-// Standard, so a mote-file URL has a host and a path. Secure, so the window's images from it
-// are not mixed content.
+// Standard, so a mote-file URL has a host and a path. Secure, so the window's images and videos
+// from it are not mixed content. Stream and supportFetchAPI allow video playback and streaming.
 protocol.registerSchemesAsPrivileged([
-  { scheme: fileScheme, privileges: { standard: true, secure: true } }
+  {
+    scheme: fileScheme,
+    privileges: {
+      standard: true,
+      secure: true,
+      stream: true,
+      supportFetchAPI: true,
+      corsEnabled: true
+    }
+  }
 ])
 
 function currentVault(dir: string): Vault {
@@ -39,7 +49,10 @@ const journalFile = (): string => join(app.getPath('userData'), 'journal.json')
 type AppSettings = {
   lastVault?: string
   theme?: ThemeSource
+  font?: FontMode
 }
+
+let currentFont: FontMode = 'kai'
 
 async function readSettings(): Promise<AppSettings> {
   try {
@@ -201,6 +214,22 @@ ipcMain.handle(channels.toggleTheme, async (): Promise<ThemeState> => {
   }
 })
 
+ipcMain.handle(channels.getFont, (): FontMode => currentFont)
+
+ipcMain.handle(channels.setFont, async (_event, font: FontMode): Promise<FontMode> => {
+  currentFont = font
+  await writeSettings({ font })
+  window?.webContents.send(channels.fontChanged, currentFont)
+  return currentFont
+})
+
+ipcMain.handle(channels.toggleFont, async (): Promise<FontMode> => {
+  currentFont = currentFont === 'kai' ? 'hei' : 'kai'
+  await writeSettings({ font: currentFont })
+  window?.webContents.send(channels.fontChanged, currentFont)
+  return currentFont
+})
+
 ipcMain.on(channels.respondToClose, (event, ready: boolean) => {
   if (!closing || window?.webContents !== event.sender) return
   closing = false
@@ -273,6 +302,9 @@ app.whenReady().then(async () => {
     if (typeof settings.lastVault === 'string') vault = await openVault(settings.lastVault)
     if (settings.theme === 'light' || settings.theme === 'dark' || settings.theme === 'system') {
       nativeTheme.themeSource = settings.theme
+    }
+    if (settings.font === 'kai' || settings.font === 'hei') {
+      currentFont = settings.font
     }
   } catch {
     // An unavailable vault can be selected again in the window.

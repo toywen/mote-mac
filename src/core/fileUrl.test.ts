@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest'
-import { fileUrl, imageType, parseFileUrl } from './fileUrl.ts'
+import { fileUrl, imageType, mediaType, parseFileUrl, videoType } from './fileUrl.ts'
 import { parseVaultPath } from './ipc.ts'
 
 describe('fileUrl and parseFileUrl', () => {
@@ -74,5 +74,27 @@ describe('imageType', () => {
       'a.toString'
     ])
       expect(imageType(path), path).toBeNull()
+  })
+})
+
+describe('videoType and mediaType', () => {
+  it('identifies supported video formats', () => {
+    expect(videoType('video.mp4')).toBe('video/mp4')
+    expect(videoType('folder/clip.WEBM')).toBe('video/webm')
+    expect(videoType('movie.mov')).toBe('video/quicktime')
+    expect(videoType('file.m4v')).toBe('video/mp4')
+    expect(videoType('audio.ogv')).toBe('video/ogg')
+  })
+
+  it('is null for non-video files', () => {
+    expect(videoType('image.png')).toBeNull()
+    expect(videoType('doc.pdf')).toBeNull()
+    expect(videoType('note.md')).toBeNull()
+  })
+
+  it('mediaType covers both images and videos', () => {
+    expect(mediaType('image.png')).toBe('image/png')
+    expect(mediaType('video.mp4')).toBe('video/mp4')
+    expect(mediaType('doc.pdf')).toBeNull()
   })
 })

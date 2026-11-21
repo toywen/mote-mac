@@ -5,10 +5,11 @@ import { buildLinkIndex, resolveLink, type LinkIndex } from './resolve.ts'
 import { preview } from './hits.ts'
 import { sourceText } from './text.ts'
 
-export type IndexedNote = { text: string; links: LinkRef[] }
+export type IndexedNote = { readonly text: string; readonly links: LinkRef[] }
 
 // Every note's normalized text and links, plus the file list that links resolve against.
-// Backlinks are not cached: each query resolves every link, so nothing goes stale.
+// Links are parsed on demand when accessed. Backlinks use a substring quick-filter before
+// link resolution so cold queries on large vaults remain fast.
 export class NoteIndex {
   private readonly notes = new Map<VaultPath, IndexedNote>()
   private links: LinkIndex = buildLinkIndex([])
@@ -17,9 +18,16 @@ export class NoteIndex {
     this.links = buildLinkIndex(files)
   }
 
-  set(path: VaultPath, raw: string): void {
+  set(path: VaultPath, raw: string, links?: LinkRef[]): void {
     const { text } = sourceText(raw)
-    this.notes.set(path, { text, links: extractLinks(text) })
+    let cached: LinkRef[] | null = links ?? null
+    this.notes.set(path, {
+      text,
+      get links(): LinkRef[] {
+        if (!cached) cached = extractLinks(text)
+        return cached
+      }
+    })
   }
 
   delete(path: VaultPath): void {
@@ -36,7 +44,10 @@ export class NoteIndex {
 
   backlinks(target: VaultPath): Hit[] {
     const hits: Hit[] = []
+    const targetName = target.slice(target.lastIndexOf('/') + 1).replace(/\.md$/i, '')
+    const targetLower = targetName.toLowerCase()
     for (const [path, note] of this.notes) {
+      if (!note.text.toLowerCase().includes(targetLower)) continue
       for (const link of note.links) {
         if (resolveLink(this.links, link.target, path) !== target) continue
         const { from, to } = link.range

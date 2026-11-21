@@ -507,8 +507,23 @@ export class Vault {
           reverseMap.set(t, f)
         }
 
-        for (const [notePath, ent] of this.entries) {
-          if (ent.kind !== 'note') continue
+        const candidateNotes = new Set<VaultPath>()
+        for (const newP of renames.values()) {
+          if (this.entries.get(newP)?.kind === 'note') candidateNotes.add(newP)
+        }
+        for (const [oldP] of renames) {
+          const oldName = oldP.slice(oldP.lastIndexOf('/') + 1).replace(/\.md$/i, '')
+          const oldLower = oldName.toLowerCase()
+          for (const [notePath, indexed] of this.index.entries()) {
+            if (indexed.text.toLowerCase().includes(oldLower)) {
+              candidateNotes.add(notePath)
+            }
+          }
+        }
+
+        for (const notePath of candidateNotes) {
+          const ent = this.entries.get(notePath)
+          if (!ent || ent.kind !== 'note') continue
           const oldSourcePath = reverseMap.get(notePath) ?? notePath
           const currentVersion = await this.readNote(notePath)
           if (!currentVersion) continue

@@ -253,3 +253,36 @@ test('clicking theme toggle switches between dark and light scheme', async () =>
     await app.close()
   }
 })
+
+test('clicking font toggle switches between kai and hei typography', async () => {
+  const { app, window } = await start('行内')
+  try {
+    await openNote(window, '行内')
+    const fontBtn = window.locator('.font-toggle')
+    await expect(fontBtn).toBeVisible()
+
+    await expect
+      .poll(() => window.evaluate(() => document.documentElement.dataset.font))
+      .toBe('kai')
+
+    // Click toggle button
+    await fontBtn.click()
+    await expect
+      .poll(() => window.evaluate(() => document.documentElement.dataset.font))
+      .toBe('hei')
+
+    // Click toggle button again
+    await fontBtn.click()
+    await expect
+      .poll(() => window.evaluate(() => document.documentElement.dataset.font))
+      .toBe('kai')
+
+    // Toggle via Cmd+Shift+K shortcut
+    await window.keyboard.press('Meta+Shift+KeyK')
+    await expect
+      .poll(() => window.evaluate(() => document.documentElement.dataset.font))
+      .toBe('hei')
+  } finally {
+    await app.close()
+  }
+})

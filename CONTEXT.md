@@ -12,7 +12,7 @@
 | 笔记       | note          | 笔记库里的一个 `.md` 文件                                                                         |
 | 附件       | file          | 笔记库里不是笔记的文件，例如图片和 PDF。用 macOS 的默认程序打开                                   |
 | 图片       | image         | 扩展名是 png、jpg、jpeg、gif、svg、webp、bmp 或 avif 的附件。编辑器经 `mote-file://` 读取并显示它 |
-| 视频       | video         | 扩展名是 mp4、webm、mov、m4v 或 ogv 的附件。编辑器经 `mote-file://` 渲染播放器并播放它           |
+| 视频       | video         | 扩展名是 mp4、webm、mov、m4v 或 ogv 的附件。编辑器经 `mote-file://` 渲染播放器并播放它            |
 | 库内路径   | `VaultPath`   | 笔记库内的相对路径，用 `/` 分隔，不含以 `.` 开头的部分。只由 `parseVaultPath` 创建                |
 | 笔记库配置 | `VaultConfig` | 笔记库里 `.obsidian` 文件夹中的 JSON 配置。mote 只读，从不修改                                    |
 | 日记       | daily note    | 按日期命名、每天一篇的笔记                                                                        |
@@ -50,9 +50,9 @@
 
 ## 开发
 
-| 术语     | 英文名               | 定义                                                                                 |
-| -------- | -------------------- | ------------------------------------------------------------------------------------ |
-| 步骤     | step                 | 开发顺序里的一步，编号 0 到 8，见 [features.md](docs/features.md#进度一览)           |
+| 术语     | 英文名               | 定义                                                                                  |
+| -------- | -------------------- | ------------------------------------------------------------------------------------- |
+| 步骤     | step                 | 开发顺序里的一步，编号 0 到 8，见 [features.md](docs/features.md#进度一览)            |
 | 验收清单 | acceptance checklist | 判断第一版能否替换 Obsidian 的 10 条检查，见 [features.md](docs/features.md#验收清单) |
-| 副本     | copy                 | 笔记库的冻结拷贝，用来测试。原始笔记库从不用来测试                                   |
-| 真实窗口 | real window          | 用 `verify-mote` skill 启动并驱动的 mote 窗口                                        |
+| 副本     | copy                 | 笔记库的冻结拷贝，用来测试。原始笔记库从不用来测试                                    |
+| 真实窗口 | real window          | 用 `verify-mote` skill 启动并驱动的 mote 窗口                                         |

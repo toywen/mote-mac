@@ -11,6 +11,7 @@ import type { Renderer } from './preview'
 import { quoteRenderers } from './quotes'
 import { tableRenderers } from './tables'
 import { taskRenderers } from './tasks'
+import { videoRenderers } from './videos'
 
 // Syntax node name to the renderer that draws it. A new element adds a file and one line here.
 export const renderers: Record<string, Renderer> = {
@@ -27,6 +28,8 @@ export const renderers: Record<string, Renderer> = {
   ...taskRenderers,
   // Takes FencedCode from codeRenderers and hands it every block that is not a diagram.
   ...mermaidRenderers,
-  // Takes WikiEmbed from imageRenderers and hands it every embed that is not a note.
+  // Takes Image, HTMLBlock, HTMLTag from imageRenderers/defaults, hands non-videos to imageRenderers
+  ...videoRenderers,
+  // Takes WikiEmbed from videoRenderers and hands it every embed that is not a note.
   ...embedRenderers
 }

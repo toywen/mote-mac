@@ -1,3 +1,16 @@
+@font-face {
+  font-family: 'Kai';
+  font-weight: 400;
+  src: local('STKaitiSC-Regular'), local('Kaiti SC'), local('STKaiti'), serif;
+  size-adjust: 108%;
+}
+@font-face {
+  font-family: 'Kai';
+  font-weight: 600 700;
+  src: local('STKaitiSC-Bold'), local('Kaiti SC Bold'), serif;
+  size-adjust: 108%;
+}
+
 :root {
   color-scheme: light dark;
   /* 暖色宣纸与徽墨设计系统 (Paper & Ink) */
@@ -20,10 +33,23 @@
   --tag-background: rgba(32, 92, 74, 0.09);
   --quote: #9b978b;
   --save-dot: #205c4a;
-  --font-text:
+  --font-kai: 'Kai', 'Kaiti SC', 'STKaiti', 'Songti SC', 'STSong', Georgia, serif;
+  --font-hei:
     -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', 'Segoe UI', Roboto,
     sans-serif;
+  --font-text: var(--font-kai);
+  --font-heading: var(--font-kai);
   --font-mono: ui-monospace, 'SF Mono', Menlo, 'PingFang SC', monospace;
+}
+
+html[data-font='kai'] {
+  --font-text: var(--font-kai);
+  --font-heading: var(--font-kai);
+}
+
+html[data-font='hei'] {
+  --font-text: var(--font-hei);
+  --font-heading: var(--font-hei);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -49,6 +75,52 @@
     --quote: #656259;
     --save-dot: #7ec4a8;
   }
+}
+
+html[data-theme='dark'] {
+  color-scheme: dark;
+  --background: #1c1b18;
+  --sidebar: #161513;
+  --border: #2b2925;
+  --text: #e9e6de;
+  --muted: #9d998d;
+  --t3: #656259;
+  --hover: rgba(255, 245, 225, 0.065);
+  --selected: rgba(255, 245, 225, 0.12);
+  --accent: #9fb0e8;
+  --notice: #2f271c;
+  --notice-text: #f0cb8d;
+  --link: #9fb0e8;
+  --link-missing: #dfb672;
+  --code-background: rgba(255, 245, 225, 0.065);
+  --highlight: rgba(223, 182, 114, 0.25);
+  --tag-text: #7ec4a8;
+  --tag-background: rgba(126, 196, 168, 0.12);
+  --quote: #656259;
+  --save-dot: #7ec4a8;
+}
+
+html[data-theme='light'] {
+  color-scheme: light;
+  --background: #fcfbf8;
+  --sidebar: #f5f3ec;
+  --border: #ebe7db;
+  --text: #22201c;
+  --muted: #656157;
+  --t3: #9b978b;
+  --hover: rgba(70, 55, 30, 0.055);
+  --selected: rgba(70, 55, 30, 0.095);
+  --accent: #2c447c;
+  --notice: #faf3e8;
+  --notice-text: #735118;
+  --link: #2c447c;
+  --link-missing: #965f1a;
+  --code-background: rgba(70, 55, 30, 0.055);
+  --highlight: rgba(223, 170, 70, 0.28);
+  --tag-text: #205c4a;
+  --tag-background: rgba(32, 92, 74, 0.09);
+  --quote: #9b978b;
+  --save-dot: #205c4a;
 }
 
 html,

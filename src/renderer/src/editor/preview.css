@@ -1,7 +1,8 @@
 /* Live preview and reading mode. Colors come from the variables in assets/main.css. */
 
 .mote-syntax {
-  color: var(--muted);
+  color: var(--t3);
+  opacity: 0.85;
 }
 
 .mote-strong {
@@ -50,8 +51,11 @@
 
 /* Headings. The editor's own rules use two classes, so these use three. */
 .cm-content .cm-line.mote-h {
+  font-family: var(--font-heading);
+  color: var(--accent);
   font-weight: 700;
   line-height: 1.35;
+  letter-spacing: -0.015em;
   padding-top: 0.35em;
   padding-bottom: 0.15em;
 }
@@ -100,6 +104,7 @@
   background: var(--hover);
   padding-left: 14px;
   color: var(--text);
+  border-radius: 0 6px 6px 0;
 }
 
 .mote-hr {
@@ -123,4 +128,21 @@
 .cm-content .cm-line.mote-codeblock-last {
   border-bottom-left-radius: 5px;
   border-bottom-right-radius: 5px;
+}
+
+.cm-content .cm-line.mote-codeblock.mote-properties {
+  background: var(--code-background);
+  color: var(--muted);
+  border-left: 1px solid var(--border);
+  border-right: 1px solid var(--border);
+}
+.cm-content .cm-line.mote-codeblock-first.mote-properties {
+  border-top: 1px solid var(--border);
+  border-top-left-radius: 6px;
+  border-top-right-radius: 6px;
+}
+.cm-content .cm-line.mote-codeblock-last.mote-properties {
+  border-bottom: 1px solid var(--border);
+  border-bottom-left-radius: 6px;
+  border-bottom-right-radius: 6px;
 }

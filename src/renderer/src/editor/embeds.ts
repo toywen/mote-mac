@@ -6,7 +6,7 @@ import { linkTarget, markdownParser } from '../../../core/markdown'
 import { subpathRange } from '../../../core/subpath'
 import { sourceText } from '../../../core/text'
 import { workspace } from '../workspace'
-import { imageRenderers } from './images'
+import { videoWikiEmbed } from './videos'
 import { editorMode, linkContext } from './livePreview'
 import { noteView } from './noteView'
 import type { LinkContext, Renderer } from './preview'
@@ -211,7 +211,7 @@ class EmbedWidget extends WidgetType {
   }
 }
 
-const imageEmbed = imageRenderers.WikiEmbed
+const imageEmbed = videoWikiEmbed
 
 // ![[note]] whose target is a note shows that note. Images, other files, targets that do not
 // resolve, a note already in the chain above and a fourth level go to the image renderer, which

@@ -59,13 +59,13 @@ export async function readNoteFile(full: string): Promise<NoteVersion | null> {
   try {
     const file = await open(full, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK)
     try {
-      if (!(await file.stat()).isFile()) return null
-      return noteVersion(await file.readFile())
+      const data = await file.readFile()
+      return noteVersion(data)
     } finally {
       await file.close()
     }
   } catch (error) {
-    if (missing(error)) return null
+    if (missing(error) || (error as NodeJS.ErrnoException).code === 'EISDIR') return null
     throw error
   }
 }
