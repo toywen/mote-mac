@@ -243,6 +243,143 @@ body {
   align-items: center;
   min-width: 0;
   gap: 6px;
+  flex: 1;
+  height: 100%;
+}
+
+/* 标签页导航栏样式 */
+.tab-bar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  min-width: 0;
+  flex: 1;
+  height: 100%;
+  overflow: hidden;
+  app-region: no-drag;
+}
+
+.tab-bar.is-empty {
+  flex: 0 0 auto;
+}
+
+.tab-scroll {
+  display: flex;
+  align-items: center;
+  gap: 3px;
+  min-width: 0;
+  height: 100%;
+  overflow-x: auto;
+  overflow-y: hidden;
+  scrollbar-width: none;
+}
+
+.tab-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.tab-item {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 8px 0 10px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--muted);
+  cursor: pointer;
+  user-select: none;
+  white-space: nowrap;
+  max-width: 200px;
+  min-width: 70px;
+  border: 1px solid transparent;
+  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  box-sizing: border-box;
+}
+
+.tab-item:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.tab-item.active {
+  background: var(--background);
+  color: var(--text);
+  font-weight: 500;
+  border-color: var(--border);
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+}
+
+.tab-folder {
+  font-size: 11px;
+  color: var(--t3);
+  opacity: 0.7;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 60px;
+  flex-shrink: 0;
+}
+
+.tab-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+  flex: 1;
+}
+
+.tab-dirty {
+  font-size: 14px;
+  line-height: 1;
+  color: var(--accent);
+  flex-shrink: 0;
+}
+
+.tab-close {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 4px;
+  color: var(--t3);
+  background: transparent;
+  border: none;
+  padding: 0;
+  opacity: 0;
+  flex-shrink: 0;
+  transition: opacity 120ms ease, background 120ms ease, color 120ms ease;
+}
+
+.tab-item:hover .tab-close,
+.tab-item.active .tab-close,
+.tab-close:focus-visible {
+  opacity: 1;
+}
+
+.tab-close:hover {
+  background: var(--border);
+  color: var(--text);
+}
+
+.tab-add {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  border-radius: 5px;
+  color: var(--muted);
+  background: transparent;
+  border: none;
+  padding: 0;
+  flex-shrink: 0;
+  transition: background 120ms ease, color 120ms ease;
+}
+
+.tab-add:hover {
+  background: var(--hover);
+  color: var(--text);
 }
 
 .pane-header h1,

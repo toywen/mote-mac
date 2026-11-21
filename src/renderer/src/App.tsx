@@ -20,12 +20,13 @@ import { HitList } from './HitList'
 import { NoteEditor } from './NoteEditor'
 import { QuickOpen } from './QuickOpen'
 import { SearchPanel } from './SearchPanel'
+import { TabBar } from './TabBar'
 import { UpdateNotification } from './UpdateNotification'
 import { executeFormatting, type FormatAction } from './editor/formatting'
 import { workspace } from './workspace'
 
 function App(): React.JSX.Element {
-  const { vault, doc, busy, error, backlinks, selection, mode } = useSyncExternalStore(
+  const { vault, tabs, doc, busy, error, backlinks, selection, mode } = useSyncExternalStore(
     workspace.subscribe,
     workspace.snapshot
   )
@@ -124,6 +125,20 @@ function App(): React.JSX.Element {
         } else {
           setFontMode((f) => (f === 'kai' ? 'hei' : 'kai'))
         }
+      } else if (event.metaKey && !event.shiftKey && !event.altKey && event.code === 'KeyW') {
+        event.preventDefault()
+        void workspace.closeActiveTab()
+      } else if (event.ctrlKey && !event.metaKey && !event.altKey && event.code === 'Tab') {
+        event.preventDefault()
+        workspace.cycleTab(event.shiftKey ? -1 : 1)
+      } else if (
+        event.metaKey &&
+        event.shiftKey &&
+        !event.altKey &&
+        (event.code === 'BracketLeft' || event.code === 'BracketRight')
+      ) {
+        event.preventDefault()
+        workspace.cycleTab(event.code === 'BracketLeft' ? -1 : 1)
       } else if (
         event.metaKey &&
         !event.shiftKey &&
@@ -162,6 +177,15 @@ function App(): React.JSX.Element {
           break
         case 'save':
           void workspace.save()
+          break
+        case 'close-tab':
+          void workspace.closeActiveTab()
+          break
+        case 'next-tab':
+          workspace.cycleTab(1)
+          break
+        case 'prev-tab':
+          workspace.cycleTab(-1)
           break
         case 'search': {
           const inEditor = document.activeElement?.closest('.cm-content')
@@ -306,45 +330,37 @@ function App(): React.JSX.Element {
                 {sidebarOpen ? <PanelLeftClose size={17} /> : <PanelLeftOpen size={17} />}
               </button>
             )}
-            {doc ? (
-              <h1 title={doc.path} className="editor-heading">
-                {doc.path.includes('/') ? (
-                  <span className="crumb-wrap">
-                    {doc.path
-                      .slice(0, doc.path.lastIndexOf('/'))
-                      .split('/')
-                      .map((seg, i) => (
-                        <span key={i} className="crumb-seg">
-                          {seg}
-                          <span className="crumb-sep">›</span>
-                        </span>
-                      ))}
-                    <b className="crumb-active">{doc.path.split('/').pop()?.slice(0, -3)}</b>
-                  </span>
-                ) : (
-                  doc.path.slice(0, -3)
-                )}
-                {backlinks?.path === doc.path && backlinks.hits.length > 0 && (
-                  <button
-                    type="button"
-                    className="title-relation-badge"
-                    onClick={() => setBacklinksOpen((open) => !open)}
-                    title={`反向链接 (${backlinks.hits.length})`}
-                    aria-expanded={backlinksOpen}
-                  >
-                    🔗{' '}
-                    <span className="hit-count" role="status" aria-label="反向链接数">
-                      {backlinks.hits.length}
-                    </span>{' '}
-                    处引用 {backlinksOpen ? '▴' : '▾'}
-                  </button>
-                )}
-              </h1>
+            {vault ? (
+              <TabBar
+                tabs={tabs}
+                activePath={doc?.path}
+                dirtyPath={doc?.kind === 'dirty' ? doc.path : undefined}
+                onNewTab={() => {
+                  setSidebarOpen(true)
+                  setSidebarView('files')
+                  void fileTreeRef.current?.createNote()
+                }}
+              />
             ) : (
-              <h1>编辑器</h1>
+              <h1>mote</h1>
             )}
           </div>
           <div className="editor-actions">
+            {doc && backlinks?.path === doc.path && backlinks.hits.length > 0 && (
+              <button
+                type="button"
+                className="title-relation-badge"
+                onClick={() => setBacklinksOpen((open) => !open)}
+                title={`反向链接 (${backlinks.hits.length})`}
+                aria-expanded={backlinksOpen}
+              >
+                🔗{' '}
+                <span className="hit-count" role="status" aria-label="反向链接数">
+                  {backlinks.hits.length}
+                </span>{' '}
+                处引用 {backlinksOpen ? '▴' : '▾'}
+              </button>
+            )}
             {doc && (
               <button
                 className="icon-button"

@@ -187,6 +187,7 @@ export const FileTree = forwardRef<
 
     if (vault.config.alwaysUpdateLinks) {
       await window.mote.renameOrMove(vault.dir, node.path, targetPath, true)
+      workspace.renameTab(node.path, targetPath)
       if (selected === node.path) void workspace.open(targetPath)
     } else {
       const count = await window.mote.countInboundLinks(vault.dir, node.path)
@@ -194,6 +195,7 @@ export const FileTree = forwardRef<
         setConfirmLinkUpdate({ oldPath: node.path, newPath: targetPath, count })
       } else {
         await window.mote.renameOrMove(vault.dir, node.path, targetPath, true)
+        workspace.renameTab(node.path, targetPath)
         if (selected === node.path) void workspace.open(targetPath)
       }
     }
@@ -205,6 +207,9 @@ export const FileTree = forwardRef<
       return
     }
     await window.mote.deleteEntry(vault.dir, node.path)
+    if (node.kind === 'note') {
+      void workspace.closeTab(node.path)
+    }
   }
 
   function keyDown(
@@ -462,6 +467,7 @@ export const FileTree = forwardRef<
                   const { oldPath, newPath } = confirmLinkUpdate
                   setConfirmLinkUpdate(null)
                   await window.mote.renameOrMove(vault.dir, oldPath, newPath, false)
+                  workspace.renameTab(oldPath, newPath)
                   if (selected === oldPath) void workspace.open(newPath)
                 }}
               >
@@ -475,6 +481,7 @@ export const FileTree = forwardRef<
                   const { oldPath, newPath } = confirmLinkUpdate
                   setConfirmLinkUpdate(null)
                   await window.mote.renameOrMove(vault.dir, oldPath, newPath, true)
+                  workspace.renameTab(oldPath, newPath)
                   if (selected === oldPath) void workspace.open(newPath)
                 }}
               >

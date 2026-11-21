@@ -34,6 +34,7 @@ type Visit = { path: VaultPath; cursor: Range | null }
 
 type WorkspaceState = {
   vault: VaultInfo | null
+  tabs: VaultPath[]
   doc: Doc | null
   busy: boolean
   error: string
@@ -54,6 +55,7 @@ const recentKey = (dir: string): string => `mote.recent:${dir}`
 class Workspace {
   private state: WorkspaceState = {
     vault: null,
+    tabs: [],
     doc: null,
     busy: true,
     error: '',
@@ -71,6 +73,7 @@ class Workspace {
   // The window's navigation history and the visit the open note belongs to.
   private visits: Visit[] = []
   private visit = -1
+  private cursors = new Map<VaultPath, Range>()
 
   snapshot = (): WorkspaceState => this.state
 
@@ -137,9 +140,10 @@ class Workspace {
       if (!(await this.flush())) return
       const vault = await window.mote.chooseVault()
       if (vault) {
-        this.set({ vault, doc: null, backlinks: null, selection: null })
+        this.set({ vault, doc: null, tabs: [], backlinks: null, selection: null })
         this.visits = []
         this.visit = -1
+        this.cursors.clear()
       }
     } catch (error) {
       this.fail(error)
@@ -186,6 +190,7 @@ class Workspace {
 
   // The editor reports the cursor, so going back to this note puts it there again.
   cursor(path: VaultPath, at: Range): void {
+    this.cursors.set(path, at)
     const visit = this.visits[this.visit]
     if (visit?.path === path) visit.cursor = at
   }
@@ -200,10 +205,18 @@ class Workspace {
   }
 
   // visit is the history index being returned to, or null to add a visit.
-  private async show(path: VaultPath, at: Place | undefined, visit: number | null): Promise<void> {
+  private async show(
+    path: VaultPath,
+    at: Place | undefined,
+    visit: number | null,
+    overrideTabs?: VaultPath[]
+  ): Promise<void> {
     const { vault, busy, doc } = this.state
     if (!vault || busy) return
+    const currentTabs = overrideTabs ?? this.state.tabs
+    const tabs = currentTabs.includes(path) ? currentTabs : [...currentTabs, path]
     if (path === doc?.path) {
+      if (this.state.tabs !== tabs) this.set({ tabs })
       if (visit !== null) this.visit = visit
       if (at) this.place(path, at)
       return
@@ -212,7 +225,7 @@ class Workspace {
     try {
       if (!(await this.flush())) return
       const version = await window.mote.readNote(vault.dir, path)
-      this.load(path, version)
+      this.load(path, version, tabs)
       if (version) {
         this.remember(vault.dir, path)
         if (visit === null) {
@@ -227,6 +240,78 @@ class Workspace {
       this.fail(error)
     } finally {
       this.set({ busy: false })
+    }
+  }
+
+  async closeTab(path: VaultPath): Promise<void> {
+    const { tabs, doc, busy, vault } = this.state
+    if (!tabs.includes(path) || busy) return
+    if (doc?.path !== path) {
+      this.cursors.delete(path)
+      this.set({ tabs: tabs.filter((t) => t !== path) })
+      return
+    }
+    this.set({ busy: true, error: '' })
+    try {
+      if (!(await this.flush())) return
+      const index = tabs.indexOf(path)
+      const nextTabs = tabs.filter((t) => t !== path)
+      this.cursors.delete(path)
+      if (nextTabs.length === 0) {
+        this.set({ tabs: [], doc: null, backlinks: null, selection: null })
+        return
+      }
+      const nextPath = nextTabs[Math.min(index, nextTabs.length - 1)]
+      if (!vault) {
+        this.set({ tabs: nextTabs, doc: null })
+        return
+      }
+      const version = await window.mote.readNote(vault.dir, nextPath)
+      this.load(nextPath, version, nextTabs)
+      if (version) {
+        this.remember(vault.dir, nextPath)
+        const at = this.cursors.get(nextPath)
+        if (at) this.place(nextPath, at)
+      }
+      void this.loadBacklinks()
+      void this.refresh()
+    } catch (error) {
+      this.fail(error)
+    } finally {
+      this.set({ busy: false })
+    }
+  }
+
+  closeActiveTab(): Promise<void> {
+    if (this.state.doc) return this.closeTab(this.state.doc.path)
+    return Promise.resolve()
+  }
+
+  cycleTab(step: -1 | 1): void {
+    const { tabs, doc } = this.state
+    if (tabs.length <= 1) return
+    const index = doc ? tabs.indexOf(doc.path) : -1
+    if (index === -1) {
+      void this.open(tabs[0])
+      return
+    }
+    const nextIndex = (index + step + tabs.length) % tabs.length
+    void this.open(tabs[nextIndex])
+  }
+
+  renameTab(from: VaultPath, to: VaultPath): void {
+    const { tabs, doc } = this.state
+    if (!tabs.includes(from)) return
+    const nextTabs = tabs.map((t) => (t === from ? to : t))
+    const cursor = this.cursors.get(from)
+    if (cursor) {
+      this.cursors.delete(from)
+      this.cursors.set(to, cursor)
+    }
+    if (doc?.path === from) {
+      this.set({ tabs: nextTabs, doc: { ...doc, path: to } })
+    } else {
+      this.set({ tabs: nextTabs })
     }
   }
 
@@ -299,12 +384,15 @@ class Workspace {
         .catch((error: unknown) => this.fail(error))
   }
 
-  private load(path: VaultPath, disk: NoteVersion | null): void {
+  private load(path: VaultPath, disk: NoteVersion | null, tabs?: VaultPath[]): void {
     this.refreshId++
     const text = disk?.text ?? ''
     // A selection made for an earlier visit to this note must not apply when it opens again.
     const selection = path === this.state.doc?.path ? this.state.selection : null
+    const currentTabs = tabs ?? this.state.tabs
+    const nextTabs = currentTabs.includes(path) ? currentTabs : [...currentTabs, path]
     this.set({
+      tabs: nextTabs,
       doc: disk
         ? { kind: 'clean', path, text, source: { text }, baseHash: disk.hash }
         : { kind: 'missing', path, text, source: { text } },

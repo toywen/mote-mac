@@ -89,7 +89,12 @@ export function buildApplicationMenu(): Menu {
           click: (_item, win) => sendAction('open-with-default-app', win)
         },
         { type: 'separator' as const },
-        { role: 'close' as const, label: '关闭窗口' }
+        {
+          label: '关闭标签页',
+          accelerator: 'CmdOrCtrl+W',
+          click: (_item, win) => sendAction('close-tab', win)
+        },
+        { role: 'close' as const, label: '关闭窗口', accelerator: 'CmdOrCtrl+Shift+W' }
       ]
     },
 
@@ -202,6 +207,17 @@ export function buildApplicationMenu(): Menu {
       submenu: [
         { role: 'minimize' as const, label: '最小化' },
         { role: 'zoom' as const, label: '缩放' },
+        { type: 'separator' as const },
+        {
+          label: '显示下一个标签页',
+          accelerator: 'Ctrl+Tab',
+          click: (_item, win) => sendAction('next-tab', win)
+        },
+        {
+          label: '显示上一个标签页',
+          accelerator: 'Ctrl+Shift+Tab',
+          click: (_item, win) => sendAction('prev-tab', win)
+        },
         ...(isMac
           ? [{ type: 'separator' as const }, { role: 'front' as const, label: '前置全部窗口' }]
           : [{ role: 'close' as const, label: '关闭' }])

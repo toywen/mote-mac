@@ -47,7 +47,7 @@
 | `src/main/fileProtocol.ts`                                                                         | `mote-file://` 的处理函数。只返回当前笔记库里的图片文件                                                                                                                                                 |
 | `src/main/notes.ts`                                                                                | 扫描文件和读取笔记。不引用 Electron，`tools/` 里的脚本也直接用它                                                                                                                                        |
 | `src/preload/`                                                                                     | 用 `contextBridge` 暴露 `window.mote`                                                                                                                                                                   |
-| `src/renderer/src/workspace.ts`                                                                    | 渲染进程的状态：当前笔记库、打开的笔记和它的状态机                                                                                                                                                      |
+| `src/renderer/src/workspace.ts`                                                                    | 渲染进程的状态：当前笔记库、多标签页列表、打开的笔记和它的状态机                                                                                                        |
 | `src/renderer/src/NoteEditor.tsx`                                                                  | CodeMirror 编辑器，把规范化文本还原成原始字节                                                                                                                                                           |
 | `src/renderer/src/editor/markdown.ts`                                                              | 编辑器用的语言。用共享的解析器，只加两个编辑器才读的节点属性。回车接着写列表和引用                                                                                                                      |
 | `src/renderer/src/editor/livePreview.ts`                                                           | 实时预览的唯一字段：每次改动遍历一次语法树，再按显示源码的规则画装饰。编辑器模式和链接解析的输入也在这里                                                                                                |
@@ -84,6 +84,7 @@
 - 渲染进程里的搜索结果也是查询结果，只读。查询词改变、收到笔记库变化、保存成功后重新查询。
 - 嵌入里显示的笔记文字也是查询结果，只读。`workspace.noteText` 不打开笔记，经 `window.mote.readNote` 读磁盘。被嵌入的是正在编辑的笔记时，读编辑器里的文字。`workspace` 的 `revision` 变大时重新读。
 - 正在编辑的文字归渲染进程。
+- 打开的标签页列表（tabs）归渲染进程的 workspace。
 - 渲染进程里的笔记路径列表是主进程推过来的副本，只读。
 - 最近打开的笔记列表归渲染进程，按笔记库存在 `localStorage`。
 - 编辑器模式归渲染进程的 `workspace`。整个窗口一个值，切换笔记时不变。编辑器只读它。
