@@ -44,7 +44,7 @@ main ── A 打包与CI/CD ── B 检查与下载核心 ── C 平滑安�
     - 增加 `"build:release": "npm run build && electron-builder --mac dmg zip"`；
   - `.github/workflows/release.yml`：
     - 触发条件：推送 `v*` tag（如 `v1.0.1`）以及手动 `workflow_dispatch`；
-    - 运行环境：`macos-14`（原生 Apple Silicon）或 `macos-latest`；
+    - 运行环境：`macos-latest`；
     - 步骤：拉取代码、配置 Node 22、`npm ci`、运行测试（`npm test`）、执行构建打包，并通过 `softprops/action-gh-release` 自动创建 Release 发布产物。
 
 ---
