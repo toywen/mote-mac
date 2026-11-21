@@ -13,12 +13,12 @@ import {
   type VaultInfo,
   type VaultPath,
   type WriteResult
-} from '../core/ipc'
-import { NoteIndex } from '../core/noteIndex'
-import { search } from '../core/search'
-import { buildRenameMapping, rewriteNoteLinks } from '../core/rename'
-import { extractLinks } from '../core/markdown'
-import { hash, kind, missing, noteVersion, readNoteFile, readNoteFiles, scanVault } from './notes'
+} from '../core/ipc.ts'
+import { NoteIndex } from '../core/noteIndex.ts'
+import { search } from '../core/search.ts'
+import { buildRenameMapping, rewriteNoteLinks } from '../core/rename.ts'
+import { extractLinks } from '../core/markdown.ts'
+import { hash, kind, missing, noteVersion, readNoteFile, readNoteFiles, scanVault } from './notes.ts'
 
 export type RenameJournal = {
   dir: string
@@ -77,11 +77,19 @@ export class Vault {
   private closed = false
   private rescan = false
 
+  readonly dir: string
+  private readonly config: VaultConfig
+  private readonly notify: (event: VaultChange) => void
+
   private constructor(
-    readonly dir: string,
-    private readonly config: VaultConfig,
-    private readonly notify: (event: VaultChange) => void
-  ) {}
+    dir: string,
+    config: VaultConfig,
+    notify: (event: VaultChange) => void
+  ) {
+    this.dir = dir
+    this.config = config
+    this.notify = notify
+  }
 
   static async open(
     dir: string,
@@ -97,17 +105,17 @@ export class Vault {
         vault.entries = await vault.scan()
         vault.indexFiles()
         await vault.indexNotes([...vault.entries.values()].filter((e) => e.kind === 'note'))
-        if (journal) {
-          const saved = await journal.read()
-          if (saved && saved.dir === vault.dir) {
-            try {
-              await vault.renameOrMove(saved.from, saved.to, saved.updateLinks, journal)
-            } catch (err) {
-              console.error('Failed to replay journal:', err)
-            }
+      })
+      if (journal) {
+        const saved = await journal.read()
+        if (saved && saved.dir === vault.dir) {
+          try {
+            await vault.renameOrMove(saved.from, saved.to, saved.updateLinks, journal)
+          } catch (err) {
+            console.error('Failed to replay journal:', err)
           }
         }
-      })
+      }
       return vault
     } catch (error) {
       vault.close()
@@ -407,11 +415,17 @@ export class Vault {
       const cleanTo = parseVaultPath(to)
       if (cleanFrom === cleanTo) return
 
-      const entry = this.entries.get(cleanFrom)
-      if (this.entries.has(cleanTo)) {
+      const fromExists = this.entries.has(cleanFrom)
+      const toExists = this.entries.has(cleanTo)
+
+      if (toExists && fromExists) {
         throw new Error('目标文件或文件夹已存在')
       }
+      if (!toExists && !fromExists) {
+        throw new Error('源文件或文件夹不存在')
+      }
 
+      const entry = this.entries.get(cleanFrom) ?? this.entries.get(cleanTo)
       const isFolder = entry?.kind === 'folder' || (!entry && !cleanFrom.endsWith('.md'))
 
       if (journal) {
@@ -424,18 +438,20 @@ export class Vault {
         })
       }
 
-      const fullFrom = join(this.dir, cleanFrom)
-      const fullTo = join(this.dir, cleanTo)
-      await mkdir(dirname(fullTo), { recursive: true })
-      try {
-        await fsRename(fullFrom, fullTo)
-      } catch (error) {
-        const code = (error as NodeJS.ErrnoException).code
-        if (code === 'ENOENT') {
-          const destStat = await stat(fullTo).catch(() => null)
-          if (!destStat) throw error
-        } else {
-          throw error
+      if (fromExists) {
+        const fullFrom = join(this.dir, cleanFrom)
+        const fullTo = join(this.dir, cleanTo)
+        await mkdir(dirname(fullTo), { recursive: true })
+        try {
+          await fsRename(fullFrom, fullTo)
+        } catch (error) {
+          const code = (error as NodeJS.ErrnoException).code
+          if (code === 'ENOENT') {
+            const destStat = await stat(fullTo).catch(() => null)
+            if (!destStat) throw error
+          } else {
+            throw error
+          }
         }
       }
 

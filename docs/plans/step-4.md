@@ -84,3 +84,23 @@ main ── A 基础文件操作 ── B Journal与改写 ── C 文件树交
   - 执行 `diff -r` 对比移动前后的副本，证明除了该文件的物理移动与引用该文件的链接文本变更外，**全库其余文件字节 100% 不变**；
   - 重放崩溃测试：写入模拟 journal 并启动应用，验证自愈机制正确完成链接更新；
   - 更新 `docs/features.md` 第 4 步状态为已完成。
+
+---
+
+## 验收结果（2026-11-21 实测）
+
+由 `tools/verify-step4.mjs` 与 Playwright 端到端测试全面验证：
+
+1. **life-os 副本重命名验证**：
+   - 将 `English/Weekly/2026-W31.md` 重命名为 `English/Weekly/2026-W31-renamed.md`（带 6 处反向链接更新）。
+   - `diff -r -u` 对比结果：除了目标文件改名，仅有引用该笔记的 6 篇转录与词汇笔记发生文本更新（`[[2026-W31]]` -> `[[2026-W31-renamed]]`），全库其余 106 篇笔记 100% 无变化。
+2. **Pesemic 副本重命名验证**：
+   - 将 `compute/liwen-deps.md` 重命名为 `compute/liwen-deps-renamed.md`。
+   - `diff -r -u` 对比结果：仅 `compute/liwen-deps.md` 发生重命名，且 `compute/compute_phase1_spec.md` 中的相对 Markdown 链接自动改写为 `liwen-deps-renamed.md`，其余文件 100% 保持字节不变。
+3. **Journal 崩溃恢复验证**：
+   - 模拟在物理移动后、链接改写前发生应用强制终止，遗留 `journal.json`。
+   - 应用重启并打开笔记库，自动检测到 journal，完成反向链接幂等改写，并安全清除 `journal.json`，未留存任何脏数据。
+4. **自动化测试**：
+   - `npm test`：8 个测试套件，80 项用例全部通过（1 项预期失败与上一步一致），链接对照 57 处一致，反向链接 52 处 0 不一致。
+   - `npx playwright test tests/e2e/fileTree.spec.ts`：3 个 Electron 真实窗口测试（新建/行内改名/自动更新链接、alwaysUpdateLinks 为 false 弹窗确认、删除非空文件夹确认）全部通过。
+   - `npm run typecheck`：Node 与 Web 端类型检查 0 报错。
