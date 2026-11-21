@@ -14,6 +14,7 @@ import {
 import { serveFile } from './fileProtocol'
 import { isAllowedExternal } from '../core/linkDest'
 import { Vault, type JournalHandler, type RenameJournal } from './vault'
+import { registerUpdaterIpc, Updater } from './updater'
 
 app.setName('mote')
 
@@ -312,7 +313,26 @@ app.whenReady().then(async () => {
   if (process.platform === 'darwin') {
     Menu.setApplicationMenu(
       Menu.buildFromTemplate([
-        { role: 'appMenu' },
+        {
+          label: app.name,
+          submenu: [
+            { role: 'about', label: '关于 mote' },
+            {
+              label: '检查更新...',
+              click: () => {
+                void Updater.getInstance().checkForUpdates()
+              }
+            },
+            { type: 'separator' },
+            { role: 'services' },
+            { type: 'separator' },
+            { role: 'hide', label: '隐藏 mote' },
+            { role: 'hideOthers', label: '隐藏其他' },
+            { role: 'unhide', label: '全部显示' },
+            { type: 'separator' },
+            { role: 'quit', label: '退出 mote' }
+          ]
+        },
         { role: 'fileMenu' },
         { role: 'editMenu' },
         { role: 'viewMenu' },
@@ -320,6 +340,7 @@ app.whenReady().then(async () => {
       ])
     )
   }
+  registerUpdaterIpc()
   protocol.handle(fileScheme, (request) => serveFile(vault, request))
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
   nativeTheme.on('updated', () => {
@@ -330,6 +351,9 @@ app.whenReady().then(async () => {
     })
   })
   createWindow()
+  setTimeout(() => {
+    void Updater.getInstance().checkForUpdates()
+  }, 3000)
   app.on('activate', () => {
     if (BrowserWindow.getAllWindows().length === 0) createWindow()
   })

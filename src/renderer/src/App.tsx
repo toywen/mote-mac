@@ -19,6 +19,7 @@ import { HitList } from './HitList'
 import { NoteEditor } from './NoteEditor'
 import { QuickOpen } from './QuickOpen'
 import { SearchPanel } from './SearchPanel'
+import { UpdateNotification } from './UpdateNotification'
 import { workspace } from './workspace'
 
 function App(): React.JSX.Element {
@@ -297,6 +298,7 @@ function App(): React.JSX.Element {
             </button>
           </div>
         </header>
+        <UpdateNotification />
         {error && (
           <div className="notice" role="alert">
             <span>{error}</span>

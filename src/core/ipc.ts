@@ -1,3 +1,5 @@
+import type { UpdateStatus } from './updaterTypes.js'
+
 export type VaultPath = string & { readonly __brand: 'VaultPath' }
 export type ContentHash = string & { readonly __brand: 'ContentHash' }
 
@@ -103,6 +105,11 @@ export interface MoteApi {
   setFont(font: FontMode): Promise<FontMode>
   toggleFont(): Promise<FontMode>
   onFontChanged(callback: (font: FontMode) => void): () => void
+  checkForUpdates(): Promise<UpdateStatus>
+  downloadUpdate(): Promise<void>
+  installUpdate(): Promise<void>
+  getAppVersion(): Promise<string>
+  onUpdateStatus(callback: (status: UpdateStatus) => void): () => void
 }
 
 export const channels = {
@@ -131,5 +138,10 @@ export const channels = {
   getFont: 'mote:get-font',
   setFont: 'mote:set-font',
   toggleFont: 'mote:toggle-font',
-  fontChanged: 'mote:font-changed'
+  fontChanged: 'mote:font-changed',
+  checkForUpdates: 'mote:check-for-updates',
+  downloadUpdate: 'mote:download-update',
+  installUpdate: 'mote:install-update',
+  getAppVersion: 'mote:get-app-version',
+  updateStatus: 'mote:update-status'
 } as const

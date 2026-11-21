@@ -7,6 +7,7 @@ import {
   type ThemeState,
   type VaultChange
 } from '../core/ipc'
+import type { UpdateStatus } from '../core/updaterTypes'
 
 const mote: MoteApi = {
   getVault: () => ipcRenderer.invoke(channels.getVault),
@@ -53,6 +54,15 @@ const mote: MoteApi = {
     const listener = (_event: IpcRendererEvent, font: FontMode): void => callback(font)
     ipcRenderer.on(channels.fontChanged, listener)
     return () => ipcRenderer.off(channels.fontChanged, listener)
+  },
+  checkForUpdates: () => ipcRenderer.invoke(channels.checkForUpdates),
+  downloadUpdate: () => ipcRenderer.invoke(channels.downloadUpdate),
+  installUpdate: () => ipcRenderer.invoke(channels.installUpdate),
+  getAppVersion: () => ipcRenderer.invoke(channels.getAppVersion),
+  onUpdateStatus: (callback) => {
+    const listener = (_event: IpcRendererEvent, status: UpdateStatus): void => callback(status)
+    ipcRenderer.on(channels.updateStatus, listener)
+    return () => ipcRenderer.off(channels.updateStatus, listener)
   }
 }
 
