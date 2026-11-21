@@ -1,5 +1,7 @@
 import {
+  ArrowUpDown,
   BookOpen,
+  Check,
   ChevronDown,
   ChevronUp,
   FilePlus,
@@ -9,12 +11,14 @@ import {
   Moon,
   PanelLeft,
   PencilLine,
+  Search,
   Sun,
   X
 } from 'lucide-react'
 import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { EditorView } from '@codemirror/view'
 import { FileTree, type FileTreeHandle } from './FileTree'
+import { type SortOrder } from './tree'
 import { type FontMode } from '../../core/ipc'
 import { groupHits } from '../../core/hits'
 import { buildLinkIndex } from '../../core/resolve'
@@ -57,7 +61,29 @@ function App(): React.JSX.Element {
     return false
   })
   const [fontMode, setFontMode] = useState<FontMode>('kai')
+  const [sortOrder, setSortOrder] = useState<SortOrder>(() => {
+    return (localStorage.getItem('mote.sort-order') as SortOrder) || 'name-asc'
+  })
+  const [sortMenuPos, setSortMenuPos] = useState<{ top: number; left: number } | null>(null)
   const fileTreeRef = useRef<FileTreeHandle>(null)
+
+  useEffect(() => {
+    if (!sortMenuPos) return
+    function handleKeyDown(e: KeyboardEvent): void {
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setSortMenuPos(null)
+      }
+    }
+    window.addEventListener('keydown', handleKeyDown, true)
+    return () => window.removeEventListener('keydown', handleKeyDown, true)
+  }, [sortMenuPos])
+
+  const handleSortChange = (order: SortOrder): void => {
+    setSortOrder(order)
+    localStorage.setItem('mote.sort-order', order)
+    setSortMenuPos(null)
+  }
   useEffect(() => workspace.connect(), [])
   useEffect(() => {
     document.documentElement.dataset.font = fontMode
@@ -283,6 +309,43 @@ function App(): React.JSX.Element {
                 <button
                   className="icon-button"
                   type="button"
+                  title="搜索（⌘⇧F）"
+                  aria-label="搜索"
+                  onClick={() => {
+                    setSidebarView('search')
+                    setSearchFocus((id) => id + 1)
+                  }}
+                >
+                  <Search size={14} strokeWidth={1.5} />
+                </button>
+                <button
+                  className={`icon-button ${sortMenuPos ? 'is-active' : ''}`}
+                  type="button"
+                  title={
+                    sortOrder === 'name-asc'
+                      ? '排序方式：文件名（从 A 到 Z）'
+                      : '排序方式：文件名（从 Z 到 A）'
+                  }
+                  aria-label="更改排序方式"
+                  aria-haspopup="menu"
+                  aria-expanded={Boolean(sortMenuPos)}
+                  onClick={(e) => {
+                    if (sortMenuPos) {
+                      setSortMenuPos(null)
+                    } else {
+                      const rect = e.currentTarget.getBoundingClientRect()
+                      setSortMenuPos({
+                        top: rect.bottom + 4,
+                        left: Math.max(8, Math.min(rect.left - 40, window.innerWidth - 170))
+                      })
+                    }
+                  }}
+                >
+                  <ArrowUpDown size={14} strokeWidth={1.5} />
+                </button>
+                <button
+                  className="icon-button"
+                  type="button"
                   title="新建笔记（⌘N）"
                   aria-label="新建笔记"
                   onClick={() => void fileTreeRef.current?.createNote()}
@@ -310,8 +373,72 @@ function App(): React.JSX.Element {
                 </button>
               </div>
             </div>
+            {sortMenuPos && (
+              <>
+                <div
+                  className="context-menu-backdrop"
+                  onClick={() => setSortMenuPos(null)}
+                  onContextMenu={(e) => {
+                    e.preventDefault()
+                    setSortMenuPos(null)
+                  }}
+                />
+                <ul
+                  className="context-menu"
+                  style={{
+                    position: 'fixed',
+                    top: sortMenuPos.top,
+                    left: sortMenuPos.left
+                  }}
+                  role="menu"
+                  aria-label="排序选项"
+                >
+                  <li role="none">
+                    <button
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={sortOrder === 'name-asc'}
+                      className={`context-menu-item ${sortOrder === 'name-asc' ? 'is-active' : ''}`}
+                      onClick={() => handleSortChange('name-asc')}
+                    >
+                      <Check
+                        size={13}
+                        strokeWidth={2}
+                        style={{
+                          visibility: sortOrder === 'name-asc' ? 'visible' : 'hidden'
+                        }}
+                      />
+                      <span>文件名（从 A 到 Z）</span>
+                    </button>
+                  </li>
+                  <li role="none">
+                    <button
+                      type="button"
+                      role="menuitemradio"
+                      aria-checked={sortOrder === 'name-desc'}
+                      className={`context-menu-item ${sortOrder === 'name-desc' ? 'is-active' : ''}`}
+                      onClick={() => handleSortChange('name-desc')}
+                    >
+                      <Check
+                        size={13}
+                        strokeWidth={2}
+                        style={{
+                          visibility: sortOrder === 'name-desc' ? 'visible' : 'hidden'
+                        }}
+                      />
+                      <span>文件名（从 Z 到 A）</span>
+                    </button>
+                  </li>
+                </ul>
+              </>
+            )}
             <nav className="tree-scroll" aria-label="笔记库">
-              <FileTree ref={fileTreeRef} vault={vault} selected={doc?.path} />
+              <FileTree
+                ref={fileTreeRef}
+                vault={vault}
+                selected={doc?.path}
+                sortOrder={sortOrder}
+              />
             </nav>
           </>
         )}

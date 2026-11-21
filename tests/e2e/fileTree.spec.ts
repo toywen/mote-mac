@@ -169,3 +169,58 @@ test('confirms before deleting non-empty folder', async () => {
     await app.close()
   }
 })
+
+test('sidebar header supports search and sort actions', async () => {
+  const info = test.info()
+  const vault = info.outputPath('search-sort-vault')
+  await mkdir(vault, { recursive: true })
+  await writeFile(join(vault, 'a-note.md'), '# A Note')
+  await writeFile(join(vault, 'z-note.md'), '# Z Note')
+  await writeFile(join(vault, 'm-note.md'), '# M Note')
+
+  const app = await launch(info.outputPath('settings'))
+  try {
+    const window = await app.firstWindow()
+    await openVault(app, window, vault)
+
+    const searchBtn = window.getByRole('button', { name: '搜索' })
+    const sortBtn = window.getByRole('button', { name: '更改排序方式' })
+    await expect(searchBtn).toBeVisible()
+    await expect(sortBtn).toBeVisible()
+
+    await searchBtn.click()
+    const searchBox = window.getByRole('searchbox', { name: '搜索' })
+    await expect(searchBox).toBeVisible()
+    await expect(searchBox).toBeFocused()
+
+    await window.getByRole('button', { name: '文件', exact: true }).click()
+    const tree = window.getByRole('tree', { name: '文件树' })
+    await expect(tree).toBeVisible()
+
+    const getItems = async (): Promise<string[]> => {
+      const items = tree.getByRole('treeitem')
+      return await items.evaluateAll((nodes) => nodes.map((n) => n.textContent?.trim() ?? ''))
+    }
+
+    expect(await getItems()).toEqual(['a-note', 'm-note', 'z-note'])
+
+    await sortBtn.click()
+    const sortMenu = window.getByRole('menu', { name: '排序选项' })
+    await expect(sortMenu).toBeVisible()
+
+    await sortMenu.getByRole('menuitemradio', { name: '文件名（从 Z 到 A）' }).click()
+    await expect(sortMenu).toHaveCount(0)
+    expect(await getItems()).toEqual(['z-note', 'm-note', 'a-note'])
+
+    await sortBtn.click()
+    await expect(sortMenu).toBeVisible()
+    await window.keyboard.press('Escape')
+    await expect(sortMenu).toHaveCount(0)
+
+    await sortBtn.click()
+    await sortMenu.getByRole('menuitemradio', { name: '文件名（从 A 到 Z）' }).click()
+    expect(await getItems()).toEqual(['a-note', 'm-note', 'z-note'])
+  } finally {
+    await app.close()
+  }
+})

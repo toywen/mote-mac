@@ -8,40 +8,9 @@ import {
   useEffect,
   type KeyboardEvent
 } from 'react'
-import { parseVaultPath, type VaultEntry, type VaultInfo, type VaultPath } from '../../core/ipc'
+import { parseVaultPath, type VaultInfo, type VaultPath } from '../../core/ipc'
+import { buildTree, type SortOrder, type TreeNode } from './tree'
 import { workspace } from './workspace'
-
-export type TreeNode = VaultEntry & { name: string; children: TreeNode[] }
-const collator = new Intl.Collator('zh-CN', { numeric: true, sensitivity: 'base' })
-
-function buildTree(entries: VaultEntry[]): TreeNode[] {
-  const roots: TreeNode[] = []
-  const nodes = new Map<VaultPath, TreeNode>()
-  for (const entry of entries) {
-    if (entry.path.startsWith('.')) continue
-    const leaf = entry.path.slice(entry.path.lastIndexOf('/') + 1)
-    nodes.set(entry.path, {
-      ...entry,
-      name: entry.kind === 'note' ? leaf.slice(0, -3) : leaf,
-      children: []
-    })
-  }
-  for (const node of nodes.values()) {
-    const parent = nodes.get(node.path.slice(0, node.path.lastIndexOf('/')) as VaultPath)
-    if (node.path.includes('/') && parent) parent.children.push(node)
-    else roots.push(node)
-  }
-  function sort(branch: TreeNode[]): void {
-    branch.sort(
-      (a, b) =>
-        Number(b.kind === 'folder') - Number(a.kind === 'folder') ||
-        collator.compare(a.name, b.name)
-    )
-    for (const node of branch) sort(node.children)
-  }
-  sort(roots)
-  return roots
-}
 
 function RenameInput({
   initialValue,
@@ -91,9 +60,10 @@ export const FileTree = forwardRef<
   {
     vault: VaultInfo
     selected?: VaultPath
+    sortOrder?: SortOrder
   }
->(function FileTree({ vault, selected }, ref): React.JSX.Element {
-  const roots = useMemo(() => buildTree(vault.entries), [vault.entries])
+>(function FileTree({ vault, selected, sortOrder = 'name-asc' }, ref): React.JSX.Element {
+  const roots = useMemo(() => buildTree(vault.entries, sortOrder), [vault.entries, sortOrder])
   const [expandedFolders, setExpandedFolders] = useState<Set<VaultPath>>(() => new Set())
   const [focused, setFocused] = useState<VaultPath>()
   const [renamingPath, setRenamingPath] = useState<VaultPath | null>(null)

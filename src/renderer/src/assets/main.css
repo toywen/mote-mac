@@ -531,17 +531,23 @@ svg.lucide {
 }
 
 .vault-name {
-  flex-shrink: 0;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  flex: 1;
   color: var(--muted);
   font-size: 11.5px;
   font-weight: 600;
   letter-spacing: 0.02em;
+  margin-right: 6px;
 }
 
 .vault-actions {
   display: flex;
   align-items: center;
   gap: 2px;
+  flex-shrink: 0;
 }
 
 .vault-actions .icon-button {
@@ -601,6 +607,10 @@ svg.lucide {
   border-radius: 5px;
   text-align: left;
   transition: background 100ms ease;
+}
+
+.context-menu-item svg {
+  flex-shrink: 0;
 }
 
 .context-menu-item:hover,
