@@ -221,6 +221,7 @@ body {
   gap: 10px;
   padding: 0 14px;
   border-bottom: 1px solid var(--border);
+  -webkit-app-region: drag;
   app-region: drag;
   box-sizing: border-box;
 }
@@ -256,7 +257,8 @@ body {
   flex: 1;
   height: 100%;
   overflow: hidden;
-  app-region: no-drag;
+  -webkit-app-region: drag;
+  app-region: drag;
 }
 
 .tab-bar.is-empty {
@@ -293,8 +295,13 @@ body {
   max-width: 200px;
   min-width: 70px;
   border: 1px solid transparent;
-  transition: background 120ms ease, color 120ms ease, border-color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    border-color 120ms ease;
   box-sizing: border-box;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
 }
 
 .tab-item:hover {
@@ -348,7 +355,10 @@ body {
   padding: 0;
   opacity: 0;
   flex-shrink: 0;
-  transition: opacity 120ms ease, background 120ms ease, color 120ms ease;
+  transition:
+    opacity 120ms ease,
+    background 120ms ease,
+    color 120ms ease;
 }
 
 .tab-item:hover .tab-close,
@@ -374,7 +384,9 @@ body {
   border: none;
   padding: 0;
   flex-shrink: 0;
-  transition: background 120ms ease, color 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
 }
 
 .tab-add:hover {
@@ -447,6 +459,7 @@ button {
   font-size: 13px;
   color: inherit;
   cursor: pointer;
+  -webkit-app-region: no-drag;
   app-region: no-drag;
 }
 
@@ -903,7 +916,6 @@ svg.lucide {
   flex-shrink: 0;
   gap: 8px;
 }
-
 
 .editor-content {
   flex: 1;

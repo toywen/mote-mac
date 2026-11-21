@@ -87,3 +87,33 @@ test('multi-tab open, switch, dirty save, shortcut close and cycle', async () =>
     await app.close()
   }
 })
+
+test('header blank area to the right of tabs is draggable', async () => {
+  const { app, window } = await start()
+  try {
+    // Open a note
+    await window.getByRole('treeitem', { name: '图表', exact: true }).click()
+
+    // Find tab add button
+    const tabAdd = window.locator('.tab-add')
+    await expect(tabAdd).toBeVisible()
+    const addBox = await tabAdd.boundingBox()
+    expect(addBox).not.toBeNull()
+
+    // Pick a point in the empty area to the right of tab-add button
+    const testPoint = { x: addBox!.x + addBox!.width + 50, y: addBox!.y + addBox!.height / 2 }
+
+    const region = await window.evaluate(({ x, y }) => {
+      const el = document.elementFromPoint(x, y)
+      return {
+        tag: el?.tagName,
+        className: el?.className,
+        webkitAppRegion: el ? getComputedStyle(el).webkitAppRegion : null
+      }
+    }, testPoint)
+
+    expect(region.webkitAppRegion).toBe('drag')
+  } finally {
+    await app.close()
+  }
+})
