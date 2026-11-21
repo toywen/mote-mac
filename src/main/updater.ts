@@ -309,17 +309,24 @@ open "${currentAppPath}"
   private fetchLatestRelease(): Promise<GitHubReleaseResponse> {
     const url = `https://api.github.com/repos/${this.repo}/releases/latest`
     return new Promise((resolve, reject) => {
-      const options = {
-        headers: {
-          'User-Agent': 'mote-desktop-app',
-          Accept: 'application/vnd.github.v3+json'
-        }
+      const headers: Record<string, string> = {
+        'User-Agent': 'mote-desktop-app',
+        Accept: 'application/vnd.github.v3+json'
       }
+      const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
+      if (token) {
+        headers['Authorization'] = `token ${token}`
+      }
+      const options = { headers }
 
       https
         .get(url, options, (res) => {
           if (res.statusCode === 404) {
-            reject(new Error('当前仓库暂无发布的 Release 版本'))
+            reject(
+              new Error(
+                '未能获取 Release 信息 (HTTP 404)。若仓库为私有（Private），未授权客户端无法访问 GitHub Releases API。'
+              )
+            )
             return
           }
           if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
@@ -353,12 +360,15 @@ open "${currentAppPath}"
           return
         }
 
-        const options = {
-          headers: {
-            'User-Agent': 'mote-desktop-app',
-            Accept: 'application/octet-stream'
-          }
+        const headers: Record<string, string> = {
+          'User-Agent': 'mote-desktop-app',
+          Accept: 'application/octet-stream'
         }
+        const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
+        if (token) {
+          headers['Authorization'] = `token ${token}`
+        }
+        const options = { headers }
 
         https
           .get(currentUrl, options, (res) => {

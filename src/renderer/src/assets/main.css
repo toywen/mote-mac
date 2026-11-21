@@ -729,6 +729,10 @@ svg.lucide {
   padding: 4px 6px 16px;
 }
 
+.file-tree {
+  min-height: 100%;
+}
+
 .file-tree,
 .file-tree ul {
   list-style: none;

@@ -51,8 +51,9 @@ function RenameInput({
 }
 
 export type FileTreeHandle = {
-  createNote(folder?: VaultPath): Promise<void>
-  createFolder(folder?: VaultPath): Promise<void>
+  createNote(folder?: VaultPath | null): Promise<void>
+  createFolder(folder?: VaultPath | null): Promise<void>
+  openRootContextMenu(x: number, y: number): void
 }
 
 export const FileTree = forwardRef<
@@ -70,7 +71,7 @@ export const FileTree = forwardRef<
   const [contextMenu, setContextMenu] = useState<{
     x: number
     y: number
-    node: TreeNode
+    node?: TreeNode
   } | null>(null)
   const [confirmLinkUpdate, setConfirmLinkUpdate] = useState<{
     oldPath: VaultPath
@@ -87,7 +88,8 @@ export const FileTree = forwardRef<
     })
   }
 
-  function resolveTargetFolder(specifiedFolder?: VaultPath): VaultPath | undefined {
+  function resolveTargetFolder(specifiedFolder?: VaultPath | null): VaultPath | undefined {
+    if (specifiedFolder === null) return undefined
     if (specifiedFolder) return specifiedFolder
     if (focused) {
       const entry = vault.entries.find((e) => e.path === focused)
@@ -104,7 +106,7 @@ export const FileTree = forwardRef<
     return undefined
   }
 
-  async function handleCreateNote(targetFolder?: VaultPath): Promise<void> {
+  async function handleCreateNote(targetFolder?: VaultPath | null): Promise<void> {
     const folder = resolveTargetFolder(targetFolder)
     try {
       const created = await window.mote.createNoteInVault(vault.dir, folder)
@@ -119,7 +121,7 @@ export const FileTree = forwardRef<
     }
   }
 
-  async function handleCreateFolder(targetFolder?: VaultPath): Promise<void> {
+  async function handleCreateFolder(targetFolder?: VaultPath | null): Promise<void> {
     const folder = resolveTargetFolder(targetFolder)
     try {
       const created = await window.mote.createFolder(vault.dir, folder)
@@ -133,14 +135,13 @@ export const FileTree = forwardRef<
     }
   }
 
-  useImperativeHandle(
-    ref,
-    () => ({
-      createNote: handleCreateNote,
-      createFolder: handleCreateFolder
-    }),
-    [vault, focused, selected]
-  )
+  useImperativeHandle(ref, () => ({
+    createNote: handleCreateNote,
+    createFolder: handleCreateFolder,
+    openRootContextMenu: (x: number, y: number) => {
+      setContextMenu({ x, y })
+    }
+  }))
 
   async function commitRename(node: TreeNode, newName: string): Promise<void> {
     setRenamingPath(null)
@@ -310,7 +311,19 @@ export const FileTree = forwardRef<
 
   return (
     <>
-      <ul className="file-tree" role="tree" aria-label="文件树">
+      <ul
+        className="file-tree"
+        role="tree"
+        aria-label="文件树"
+        onContextMenu={(e) => {
+          if (e.target instanceof HTMLElement && e.target.closest('.tree-row')) {
+            return
+          }
+          e.preventDefault()
+          e.stopPropagation()
+          setContextMenu({ x: e.clientX, y: e.clientY })
+        }}
+      >
         {render(roots, 0)}
       </ul>
 
@@ -326,7 +339,13 @@ export const FileTree = forwardRef<
           />
           <ul
             className="context-menu"
-            style={{ left: contextMenu.x, top: contextMenu.y }}
+            style={{
+              left: Math.max(8, Math.min(contextMenu.x, window.innerWidth - 170)),
+              top: Math.max(
+                8,
+                Math.min(contextMenu.y, window.innerHeight - (contextMenu.node ? 190 : 115))
+              )
+            }}
             role="menu"
             aria-label="操作菜单"
           >
@@ -336,8 +355,8 @@ export const FileTree = forwardRef<
                 role="menuitem"
                 className="context-menu-item"
                 onClick={() => {
-                  const target =
-                    contextMenu.node.kind === 'folder'
+                  const target = contextMenu.node
+                    ? contextMenu.node.kind === 'folder'
                       ? contextMenu.node.path
                       : contextMenu.node.path.includes('/')
                         ? (contextMenu.node.path.slice(
@@ -345,6 +364,7 @@ export const FileTree = forwardRef<
                             contextMenu.node.path.lastIndexOf('/')
                           ) as VaultPath)
                         : undefined
+                    : null
                   setContextMenu(null)
                   void handleCreateNote(target)
                 }}
@@ -358,8 +378,8 @@ export const FileTree = forwardRef<
                 role="menuitem"
                 className="context-menu-item"
                 onClick={() => {
-                  const target =
-                    contextMenu.node.kind === 'folder'
+                  const target = contextMenu.node
+                    ? contextMenu.node.kind === 'folder'
                       ? contextMenu.node.path
                       : contextMenu.node.path.includes('/')
                         ? (contextMenu.node.path.slice(
@@ -367,6 +387,7 @@ export const FileTree = forwardRef<
                             contextMenu.node.path.lastIndexOf('/')
                           ) as VaultPath)
                         : undefined
+                    : null
                   setContextMenu(null)
                   void handleCreateFolder(target)
                 }}
@@ -375,6 +396,22 @@ export const FileTree = forwardRef<
               </button>
             </li>
             <li className="context-menu-separator" role="separator" />
+            {contextMenu.node && (
+              <li role="none">
+                <button
+                  type="button"
+                  role="menuitem"
+                  className="context-menu-item"
+                  onClick={() => {
+                    const node = contextMenu.node!
+                    setContextMenu(null)
+                    setRenamingPath(node.path)
+                  }}
+                >
+                  重命名
+                </button>
+              </li>
+            )}
             <li role="none">
               <button
                 type="button"
@@ -383,41 +420,31 @@ export const FileTree = forwardRef<
                 onClick={() => {
                   const node = contextMenu.node
                   setContextMenu(null)
-                  setRenamingPath(node.path)
-                }}
-              >
-                重命名
-              </button>
-            </li>
-            <li role="none">
-              <button
-                type="button"
-                role="menuitem"
-                className="context-menu-item"
-                onClick={() => {
-                  const node = contextMenu.node
-                  setContextMenu(null)
-                  void window.mote.showInFolder(vault.dir, node.path)
+                  void window.mote.showInFolder(vault.dir, node?.path)
                 }}
               >
                 在访达中显示
               </button>
             </li>
-            <li className="context-menu-separator" role="separator" />
-            <li role="none">
-              <button
-                type="button"
-                role="menuitem"
-                className="context-menu-item danger"
-                onClick={() => {
-                  const node = contextMenu.node
-                  setContextMenu(null)
-                  void handleDelete(node)
-                }}
-              >
-                移到废纸篓
-              </button>
-            </li>
+            {contextMenu.node && (
+              <>
+                <li className="context-menu-separator" role="separator" />
+                <li role="none">
+                  <button
+                    type="button"
+                    role="menuitem"
+                    className="context-menu-item danger"
+                    onClick={() => {
+                      const node = contextMenu.node!
+                      setContextMenu(null)
+                      void handleDelete(node)
+                    }}
+                  >
+                    移到废纸篓
+                  </button>
+                </li>
+              </>
+            )}
           </ul>
         </>
       )}

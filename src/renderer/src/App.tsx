@@ -301,7 +301,16 @@ function App(): React.JSX.Element {
         )}
         {vault && sidebarView === 'files' && (
           <>
-            <div className="vault-header">
+            <div
+              className="vault-header"
+              onContextMenu={(e) => {
+                if (e.target instanceof HTMLElement && e.target.closest('button')) {
+                  return
+                }
+                e.preventDefault()
+                fileTreeRef.current?.openRootContextMenu(e.clientX, e.clientY)
+              }}
+            >
               <div className="vault-name" title={vault.dir}>
                 {vault.dir.split('/').pop() || '/'}
               </div>
@@ -432,7 +441,17 @@ function App(): React.JSX.Element {
                 </ul>
               </>
             )}
-            <nav className="tree-scroll" aria-label="笔记库">
+            <nav
+              className="tree-scroll"
+              aria-label="笔记库"
+              onContextMenu={(e) => {
+                if (e.target instanceof HTMLElement && e.target.closest('.tree-row')) {
+                  return
+                }
+                e.preventDefault()
+                fileTreeRef.current?.openRootContextMenu(e.clientX, e.clientY)
+              }}
+            >
               <FileTree
                 ref={fileTreeRef}
                 vault={vault}

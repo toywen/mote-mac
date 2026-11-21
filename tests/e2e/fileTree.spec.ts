@@ -224,3 +224,47 @@ test('sidebar header supports search and sort actions', async () => {
     await app.close()
   }
 })
+
+test('sidebar blank area context menu creates notes and folders at root', async () => {
+  const info = test.info()
+  const vault = info.outputPath('blank-context-menu-vault')
+  await mkdir(vault, { recursive: true })
+  await writeFile(join(vault, 'existing.md'), '# Existing')
+
+  const app = await launch(info.outputPath('settings'))
+  try {
+    const window = await app.firstWindow()
+    await openVault(app, window, vault)
+
+    const tree = window.getByRole('tree', { name: '文件树' })
+    await expect(tree.getByRole('treeitem', { name: 'existing' })).toBeVisible()
+
+    // Right click on the blank area in tree-scroll
+    const treeScroll = window.getByRole('navigation', { name: '笔记库' })
+    await treeScroll.click({ button: 'right', position: { x: 50, y: 250 } })
+
+    const menu = window.getByRole('menu', { name: '操作菜单' })
+    await expect(menu).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: '新建笔记' })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: '新建文件夹' })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: '在访达中显示' })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: '重命名' })).toHaveCount(0)
+    await expect(menu.getByRole('menuitem', { name: '移到废纸篓' })).toHaveCount(0)
+
+    // Click '新建笔记' from root context menu
+    await menu.getByRole('menuitem', { name: '新建笔记' }).click()
+    const newNote = tree.getByRole('treeitem', { name: '未命名', exact: true })
+    await expect(newNote).toBeVisible()
+
+    const input = newNote.locator('input.tree-input')
+    await expect(input).toBeVisible()
+    await input.fill('root-created-note')
+    await input.press('Enter')
+
+    await expect(
+      tree.getByRole('treeitem', { name: 'root-created-note', exact: true })
+    ).toBeVisible()
+  } finally {
+    await app.close()
+  }
+})

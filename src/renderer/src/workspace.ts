@@ -48,7 +48,8 @@ type WorkspaceState = {
   mode: EditorMode
 }
 
-const AUTOSAVE_MS = 750
+const AUTOSAVE_DEBOUNCE_MS = 150
+const AUTOSAVE_MAX_WAIT_MS = 800
 const RECENT_LIMIT = 50
 const recentKey = (dir: string): string => `mote.recent:${dir}`
 
@@ -65,7 +66,8 @@ class Workspace {
     mode: 'live'
   }
   private readonly listeners = new Set<() => void>()
-  private timer?: number
+  private saveTimer?: number
+  private maxWaitTimer?: number
   private saving?: Promise<boolean>
   private refreshId = 0
   private backlinksId = 0
@@ -413,10 +415,31 @@ class Workspace {
   }
 
   private scheduleSave(): void {
-    clearTimeout(this.timer)
-    this.timer = window.setTimeout(() => {
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer)
+    }
+    this.saveTimer = window.setTimeout(() => {
+      this.clearSaveTimers()
       void this.save()
-    }, AUTOSAVE_MS)
+    }, AUTOSAVE_DEBOUNCE_MS)
+
+    if (!this.maxWaitTimer) {
+      this.maxWaitTimer = window.setTimeout(() => {
+        this.clearSaveTimers()
+        void this.save()
+      }, AUTOSAVE_MAX_WAIT_MS)
+    }
+  }
+
+  private clearSaveTimers(): void {
+    if (this.saveTimer) {
+      clearTimeout(this.saveTimer)
+      this.saveTimer = undefined
+    }
+    if (this.maxWaitTimer) {
+      clearTimeout(this.maxWaitTimer)
+      this.maxWaitTimer = undefined
+    }
   }
 
   async flush(): Promise<boolean> {
@@ -427,7 +450,7 @@ class Workspace {
   }
 
   save(keepMine = false): Promise<boolean> {
-    clearTimeout(this.timer)
+    this.clearSaveTimers()
     if (this.saving) return this.saving
     const { doc, vault } = this.state
     if (!doc || !vault || doc.kind === 'clean' || doc.kind === 'missing')
@@ -479,7 +502,7 @@ class Workspace {
   }
 
   private receiveConflict(doc: Doc, disk: NoteVersion | null): void {
-    clearTimeout(this.timer)
+    this.clearSaveTimers()
     if (disk?.text === doc.text) this.load(doc.path, disk)
     else this.set({ doc: { ...doc, kind: 'conflict', disk }, error: '' })
   }

@@ -2,6 +2,7 @@ import {
   app,
   BaseWindow,
   BrowserWindow,
+  dialog,
   Menu,
   type MenuItemConstructorOptions,
   shell
@@ -31,8 +32,51 @@ export function buildApplicationMenu(): Menu {
               { role: 'about' as const, label: '关于 mote' },
               {
                 label: '检查更新...',
-                click: () => {
-                  void Updater.getInstance().checkForUpdates()
+                click: async (_menuItem, browserWindow) => {
+                  const targetWin =
+                    (browserWindow instanceof BrowserWindow ? browserWindow : null) ??
+                    BrowserWindow.getFocusedWindow() ??
+                    BrowserWindow.getAllWindows()[0]
+
+                  const updater = Updater.getInstance()
+                  try {
+                    const status = await updater.checkForUpdates()
+                    if (status.state === 'not-available') {
+                      if (targetWin && !targetWin.isDestroyed()) {
+                        await dialog.showMessageBox(targetWin, {
+                          type: 'info',
+                          buttons: ['好'],
+                          defaultId: 0,
+                          title: '检查更新',
+                          message: '当前已是最新版本',
+                          detail: `mote v${status.currentVersion} 目前已是最新版本。`
+                        })
+                      }
+                    } else if (status.state === 'error') {
+                      if (targetWin && !targetWin.isDestroyed()) {
+                        await dialog.showMessageBox(targetWin, {
+                          type: 'warning',
+                          buttons: ['好'],
+                          defaultId: 0,
+                          title: '检查更新',
+                          message: '检查更新失败',
+                          detail: status.error || '检查更新失败，请稍后重试。'
+                        })
+                      }
+                    }
+                  } catch (err: unknown) {
+                    if (targetWin && !targetWin.isDestroyed()) {
+                      const msg = err instanceof Error ? err.message : String(err)
+                      await dialog.showMessageBox(targetWin, {
+                        type: 'warning',
+                        buttons: ['好'],
+                        defaultId: 0,
+                        title: '检查更新',
+                        message: '检查更新失败',
+                        detail: msg
+                      })
+                    }
+                  }
                 }
               },
               { type: 'separator' as const },

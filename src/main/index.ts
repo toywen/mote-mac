@@ -197,8 +197,12 @@ ipcMain.handle(channels.deleteEntry, async (_event, dir: string, path: VaultPath
   await shell.trashItem(full)
   await v.deleteEntry(path)
 })
-ipcMain.handle(channels.showInFolder, async (_event, dir: string, path: VaultPath) => {
+ipcMain.handle(channels.showInFolder, async (_event, dir: string, path?: VaultPath) => {
   const v = currentVault(dir)
+  if (!path) {
+    await shell.openPath(v.dir)
+    return
+  }
   const full = await v.resolvePath(path)
   shell.showItemInFolder(full)
 })

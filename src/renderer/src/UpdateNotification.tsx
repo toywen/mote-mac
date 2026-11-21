@@ -1,4 +1,4 @@
-import { Download, RefreshCw, Sparkles, X } from 'lucide-react'
+import { Sparkles, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 import type { UpdateStatus } from '../../core/updaterTypes'
 import './UpdateNotification.css'
@@ -40,15 +40,15 @@ export function UpdateNotification(): React.JSX.Element | null {
     <div className="update-banner" role="status" aria-live="polite">
       <div className="update-banner-header">
         <div className="update-banner-title">
-          <Sparkles size={15} strokeWidth={1.5} />
+          <Sparkles size={15} strokeWidth={1.5} className="update-sparkle-icon" />
           {state === 'available' && (
             <span>
               发现新版本 <span className="update-banner-badge">v{release?.version}</span>
             </span>
           )}
           {state === 'downloading' && <span>正在下载更新...</span>}
-          {state === 'downloaded' && <span>新版本已准备就绪</span>}
-          {state === 'installing' && <span>正在重启并应用更新...</span>}
+          {state === 'downloaded' && <span>新版本已就绪</span>}
+          {state === 'installing' && <span>正在重启应用更新...</span>}
         </div>
 
         <div className="update-banner-actions">
@@ -63,32 +63,26 @@ export function UpdateNotification(): React.JSX.Element | null {
                   {showNotes ? '收起说明' : '更新说明'}
                 </button>
               )}
-              <button
-                type="button"
-                className="update-btn update-btn-primary"
-                onClick={handleDownload}
-              >
-                <Download size={13} strokeWidth={1.5} />
+              <button type="button" className="update-btn-primary" onClick={handleDownload}>
                 下载更新
               </button>
             </>
           )}
 
           {state === 'downloaded' && (
-            <button type="button" className="update-btn update-btn-primary" onClick={handleInstall}>
-              <RefreshCw size={13} strokeWidth={1.5} />
+            <button type="button" className="update-btn-primary" onClick={handleInstall}>
               立即重启更新
             </button>
           )}
 
           <button
             type="button"
-            className="icon-button"
-            title="关闭提示"
+            className="update-close-btn"
+            title="稍后提醒"
             aria-label="关闭提示"
             onClick={() => setDismissed(true)}
           >
-            <X size={13} strokeWidth={1.5} />
+            <X size={14} strokeWidth={1.8} />
           </button>
         </div>
       </div>

@@ -26,8 +26,9 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | P0     | 5    | 视频阅读（本地/YouTube）、性能                       | ✅ 已完成（2026-11-21）                                                      | 验收-6、验收-10、验收-11                                                                        |
 | P0     | 6    | 打包与自动更新：通过 GitHub 打包成 dmg，支持检查更新 | ✅ 已完成（2026-11-21）                                                      | 验收-8、验收-9，见 [step-6.md](plans/step-6.md)                                                 |
 | P0     | 7    | Markdown 快捷键与应用菜单                            | ✅ 已完成（2026-11-21），见 [step-7.md](plans/step-7.md)                     | 验收-12                                                                                         |
-| P0     | 8    | 试用一周                                             | ⬜ 未开始                                                                    | 验收-7。安装打包出的 dmg，试用期间让 Obsidian 在后台开着，obsidian-git 才会继续备份 `~/life-os` |
-| P0     | 9    | 同步                                                 | ⬜ 未开始                                                                    | 见同步-1                                                                                        |
+| P0     | 8    | HTML 格式可读                                        | ⬜ 下一步                                                                    | 验收-13                                                                                         |
+| P0     | 9    | 试用一周                                             | ⬜ 未开始                                                                    | 验收-7。安装打包出的 dmg，试用期间让 Obsidian 在后台开着，obsidian-git 才会继续备份 `~/life-os` |
+| P0     | 10   | 同步                                                 | ⬜ 未开始                                                                    | 见同步-1                                                                                        |
 | P1     | —    | 标签页、表格编辑、属性面板等 9 项（图片附件已实现）  | 🟡 部分                                                                      | 见 P1-5                                                                                         |
 
 已完成的步骤里还有 🟡 项，见下面各步的表。每一步的实现计划在 [plans/](plans/)，例如 [step-3.md](plans/step-3.md)。
@@ -47,7 +48,7 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | ✅ 已实现 | 笔记库-7 | 正在编辑的笔记被外部修改时，不覆盖，提示你选择保留哪一份                                                         | 测试：external saves refresh clean notes and keep both sides of a conflict；verify：external-change                                                                                |                                                                                                                                  |
 | ✅ 已实现 | 文件树-1 | 显示文件夹和全部文件，文件夹可以折叠                                                                             | 测试：long file trees preserve the vault name and can be collapsed；verify：open-vault                                                                                             |                                                                                                                                  |
 | 🟡 部分   | 文件树-2 | 点击笔记，在编辑器里打开。点击附件，用 macOS 的默认程序打开                                                      | verify：open-vault                                                                                                                                                                 | 打开笔记已验证。打开附件有代码，没有测试                                                                                         |
-| ✅ 已实现 | 编辑器-7 | 停止输入后自动保存。切换笔记和退出时也先保存                                                                     | 测试：edits preserve source bytes…；verify：edit-and-save                                                                                                                          |                                                                                                                                  |
+| ✅ 已实现 | 编辑器-7 | 停止输入后自动保存。切换笔记和退出时也先保存                                                                     | 测试：edits preserve source bytes…；verify：edit-and-save                                                                                                                          | 2026-11-22：防抖时间优化为 150ms 并设 800ms 最大等待时间，停止输入即刻落盘                                                       |
 | ✅ 已实现 | 编辑器-8 | 只打开、不修改的笔记，字节不变                                                                                   | 测试：edits preserve source bytes…；verify：edit-and-save                                                                                                                          | 覆盖 CRLF、BOM 和无结尾换行                                                                                                      |
 
 ## 第 2 步：链接解析、反向链接和查找
@@ -83,7 +84,7 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 
 | 状态      | 编号     | 功能                                                                                   | 证据                                                                                                                            | 备注                                                                                  |
 | --------- | -------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
-| ✅ 已实现 | 文件树-3 | 新建笔记和文件夹。新笔记的位置按笔记库配置决定                                         | 测试：creates a new note, renames it, and updates inbound links                                                                 | 2026-11-21。支持顶部工具栏与右键菜单新建，自动防重名递增                              |
+| ✅ 已实现 | 文件树-3 | 新建笔记和文件夹。新笔记的位置按笔记库配置决定                                         | 测试：creates a new note, renames it, and updates inbound links；sidebar blank area context menu creates notes and folders at root | 2026-11-22。支持顶部工具栏、笔记项右键与侧栏空白区域右键根目录操作，自动防重名递增 |
 | ✅ 已实现 | 文件树-4 | 改名和移动笔记或文件夹。笔记库配置要求时，更新指向它的链接和它里面的 Markdown 相对链接 | Vitest：rewriteNoteLinks；测试：creates a new note, renames it...；verify：verify-step4（life-os 与 Pesemic 副本 diff -r 验证） | 2026-11-21。见 ADR 0006，支持 journal 崩溃自愈，alwaysUpdateLinks 为 false 时弹窗询问 |
 | ✅ 已实现 | 文件树-5 | 删除笔记时，移到 macOS 废纸篓                                                          | 测试：confirms before deleting non-empty folder；verify：verify-step4                                                           | 2026-11-21。单篇笔记静默移入废纸篓，非空文件夹二次弹窗确认                            |
 | ✅ 已实现 | 文件树-6 | 侧栏头部支持搜索与排序按钮，文件树可按文件名正序（A-Z）与倒序（Z-A）排序               | 测试：sidebar header supports search and sort actions；单元测试：tree.test.ts                                                   | 2026-11-21。侧栏操作栏新增搜索入口与排序下拉菜单，支持持久化排序设置                 |
@@ -104,7 +105,7 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | 状态      | 编号   | 功能                                                   | 证据                                                                                          | 备注                                                                                                           |
 | --------- | ------ | ------------------------------------------------------ | --------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------------------------- |
 | ✅ 已实现 | 打包-1 | 通过 GitHub Actions 自动构建全架构 macOS `.dmg` 与 `.zip` 安装包（支持 Apple Silicon arm64、Intel x64 与 Universal 通用双架构） | 脚本：tools/verify-step6.mjs；本地实测输出 arm64、x64 与 universal 三类 DMG 及 ZIP 安装包 | 2026-11-21。配置 .github/workflows/release.yml 显式指定 `--arm64 --x64 --universal` 打包，支持所有 Mac 系列（含非 M 芯片 Intel 机型），彻底避免架构不匹配禁止符 ⃠ |
-| ✅ 已实现 | 更新-1 | 应用内检查 GitHub Releases 新版本，下载并平滑更新      | 单元测试：updaterTypes.test.ts；脚本：tools/verify-step6.mjs；E2E 交互组件 UpdateNotification | 2026-11-21。基于 GitHub Releases API 检查新版本，多架构匹配，下载后提示重启完成更新，见 ADR 0014               |
+| ✅ 已实现 | 更新-1 | 应用内检查 GitHub Releases 新版本，下载并平滑更新      | 单元测试：updaterTypes.test.ts；脚本：tools/verify-step6.mjs；E2E 交互组件 UpdateNotification | 2026-11-22。优化更新提示组件为 macOS 原生蓝胶囊风格与无侵扰交互，菜单增加手动检查弹窗反馈，见 ADR 0014               |
 
 ## 第 7 步：Markdown 快捷键与应用菜单
 
@@ -113,11 +114,17 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | ✅ 已实现 | 快捷键-1 | Markdown 编辑格式化快捷键：支持粗体 `Cmd+B`、斜体 `Cmd+I`、链接 `Cmd+K`、删除线 `Cmd+Shift+X`、高亮 `Cmd+Shift+H`、代码等快捷键 | 单元测试：formatting.test.ts（24 项全过）；脚本：tools/verify-step7.mjs；E2E：tests/e2e/menu.spec.ts | 2026-11-21。选中文本智能包裹，无选区时光标居中，支持反选取消格式化与网址智能转换，见 ADR 0015             |
 | ✅ 已实现 | 菜单-1   | 原生 macOS 应用菜单（文件、编辑、格式、查看、窗口、帮助）                                                                       | 脚本：tools/verify-step7.mjs；主进程菜单：src/main/menu.ts；IPC：channels.menuAction                 | 2026-11-21。规范化 macOS 7 项顶栏菜单结构，绑定常用快捷键与操作，通过 IPC 与渲染进程双向联动，见 ADR 0015 |
 
-## 第 8 步：试用一周
+## 第 8 步：HTML 格式可读
+
+| 状态      | 编号   | 功能                                                                  | 证据 | 备注                                                                                             |
+| --------- | ------ | --------------------------------------------------------------------- | ---- | ------------------------------------------------------------------------------------------------ |
+| ⬜ 未实现 | HTML-1 | 支持 .html 格式文件在应用内直接打开与沙箱安全阅读，无需跳转外部浏览器 |      | 点击文件树或库内链接直接在主视口渲染，采用沙箱隔离保护（sandbox iframe），排版样式完整且安全受控 |
+
+## 第 9 步：试用一周
 
 由人工在真实环境中使用打包产出的 DMG 连续一周记笔记，验证日常读写与替换 Obsidian 的可行性，详见[验收-7](#验收清单)。
 
-## 第 9 步：同步
+## 第 10 步：同步
 
 | 状态      | 编号   | 功能                                                                                                               | 证据 | 备注                                                                                                                             |
 | --------- | ------ | ------------------------------------------------------------------------------------------------------------------ | ---- | -------------------------------------------------------------------------------------------------------------------------------- |

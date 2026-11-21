@@ -137,7 +137,7 @@ export interface MoteApi {
   createNoteInVault(dir: string, parentFolder?: VaultPath, initialName?: string): Promise<VaultPath>
   createFolder(dir: string, parentFolder?: VaultPath, initialName?: string): Promise<VaultPath>
   deleteEntry(dir: string, path: VaultPath): Promise<void>
-  showInFolder(dir: string, path: VaultPath): Promise<void>
+  showInFolder(dir: string, path?: VaultPath): Promise<void>
   renameOrMove(dir: string, from: VaultPath, to: VaultPath, updateLinks: boolean): Promise<void>
   countInboundLinks(dir: string, path: VaultPath): Promise<number>
   backlinks(dir: string, path: VaultPath): Promise<Hit[]>
