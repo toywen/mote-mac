@@ -1,5 +1,5 @@
 import { constants, watch, type FSWatcher } from 'node:fs'
-import { lstat, mkdir, open, readFile, realpath, stat } from 'node:fs/promises'
+import { lstat, mkdir, open, readFile, realpath, rename as fsRename, stat } from 'node:fs/promises'
 import { dirname, join, resolve } from 'node:path'
 import {
   parseVaultPath,
@@ -16,7 +16,23 @@ import {
 } from '../core/ipc'
 import { NoteIndex } from '../core/noteIndex'
 import { search } from '../core/search'
+import { buildRenameMapping, rewriteNoteLinks } from '../core/rename'
+import { extractLinks } from '../core/markdown'
 import { hash, kind, missing, noteVersion, readNoteFile, readNoteFiles, scanVault } from './notes'
+
+export type RenameJournal = {
+  dir: string
+  from: VaultPath
+  to: VaultPath
+  kind: 'note' | 'folder'
+  updateLinks: boolean
+}
+
+export interface JournalHandler {
+  read(): Promise<RenameJournal | null>
+  write(journal: RenameJournal): Promise<void>
+  clear(): Promise<void>
+}
 
 async function readConfig(root: string): Promise<VaultConfig> {
   const obsidian = join(root, '.obsidian')
@@ -67,7 +83,11 @@ export class Vault {
     private readonly notify: (event: VaultChange) => void
   ) {}
 
-  static async open(dir: string, notify: (event: VaultChange) => void): Promise<Vault> {
+  static async open(
+    dir: string,
+    notify: (event: VaultChange) => void,
+    journal?: JournalHandler
+  ): Promise<Vault> {
     const root = await realpath(resolve(dir))
     const vault = new Vault(root, await readConfig(root), notify)
     try {
@@ -77,6 +97,16 @@ export class Vault {
         vault.entries = await vault.scan()
         vault.indexFiles()
         await vault.indexNotes([...vault.entries.values()].filter((e) => e.kind === 'note'))
+        if (journal) {
+          const saved = await journal.read()
+          if (saved && saved.dir === vault.dir) {
+            try {
+              await vault.renameOrMove(saved.from, saved.to, saved.updateLinks, journal)
+            } catch (err) {
+              console.error('Failed to replay journal:', err)
+            }
+          }
+        }
       })
       return vault
     } catch (error) {
@@ -217,6 +247,303 @@ export class Vault {
     const full = join(this.dir, parseVaultPath(path))
     if ((await realpath(dirname(full))) !== dirname(full)) throw new Error('无法访问链接路径')
     return full
+  }
+
+  async resolvePath(path: VaultPath): Promise<string> {
+    const clean = parseVaultPath(path)
+    const full = resolve(join(this.dir, clean))
+    if (!full.startsWith(this.dir + '/') && full !== this.dir) {
+      throw new Error('无法访问路径')
+    }
+    return full
+  }
+
+  countInboundLinks(path: VaultPath): number {
+    const clean = parseVaultPath(path)
+    const entry = this.entries.get(clean)
+    if (!entry) return 0
+    if (entry.kind === 'note') {
+      return this.backlinks(clean).length
+    }
+    let total = 0
+    const prefix = clean + '/'
+    for (const [p, e] of this.entries) {
+      if (e.kind === 'note' && p.startsWith(prefix)) {
+        total += this.backlinks(p).length
+      }
+    }
+    return total
+  }
+
+  createNoteInVault(parentFolder?: VaultPath, initialName?: string): Promise<VaultPath> {
+    return this.run(async () => {
+      let folder = parentFolder ? parseVaultPath(parentFolder) : ''
+      if (!folder) {
+        if (this.config.newFileLocation === 'folder' && this.config.newFileFolderPath) {
+          folder = parseVaultPath(this.config.newFileFolderPath.replace(/^\/+|\/+$/g, ''))
+        }
+      }
+      const base = initialName ? initialName.replace(/\.md$/i, '') : '未命名'
+      let candidateName = `${base}.md`
+      let candidatePath = parseVaultPath(folder ? `${folder}/${candidateName}` : candidateName)
+      let count = 1
+      while (this.entries.has(candidatePath)) {
+        candidateName = `${base} ${count++}.md`
+        candidatePath = parseVaultPath(folder ? `${folder}/${candidateName}` : candidateName)
+      }
+
+      if (folder) {
+        let sub = ''
+        for (const part of folder.split('/')) {
+          sub = sub ? `${sub}/${part}` : part
+          const vp = parseVaultPath(sub)
+          const dir = join(this.dir, sub)
+          await mkdir(dir).catch((err: unknown) => {
+            if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err
+          })
+          if (!this.entries.has(vp)) {
+            this.entries.set(vp, { path: vp, kind: 'folder' })
+          }
+        }
+      }
+
+      const full = join(this.dir, candidatePath)
+      const flags =
+        constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW
+      const handle = await open(full, flags, 0o666)
+      await handle.close()
+
+      this.ownWrites.set(candidatePath, hash(Buffer.alloc(0)))
+      this.entries.set(candidatePath, { path: candidatePath, kind: 'note' })
+      this.indexFiles()
+      this.index.set(candidatePath, '')
+      this.notify({
+        dir: this.dir,
+        entries: [...this.entries.values()],
+        changed: [candidatePath],
+        removed: []
+      })
+      return candidatePath
+    })
+  }
+
+  createFolder(parentFolder?: VaultPath, initialName?: string): Promise<VaultPath> {
+    return this.run(async () => {
+      const folder = parentFolder ? parseVaultPath(parentFolder) : ''
+      const base = initialName ? initialName.trim() : '未命名文件夹'
+      let candidateName = base
+      let candidatePath = parseVaultPath(folder ? `${folder}/${candidateName}` : candidateName)
+      let count = 1
+      while (this.entries.has(candidatePath)) {
+        candidateName = `${base} ${count++}`
+        candidatePath = parseVaultPath(folder ? `${folder}/${candidateName}` : candidateName)
+      }
+
+      const full = join(this.dir, candidatePath)
+      await mkdir(full, { recursive: true })
+
+      let sub = ''
+      for (const part of candidatePath.split('/')) {
+        sub = sub ? `${sub}/${part}` : part
+        const vp = parseVaultPath(sub)
+        if (!this.entries.has(vp)) {
+          this.entries.set(vp, { path: vp, kind: 'folder' })
+        }
+      }
+
+      this.indexFiles()
+      this.notify({
+        dir: this.dir,
+        entries: [...this.entries.values()],
+        changed: [],
+        removed: []
+      })
+      return candidatePath
+    })
+  }
+
+  deleteEntry(path: VaultPath): Promise<void> {
+    return this.run(async () => {
+      const clean = parseVaultPath(path)
+      const entry = this.entries.get(clean)
+      if (!entry) return
+      const removed: VaultPath[] = []
+      if (entry.kind === 'folder') {
+        const prefix = clean + '/'
+        for (const [p, e] of this.entries) {
+          if (p === clean || p.startsWith(prefix)) {
+            this.entries.delete(p)
+            if (e.kind === 'note') {
+              this.index.delete(p)
+              this.ownWrites.delete(p)
+            }
+            removed.push(p)
+          }
+        }
+      } else {
+        this.entries.delete(clean)
+        this.index.delete(clean)
+        this.ownWrites.delete(clean)
+        removed.push(clean)
+      }
+      this.indexFiles()
+      this.notify({
+        dir: this.dir,
+        entries: [...this.entries.values()],
+        changed: [],
+        removed
+      })
+    })
+  }
+
+  renameOrMove(
+    from: VaultPath,
+    to: VaultPath,
+    updateLinks: boolean,
+    journal?: JournalHandler
+  ): Promise<void> {
+    return this.run(async () => {
+      const cleanFrom = parseVaultPath(from)
+      const cleanTo = parseVaultPath(to)
+      if (cleanFrom === cleanTo) return
+
+      const entry = this.entries.get(cleanFrom)
+      if (this.entries.has(cleanTo)) {
+        throw new Error('目标文件或文件夹已存在')
+      }
+
+      const isFolder = entry?.kind === 'folder' || (!entry && !cleanFrom.endsWith('.md'))
+
+      if (journal) {
+        await journal.write({
+          dir: this.dir,
+          from: cleanFrom,
+          to: cleanTo,
+          kind: isFolder ? 'folder' : 'note',
+          updateLinks
+        })
+      }
+
+      const fullFrom = join(this.dir, cleanFrom)
+      const fullTo = join(this.dir, cleanTo)
+      await mkdir(dirname(fullTo), { recursive: true })
+      try {
+        await fsRename(fullFrom, fullTo)
+      } catch (error) {
+        const code = (error as NodeJS.ErrnoException).code
+        if (code === 'ENOENT') {
+          const destStat = await stat(fullTo).catch(() => null)
+          if (!destStat) throw error
+        } else {
+          throw error
+        }
+      }
+
+      const renames = new Map<VaultPath, VaultPath>()
+      if (isFolder) {
+        const fromPrefix = cleanFrom + '/'
+        for (const [p] of this.entries) {
+          if (p === cleanFrom || p.startsWith(fromPrefix)) {
+            const suffix = p.slice(cleanFrom.length)
+            renames.set(p, parseVaultPath(cleanTo + suffix))
+          }
+        }
+        if (!renames.has(cleanFrom)) {
+          renames.set(cleanFrom, cleanTo)
+        }
+      } else {
+        renames.set(cleanFrom, cleanTo)
+      }
+
+      for (const [oldP, newP] of renames) {
+        const oldEntry = this.entries.get(oldP)
+        this.entries.delete(oldP)
+        if (oldEntry) {
+          this.entries.set(newP, { path: newP, kind: oldEntry.kind })
+          if (oldEntry.kind === 'note') {
+            const noteData = this.index.get(oldP)
+            this.index.delete(oldP)
+            if (noteData) {
+              this.index.set(newP, noteData.text)
+            }
+            const ownHash = this.ownWrites.get(oldP)
+            this.ownWrites.delete(oldP)
+            if (ownHash) this.ownWrites.set(newP, ownHash)
+          }
+        } else {
+          this.entries.set(newP, { path: newP, kind: kind(newP) })
+        }
+      }
+      this.indexFiles()
+
+      const changedNotes: VaultPath[] = []
+      if (updateLinks) {
+        const currentFiles = [...this.entries.values()]
+          .filter((e) => e.kind !== 'folder')
+          .map((e) => e.path)
+        const mapping = buildRenameMapping(renames, currentFiles)
+
+        const reverseMap = new Map<VaultPath, VaultPath>()
+        for (const [f, t] of renames) {
+          reverseMap.set(t, f)
+        }
+
+        for (const [notePath, ent] of this.entries) {
+          if (ent.kind !== 'note') continue
+          const oldSourcePath = reverseMap.get(notePath) ?? notePath
+          const currentVersion = await this.readNote(notePath)
+          if (!currentVersion) continue
+
+          const links = extractLinks(currentVersion.text)
+          const newText = rewriteNoteLinks(
+            notePath,
+            oldSourcePath,
+            currentVersion.text,
+            links,
+            mapping,
+            this.config
+          )
+          if (newText !== null && newText !== currentVersion.text) {
+            const bytes = Buffer.from(newText, 'utf8')
+            const nextHash = hash(bytes)
+            const full = await this.filePath(notePath)
+            const file = await open(
+              full,
+              constants.O_RDWR | constants.O_NOFOLLOW | constants.O_NONBLOCK
+            )
+            try {
+              for (let offset = 0; offset < bytes.length; ) {
+                const { bytesWritten } = await file.write(
+                  bytes,
+                  offset,
+                  bytes.length - offset,
+                  offset
+                )
+                if (!bytesWritten) throw new Error('无法写入笔记')
+                offset += bytesWritten
+              }
+              await file.truncate(bytes.length)
+              this.ownWrites.set(notePath, nextHash)
+              this.index.set(notePath, newText)
+              changedNotes.push(notePath)
+            } finally {
+              await file.close()
+            }
+          }
+        }
+      }
+
+      if (journal) {
+        await journal.clear()
+      }
+
+      this.notify({
+        dir: this.dir,
+        entries: [...this.entries.values()],
+        changed: [...changedNotes, ...renames.values()],
+        removed: [...renames.keys()]
+      })
+    })
   }
 
   async readNote(path: VaultPath): Promise<NoteVersion | null> {

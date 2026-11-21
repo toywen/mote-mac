@@ -1,12 +1,12 @@
 import { app, shell, BrowserWindow, dialog, ipcMain, nativeTheme, protocol } from 'electron'
 import { join } from 'path'
-import { lstat, mkdir, readFile, rename, writeFile } from 'node:fs/promises'
+import { lstat, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { optimizer, is } from '@electron-toolkit/utils'
 import { fileScheme } from '../core/fileUrl'
 import { channels, type ContentHash, type VaultPath } from '../core/ipc'
 import { serveFile } from './fileProtocol'
 import { isAllowedExternal } from '../core/linkDest'
-import { Vault } from './vault'
+import { Vault, type JournalHandler, type RenameJournal } from './vault'
 
 let window: BrowserWindow | undefined
 let vault: Vault | undefined
@@ -26,14 +26,39 @@ function currentVault(dir: string): Vault {
 }
 
 const settingsFile = (): string => join(app.getPath('userData'), 'settings.json')
+const journalFile = (): string => join(app.getPath('userData'), 'journal.json')
+
+const journalHandler: JournalHandler = {
+  async read() {
+    try {
+      const raw = await readFile(journalFile(), 'utf8')
+      return JSON.parse(raw) as RenameJournal
+    } catch {
+      return null
+    }
+  },
+  async write(journal: RenameJournal) {
+    await mkdir(app.getPath('userData'), { recursive: true })
+    const tmp = journalFile() + '.tmp'
+    await writeFile(tmp, JSON.stringify(journal))
+    await rename(tmp, journalFile())
+  },
+  async clear() {
+    await rm(journalFile()).catch(() => {})
+  }
+}
 
 // The --background of src/renderer/src/assets/main.css, so a dark window never flashes white.
 const windowBackground = (): string => (nativeTheme.shouldUseDarkColors ? '#1e1e1e' : '#ffffff')
 
 function openVault(dir: string): Promise<Vault> {
-  return Vault.open(dir, (change) => {
-    if (vault?.dir === change.dir) window?.webContents.send(channels.vaultChanged, change)
-  })
+  return Vault.open(
+    dir,
+    (change) => {
+      if (vault?.dir === change.dir) window?.webContents.send(channels.vaultChanged, change)
+    },
+    journalHandler
+  )
 }
 
 ipcMain.handle(channels.getVault, () => vault?.info() ?? null)
@@ -88,6 +113,35 @@ ipcMain.handle(channels.openWithDefaultApp, async (_event, dir: string, path: Va
 })
 ipcMain.handle(channels.createNote, (_event, dir: string, path: VaultPath) =>
   currentVault(dir).createNote(path)
+)
+ipcMain.handle(
+  channels.createNoteInVault,
+  (_event, dir: string, parentFolder?: VaultPath, initialName?: string) =>
+    currentVault(dir).createNoteInVault(parentFolder, initialName)
+)
+ipcMain.handle(
+  channels.createFolder,
+  (_event, dir: string, parentFolder?: VaultPath, initialName?: string) =>
+    currentVault(dir).createFolder(parentFolder, initialName)
+)
+ipcMain.handle(channels.deleteEntry, async (_event, dir: string, path: VaultPath) => {
+  const v = currentVault(dir)
+  const full = await v.resolvePath(path)
+  await shell.trashItem(full)
+  await v.deleteEntry(path)
+})
+ipcMain.handle(channels.showInFolder, async (_event, dir: string, path: VaultPath) => {
+  const v = currentVault(dir)
+  const full = await v.resolvePath(path)
+  shell.showItemInFolder(full)
+})
+ipcMain.handle(
+  channels.renameOrMove,
+  (_event, dir: string, from: VaultPath, to: VaultPath, updateLinks: boolean) =>
+    currentVault(dir).renameOrMove(from, to, updateLinks, journalHandler)
+)
+ipcMain.handle(channels.countInboundLinks, (_event, dir: string, path: VaultPath) =>
+  currentVault(dir).countInboundLinks(path)
 )
 // Main is the boundary, so it checks the address again before the system opens it.
 ipcMain.handle(channels.openExternal, async (_event, url: string) => {

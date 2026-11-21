@@ -10,6 +10,15 @@ const mote: MoteApi = {
   openWithDefaultApp: (dir, path) => ipcRenderer.invoke(channels.openWithDefaultApp, dir, path),
   createNote: (dir, path) => ipcRenderer.invoke(channels.createNote, dir, path),
   openExternal: (url) => ipcRenderer.invoke(channels.openExternal, url),
+  createNoteInVault: (dir, folder, name) =>
+    ipcRenderer.invoke(channels.createNoteInVault, dir, folder, name),
+  createFolder: (dir, parent, name) =>
+    ipcRenderer.invoke(channels.createFolder, dir, parent, name),
+  deleteEntry: (dir, path) => ipcRenderer.invoke(channels.deleteEntry, dir, path),
+  showInFolder: (dir, path) => ipcRenderer.invoke(channels.showInFolder, dir, path),
+  renameOrMove: (dir, from, to, updateLinks) =>
+    ipcRenderer.invoke(channels.renameOrMove, dir, from, to, updateLinks),
+  countInboundLinks: (dir, path) => ipcRenderer.invoke(channels.countInboundLinks, dir, path),
   backlinks: (dir, path) => ipcRenderer.invoke(channels.backlinks, dir, path),
   search: (dir, query, limit) => ipcRenderer.invoke(channels.search, dir, query, limit),
   onVaultChanged: (callback) => {

@@ -75,6 +75,17 @@ export interface MoteApi {
   createNote(dir: string, path: VaultPath): Promise<void>
   // Hands an http, https or mailto address to the system.
   openExternal(url: string): Promise<void>
+  createNoteInVault(dir: string, parentFolder?: VaultPath, initialName?: string): Promise<VaultPath>
+  createFolder(dir: string, parentFolder?: VaultPath, initialName?: string): Promise<VaultPath>
+  deleteEntry(dir: string, path: VaultPath): Promise<void>
+  showInFolder(dir: string, path: VaultPath): Promise<void>
+  renameOrMove(
+    dir: string,
+    from: VaultPath,
+    to: VaultPath,
+    updateLinks: boolean
+  ): Promise<void>
+  countInboundLinks(dir: string, path: VaultPath): Promise<number>
   backlinks(dir: string, path: VaultPath): Promise<Hit[]>
   search(dir: string, query: string, limit: number): Promise<SearchResult>
   onVaultChanged(callback: (change: VaultChange) => void): () => void
@@ -90,6 +101,12 @@ export const channels = {
   openWithDefaultApp: 'mote:open-with-default-app',
   createNote: 'mote:create-note',
   openExternal: 'mote:open-external',
+  createNoteInVault: 'mote:create-note-in-vault',
+  createFolder: 'mote:create-folder',
+  deleteEntry: 'mote:delete-entry',
+  showInFolder: 'mote:show-in-folder',
+  renameOrMove: 'mote:rename-or-move',
+  countInboundLinks: 'mote:count-inbound-links',
   backlinks: 'mote:backlinks',
   search: 'mote:search',
   vaultChanged: 'mote:vault-changed',
