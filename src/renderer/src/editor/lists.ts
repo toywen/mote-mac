@@ -51,7 +51,7 @@ const listMark: Renderer = (node, cx) => {
     : bullet
   return [
     {
-      reveal: line,
+      reveal: { from: -1, to: -1 },
       always: [depthLine(depth).range(line.from), prefix.range(from, to)],
       concealed: [marker.range(from, to)]
     }

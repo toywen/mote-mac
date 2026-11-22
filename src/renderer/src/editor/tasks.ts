@@ -71,7 +71,7 @@ const taskMarker: Renderer = (node, cx) => {
   const widget = Decoration.replace({ widget: new CheckboxWidget(checked, label) })
   const always = [(bullet ? bulletTask : orderedTask).range(line.from)]
   if (checked && task && task.to > end) always.push(done.range(end, task.to))
-  return [{ reveal: line, always, concealed: [widget.range(node.from, end)] }]
+  return [{ reveal: { from: -1, to: -1 }, always, concealed: [widget.range(node.from, end)] }]
 }
 
 export const taskRenderers: Record<string, Renderer> = {
