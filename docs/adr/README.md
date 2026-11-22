@@ -29,3 +29,4 @@ ADR（Architecture Decision Record）是架构决策记录。每个文件记一�
 | [0016](0016-paste-and-drop-image-attachments.md)              | 粘贴与拖拽图片按配置自动存入附件文件夹   | 被 0017 替代（附件存储部分） |
 | [0017](0017-mote-vault-spec-and-dot-mote.md)                   | mote 独立笔记库规范与 .mote 目录         | 已实现                       |
 | [0018](0018-sandboxed-html-viewing.md)                         | 在应用内沙箱安全阅读 HTML 文件           | 已实现                       |
+| [0019](0019-table-cell-editing-math-rendering-and-multi-vault-windows.md) | 表格单元格直接编辑、数学公式渲染与多笔记库多窗口 | 已实现                       |

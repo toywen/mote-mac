@@ -6,6 +6,7 @@ import { imageRenderers } from './images'
 import { inlineRenderers } from './inline'
 import { linkRenderers } from './links'
 import { listRenderers } from './lists'
+import { mathRenderers } from './math'
 import { mermaidRenderers } from './mermaid'
 import type { Renderer } from './preview'
 import { quoteRenderers } from './quotes'
@@ -22,6 +23,7 @@ export const renderers: Record<string, Renderer> = {
   ...quoteRenderers,
   ...codeRenderers,
   ...imageRenderers,
+  ...mathRenderers,
   // Takes Blockquote from quoteRenderers and hands it plain quotes.
   ...calloutRenderers,
   ...tableRenderers,

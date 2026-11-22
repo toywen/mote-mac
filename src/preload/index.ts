@@ -73,7 +73,8 @@ const mote: MoteApi = {
     const listener = (_event: IpcRendererEvent, action: MenuAction): void => callback(action)
     ipcRenderer.on(channels.menuAction, listener)
     return () => ipcRenderer.off(channels.menuAction, listener)
-  }
+  },
+  newWindow: (dir?: string) => ipcRenderer.invoke(channels.newWindow, dir)
 }
 
 contextBridge.exposeInMainWorld('mote', mote)

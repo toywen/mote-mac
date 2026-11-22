@@ -20,7 +20,7 @@ function sendAction(action: MenuAction, win?: BaseWindow | null): void {
   }
 }
 
-export function buildApplicationMenu(): Menu {
+export function buildApplicationMenu(onCreateWindow?: (win?: BaseWindow | null) => void): Menu {
   const isMac = process.platform === 'darwin'
 
   const template: MenuItemConstructorOptions[] = [
@@ -107,6 +107,13 @@ export function buildApplicationMenu(): Menu {
           label: '新建笔记',
           accelerator: 'CmdOrCtrl+N',
           click: (_item, win) => sendAction('new-note', win)
+        },
+        {
+          label: '新建窗口',
+          accelerator: 'CmdOrCtrl+Shift+N',
+          click: (_item, win) => {
+            if (onCreateWindow) onCreateWindow(win)
+          }
         },
         {
           label: '快速打开...',

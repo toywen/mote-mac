@@ -24,6 +24,14 @@ function nodes(text: string, name: string): string[] {
 }
 
 describe('markdownParser', () => {
+  it('parses inline and block math formulas', () => {
+    expect(nodes('质能方程 $E = mc^2$ 在这里', 'InlineMath')).toEqual(['$E = mc^2$'])
+    expect(nodes('普通 $ 价格 $100 元', 'InlineMath')).toEqual([])
+    expect(nodes('$$x^2 + y^2 = z^2$$', 'BlockMath')).toEqual(['$$x^2 + y^2 = z^2$$'])
+    const multiline = '$$\n\\frac{a}{b} = c\n$$'
+    expect(nodes(multiline, 'BlockMath')).toEqual([multiline])
+  })
+
   it('parses tables into rows and cells', () => {
     const text = '| a | b |\n| --- | --- |\n| 一 | [[Readme]] |'
     expect(nodes(text, 'Table')).toEqual([text])

@@ -117,6 +117,62 @@ const frontmatter: BlockParser = {
   }
 }
 
+const DOLLAR = 36
+
+const inlineMath: InlineParser = {
+  name: 'InlineMath',
+  before: 'Escape',
+  parse(cx, next, pos) {
+    if (next !== DOLLAR || cx.char(pos + 1) === DOLLAR) return -1
+    if (pos > cx.offset && cx.char(pos - 1) === 92) return -1
+    const nextChar = cx.slice(pos + 1, pos + 2)
+    if (!nextChar || /^\s/.test(nextChar) || nextChar === '$') return -1
+    const rest = cx.slice(pos + 1, cx.end)
+    const newline = rest.indexOf('\n')
+    const limit = newline >= 0 ? newline : rest.length
+    let close = -1
+    for (let i = 0; i < limit; i++) {
+      if (rest.charCodeAt(i) === DOLLAR && (i === 0 || rest.charCodeAt(i - 1) !== 92)) {
+        if (!/\s/.test(rest[i - 1])) {
+          close = i
+          break
+        }
+      }
+    }
+    if (close < 0) return -1
+    return cx.addElement(cx.elt('InlineMath', pos, pos + 1 + close + 1))
+  }
+}
+
+const blockMath: BlockParser = {
+  name: 'BlockMath',
+  before: 'HorizontalRule',
+  parse(cx, line) {
+    const trimmed = line.text.trim()
+    if (!trimmed.startsWith('$$')) return false
+    const start = cx.lineStart
+    if (
+      trimmed.length > 2 &&
+      trimmed.endsWith('$$') &&
+      trimmed.indexOf('$$', 2) === trimmed.length - 2
+    ) {
+      const end = cx.lineStart + line.text.length
+      cx.nextLine()
+      cx.addElement(cx.elt('BlockMath', start, end))
+      return true
+    }
+    while (cx.nextLine()) {
+      if (line.text.trim().endsWith('$$')) {
+        const end = cx.lineStart + line.text.length
+        cx.nextLine()
+        cx.addElement(cx.elt('BlockMath', start, end))
+        return true
+      }
+    }
+    return false
+  }
+}
+
 export const markdownParser = commonmark.configure([
   Table,
   TaskList,
@@ -128,10 +184,12 @@ export const markdownParser = commonmark.configure([
       'Highlight',
       'HighlightMark',
       'Tag',
+      'InlineMath',
+      { name: 'BlockMath', block: true },
       { name: 'Frontmatter', block: true }
     ],
-    parseInline: [wikiLink, highlight, tag, bareUrl],
-    parseBlock: [frontmatter]
+    parseInline: [wikiLink, highlight, tag, bareUrl, inlineMath],
+    parseBlock: [frontmatter, blockMath]
   }
 ])
 

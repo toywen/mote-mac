@@ -86,8 +86,13 @@ function inline(node: SyntaxNode, draw: Draw): Node {
 
 // The cells of a header or body row, empty ones included. at is where a click puts the cursor:
 // after the cell's text, or inside an empty cell.
-function rowCells(row: SyntaxNode): { node: SyntaxNode | null; at: number }[] {
-  const cells: { node: SyntaxNode | null; at: number }[] = []
+function rowCells(row: SyntaxNode): {
+  node: SyntaxNode | null
+  from: number
+  to: number
+  at: number
+}[] {
+  const cells: { node: SyntaxNode | null; from: number; to: number; at: number }[] = []
   let cell: SyntaxNode | null = null
   let after = row.from
   for (let child = row.firstChild; child; child = child.nextSibling) {
@@ -96,12 +101,19 @@ function rowCells(row: SyntaxNode): { node: SyntaxNode | null; at: number }[] {
     // A leading pipe opens the first cell instead of closing one.
     if (cell || child.from > row.from)
       cells.push(
-        cell ? { node: cell, at: cell.to } : { node: null, at: Math.min(after + 1, child.from) }
+        cell
+          ? { node: cell, from: cell.from, to: cell.to, at: cell.to }
+          : {
+              node: null,
+              from: Math.min(after + 1, child.from),
+              to: Math.min(after + 1, child.from),
+              at: Math.min(after + 1, child.from)
+            }
       )
     cell = null
     after = child.to
   }
-  if (cell) cells.push({ node: cell, at: cell.to })
+  if (cell) cells.push({ node: cell, from: cell.from, to: cell.to, at: cell.to })
   return cells
 }
 
@@ -149,6 +161,9 @@ class TableWidget extends WidgetType {
 
   // Clicks on links reach the editor, which follows them. The widget handles the rest.
   ignoreEvent(event: Event): boolean {
+    if (event.target instanceof Element && event.target.closest('[contenteditable="true"]')) {
+      return true
+    }
     return !(event.target instanceof Element && event.target.closest('.mote-link'))
   }
 
@@ -157,10 +172,29 @@ class TableWidget extends WidgetType {
       read: (from, to) => this.source.slice(from - this.from, to - this.from),
       links: this.links
     }
+    const isEditable = view.state.facet(EditorView.editable)
     const delimiters = this.table.getChild('TableDelimiter')
     const align = delimiters ? alignments(draw.read(delimiters.from, delimiters.to)) : []
     const wrap = element('div', 'mote-table-wrap')
     const table = wrap.appendChild(element('table', 'mote-table'))
+
+    const commitCell = (cell: HTMLElement): void => {
+      if (!isEditable) return
+      const currentVal = (cell.textContent ?? '').replace(/\r?\n/g, ' ').trim()
+      const origVal = (cell.dataset.original ?? '').trim()
+      if (currentVal === origVal) return
+      const sanitized = currentVal.replace(/\|/g, '\\|')
+      const cellFrom = Number(cell.dataset.cellFrom)
+      const cellTo = Number(cell.dataset.cellTo)
+      const docFrom = this.from + cellFrom
+      const docTo = this.from + cellTo
+      cell.dataset.original = sanitized
+      view.dispatch({
+        changes: { from: docFrom, to: docTo, insert: sanitized },
+        userEvent: 'input'
+      })
+    }
+
     let columns = 0
     let body: HTMLElement | null = null
     for (let row = this.table.firstChild; row; row = row.nextSibling) {
@@ -176,21 +210,80 @@ class TableWidget extends WidgetType {
       for (let i = 0; i < columns; i++) {
         const cell = tr.appendChild(element(header ? 'th' : 'td'))
         if (align[i]) cell.style.textAlign = align[i]
-        const { node, at } = cells[i] ?? { node: null, at: row.to }
+        const { node, from, to, at } = cells[i] ?? {
+          node: null,
+          from: row.to,
+          to: row.to,
+          at: row.to
+        }
         if (node) appendInline(cell, node, node.from, node.to, draw)
         cell.dataset.at = String(at - this.from)
+        cell.dataset.cellFrom = String(from - this.from)
+        cell.dataset.cellTo = String(to - this.from)
+        cell.dataset.original = node ? draw.read(from, to) : ''
+
+        if (isEditable) {
+          cell.contentEditable = 'true'
+          cell.spellcheck = false
+          cell.tabIndex = 0
+
+          cell.addEventListener('focus', () => {
+            const raw = cell.dataset.original ?? ''
+            if (cell.textContent !== raw) {
+              cell.textContent = raw
+            }
+            const range = document.createRange()
+            range.selectNodeContents(cell)
+            range.collapse(false)
+            const sel = window.getSelection()
+            sel?.removeAllRanges()
+            sel?.addRange(range)
+          })
+
+          cell.addEventListener('keydown', (e) => {
+            if (e.key === 'Tab') {
+              e.preventDefault()
+              commitCell(cell)
+              const allCells = Array.from(
+                wrap.querySelectorAll<HTMLElement>('[contenteditable="true"]')
+              )
+              const idx = allCells.indexOf(cell)
+              const nextIdx = e.shiftKey ? idx - 1 : idx + 1
+              if (nextIdx >= 0 && nextIdx < allCells.length) {
+                allCells[nextIdx].focus()
+              }
+            } else if (e.key === 'Enter') {
+              e.preventDefault()
+              commitCell(cell)
+              const currentRow = cell.closest('tr')
+              const targetRow = e.shiftKey
+                ? (currentRow?.previousElementSibling as HTMLTableRowElement | null)
+                : (currentRow?.nextElementSibling as HTMLTableRowElement | null)
+              if (targetRow) {
+                const colIndex = Array.from(currentRow?.children ?? []).indexOf(cell)
+                const targetCell = targetRow.children[colIndex] as HTMLElement | undefined
+                if (targetCell?.isContentEditable) targetCell.focus()
+                else cell.blur()
+              } else {
+                cell.blur()
+              }
+            }
+          })
+
+          cell.addEventListener('blur', () => {
+            commitCell(cell)
+          })
+        }
       }
     }
-    // A click on a cell puts the cursor in that cell's source, which shows the table's source.
     wrap.addEventListener('mousedown', (event) => {
       const target = event.target instanceof Element ? event.target : null
-      const cell = target?.closest<HTMLElement>('[data-at]')
-      if (event.button !== 0 || !cell || target?.closest('.mote-link')) return
+      if (target?.closest('.mote-link')) return
+      if (target?.closest('[contenteditable="true"]')) {
+        return
+      }
+      if (event.button !== 0) return
       if (!view.state.facet(EditorView.editable)) return
-      event.preventDefault()
-      const anchor = view.posAtDOM(wrap) + Number(cell.dataset.at)
-      view.dispatch({ selection: { anchor }, userEvent: 'select.pointer' })
-      view.focus()
     })
     return wrap
   }
@@ -209,7 +302,7 @@ const table: Renderer = (node, cx) => {
   const widget = new TableWidget(node.node, from, doc.sliceString(from, to), cx.links, rows)
   return [
     {
-      reveal: { from, to },
+      reveal: { from: 0, to: 0 },
       always: [],
       concealed: [Decoration.replace({ widget, block }).range(from, to)],
       block: true

@@ -161,11 +161,13 @@ export interface MoteApi {
   getAppVersion(): Promise<string>
   onUpdateStatus(callback: (status: UpdateStatus) => void): () => void
   onMenuAction(callback: (action: MenuAction) => void): () => void
+  newWindow(dir?: string): Promise<void>
 }
 
 export const channels = {
   getVault: 'mote:get-vault',
   chooseVault: 'mote:choose-vault',
+  newWindow: 'mote:new-window',
   readNote: 'mote:read-note',
   writeNote: 'mote:write-note',
   openWithDefaultApp: 'mote:open-with-default-app',

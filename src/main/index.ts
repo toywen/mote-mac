@@ -1,4 +1,14 @@
-import { app, shell, BrowserWindow, dialog, ipcMain, nativeTheme, protocol, Menu } from 'electron'
+import {
+  app,
+  shell,
+  BrowserWindow,
+  dialog,
+  ipcMain,
+  nativeTheme,
+  protocol,
+  Menu,
+  webContents
+} from 'electron'
 import { basename, join } from 'path'
 import { lstat, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import { optimizer, is } from '@electron-toolkit/utils'
@@ -19,10 +29,11 @@ import { buildApplicationMenu } from './menu'
 
 app.setName('mote')
 
-let window: BrowserWindow | undefined
-let vault: Vault | undefined
+const windows = new Set<BrowserWindow>()
+const vaults = new Map<string, Vault>()
+const windowVaultMap = new Map<number, string>() // webContents.id -> vault.dir
+const closingWindows = new Set<number>() // window.id
 let choosingVault = false
-let closing = false
 let quitting = false
 
 // Standard, so a mote-file URL has a host and a path. Secure, so the window's images and videos
@@ -41,12 +52,12 @@ protocol.registerSchemesAsPrivileged([
 ])
 
 function currentVault(dir: string): Vault {
-  if (!vault || vault.dir !== dir) throw new Error('笔记库已切换')
-  return vault
+  const v = vaults.get(dir)
+  if (!v) throw new Error(`笔记库未打开: ${dir}`)
+  return v
 }
 
 const settingsFile = (): string => join(app.getPath('userData'), 'settings.json')
-const journalFile = (): string => join(app.getPath('userData'), 'journal.json')
 
 type AppSettings = {
   lastVault?: string
@@ -73,65 +84,112 @@ async function writeSettings(update: Partial<AppSettings>): Promise<void> {
   await rename(tmp, settingsFile())
 }
 
-const journalHandler: JournalHandler = {
-  async read() {
-    try {
-      const raw = await readFile(journalFile(), 'utf8')
-      return JSON.parse(raw) as RenameJournal
-    } catch {
-      return null
+function getJournalHandler(dir: string): JournalHandler {
+  const hash = Buffer.from(dir).toString('hex').slice(0, 16)
+  const file = join(app.getPath('userData'), `journal-${hash}.json`)
+  return {
+    async read() {
+      try {
+        const raw = await readFile(file, 'utf8')
+        return JSON.parse(raw) as RenameJournal
+      } catch {
+        return null
+      }
+    },
+    async write(journal: RenameJournal) {
+      await mkdir(app.getPath('userData'), { recursive: true })
+      const tmp = file + '.tmp'
+      await writeFile(tmp, JSON.stringify(journal))
+      await rename(tmp, file)
+    },
+    async clear() {
+      await rm(file).catch(() => {})
     }
-  },
-  async write(journal: RenameJournal) {
-    await mkdir(app.getPath('userData'), { recursive: true })
-    const tmp = journalFile() + '.tmp'
-    await writeFile(tmp, JSON.stringify(journal))
-    await rename(tmp, journalFile())
-  },
-  async clear() {
-    await rm(journalFile()).catch(() => {})
   }
 }
 
 // The --background of src/renderer/src/assets/main.css, so a dark window never flashes white.
 const windowBackground = (): string => (nativeTheme.shouldUseDarkColors ? '#1c1b18' : '#fcfbf8')
 
-function openVault(dir: string): Promise<Vault> {
-  return Vault.open(
+async function getOrOpenVault(dir: string): Promise<Vault> {
+  const existing = vaults.get(dir)
+  if (existing) return existing
+  const next = await Vault.open(
     dir,
     (change) => {
-      if (vault?.dir === change.dir) window?.webContents.send(channels.vaultChanged, change)
+      for (const [wcId, vDir] of windowVaultMap.entries()) {
+        if (vDir === change.dir) {
+          const contents = webContents.fromId(wcId)
+          if (contents && !contents.isDestroyed()) {
+            contents.send(channels.vaultChanged, change)
+          }
+        }
+      }
     },
-    journalHandler
+    getJournalHandler(dir)
   )
+  vaults.set(dir, next)
+  return next
 }
 
-ipcMain.handle(channels.getVault, () => vault?.info() ?? null)
+ipcMain.handle(channels.getVault, (event) => {
+  const dir = windowVaultMap.get(event.sender.id)
+  if (dir) return vaults.get(dir)?.info() ?? null
+  return null
+})
+
 ipcMain.handle(channels.chooseVault, async (event) => {
   const owner = BrowserWindow.fromWebContents(event.sender)
   if (!owner || choosingVault) return null
   choosingVault = true
   try {
+    const currentDir = windowVaultMap.get(event.sender.id)
     const choice = await dialog.showOpenDialog(owner, {
       title: '打开笔记库',
-      defaultPath: vault?.dir,
+      defaultPath: currentDir,
       properties: ['openDirectory']
     })
     const dir = choice.filePaths[0]
     if (choice.canceled || !dir) return null
-    const next = await openVault(dir)
+
+    // Check if another window already has this vault open:
+    for (const [wcId, vDir] of windowVaultMap.entries()) {
+      if (vDir === dir && wcId !== event.sender.id) {
+        const otherWin = BrowserWindow.getAllWindows().find((w) => w.webContents.id === wcId)
+        if (otherWin && !otherWin.isDestroyed()) {
+          otherWin.focus()
+          return null
+        }
+      }
+    }
+
+    const next = await getOrOpenVault(dir)
+    const oldDir = windowVaultMap.get(event.sender.id)
+    windowVaultMap.set(event.sender.id, next.dir)
+
     try {
       await writeSettings({ lastVault: next.dir })
-    } catch (error) {
-      next.close()
-      throw error
+    } catch {
+      // ignore settings write failure
     }
-    vault?.close()
-    vault = next
-    return vault.info()
+
+    if (oldDir && oldDir !== next.dir && !Array.from(windowVaultMap.values()).includes(oldDir)) {
+      const oldV = vaults.get(oldDir)
+      if (oldV) {
+        oldV.close()
+        vaults.delete(oldDir)
+      }
+    }
+
+    return next.info()
   } finally {
     choosingVault = false
   }
+})
+
+ipcMain.handle(channels.newWindow, async (event, dir?: string) => {
+  const targetDir = dir ?? windowVaultMap.get(event.sender.id)
+  await createWindow(targetDir)
 })
 
 ipcMain.handle(channels.readNote, (_event, dir: string, path: VaultPath) =>
@@ -159,8 +217,8 @@ ipcMain.handle(
   (_event, dir: string, notePath: VaultPath, fileName: string, data: Uint8Array) =>
     currentVault(dir).saveAttachment(notePath, fileName, Buffer.from(data))
 )
-ipcMain.handle(channels.chooseAndSaveImage, async (_event, dir: string, notePath: VaultPath) => {
-  const win = BrowserWindow.getFocusedWindow() ?? window
+ipcMain.handle(channels.chooseAndSaveImage, async (event, dir: string, notePath: VaultPath) => {
+  const win = BrowserWindow.fromWebContents(event.sender) ?? BrowserWindow.getFocusedWindow()
   if (!win) return null
   const result = await dialog.showOpenDialog(win, {
     title: '插入图片',
@@ -209,7 +267,7 @@ ipcMain.handle(channels.showInFolder, async (_event, dir: string, path?: VaultPa
 ipcMain.handle(
   channels.renameOrMove,
   (_event, dir: string, from: VaultPath, to: VaultPath, updateLinks: boolean) =>
-    currentVault(dir).renameOrMove(from, to, updateLinks, journalHandler)
+    currentVault(dir).renameOrMove(from, to, updateLinks, getJournalHandler(dir))
 )
 ipcMain.handle(channels.countInboundLinks, (_event, dir: string, path: VaultPath) =>
   currentVault(dir).countInboundLinks(path)
@@ -249,22 +307,27 @@ ipcMain.handle(channels.getFont, (): FontMode => currentFont)
 ipcMain.handle(channels.setFont, async (_event, font: FontMode): Promise<FontMode> => {
   currentFont = font
   await writeSettings({ font })
-  window?.webContents.send(channels.fontChanged, currentFont)
+  for (const win of windows) {
+    if (!win.isDestroyed()) win.webContents.send(channels.fontChanged, currentFont)
+  }
   return currentFont
 })
 
 ipcMain.handle(channels.toggleFont, async (): Promise<FontMode> => {
   currentFont = currentFont === 'kai' ? 'hei' : 'kai'
   await writeSettings({ font: currentFont })
-  window?.webContents.send(channels.fontChanged, currentFont)
+  for (const win of windows) {
+    if (!win.isDestroyed()) win.webContents.send(channels.fontChanged, currentFont)
+  }
   return currentFont
 })
 
 ipcMain.on(channels.respondToClose, (event, ready: boolean) => {
-  if (!closing || window?.webContents !== event.sender) return
-  closing = false
+  const win = BrowserWindow.fromWebContents(event.sender)
+  if (!win || !closingWindows.has(win.id)) return
+  closingWindows.delete(win.id)
   if (ready) {
-    window.destroy()
+    win.destroy()
   } else {
     quitting = false
   }
@@ -272,12 +335,34 @@ ipcMain.on(channels.respondToClose, (event, ready: boolean) => {
 
 app.on('before-quit', (event) => {
   quitting = true
-  if (!window) return
+  if (windows.size === 0) return
   event.preventDefault()
-  window.close()
+  for (const win of windows) {
+    if (!win.isDestroyed()) win.close()
+  }
 })
 
-function createWindow(): void {
+async function createWindow(targetVaultDir?: string): Promise<BrowserWindow> {
+  let initialVaultDir = targetVaultDir
+  if (!initialVaultDir && vaults.size === 0) {
+    try {
+      const settings = await readSettings()
+      if (typeof settings.lastVault === 'string') {
+        initialVaultDir = settings.lastVault
+      }
+    } catch {
+      // ignore
+    }
+  }
+
+  if (initialVaultDir) {
+    try {
+      await getOrOpenVault(initialVaultDir)
+    } catch {
+      initialVaultDir = undefined
+    }
+  }
+
   const mainWindow = new BrowserWindow({
     title: 'mote',
     width: 1200,
@@ -292,19 +377,41 @@ function createWindow(): void {
       sandbox: true
     }
   })
-  window = mainWindow
+
+  const windowId = mainWindow.id
+  const webContentsId = mainWindow.webContents.id
+
+  windows.add(mainWindow)
+  if (initialVaultDir) {
+    windowVaultMap.set(webContentsId, initialVaultDir)
+  }
 
   mainWindow.on('close', (event) => {
-    if (mainWindow.webContents.isCrashed() || mainWindow.webContents.isLoadingMainFrame()) return
+    if (
+      mainWindow.isDestroyed() ||
+      mainWindow.webContents.isCrashed() ||
+      mainWindow.webContents.isLoadingMainFrame()
+    )
+      return
+    if (closingWindows.has(windowId)) return
     event.preventDefault()
-    if (closing) return
-    closing = true
+    closingWindows.add(windowId)
     mainWindow.webContents.send(channels.closeRequested)
   })
+
   mainWindow.on('closed', () => {
-    window = undefined
-    closing = false
-    if (quitting) app.quit()
+    closingWindows.delete(windowId)
+    windows.delete(mainWindow)
+    const dir = windowVaultMap.get(webContentsId)
+    windowVaultMap.delete(webContentsId)
+    if (dir && !Array.from(windowVaultMap.values()).includes(dir)) {
+      const v = vaults.get(dir)
+      if (v) {
+        v.close()
+        vaults.delete(dir)
+      }
+    }
+    if (quitting && windows.size === 0) app.quit()
   })
 
   mainWindow.on('ready-to-show', () => mainWindow.show())
@@ -322,8 +429,6 @@ function createWindow(): void {
       void shell.openExternal(url)
     }
   })
-  // The window only ever shows mote. A page from anywhere else, such as a file dropped on the
-  // window, would get window.mote and with it the vault.
   mainWindow.webContents.on('will-navigate', (event, url) => {
     if (url.split('#')[0] !== mainWindow.webContents.getURL().split('#')[0]) event.preventDefault()
   })
@@ -333,12 +438,15 @@ function createWindow(): void {
   } else {
     mainWindow.loadFile(join(__dirname, '../renderer/index.html'))
   }
+
+  return mainWindow
 }
 
 app.whenReady().then(async () => {
+  let defaultDir: string | undefined
   try {
     const settings = await readSettings()
-    if (typeof settings.lastVault === 'string') vault = await openVault(settings.lastVault)
+    if (typeof settings.lastVault === 'string') defaultDir = settings.lastVault
     if (settings.theme === 'light' || settings.theme === 'dark' || settings.theme === 'system') {
       nativeTheme.themeSource = settings.theme
     }
@@ -348,22 +456,43 @@ app.whenReady().then(async () => {
   } catch {
     // An unavailable vault can be selected again in the window.
   }
-  Menu.setApplicationMenu(buildApplicationMenu())
+  Menu.setApplicationMenu(
+    buildApplicationMenu((targetWin) => {
+      const win =
+        (targetWin instanceof BrowserWindow ? targetWin : null) ?? BrowserWindow.getFocusedWindow()
+      const targetDir = win ? windowVaultMap.get(win.webContents.id) : undefined
+      void createWindow(targetDir)
+    })
+  )
   registerUpdaterIpc()
-  protocol.handle(fileScheme, (request) => serveFile(vault, request))
+  protocol.handle(fileScheme, (request) => {
+    const focused = BrowserWindow.getFocusedWindow()
+    const focusedVaultDir = focused ? windowVaultMap.get(focused.webContents.id) : undefined
+    const focusedVault = focusedVaultDir ? vaults.get(focusedVaultDir) : undefined
+    const list: Vault[] = []
+    if (focusedVault) list.push(focusedVault)
+    for (const v of vaults.values()) {
+      if (v !== focusedVault) list.push(v)
+    }
+    return serveFile(list, request)
+  })
   app.on('browser-window-created', (_, window) => optimizer.watchWindowShortcuts(window))
   nativeTheme.on('updated', () => {
-    window?.setBackgroundColor(windowBackground())
-    window?.webContents.send(channels.themeChanged, {
-      source: nativeTheme.themeSource,
-      shouldUseDarkColors: nativeTheme.shouldUseDarkColors
-    })
+    for (const win of windows) {
+      if (!win.isDestroyed()) {
+        win.setBackgroundColor(windowBackground())
+        win.webContents.send(channels.themeChanged, {
+          source: nativeTheme.themeSource,
+          shouldUseDarkColors: nativeTheme.shouldUseDarkColors
+        })
+      }
+    }
   })
-  createWindow()
+  await createWindow(defaultDir)
   setTimeout(() => {
     void Updater.getInstance().checkForUpdates()
   }, 3000)
   app.on('activate', () => {
-    if (BrowserWindow.getAllWindows().length === 0) createWindow()
+    if (windows.size === 0) void createWindow()
   })
 })

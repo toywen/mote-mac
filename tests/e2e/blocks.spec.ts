@@ -104,16 +104,16 @@ test('callouts, tables and task checkboxes render, and a checkbox click changes 
     const short = tables.getByRole('table').nth(1)
     await expect(short.getByRole('cell')).toHaveText(['只有一格', '', '一', '二'])
 
-    // A click on a cell puts the cursor in it, and the table shows its source until the
-    // selection leaves.
+    // P1-2: A click on a cell allows editing it in-place while keeping the table rendered.
     const delimiter = line(tables, '\\| :--- \\| :---: \\| ---: \\| --- \\|')
     await expect(delimiter).toHaveCount(0)
+    await expect(tables.getByRole('table')).toHaveCount(3)
     await table.getByText('斜体', { exact: true }).click()
-    await expect(delimiter).toHaveCount(1)
-    await expect(tables.getByRole('table')).toHaveCount(2)
+    await expect(delimiter).toHaveCount(0)
+    await expect(tables.getByRole('table')).toHaveCount(3)
     await window.keyboard.insertText('甲')
-    await expect.poll(() => readFile(join(vault, '表格.md'), 'utf8')).toContain('| *斜体*甲 |')
     await line(tables, '表格下面一行。').click()
+    await expect.poll(() => readFile(join(vault, '表格.md'), 'utf8')).toContain('| *斜体*甲 |')
     await expect(delimiter).toHaveCount(0)
     await expect(tables.getByRole('table')).toHaveCount(3)
 
