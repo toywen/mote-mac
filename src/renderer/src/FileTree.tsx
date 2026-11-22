@@ -3,7 +3,9 @@ import {
   ChevronRight,
   File,
   FileCode,
+  FileImage,
   FileText,
+  FileType,
   Folder,
   FolderOpen
 } from 'lucide-react'
@@ -17,7 +19,7 @@ import {
   type KeyboardEvent
 } from 'react'
 import { parseVaultPath, type VaultInfo, type VaultPath } from '../../core/ipc'
-import { isHtmlPath } from '../../core/fileUrl'
+import { isHtmlPath, isImagePath, isPdfPath } from '../../core/fileUrl'
 import { buildTree, type SortOrder, type TreeNode } from './tree'
 import { workspace } from './workspace'
 
@@ -263,7 +265,11 @@ export const FileTree = forwardRef<
           ? FileText
           : isHtmlPath(node.path)
             ? FileCode
-            : File
+            : isImagePath(node.path)
+              ? FileImage
+              : isPdfPath(node.path)
+                ? FileType
+                : File
       const isRenaming = renamingPath === node.path
 
       return (
@@ -285,7 +291,13 @@ export const FileTree = forwardRef<
             onKeyDown={(event) => keyDown(event, node, expanded)}
             onClick={() => {
               if (folder) toggle(node.path)
-              else if (node.kind === 'note' || isHtmlPath(node.path)) void workspace.open(node.path)
+              else if (
+                node.kind === 'note' ||
+                isHtmlPath(node.path) ||
+                isImagePath(node.path) ||
+                isPdfPath(node.path)
+              )
+                void workspace.open(node.path)
               else void workspace.openFile(node.path)
             }}
             onContextMenu={(e) => {

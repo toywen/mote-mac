@@ -1440,3 +1440,113 @@ html[data-theme='dark'] .search-input-container:focus-within {
   background: #ffffff;
   display: block;
 }
+
+/* 图片文件与媒体查看器 */
+.image-viewer-container {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: var(--background);
+  position: relative;
+  overflow: hidden;
+}
+
+.image-viewer-toolbar {
+  position: absolute;
+  top: 14px;
+  right: 18px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--sidebar);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  padding: 3px 6px 3px 10px;
+  box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  z-index: 10;
+  user-select: none;
+}
+
+.image-dimensions-badge {
+  font-size: 11px;
+  font-family: var(--font-mono);
+  color: var(--muted);
+}
+
+.image-viewer-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 8px;
+  border: 0;
+  border-radius: 12px;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-hei);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition: background 120ms ease;
+}
+
+.image-viewer-btn:hover {
+  background: var(--hover);
+}
+
+.image-viewer-canvas {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  overflow: auto;
+  padding: 24px;
+  box-sizing: border-box;
+}
+
+.image-viewer-img {
+  display: block;
+  border-radius: 4px;
+  box-shadow: 0 4px 24px rgba(0, 0, 0, 0.08);
+  transition:
+    max-width 150ms ease,
+    max-height 150ms ease;
+}
+
+.image-viewer-img.is-fit {
+  max-width: 100%;
+  max-height: 100%;
+  object-fit: contain;
+  cursor: zoom-in;
+}
+
+.image-viewer-img.is-natural {
+  max-width: none;
+  max-height: none;
+  cursor: zoom-out;
+}
+
+/* PDF 文件阅读器 */
+.pdf-viewer-container {
+  flex: 1;
+  min-height: 0;
+  width: 100%;
+  height: 100%;
+  display: flex;
+  background: var(--background);
+  position: relative;
+}
+
+.pdf-viewer-frame {
+  width: 100%;
+  height: 100%;
+  border: none;
+  display: block;
+  background: var(--background);
+}

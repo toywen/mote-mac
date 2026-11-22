@@ -52,13 +52,19 @@ export async function serveFile(
         const total = stats.size
 
         const isHtml = type.startsWith('text/html')
+        const isPdf = type === 'application/pdf'
         const securityHeaders = isHtml
           ? {
               'Content-Security-Policy':
                 "default-src 'self' mote-file: data: blob: https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' mote-file: data: https: 'unsafe-inline'; img-src 'self' mote-file: data: blob: https:; media-src 'self' mote-file: data: blob: https:;",
               'X-Content-Type-Options': 'nosniff'
             }
-          : inert
+          : isPdf
+            ? {
+                'Content-Disposition': 'inline',
+                'X-Content-Type-Options': 'nosniff'
+              }
+            : inert
 
         const rangeHeader = request.headers.get('range')
         if (rangeHeader && rangeHeader.startsWith('bytes=')) {

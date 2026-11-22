@@ -31,6 +31,9 @@ const htmlTypes = new Map([
   ['htm', 'text/html; charset=utf-8']
 ])
 
+// The PDF types supported for in-app viewing.
+const pdfTypes = new Map([['pdf', 'application/pdf']])
+
 // The MIME type of an image path, or null when its extension is not an image type.
 export function imageType(path: string): string | null {
   const name = path.slice(path.lastIndexOf('/') + 1)
@@ -52,14 +55,36 @@ export function htmlType(path: string): string | null {
   return dot < 0 ? null : (htmlTypes.get(name.slice(dot + 1).toLowerCase()) ?? null)
 }
 
+// The MIME type of a PDF path, or null when its extension is not a PDF type.
+export function pdfType(path: string): string | null {
+  const name = path.slice(path.lastIndexOf('/') + 1)
+  const dot = name.lastIndexOf('.')
+  return dot < 0 ? null : (pdfTypes.get(name.slice(dot + 1).toLowerCase()) ?? null)
+}
+
 // True when the path represents an HTML file (.html or .htm).
 export function isHtmlPath(path: string): boolean {
   return /\.html?$/i.test(path)
 }
 
-// The MIME type of any supported media path (image, video, or HTML), or null.
+// True when the path represents a PDF file (.pdf).
+export function isPdfPath(path: string): boolean {
+  return /\.pdf$/i.test(path)
+}
+
+// True when the path represents an image file supported for viewing.
+export function isImagePath(path: string): boolean {
+  return imageType(path) !== null
+}
+
+// True when the path represents any file viewable as a tab in the workspace.
+export function isViewableFilePath(path: string): boolean {
+  return path.endsWith('.md') || isHtmlPath(path) || isPdfPath(path) || isImagePath(path)
+}
+
+// The MIME type of any supported media path (image, video, HTML, or PDF), or null.
 export function mediaType(path: string): string | null {
-  return imageType(path) ?? videoType(path) ?? htmlType(path)
+  return imageType(path) ?? videoType(path) ?? htmlType(path) ?? pdfType(path)
 }
 
 export function fileUrl(path: VaultPath): string {

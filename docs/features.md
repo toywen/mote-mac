@@ -144,6 +144,7 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | 💤 未排期 | P1-7 | 在笔记里嵌入音频、PDF 等其他附件                                   |                                                                                                                                                   | 视频嵌入阅读已提前至第 5 步（视频-1）                                                                                                                                |
 | 💤 未排期 | P1-8 | 大纲、书签、出链和标签面板                                         |                                                                                                                                                   |                                                                                                                                                                      |
 | ✅ 已实现 | P1-9 | 同时打开多个笔记库窗口                                             | 测试：tests/e2e/multiWindow.spec.ts                                                                                                               | 2026-11-22。主进程升级为多窗口多库并行架构（windows + vaults + windowVaultMap），支持应用菜单“新建窗口”（Cmd+Shift+N）与独立切换笔记库，窗口生命周期与文档编辑完全隔离。   |
+| ✅ 已实现 | P1-10 | 图片与 PDF 格式文件在应用内直接打开与预览                          | 测试：tests/e2e/mediaPreview.spec.ts；Vitest：src/core/fileUrl.test.ts                                                                             | 2026-11-22。点击文件树、快速打开（Cmd+O）或内部链接直接以独立标签页在主工作区渲染，图片支持自适应与 1:1 原图切换与分辨率提示，PDF 基于 Chromium 原生引擎渲染，支持一键在系统默认应用中打开，见 ADR 0020。 |
 
 ## 第一版不做
 

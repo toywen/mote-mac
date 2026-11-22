@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { VaultEntry, VaultPath } from '../../core/ipc'
-import { isHtmlPath } from '../../core/fileUrl'
+import { isViewableFilePath } from '../../core/fileUrl'
 import { Highlighted } from './HitList'
 import { suggest } from './quickOpenMatch'
 import { workspace } from './workspace'
@@ -18,7 +18,7 @@ export function QuickOpen({
   const notes = useMemo(
     () =>
       entries
-        .filter((entry) => entry.kind === 'note' || isHtmlPath(entry.path))
+        .filter((entry) => entry.kind === 'note' || isViewableFilePath(entry.path))
         .map((entry) => entry.path),
     [entries]
   )

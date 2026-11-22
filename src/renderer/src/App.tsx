@@ -26,7 +26,9 @@ import { buildLinkIndex } from '../../core/resolve'
 import { isHtmlPath } from '../../core/fileUrl'
 import { HitList } from './HitList'
 import { HtmlViewer } from './HtmlViewer'
+import { ImageViewer } from './ImageViewer'
 import { NoteEditor } from './NoteEditor'
+import { PdfViewer } from './PdfViewer'
 import { QuickOpen } from './QuickOpen'
 import { SearchPanel } from './SearchPanel'
 import { TabBar } from './TabBar'
@@ -517,18 +519,18 @@ function App(): React.JSX.Element {
                 )}
               </button>
             )}
-            {doc?.kind === 'html' && (
+            {doc && (doc.kind === 'html' || doc.kind === 'image' || doc.kind === 'pdf') && (
               <button
                 className="icon-button"
                 type="button"
-                title="在默认浏览器中打开"
-                aria-label="在默认浏览器中打开"
+                title="在系统默认应用中打开"
+                aria-label="在系统默认应用中打开"
                 onClick={() => void workspace.openFile(doc.path)}
               >
                 <ExternalLink size={16} strokeWidth={1.5} />
               </button>
             )}
-            {doc && doc.kind !== 'html' && (
+            {doc && doc.kind !== 'html' && doc.kind !== 'image' && doc.kind !== 'pdf' && (
               <button
                 className="icon-button"
                 type="button"
@@ -585,6 +587,10 @@ function App(): React.JSX.Element {
         {doc && doc.kind !== 'missing' ? (
           doc.kind === 'html' ? (
             <HtmlViewer key={doc.path} path={doc.path} revision={revision} />
+          ) : doc.kind === 'image' ? (
+            <ImageViewer key={doc.path} path={doc.path} revision={revision} />
+          ) : doc.kind === 'pdf' ? (
+            <PdfViewer key={doc.path} path={doc.path} revision={revision} />
           ) : (
             <NoteEditor
               key={doc.path}

@@ -4,8 +4,12 @@ import {
   htmlType,
   imageType,
   isHtmlPath,
+  isImagePath,
+  isPdfPath,
+  isViewableFilePath,
   mediaType,
   parseFileUrl,
+  pdfType,
   videoType
 } from './fileUrl.ts'
 import { parseVaultPath } from './ipc.ts'
@@ -107,11 +111,12 @@ describe('videoType and mediaType', () => {
     expect(videoType('note.md')).toBeNull()
   })
 
-  it('mediaType covers images, videos and html', () => {
+  it('mediaType covers images, videos, html and pdf', () => {
     expect(mediaType('image.png')).toBe('image/png')
     expect(mediaType('video.mp4')).toBe('video/mp4')
     expect(mediaType('page.html')).toBe('text/html; charset=utf-8')
-    expect(mediaType('doc.pdf')).toBeNull()
+    expect(mediaType('doc.pdf')).toBe('application/pdf')
+    expect(mediaType('archive.zip')).toBeNull()
   })
 
   it('identifies html formats with htmlType and isHtmlPath', () => {
@@ -121,5 +126,26 @@ describe('videoType and mediaType', () => {
     expect(isHtmlPath('index.html')).toBe(true)
     expect(isHtmlPath('folder/test.htm')).toBe(true)
     expect(isHtmlPath('note.md')).toBe(false)
+  })
+
+  it('identifies pdf and image formats with isPdfPath, isImagePath and isViewableFilePath', () => {
+    expect(pdfType('document.pdf')).toBe('application/pdf')
+    expect(pdfType('manual.PDF')).toBe('application/pdf')
+    expect(pdfType('image.png')).toBeNull()
+
+    expect(isPdfPath('doc.pdf')).toBe(true)
+    expect(isPdfPath('doc.PDF')).toBe(true)
+    expect(isPdfPath('doc.md')).toBe(false)
+
+    expect(isImagePath('photo.png')).toBe(true)
+    expect(isImagePath('photo.jpg')).toBe(true)
+    expect(isImagePath('icon.svg')).toBe(true)
+    expect(isImagePath('doc.pdf')).toBe(false)
+
+    expect(isViewableFilePath('note.md')).toBe(true)
+    expect(isViewableFilePath('page.html')).toBe(true)
+    expect(isViewableFilePath('doc.pdf')).toBe(true)
+    expect(isViewableFilePath('image.png')).toBe(true)
+    expect(isViewableFilePath('binary.bin')).toBe(false)
   })
 })

@@ -7,7 +7,7 @@ import type {
   VaultInfo,
   VaultPath
 } from '../../core/ipc'
-import { isHtmlPath } from '../../core/fileUrl'
+import { isHtmlPath, isImagePath, isPdfPath } from '../../core/fileUrl'
 import type { LinkDest } from '../../core/linkDest'
 import { resolveSubpath } from '../../core/subpath'
 import { sourceText } from '../../core/text'
@@ -17,12 +17,16 @@ type Draft = { path: VaultPath; text: string; source: { text: string } }
 type DirtyDoc = Draft & { kind: 'dirty'; baseHash: ContentHash }
 type ConflictDoc = Draft & { kind: 'conflict'; disk: NoteVersion | null }
 export type HtmlDoc = { kind: 'html'; path: VaultPath }
+export type ImageDoc = { kind: 'image'; path: VaultPath }
+export type PdfDoc = { kind: 'pdf'; path: VaultPath }
 export type Doc =
   | (Draft & { kind: 'clean' | 'saving'; baseHash: ContentHash })
   | (Draft & { kind: 'missing' })
   | DirtyDoc
   | ConflictDoc
   | HtmlDoc
+  | ImageDoc
+  | PdfDoc
 
 type Range = { from: number; to: number }
 
@@ -173,7 +177,8 @@ class Workspace {
         case 'note':
           return await this.open(dest.path, dest.subpath ? { subpath: dest.subpath } : undefined)
         case 'file':
-          if (isHtmlPath(dest.path)) return await this.open(dest.path)
+          if (isHtmlPath(dest.path) || isImagePath(dest.path) || isPdfPath(dest.path))
+            return await this.open(dest.path)
           return await this.openFile(dest.path)
         case 'missing':
           await window.mote.createNote(vault.dir, dest.path)
@@ -230,7 +235,7 @@ class Workspace {
     this.set({ busy: true, error: '' })
     try {
       if (!(await this.flush())) return
-      if (isHtmlPath(path)) {
+      if (isHtmlPath(path) || isImagePath(path) || isPdfPath(path)) {
         this.refreshId++
         const exists = vault.entries.some((e) => e.path === path)
         if (!exists) {
@@ -242,7 +247,8 @@ class Workspace {
           })
           return
         }
-        this.set({ tabs, doc: { kind: 'html', path }, selection: null, backlinks: null })
+        const kind = isImagePath(path) ? 'image' : isPdfPath(path) ? 'pdf' : 'html'
+        this.set({ tabs, doc: { kind, path }, selection: null, backlinks: null })
         this.remember(vault.dir, path)
         if (visit === null) {
           this.visits = [...this.visits.slice(0, this.visit + 1), { path, cursor: null }]
@@ -292,7 +298,7 @@ class Workspace {
         this.set({ tabs: nextTabs, doc: null })
         return
       }
-      if (isHtmlPath(nextPath)) {
+      if (isHtmlPath(nextPath) || isImagePath(nextPath) || isPdfPath(nextPath)) {
         const exists = vault.entries.some((e) => e.path === nextPath)
         if (!exists) {
           this.set({
@@ -302,9 +308,10 @@ class Workspace {
             backlinks: null
           })
         } else {
+          const kind = isImagePath(nextPath) ? 'image' : isPdfPath(nextPath) ? 'pdf' : 'html'
           this.set({
             tabs: nextTabs,
-            doc: { kind: 'html', path: nextPath },
+            doc: { kind, path: nextPath },
             selection: null,
             backlinks: null
           })
@@ -369,7 +376,7 @@ class Workspace {
       return
     }
     const from =
-      doc?.path === path && doc.kind !== 'html'
+      doc?.path === path && doc.kind !== 'html' && doc.kind !== 'image' && doc.kind !== 'pdf'
         ? resolveSubpath(sourceText(doc.text).text, at.subpath)
         : null
     if (from !== null) this.select(path, { from, to: from }, true)
@@ -403,7 +410,14 @@ class Workspace {
   async noteText(path: VaultPath): Promise<string | null> {
     const { vault, doc } = this.state
     if (!vault) return null
-    if (doc?.path === path && doc.kind !== 'missing' && doc.kind !== 'html') return doc.text
+    if (
+      doc?.path === path &&
+      doc.kind !== 'missing' &&
+      doc.kind !== 'html' &&
+      doc.kind !== 'image' &&
+      doc.kind !== 'pdf'
+    )
+      return doc.text
     return (await window.mote.readNote(vault.dir, path))?.text ?? null
   }
 
@@ -452,7 +466,14 @@ class Workspace {
 
   edit(path: VaultPath, text: string): void {
     const { doc } = this.state
-    if (doc?.path !== path || doc.kind === 'missing' || doc.kind === 'html' || doc.text === text)
+    if (
+      doc?.path !== path ||
+      doc.kind === 'missing' ||
+      doc.kind === 'html' ||
+      doc.kind === 'image' ||
+      doc.kind === 'pdf' ||
+      doc.text === text
+    )
       return
     if (doc.kind === 'conflict' || doc.kind === 'saving') {
       this.set({ doc: { ...doc, text } })
@@ -501,7 +522,15 @@ class Workspace {
     this.clearSaveTimers()
     if (this.saving) return this.saving
     const { doc, vault } = this.state
-    if (!doc || !vault || doc.kind === 'clean' || doc.kind === 'missing' || doc.kind === 'html')
+    if (
+      !doc ||
+      !vault ||
+      doc.kind === 'clean' ||
+      doc.kind === 'missing' ||
+      doc.kind === 'html' ||
+      doc.kind === 'image' ||
+      doc.kind === 'pdf'
+    )
       return Promise.resolve(true)
     if (doc.kind !== 'dirty' && (doc.kind !== 'conflict' || !keepMine))
       return Promise.resolve(false)
@@ -521,6 +550,8 @@ class Workspace {
         !current ||
         current.path !== doc.path ||
         current.kind === 'html' ||
+        current.kind === 'image' ||
+        current.kind === 'pdf' ||
         current.kind === 'missing'
       )
         return false
@@ -541,7 +572,12 @@ class Workspace {
       return this.refresh()
     } catch (error) {
       const current = this.state.doc
-      if (current?.path === doc.path && current.kind !== 'html')
+      if (
+        current?.path === doc.path &&
+        current.kind !== 'html' &&
+        current.kind !== 'image' &&
+        current.kind !== 'pdf'
+      )
         this.set({ doc: { ...doc, text: current.text } })
       this.fail(error)
       return false
@@ -561,7 +597,10 @@ class Workspace {
     }
   }
 
-  private receiveConflict(doc: Exclude<Doc, HtmlDoc>, disk: NoteVersion | null): void {
+  private receiveConflict(
+    doc: Exclude<Doc, HtmlDoc | ImageDoc | PdfDoc>,
+    disk: NoteVersion | null
+  ): void {
     this.clearSaveTimers()
     if (disk?.text === doc.text) this.load(doc.path, disk)
     else this.set({ doc: { ...doc, kind: 'conflict', disk }, error: '' })
@@ -574,7 +613,7 @@ class Workspace {
     this.set({ revision: this.state.revision + 1 })
     void this.loadBacklinks()
     if (doc && (change.changed.includes(doc.path) || change.removed.includes(doc.path))) {
-      if (doc.kind === 'html') {
+      if (doc.kind === 'html' || doc.kind === 'image' || doc.kind === 'pdf') {
         if (change.removed.includes(doc.path)) {
           this.set({ doc: { kind: 'missing', path: doc.path, text: '', source: { text: '' } } })
         }
@@ -586,7 +625,15 @@ class Workspace {
 
   private async refresh(): Promise<boolean> {
     const { doc, vault } = this.state
-    if (!doc || !vault || doc.kind === 'saving' || doc.kind === 'html') return true
+    if (
+      !doc ||
+      !vault ||
+      doc.kind === 'saving' ||
+      doc.kind === 'html' ||
+      doc.kind === 'image' ||
+      doc.kind === 'pdf'
+    )
+      return true
     const refreshId = ++this.refreshId
     try {
       const disk = await window.mote.readNote(vault.dir, doc.path)
@@ -601,12 +648,16 @@ class Workspace {
       const knownHash =
         current.kind === 'conflict'
           ? current.disk?.hash
-          : current.kind === 'missing' || current.kind === 'html'
+          : current.kind === 'missing' ||
+              current.kind === 'html' ||
+              current.kind === 'image' ||
+              current.kind === 'pdf'
             ? undefined
             : current.baseHash
       if (disk?.hash !== knownHash) {
         if (current.kind === 'clean' || current.kind === 'missing') this.load(current.path, disk)
-        else if (current.kind !== 'html') this.receiveConflict(current, disk)
+        else if (current.kind !== 'html' && current.kind !== 'image' && current.kind !== 'pdf')
+          this.receiveConflict(current, disk)
       }
       return this.state.doc?.kind !== 'conflict'
     } catch (error) {
