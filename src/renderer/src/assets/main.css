@@ -781,6 +781,7 @@ svg.lucide {
   color: var(--muted);
   border: 0;
   border-radius: 6px;
+  font-family: inherit;
   font-size: 12.5px;
   position: relative;
   transition:
@@ -847,6 +848,12 @@ svg.lucide {
 
 .sidebar {
   border-right: 1px solid var(--border);
+  font-family: var(--font-text);
+}
+
+.sidebar button,
+.sidebar input {
+  font-family: inherit;
 }
 
 .sidebar[hidden] {
@@ -1251,7 +1258,7 @@ svg.lucide {
   border-radius: 6px;
   background: transparent;
   color: var(--muted);
-  font-family: var(--font-hei);
+  font-family: inherit;
   font-size: 12.5px;
   font-weight: 500;
   cursor: pointer;
@@ -1323,7 +1330,7 @@ html[data-theme='dark'] .search-input-container:focus-within {
   border: none;
   background: transparent;
   color: var(--text);
-  font-family: var(--font-hei);
+  font-family: inherit;
   font-size: 12.5px;
   outline: none;
   padding: 0;
@@ -1362,7 +1369,7 @@ html[data-theme='dark'] .search-input-container:focus-within {
 .search-summary {
   padding: 6px 12px 6px;
   color: var(--muted);
-  font-family: var(--font-hei);
+  font-family: inherit;
   font-size: 11.5px;
   font-weight: 500;
   letter-spacing: 0.01em;
