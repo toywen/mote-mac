@@ -1,0 +1,2610 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>mote · 在 Mac 上，重归书写的纯粹</title>
+  <meta name="description" content="mote 是一款原生体验的 Mac 笔记应用。直接打开你的本地 Markdown 笔记库，0 破坏、0 私有配置；沉浸双栏排版，毫秒级快速打开与中文全文检索，带来指尖触碰纸页般的阅读与写作体验。" />
+  <meta property="og:title" content="mote · 在 Mac 上，重归书写的纯粹" />
+  <meta property="og:description" content="零迁移成本，零数据破坏。专为 Mac 打造的纯粹 Markdown 笔记工具。" />
+  <meta property="og:type" content="website" />
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1024 1024'><rect x='100' y='100' width='824' height='824' rx='185' fill='%231f1e1b'/><circle cx='694' cy='640' r='50' fill='%23f0b45c'/><path d='M330 690V333M330 470a91 91 0 0 1 182 0V690M512 470a91 91 0 0 1 182 0V556' fill='none' stroke='%23faf8f2' stroke-width='92'/></svg>" />
+  <style>
+    /* ========================================================= */
+    /* Design Tokens: 宣纸温润 / 墨石沉夜 (Strictly aligned with mote) */
+    /* ========================================================= */
+    @font-face {
+      font-family: 'Kai';
+      font-weight: 400;
+      src: local('STKaitiSC-Regular'), local('Kaiti SC'), local('STKaiti'), serif;
+    }
+    @font-face {
+      font-family: 'Kai';
+      font-weight: 700;
+      src: local('STKaitiSC-Bold'), local('Kaiti SC Bold'), serif;
+    }
+
+    :root {
+      color-scheme: light dark;
+      --bg: #fcfbf8;
+      --bg-sidebar: #f5f3ec;
+      --bg-card: #ffffff;
+      --bg-elevated: #ffffff;
+      --border: #ebe7db;
+      --border-subtle: #f0eee6;
+      --text: #22201c;
+      --text-muted: #656157;
+      --text-subtle: #9b978b;
+      --hover: rgba(70, 55, 30, 0.055);
+      --selected: rgba(70, 55, 30, 0.095);
+      --accent: #2c447c;
+      --accent-hover: #1f315a;
+      --accent-bg: rgba(44, 68, 124, 0.08);
+      --accent-glow: rgba(44, 68, 124, 0.18);
+      --accent-gold: #f0b45c;
+      --notice: #faf3e8;
+      --notice-text: #735118;
+      --link: #2c447c;
+      --link-missing: #965f1a;
+      --code-bg: rgba(70, 55, 30, 0.055);
+      --highlight: rgba(223, 170, 70, 0.28);
+      --tag-text: #205c4a;
+      --tag-bg: rgba(32, 92, 74, 0.09);
+      --callout-note: #2c447c;
+      --callout-note-bg: rgba(44, 68, 124, 0.06);
+      --callout-tip: #205c4a;
+      --callout-tip-bg: rgba(32, 92, 74, 0.07);
+      --callout-warn: #965f1a;
+      --callout-warn-bg: rgba(150, 95, 26, 0.08);
+
+      --font-kai: 'Kai', 'Kaiti SC', 'STKaiti', 'Songti SC', 'STSong', Georgia, serif;
+      --font-mono: ui-monospace, 'SF Mono', Menlo, Monaco, Consolas, monospace;
+
+      --font-family-display: var(--font-kai);
+      --font-family-body: var(--font-kai);
+      --shadow-sm: 0 2px 8px rgba(35, 30, 20, 0.04);
+      --shadow-md: 0 8px 24px rgba(35, 30, 20, 0.08);
+      --shadow-lg: 0 24px 64px rgba(35, 30, 20, 0.12);
+      --shadow-window: 0 32px 80px -12px rgba(25, 20, 15, 0.18), 0 0 0 1px var(--border);
+
+      --radius-sm: 6px;
+      --radius-md: 10px;
+      --radius-lg: 16px;
+      --radius-xl: 22px;
+    }
+
+    html[data-theme='dark'] {
+      --bg: #1c1b18;
+      --bg-sidebar: #161513;
+      --bg-card: #23221e;
+      --bg-elevated: #292823;
+      --border: #2b2925;
+      --border-subtle: #24221e;
+      --text: #e9e6de;
+      --text-muted: #9d998d;
+      --text-subtle: #656259;
+      --hover: rgba(255, 245, 225, 0.065);
+      --selected: rgba(255, 245, 225, 0.12);
+      --accent: #9fb0e8;
+      --accent-hover: #b8c5f2;
+      --accent-bg: rgba(159, 176, 232, 0.12);
+      --accent-glow: rgba(159, 176, 232, 0.25);
+      --accent-gold: #f0b45c;
+      --notice: #2f271c;
+      --notice-text: #f0cb8d;
+      --link: #9fb0e8;
+      --link-missing: #dfb672;
+      --code-bg: rgba(255, 245, 225, 0.065);
+      --highlight: rgba(223, 182, 114, 0.25);
+      --tag-text: #7ec4a8;
+      --tag-bg: rgba(126, 196, 168, 0.12);
+      --callout-note: #9fb0e8;
+      --callout-note-bg: rgba(159, 176, 232, 0.1);
+      --callout-tip: #7ec4a8;
+      --callout-tip-bg: rgba(126, 196, 168, 0.1);
+      --callout-warn: #dfb672;
+      --callout-warn-bg: rgba(223, 182, 114, 0.1);
+
+      --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.25);
+      --shadow-md: 0 8px 24px rgba(0, 0, 0, 0.35);
+      --shadow-lg: 0 24px 64px rgba(0, 0, 0, 0.5);
+      --shadow-window: 0 32px 80px -12px rgba(0, 0, 0, 0.65), 0 0 0 1px #38352f;
+    }
+
+    /* Reset & Basics */
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html {
+      scroll-behavior: smooth;
+      background-color: var(--bg);
+      color: var(--text);
+      font-family: var(--font-family-body);
+      font-size: 16px;
+      line-height: 1.68;
+      -webkit-font-smoothing: antialiased;
+      -moz-osx-font-smoothing: grayscale;
+      transition: background-color 0.25s ease, color 0.25s ease;
+    }
+
+    body {
+      overflow-x: hidden;
+      min-height: 100%;
+      display: flex;
+      flex-direction: column;
+      position: relative;
+    }
+
+    /* Subtle Paper Texture Background */
+    body::before {
+      content: '';
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 9999;
+      opacity: 0.025;
+      background-image: radial-gradient(var(--text) 1px, transparent 0);
+      background-size: 24px 24px;
+    }
+
+    a {
+      color: inherit;
+      text-decoration: none;
+    }
+
+    button {
+      font-family: inherit;
+      cursor: pointer;
+      border: none;
+      background: none;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 1180px;
+      margin: 0 auto;
+      padding: 0 24px;
+    }
+
+    /* ========================================================= */
+    /* Header & Navigation Bar */
+    /* ========================================================= */
+    .site-header {
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      width: 100%;
+      background: rgba(252, 251, 248, 0.82);
+      backdrop-filter: blur(16px);
+      -webkit-backdrop-filter: blur(16px);
+      border-bottom: 1px solid var(--border);
+      transition: background-color 0.25s ease, border-color 0.25s ease;
+    }
+
+    html[data-theme='dark'] .site-header {
+      background: rgba(28, 27, 24, 0.82);
+    }
+
+    .nav-inner {
+      height: 64px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 20px;
+    }
+
+    .brand-link {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-weight: 700;
+      font-size: 1.25rem;
+      letter-spacing: -0.02em;
+    }
+
+    .brand-logo-icon {
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.12);
+      flex-shrink: 0;
+      transition: transform 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+
+    .brand-link:hover .brand-logo-icon {
+      transform: scale(1.06) rotate(-2deg);
+    }
+
+    .brand-text {
+      font-family: var(--font-family-display);
+      font-weight: 700;
+      font-size: 1.35rem;
+      color: var(--text);
+    }
+
+    .brand-badge {
+      font-size: 0.72rem;
+      padding: 2px 8px;
+      border-radius: 12px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-weight: 600;
+      letter-spacing: 0.02em;
+    }
+
+    .nav-links {
+      display: flex;
+      align-items: center;
+      gap: 28px;
+      list-style: none;
+      font-size: 0.95rem;
+    }
+
+    .nav-links a {
+      color: var(--text-muted);
+      transition: color 0.15s ease;
+      font-weight: 500;
+    }
+
+    .nav-links a:hover {
+      color: var(--text);
+    }
+
+    .nav-actions {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .tool-btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      width: 36px;
+      height: 36px;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      transition: all 0.15s ease;
+    }
+
+    .tool-btn:hover {
+      color: var(--text);
+      background: var(--hover);
+      border-color: var(--text-subtle);
+    }
+
+    .tool-btn svg {
+      width: 17px;
+      height: 17px;
+    }
+
+    .btn-download-nav {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent);
+      color: #ffffff;
+      padding: 8px 16px;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.88rem;
+      transition: all 0.2s ease;
+      box-shadow: 0 2px 8px var(--accent-glow);
+    }
+
+    html[data-theme='dark'] .btn-download-nav {
+      background: var(--accent);
+      color: #161513;
+    }
+
+    .btn-download-nav:hover {
+      background: var(--accent-hover);
+      transform: translateY(-1px);
+    }
+
+    /* ========================================================= */
+    /* Hero Section */
+    /* ========================================================= */
+    .hero-section {
+      padding: 68px 0 40px;
+      text-align: center;
+      position: relative;
+    }
+
+    .hero-badge-wrap {
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 14px;
+      background: var(--accent-bg);
+      border: 1px solid rgba(44, 68, 124, 0.18);
+      border-radius: 24px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 24px;
+      transition: transform 0.2s ease;
+    }
+
+    .hero-badge-wrap:hover {
+      transform: translateY(-1px);
+    }
+
+    .hero-badge-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: var(--accent-gold);
+      box-shadow: 0 0 8px var(--accent-gold);
+    }
+
+    .hero-title {
+      font-family: var(--font-family-display);
+      font-size: 3.5rem;
+      font-weight: 700;
+      line-height: 1.18;
+      letter-spacing: -0.025em;
+      color: var(--text);
+      max-width: 860px;
+      margin: 0 auto 20px;
+    }
+
+    .hero-subtitle {
+      font-size: 1.25rem;
+      line-height: 1.7;
+      color: var(--text-muted);
+      max-width: 740px;
+      margin: 0 auto 36px;
+      font-weight: 400;
+    }
+
+    .hero-actions {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-wrap: wrap;
+      gap: 16px;
+      margin-bottom: 20px;
+    }
+
+    .btn-primary-lg {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--accent);
+      color: #ffffff;
+      padding: 14px 28px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 1.05rem;
+      transition: all 0.25s cubic-bezier(0.2, 0.8, 0.25, 1);
+      box-shadow: 0 6px 20px var(--accent-glow);
+    }
+
+    html[data-theme='dark'] .btn-primary-lg {
+      background: var(--accent);
+      color: #161513;
+    }
+
+    .btn-primary-lg:hover {
+      background: var(--accent-hover);
+      transform: translateY(-2px);
+      box-shadow: 0 10px 28px var(--accent-glow);
+    }
+
+    .btn-secondary-lg {
+      display: inline-flex;
+      align-items: center;
+      gap: 10px;
+      background: var(--bg-card);
+      color: var(--text);
+      padding: 14px 24px;
+      border-radius: var(--radius-md);
+      font-weight: 600;
+      font-size: 1.05rem;
+      border: 1px solid var(--border);
+      transition: all 0.2s ease;
+      box-shadow: var(--shadow-sm);
+    }
+
+    .btn-secondary-lg:hover {
+      background: var(--hover);
+      border-color: var(--text-subtle);
+      transform: translateY(-2px);
+    }
+
+    .hero-meta-note {
+      font-size: 0.85rem;
+      color: var(--text-subtle);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 18px;
+      flex-wrap: wrap;
+      margin-bottom: 48px;
+    }
+
+    .hero-meta-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    /* ========================================================= */
+    /* macOS App Window Interactive Showcase (The Hero Mockup) */
+    /* ========================================================= */
+    .app-window-container {
+      position: relative;
+      margin: 0 auto;
+      max-width: 1040px;
+      perspective: 1000px;
+    }
+
+    .app-window {
+      background: var(--bg);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-window);
+      border: 1px solid var(--border);
+      overflow: hidden;
+      display: flex;
+      flex-direction: column;
+      height: 620px;
+      text-align: left;
+      position: relative;
+      transition: all 0.3s ease;
+    }
+
+    /* Window Header */
+    .app-titlebar {
+      height: 44px;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 16px;
+      user-select: none;
+      -webkit-user-select: none;
+    }
+
+    .app-lights {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .light-circle {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+    }
+
+    .light-close { background: #ff5f56; border: 1px solid #e0443e; }
+    .light-min { background: #ffbd2e; border: 1px solid #dea123; }
+    .light-max { background: #27c93f; border: 1px solid #1aab29; }
+
+    .window-title {
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      letter-spacing: -0.01em;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .titlebar-tools {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .titlebar-tool-btn {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 0.76rem;
+      color: var(--text-muted);
+      border: 1px solid var(--border);
+      background: var(--bg);
+      display: flex;
+      align-items: center;
+      gap: 4px;
+      transition: background 0.15s ease;
+    }
+
+    .titlebar-tool-btn:hover {
+      background: var(--hover);
+      color: var(--text);
+    }
+
+    /* Window Body Dual Pane */
+    .app-body {
+      display: grid;
+      grid-template-columns: 240px 1fr;
+      flex: 1;
+      min-height: 0;
+      transition: grid-template-columns 0.25s cubic-bezier(0.2, 0.8, 0.25, 1);
+    }
+
+    .app-body.sidebar-closed {
+      grid-template-columns: 0px 1fr;
+    }
+
+    /* Sidebar with Folders and Files */
+    .app-sidebar {
+      background: var(--bg-sidebar);
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+    }
+
+    .sidebar-header {
+      padding: 10px 14px;
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .file-tree-list {
+      list-style: none;
+      padding: 8px 6px;
+      overflow-y: auto;
+      font-size: 0.84rem;
+    }
+
+    /* Folder Group styling */
+    .tree-folder-group {
+      margin-bottom: 4px;
+    }
+
+    .tree-folder-header {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 5px 8px;
+      border-radius: var(--radius-sm);
+      color: var(--text);
+      cursor: pointer;
+      user-select: none;
+      font-weight: 600;
+      font-size: 0.82rem;
+      transition: background 0.12s ease;
+    }
+
+    .tree-folder-header:hover {
+      background: var(--hover);
+    }
+
+    .chevron-icon {
+      transition: transform 0.2s ease;
+      color: var(--text-subtle);
+      flex-shrink: 0;
+    }
+
+    .tree-folder-group.collapsed .chevron-icon {
+      transform: rotate(-90deg);
+    }
+
+    .folder-icon {
+      color: var(--accent);
+      opacity: 0.85;
+      flex-shrink: 0;
+    }
+
+    .folder-children {
+      list-style: none;
+      padding-left: 18px;
+      overflow: hidden;
+      margin-top: 1px;
+    }
+
+    .tree-folder-group.collapsed .folder-children {
+      display: none;
+    }
+
+    .tree-item {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 8px;
+      border-radius: var(--radius-sm);
+      color: var(--text-muted);
+      cursor: pointer;
+      user-select: none;
+      transition: background 0.12s ease, color 0.12s ease;
+      font-size: 0.82rem;
+      margin-bottom: 1px;
+    }
+
+    .tree-item:hover {
+      background: var(--hover);
+      color: var(--text);
+    }
+
+    .tree-item.active {
+      background: var(--selected);
+      color: var(--text);
+      font-weight: 600;
+    }
+
+    .tree-item-icon {
+      width: 14px;
+      height: 14px;
+      opacity: 0.65;
+      flex-shrink: 0;
+    }
+
+    /* Main Editor Pane */
+    .app-editor-pane {
+      background: var(--bg);
+      display: flex;
+      flex-direction: column;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Tab Bar */
+    .app-tabbar {
+      display: flex;
+      align-items: center;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      padding: 0 8px;
+      overflow-x: auto;
+      gap: 2px;
+      height: 38px;
+    }
+
+    .tab-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      padding: 6px 12px;
+      border-radius: 6px 6px 0 0;
+      font-size: 0.82rem;
+      color: var(--text-muted);
+      background: transparent;
+      cursor: pointer;
+      border-top: 2px solid transparent;
+      transition: all 0.15s ease;
+      white-space: nowrap;
+    }
+
+    .tab-item:hover {
+      color: var(--text);
+      background: var(--hover);
+    }
+
+    .tab-item.active {
+      background: var(--bg);
+      color: var(--text);
+      font-weight: 600;
+      border-top-color: var(--accent);
+      border-left: 1px solid var(--border);
+      border-right: 1px solid var(--border);
+      border-bottom: 1px solid var(--bg);
+      margin-bottom: -1px;
+    }
+
+    .tab-dirty-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--tag-text);
+    }
+
+    /* Editor Canvas / Reading Canvas */
+    .editor-canvas-wrap {
+      flex: 1;
+      overflow-y: auto;
+      padding: 32px 48px;
+      max-width: 860px;
+      margin: 0 auto;
+      width: 100%;
+    }
+
+    /* Title Ribbon with Floating Backlink Badge */
+    .title-ribbon {
+      display: flex;
+      align-items: baseline;
+      justify-content: space-between;
+      gap: 16px;
+      margin-bottom: 24px;
+      padding-bottom: 14px;
+      border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .doc-headline {
+      font-family: var(--font-family-display);
+      font-size: 2.1rem;
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--text);
+    }
+
+    .backlink-badge-btn {
+      display: inline-flex;
+      align-items: center;
+      gap: 6px;
+      padding: 4px 10px;
+      border-radius: 14px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      font-size: 0.78rem;
+      font-weight: 600;
+      border: 1px solid rgba(44, 68, 124, 0.15);
+      cursor: pointer;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .backlink-badge-btn:hover {
+      background: var(--accent);
+      color: #ffffff;
+    }
+
+    /* Properties YAML Card */
+    .properties-card {
+      background: var(--code-bg);
+      border-radius: var(--radius-sm);
+      border: 1px solid var(--border);
+      padding: 10px 14px;
+      margin-bottom: 24px;
+      font-size: 0.82rem;
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    .property-row {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+    }
+
+    .property-key {
+      color: var(--text-subtle);
+      width: 70px;
+      font-family: var(--font-mono);
+      font-size: 0.78rem;
+    }
+
+    .property-val {
+      color: var(--text);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .tag-pill {
+      background: var(--tag-bg);
+      color: var(--tag-text);
+      padding: 1px 8px;
+      border-radius: 10px;
+      font-size: 0.75rem;
+      font-weight: 500;
+    }
+
+    /* Note Body Elements */
+    .note-p {
+      margin-bottom: 16px;
+      font-size: 1.05rem;
+      line-height: 1.8;
+      color: var(--text);
+    }
+
+    .wiki-link {
+      color: var(--link);
+      background: var(--accent-bg);
+      padding: 2px 6px;
+      border-radius: 4px;
+      font-weight: 500;
+      cursor: pointer;
+      text-decoration: none;
+      transition: background 0.12s ease;
+    }
+
+    .wiki-link:hover {
+      background: rgba(44, 68, 124, 0.16);
+      text-decoration: underline;
+    }
+
+    .highlight-text {
+      background: var(--highlight);
+      padding: 1px 4px;
+      border-radius: 2px;
+    }
+
+    /* Callout Card */
+    .callout-box {
+      border-left: 4px solid var(--callout-note);
+      background: var(--callout-note-bg);
+      border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+      padding: 12px 16px;
+      margin: 20px 0;
+      font-size: 0.95rem;
+    }
+
+    .callout-title {
+      font-weight: 700;
+      color: var(--callout-note);
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 4px;
+    }
+
+    .callout-box.tip {
+      border-left-color: var(--callout-tip);
+      background: var(--callout-tip-bg);
+    }
+    .callout-box.tip .callout-title {
+      color: var(--callout-tip);
+    }
+
+    /* Task List Item */
+    .task-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      margin: 8px 0;
+      font-size: 0.98rem;
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .task-checkbox {
+      width: 16px;
+      height: 16px;
+      border-radius: 4px;
+      border: 1.5px solid var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.15s ease;
+      flex-shrink: 0;
+    }
+
+    .task-checkbox.checked {
+      background: var(--accent);
+      color: #fff;
+    }
+
+    .task-text.checked {
+      text-decoration: line-through;
+      color: var(--text-subtle);
+    }
+
+    /* Floating Backlinks Popover in Mockup */
+    .floating-backlinks-popover {
+      position: absolute;
+      top: 90px;
+      right: 32px;
+      width: 280px;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      box-shadow: var(--shadow-lg);
+      padding: 14px;
+      z-index: 50;
+      display: none;
+      animation: popIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
+    }
+
+    .floating-backlinks-popover.open {
+      display: block;
+    }
+
+    @keyframes popIn {
+      from { opacity: 0; transform: translateY(-8px) scale(0.96); }
+      to { opacity: 1; transform: translateY(0) scale(1); }
+    }
+
+    .popover-header {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-bottom: 10px;
+      font-size: 0.82rem;
+      font-weight: 600;
+      color: var(--text);
+    }
+
+    .backlink-hit-item {
+      padding: 8px;
+      border-radius: 6px;
+      background: var(--hover);
+      margin-bottom: 6px;
+      font-size: 0.78rem;
+    }
+
+    .backlink-hit-path {
+      font-weight: 600;
+      color: var(--accent);
+      margin-bottom: 2px;
+    }
+
+    .backlink-hit-snippet {
+      color: var(--text-muted);
+      line-height: 1.4;
+    }
+
+    /* Mockup Control Bar underneath */
+    .mockup-controls-bar {
+      margin-top: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 0 12px;
+      font-size: 0.82rem;
+      color: var(--text-subtle);
+    }
+
+    .interactive-hint {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .interactive-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #27c93f;
+      box-shadow: 0 0 8px #27c93f;
+    }
+
+    /* ========================================================= */
+    /* Core Value Propositions: "三不承诺与极致哲学" */
+    /* ========================================================= */
+    .section-spacing {
+      padding: 96px 0;
+    }
+
+    .section-header {
+      text-align: center;
+      max-width: 720px;
+      margin: 0 auto 56px;
+    }
+
+    .section-eyebrow {
+      font-size: 0.88rem;
+      font-weight: 700;
+      color: var(--accent);
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      margin-bottom: 12px;
+    }
+
+    .section-title {
+      font-family: var(--font-family-display);
+      font-size: 2.5rem;
+      font-weight: 700;
+      line-height: 1.25;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .section-desc {
+      font-size: 1.15rem;
+      color: var(--text-muted);
+      line-height: 1.7;
+    }
+
+    /* Three Non-Destructive Principles Grid */
+    .principles-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      margin-bottom: 64px;
+    }
+
+    .principle-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px 28px;
+      box-shadow: var(--shadow-sm);
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .principle-card:hover {
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-md);
+      border-color: var(--accent);
+    }
+
+    .principle-num {
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--accent);
+      margin-bottom: 16px;
+      display: inline-block;
+      padding: 2px 8px;
+      background: var(--accent-bg);
+      border-radius: 4px;
+    }
+
+    .principle-title {
+      font-family: var(--font-family-display);
+      font-size: 1.45rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 12px;
+    }
+
+    .principle-body {
+      color: var(--text-muted);
+      font-size: 0.98rem;
+      line-height: 1.7;
+    }
+
+    /* Feature Deep Dive (Split Row) */
+    .feature-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 48px;
+      align-items: center;
+      margin-bottom: 84px;
+    }
+
+    .feature-row.reverse {
+      direction: rtl;
+    }
+    .feature-row.reverse > * {
+      direction: ltr;
+    }
+
+    .feature-text-block {
+      max-width: 500px;
+    }
+
+    .feature-tag {
+      display: inline-block;
+      font-size: 0.8rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 12px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      margin-bottom: 16px;
+    }
+
+    .feature-heading {
+      font-family: var(--font-family-display);
+      font-size: 2rem;
+      font-weight: 700;
+      line-height: 1.3;
+      color: var(--text);
+      margin-bottom: 16px;
+    }
+
+    .feature-paragraph {
+      font-size: 1.05rem;
+      color: var(--text-muted);
+      line-height: 1.75;
+      margin-bottom: 24px;
+    }
+
+    .feature-points {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .feature-point-item {
+      display: flex;
+      align-items: flex-start;
+      gap: 10px;
+      font-size: 0.98rem;
+      color: var(--text);
+    }
+
+    .feature-point-icon {
+      color: var(--accent);
+      flex-shrink: 0;
+      margin-top: 3px;
+    }
+
+    /* Visual Cards inside Feature Rows */
+    .feature-visual-panel {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-md);
+      padding: 24px;
+      position: relative;
+      overflow: hidden;
+    }
+
+    /* Typography Showcase Box */
+    .typography-demo-box {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 24px;
+      background: var(--bg);
+    }
+
+    .typo-sample-title {
+      font-size: 1.6rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+      color: var(--text);
+    }
+
+    .typo-sample-content {
+      font-size: 1.05rem;
+      line-height: 1.85;
+      color: var(--text-muted);
+    }
+
+    /* Performance Meter Visual */
+    .benchmark-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 16px;
+    }
+
+    .metric-card {
+      background: var(--bg);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 18px;
+    }
+
+    .metric-number {
+      font-family: var(--font-mono);
+      font-size: 2.2rem;
+      font-weight: 700;
+      color: var(--accent);
+      line-height: 1.1;
+      margin-bottom: 6px;
+    }
+
+    .metric-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text);
+      margin-bottom: 4px;
+    }
+
+    .metric-sub {
+      font-size: 0.78rem;
+      color: var(--text-subtle);
+    }
+
+    /* ========================================================= */
+    /* Interactive Live Scratchpad Playground */
+    /* ========================================================= */
+    .playground-section {
+      background: var(--bg-sidebar);
+      border-top: 1px solid var(--border);
+      border-bottom: 1px solid var(--border);
+      padding: 84px 0;
+    }
+
+    .playground-container {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      box-shadow: var(--shadow-lg);
+      overflow: hidden;
+    }
+
+    .playground-header {
+      padding: 12px 20px;
+      background: var(--bg-sidebar);
+      border-bottom: 1px solid var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 12px;
+    }
+
+    .preset-btns-group {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .preset-btn {
+      padding: 5px 12px;
+      border-radius: 6px;
+      font-size: 0.82rem;
+      border: 1px solid var(--border);
+      background: var(--bg-card);
+      color: var(--text-muted);
+      cursor: pointer;
+      transition: all 0.15s ease;
+    }
+
+    .preset-btn:hover {
+      background: var(--hover);
+      color: var(--text);
+    }
+
+    .preset-btn.active {
+      background: var(--accent);
+      color: #fff;
+      border-color: var(--accent);
+    }
+
+    .playground-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      min-height: 360px;
+    }
+
+    .playground-editor-wrap {
+      border-right: 1px solid var(--border);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .playground-textarea {
+      flex: 1;
+      width: 100%;
+      padding: 24px;
+      border: none;
+      outline: none;
+      background: transparent;
+      color: var(--text);
+      font-family: var(--font-mono);
+      font-size: 0.95rem;
+      line-height: 1.7;
+      resize: none;
+    }
+
+    .playground-preview-wrap {
+      padding: 24px 32px;
+      overflow-y: auto;
+      background: var(--bg);
+    }
+
+    /* ========================================================= */
+    /* Comparison Table: mote vs Conventional Tools */
+    /* ========================================================= */
+    .comparison-table-wrap {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      overflow-x: auto;
+      box-shadow: var(--shadow-sm);
+      background: var(--bg-card);
+      margin-top: 36px;
+    }
+
+    .compare-table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+      font-size: 0.96rem;
+    }
+
+    .compare-table th, .compare-table td {
+      padding: 16px 24px;
+      border-bottom: 1px solid var(--border);
+    }
+
+    .compare-table th {
+      background: var(--bg-sidebar);
+      font-weight: 700;
+      color: var(--text);
+      font-size: 0.9rem;
+    }
+
+    .compare-table tr:last-child td {
+      border-bottom: none;
+    }
+
+    .table-badge-winner {
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+      color: #205c4a;
+      font-weight: 600;
+    }
+
+    html[data-theme='dark'] .table-badge-winner {
+      color: #7ec4a8;
+    }
+
+    /* ========================================================= */
+    /* Download Hub Section */
+    /* ========================================================= */
+    .download-section {
+      padding: 96px 0;
+      text-align: center;
+    }
+
+    .download-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 24px;
+      max-width: 960px;
+      margin: 40px auto 48px;
+    }
+
+    .download-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 32px 24px;
+      box-shadow: var(--shadow-sm);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      transition: all 0.25s ease;
+      position: relative;
+    }
+
+    .download-card.highlight {
+      border-color: var(--accent);
+      box-shadow: 0 8px 30px var(--accent-glow);
+    }
+
+    .download-chip {
+      position: absolute;
+      top: -12px;
+      background: var(--accent);
+      color: #fff;
+      font-size: 0.74rem;
+      font-weight: 700;
+      padding: 2px 10px;
+      border-radius: 12px;
+      letter-spacing: 0.04em;
+    }
+
+    html[data-theme='dark'] .download-chip {
+      background: var(--accent);
+      color: #161513;
+    }
+
+    .download-icon {
+      width: 48px;
+      height: 48px;
+      border-radius: 12px;
+      margin-bottom: 16px;
+      color: var(--accent);
+    }
+
+    .download-arch-name {
+      font-family: var(--font-family-display);
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+
+    .download-arch-desc {
+      font-size: 0.88rem;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+      flex: 1;
+    }
+
+    .btn-download-card {
+      width: 100%;
+      padding: 12px 0;
+      border-radius: var(--radius-sm);
+      font-weight: 600;
+      font-size: 0.95rem;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8px;
+      transition: all 0.2s ease;
+      background: var(--hover);
+      color: var(--text);
+      border: 1px solid var(--border);
+    }
+
+    .download-card.highlight .btn-download-card {
+      background: var(--accent);
+      color: #ffffff;
+      border-color: var(--accent);
+    }
+
+    html[data-theme='dark'] .download-card.highlight .btn-download-card {
+      background: var(--accent);
+      color: #161513;
+    }
+
+    .btn-download-card:hover {
+      transform: translateY(-2px);
+    }
+
+    .install-instruction-box {
+      max-width: 680px;
+      margin: 0 auto;
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 20px 24px;
+      text-align: left;
+      font-size: 0.92rem;
+      color: var(--text-muted);
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    /* Keyboard Shortcuts Showcase */
+    .shortcuts-section {
+      padding: 64px 0;
+      border-top: 1px solid var(--border);
+    }
+
+    .shortcuts-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 16px;
+      margin-top: 32px;
+    }
+
+    .shortcut-card {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      padding: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+    }
+
+    .key-badge {
+      display: inline-flex;
+      align-items: center;
+      gap: 2px;
+      padding: 4px 8px;
+      border-radius: 6px;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+      font-family: var(--font-mono);
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+    }
+
+    /* ========================================================= */
+    /* Footer */
+    /* ========================================================= */
+    .site-footer {
+      border-top: 1px solid var(--border);
+      background: var(--bg-sidebar);
+      padding: 56px 0 40px;
+      margin-top: auto;
+      font-size: 0.9rem;
+      color: var(--text-muted);
+    }
+
+    .footer-inner {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      flex-wrap: wrap;
+      gap: 32px;
+      margin-bottom: 40px;
+    }
+
+    .footer-brand {
+      max-width: 320px;
+    }
+
+    .footer-links-group {
+      display: flex;
+      gap: 48px;
+    }
+
+    .footer-col-title {
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+    }
+
+    .footer-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .footer-list a:hover {
+      color: var(--text);
+    }
+
+    .footer-bottom {
+      border-top: 1px solid var(--border);
+      padding-top: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 0.82rem;
+      color: var(--text-subtle);
+    }
+
+    /* Responsive */
+    @media (max-width: 900px) {
+      .hero-title { font-size: 2.6rem; }
+      .app-body { grid-template-columns: 0px 1fr; }
+      .principles-grid, .download-grid { grid-template-columns: 1fr; }
+      .feature-row, .feature-row.reverse { grid-template-columns: 1fr; gap: 32px; }
+      .shortcuts-grid { grid-template-columns: repeat(2, 1fr); }
+      .playground-grid { grid-template-columns: 1fr; }
+      .playground-editor-wrap { border-right: none; border-bottom: 1px solid var(--border); }
+      .nav-links { display: none; }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- Site Navigation -->
+  <header class="site-header">
+    <div class="container nav-inner">
+      <a href="#" class="brand-link" aria-label="mote 首页">
+        <svg class="brand-logo-icon" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+          <defs>
+            <linearGradient id="nav-bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#303034"/><stop offset="1" stop-color="#151517"/></linearGradient>
+            <linearGradient id="nav-gl" gradientUnits="userSpaceOnUse" x1="0" y1="333" x2="0" y2="690"><stop offset="0" stop-color="#faf8f2"/><stop offset="1" stop-color="#e4e1d8"/></linearGradient>
+          </defs>
+          <rect x="100" y="100" width="824" height="824" rx="185" fill="url(#nav-bg)"/>
+          <g transform="translate(0 -6)">
+            <path d="M330 690V333M330 470a91 91 0 0 1 182 0V690M512 470a91 91 0 0 1 182 0V556" fill="none" stroke="url(#nav-gl)" stroke-width="92"/>
+            <circle cx="694" cy="640" r="50" fill="#f0b45c"/>
+          </g>
+        </svg>
+        <span class="brand-text">mote</span>
+        <span class="brand-badge">v1.0.6</span>
+      </a>
+
+      <nav>
+        <ul class="nav-links">
+          <li><a href="#features">功能特性</a></li>
+          <li><a href="#philosophy">设计哲学</a></li>
+          <li><a href="#playground">在线体验</a></li>
+          <li><a href="#comparison">深度对比</a></li>
+          <li><a href="#shortcuts">快捷键</a></li>
+          <li><a href="#download">下载</a></li>
+        </ul>
+      </nav>
+
+      <div class="nav-actions">
+        <!-- Theme Toggle Button -->
+        <button id="btn-toggle-theme" class="tool-btn" title="切换深色/浅色模式" aria-label="切换深色/浅色模式">
+          <svg id="theme-sun-icon" style="display:none;" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z" />
+          </svg>
+          <svg id="theme-moon-icon" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z" />
+          </svg>
+        </button>
+
+        <a href="#download" class="btn-download-nav">
+          <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+          <span>下载 Mac 版</span>
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <main>
+    <section class="hero-section">
+      <div class="container">
+        <div class="hero-badge-wrap">
+          <span class="hero-badge-dot"></span>
+          <span>专为 macOS 打造 · 原生极速的本地 Markdown 笔记库</span>
+        </div>
+
+        <h1 class="hero-title">在 Mac 上，重塑纯粹笔记体验</h1>
+        <p class="hero-subtitle">
+          零迁移成本，零数据破坏。直接打开你现有的本地 Markdown 笔记库，享受纯粹沉浸的双栏排版、毫秒级快速打开与中文全文检索，带来如触碰温润纸页般的书写心流。
+        </p>
+
+        <div class="hero-actions">
+          <a href="#download" id="hero-primary-download-btn" class="btn-primary-lg">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 170 170">
+              <path d="M150.37 130.25c-2.45 5.66-5.35 10.87-8.71 15.66-4.58 6.53-8.33 11.05-11.22 13.56-4.48 4.12-9.28 6.23-14.42 6.35-3.69 0-8.14-1.05-13.32-3.18-5.19-2.12-9.97-3.17-14.34-3.17-4.58 0-9.49 1.05-14.75 3.17-5.26 2.13-9.5 3.24-12.74 3.35-4.35.13-9.16-1.9-14.42-6.08-3.69-3.04-7.67-7.81-11.96-14.32-7.85-11.96-13.62-25.77-17.3-41.44-3.68-15.67-4.59-29.74-2.73-42.22 2.68-17.76 9.47-31.96 20.36-42.6 10.89-10.63 23.83-16.14 38.83-16.51 5.35 0 11.05 1.25 17.09 3.76 6.03 2.51 10.15 3.82 12.35 3.93 1.9.11 6.09-1.25 12.57-4.09 6.48-2.84 12.44-4.14 17.88-3.9 13.06.77 24.08 5.68 33.06 14.73-11.49 6.94-17.09 16.53-16.8 28.76.32 10.05 4.31 18.51 11.96 25.37 7.65 6.87 16.71 10.74 27.18 11.62-2.34 7.42-5.34 15.22-9.01 23.41zM119.22 31.84c0-7.39 2.66-14.37 7.97-20.93 5.32-6.56 11.9-10.72 19.74-12.48 1.09 8.04-.6 15.6-5.07 22.68-4.47 7.08-11.08 11.62-19.82 13.61-.76-.98-1.74-2.11-2.82-3.39v.51z"/>
+            </svg>
+            <span id="hero-download-text">下载 macOS 版 (Apple Silicon)</span>
+          </a>
+
+          <a href="https://github.com/toywen/mote-mac" target="_blank" rel="noopener" class="btn-secondary-lg">
+            <svg width="20" height="20" fill="currentColor" viewBox="0 0 24 24"><path fill-rule="evenodd" clip-rule="evenodd" d="M12 2C6.477 2 2 6.484 2 12.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.53 1.032 1.53 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0112 6.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.202 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.943.359.309.678.92.678 1.855 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0022 12.017C22 6.484 17.522 2 12 2z"/></svg>
+            <span>GitHub 源码仓库</span>
+          </a>
+        </div>
+
+        <div class="hero-meta-note">
+          <span class="hero-meta-item">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z"/></svg>
+            100% 本地优先与数据主权
+          </span>
+          <span class="hero-meta-item">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>
+            实测 10.2ms 外部同步刷新
+          </span>
+          <span class="hero-meta-item">
+            <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M5 13l4 4L19 7"/></svg>
+            无需注册与云端绑定
+          </span>
+        </div>
+
+        <!-- Interactive App Showcase Mockup -->
+        <div class="app-window-container">
+          <div class="app-window" id="demo-window">
+            <!-- macOS Window Title Bar -->
+            <div class="app-titlebar">
+              <div class="app-lights">
+                <span class="light-circle light-close"></span>
+                <span class="light-circle light-min"></span>
+                <span class="light-circle light-max"></span>
+              </div>
+              <div class="window-title">
+                <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/></svg>
+                <span>life-os (知识库)</span>
+              </div>
+              <div class="titlebar-tools">
+                <button class="titlebar-tool-btn" id="mockup-toggle-sidebar" title="收起/展开文件树 (⌘\)">
+                  <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
+                  <span>侧栏</span>
+                </button>
+              </div>
+            </div>
+
+            <!-- Body Panes -->
+            <div class="app-body" id="app-body">
+              <!-- Left Sidebar: Rich Folders & Files -->
+              <aside class="app-sidebar">
+                <div class="sidebar-header">
+                  <span>文件列表</span>
+                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                </div>
+                <ul class="file-tree-list">
+                  <!-- Daily Group -->
+                  <li class="tree-folder-group">
+                    <div class="tree-folder-header" onclick="toggleFolder(this)">
+                      <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                      <svg class="folder-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      <span>Daily</span>
+                    </div>
+                    <ul class="folder-children">
+                      <li class="tree-item" data-tab="daily" onclick="switchMockupTab('daily')">
+                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span>2026-11-22.md</span>
+                      </li>
+                      <li class="tree-item" data-tab="daily-prev" onclick="switchMockupTab('daily-prev')">
+                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span>2026-11-21.md</span>
+                      </li>
+                    </ul>
+                  </li>
+
+                  <!-- 工作 Group -->
+                  <li class="tree-folder-group">
+                    <div class="tree-folder-header" onclick="toggleFolder(this)">
+                      <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                      <svg class="folder-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      <span>工作</span>
+                    </div>
+                    <ul class="folder-children">
+                      <li class="tree-item" data-tab="weekly" onclick="switchMockupTab('weekly')">
+                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span>周报与复盘.md</span>
+                      </li>
+                      <li class="tree-item" data-tab="quarterly" onclick="switchMockupTab('quarterly')">
+                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span>Q4规划与思考.md</span>
+                      </li>
+                    </ul>
+                  </li>
+
+                  <!-- 项目 Group -->
+                  <li class="tree-folder-group">
+                    <div class="tree-folder-header" onclick="toggleFolder(this)">
+                      <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                      <svg class="folder-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      <span>项目</span>
+                    </div>
+                    <ul class="folder-children">
+                      <li class="tree-item active" data-tab="philosophy" onclick="switchMockupTab('philosophy')">
+                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span>设计理念.md</span>
+                      </li>
+                      <li class="tree-item" data-tab="architecture" onclick="switchMockupTab('architecture')">
+                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span>架构与性能.md</span>
+                      </li>
+                      <li class="tree-item" data-tab="shortcuts" onclick="switchMockupTab('shortcuts')">
+                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span>快捷键与效率.md</span>
+                      </li>
+                    </ul>
+                  </li>
+
+                  <!-- 思考 Group -->
+                  <li class="tree-folder-group">
+                    <div class="tree-folder-header" onclick="toggleFolder(this)">
+                      <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                      <svg class="folder-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      <span>思考</span>
+                    </div>
+                    <ul class="folder-children">
+                      <li class="tree-item" data-tab="flow" onclick="switchMockupTab('flow')">
+                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span>心流与专注.md</span>
+                      </li>
+                    </ul>
+                  </li>
+                </ul>
+              </aside>
+
+              <!-- Right Pane: Note Editor & Reading Mode -->
+              <div class="app-editor-pane">
+                <!-- TabBar -->
+                <div class="app-tabbar">
+                  <div class="tab-item active" id="tab-btn-philosophy" onclick="switchMockupTab('philosophy')">
+                    <span class="tab-dirty-dot"></span>
+                    <span>设计理念.md</span>
+                  </div>
+                  <div class="tab-item" id="tab-btn-architecture" onclick="switchMockupTab('architecture')">
+                    <span>架构与性能.md</span>
+                  </div>
+                  <div class="tab-item" id="tab-btn-weekly" onclick="switchMockupTab('weekly')">
+                    <span>周报与复盘.md</span>
+                  </div>
+                  <div class="tab-item" id="tab-btn-daily" onclick="switchMockupTab('daily')">
+                    <span>2026-11-22.md</span>
+                  </div>
+                </div>
+
+                <!-- Editor Canvas -->
+                <div class="editor-canvas-wrap">
+                  <!-- Note Content 1 (Philosophy) -->
+                  <div id="content-philosophy" class="tab-content-panel">
+                    <div class="title-ribbon">
+                      <h2 class="doc-headline">为专注与文学审美而生</h2>
+                      <button class="backlink-badge-btn" id="btn-toggle-backlinks">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
+                        <span>反向链接 (3)</span>
+                      </button>
+                    </div>
+
+                    <!-- YAML Frontmatter -->
+                    <div class="properties-card">
+                      <div class="property-row">
+                        <span class="property-key">tags</span>
+                        <div class="property-val">
+                          <span class="tag-pill">#macOS原生</span>
+                          <span class="tag-pill">#知识管理</span>
+                          <span class="tag-pill">#零破坏</span>
+                        </div>
+                      </div>
+                      <div class="property-row">
+                        <span class="property-key">created</span>
+                        <span class="property-val" style="font-family:var(--font-mono); font-size:0.78rem;">2026-11-22 22:00</span>
+                      </div>
+                    </div>
+
+                    <p class="note-p">
+                      文字是思考的容器。在 Mac 上，我们渴望一款轻盈、温润且纯粹的本地笔记工具，没有繁琐的云端登录、没有笨重的框架迟滞，更没有打乱思绪的多余修饰。
+                    </p>
+
+                    <p class="note-p">
+                      <strong style="color:var(--text);">mote 的诞生只为一个使命：</strong>在 Mac 上重归书写的纯粹。打开任意本地 Markdown 文件夹，即可体验 <span class="highlight-text">860px 黄金阅读版心</span> 与指尖触碰纸页般的温润字韵。
+                    </p>
+
+                    <div class="callout-box">
+                      <div class="callout-title">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+                        <span>零破坏承诺 (Zero-Damage Invariant)</span>
+                      </div>
+                      mote 绝不会向你的笔记库私写任何隐藏文件，也不擅自修改你的链接语法。所有设置与索引存放于 macOS 系统标准支持目录，你的知识资产 100% 自由纯净。
+                    </div>
+
+                    <!-- Interactive Task Checkboxes -->
+                    <div style="margin: 20px 0;">
+                      <div class="task-item" onclick="toggleTask(this)">
+                        <span class="task-checkbox checked"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+                        <span class="task-text checked">打开本地文件夹作为笔记库，秒级呈现文件树</span>
+                      </div>
+                      <div class="task-item" onclick="toggleTask(this)">
+                        <span class="task-checkbox checked"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+                        <span class="task-text checked">输入 <a class="wiki-link">[[双向链接]]</a> 即时完成补全与链接解析</span>
+                      </div>
+                      <div class="task-item" onclick="toggleTask(this)">
+                        <span class="task-checkbox"><svg width="10" height="10" style="display:none;" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+                        <span class="task-text">点击此项体验 mote 原生复选框状态切换</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <!-- Note Content 2 (Architecture) -->
+                  <div id="content-architecture" class="tab-content-panel" style="display:none;">
+                    <div class="title-ribbon">
+                      <h2 class="doc-headline">极致轻盈的本地优先架构</h2>
+                      <button class="backlink-badge-btn">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/></svg>
+                        <span>反向链接 (5)</span>
+                      </button>
+                    </div>
+                    <p class="note-p">
+                      mote 基于纯粹的本地优先原则构建，完全遵循标准 Markdown 语法。双链解析毫秒级完成，经 5 个不同规模的测试笔记库、数万条双链全量测试，稳定顺滑。
+                    </p>
+                    <div class="callout-box tip">
+                      <div class="callout-title">
+                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
+                        <span>即开即写，极度轻巧</span>
+                      </div>
+                      打开包含数万篇笔记的大型库，mote 无需预热复杂沙盒，内存常驻仅 60MB 上下，冷启动低于 0.3 秒。
+                    </div>
+                  </div>
+
+                  <!-- Note Content 3 (Weekly) -->
+                  <div id="content-weekly" class="tab-content-panel" style="display:none;">
+                    <div class="title-ribbon">
+                      <h2 class="doc-headline">周报与复盘思考</h2>
+                      <button class="backlink-badge-btn">
+                        <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/></svg>
+                        <span>反向链接 (2)</span>
+                      </button>
+                    </div>
+                    <p class="note-p">
+                      多层文件夹树与双栏平滑折叠已经调优完毕，860px 黄金版心在浅色与深色下均保持极佳可读性。
+                    </p>
+                    <ul style="line-height:2.2; margin-left:20px;">
+                      <li>完成核心解析器与反向索引模块</li>
+                      <li>引入 <a class="wiki-link">[[心流与专注]]</a> 中的沉浸式排版原则</li>
+                      <li>优化外部文件变更检测（实测 10.2ms 刷新）</li>
+                    </ul>
+                  </div>
+
+                  <!-- Note Content 4 (Daily) -->
+                  <div id="content-daily" class="tab-content-panel" style="display:none;">
+                    <div class="title-ribbon">
+                      <h2 class="doc-headline">2026-11-22 · 随想</h2>
+                    </div>
+                    <p class="note-p">
+                      晨起窗前落满初冬的银杏。打开 mote，指尖抚过温润的字间，一切繁芜杂念尽皆隐退，只留思考静静流淌。
+                    </p>
+                  </div>
+
+                  <!-- Note Content 5 (Shortcuts) -->
+                  <div id="content-shortcuts" class="tab-content-panel" style="display:none;">
+                    <div class="title-ribbon">
+                      <h2 class="doc-headline">macOS 原生快捷键指南</h2>
+                    </div>
+                    <p class="note-p">深度融入 macOS 原生操作直觉，指尖敲击即刻响应：</p>
+                    <ul style="list-style:none; padding-left:0; line-height:2.2;">
+                      <li><span class="key-badge">⌘ O</span> 快速打开任何笔记（毫秒级实时联想）</li>
+                      <li><span class="key-badge">⌘ ⇧ F</span> 内存级中文全文检索，毫秒级定位目标段落</li>
+                      <li><span class="key-badge">⌘ E</span> 实时预览 (Live Preview) 与只读阅读模式平滑切换</li>
+                      <li><span class="key-badge">⌘ ⇧ D</span> 切换深浅色外观，沉浸书写</li>
+                      <li><span class="key-badge">⌘ \</span> 侧边栏平滑折叠与展开</li>
+                    </ul>
+                  </div>
+                </div>
+
+                <!-- Floating Backlinks Popover Component -->
+                <div class="floating-backlinks-popover" id="mockup-backlinks-popover">
+                  <div class="popover-header">
+                    <span>反向链接 (3 处引用)</span>
+                    <span style="font-size:0.75rem; color:var(--text-subtle);">按路径排序</span>
+                  </div>
+                  <div class="backlink-hit-item">
+                    <div class="backlink-hit-path">工作/Q4规划与思考.md</div>
+                    <div class="backlink-hit-snippet">“...在探讨文学式笔记时，我们参考了 <span class="highlight-text">[[设计理念]]</span> 中对 860px 版心的构想...”</div>
+                  </div>
+                  <div class="backlink-hit-item">
+                    <div class="backlink-hit-path">项目/架构与性能.md</div>
+                    <div class="backlink-hit-snippet">“...将全部日常读写迁移至原生 Mac 工具，符合 <span class="highlight-text">[[设计理念]]</span> 的初衷...”</div>
+                  </div>
+                  <div class="backlink-hit-item">
+                    <div class="backlink-hit-path">思考/心流与专注.md</div>
+                    <div class="backlink-hit-snippet">“...双链网络不需要沉重的侧边栏，详见 <span class="highlight-text">[[设计理念]]</span> 的纽带设计...”</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="mockup-controls-bar">
+            <span class="interactive-hint">
+              <span class="interactive-dot"></span>
+              <span>实时交互式原型：可点击左侧文件夹折叠/展开、切换文件与反向链接体验真实操作</span>
+            </span>
+            <span>macOS Monterey / Ventura / Sonoma / Sequoia</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- The 3 Non-Destructive Principles Section -->
+    <section class="section-spacing" id="philosophy">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow">Data Sovereignty & Non-Destructive</div>
+          <h2 class="section-title">你的知识资产，100% 纯净与安全</h2>
+          <p class="section-desc">
+            很多笔记软件试图用私有格式将你锁定。mote 反其道而行之：以最克制的工程纪律，敬畏每一篇笔记的每一个字节。
+          </p>
+        </div>
+
+        <div class="principles-grid">
+          <div class="principle-card">
+            <span class="principle-num">01 / 原样保留</span>
+            <h3 class="principle-title">零改写，零破坏</h3>
+            <p class="principle-body">
+              只打开、不修改的笔记，磁盘文件字节保持绝对不变。自动保存精确保留文件原本的换行符（CRLF/LF）与 BOM 标记，拒绝悄悄修改元数据。
+            </p>
+          </div>
+
+          <div class="principle-card">
+            <span class="principle-num">02 / 绝不污染</span>
+            <h3 class="principle-title">不在库内留下私有文件</h3>
+            <p class="principle-body">
+              mote 自己的配置、缓存与日志全部存放于系统标准支持目录，不向笔记库写入任何私有文件，随时换用任何编辑器打开依然完好如初。
+            </p>
+          </div>
+
+          <div class="principle-card">
+            <span class="principle-num">03 / 冲突防卫</span>
+            <h3 class="principle-title">外部修改智能感知</h3>
+            <p class="principle-body">
+              与 Git、iCloud 或外部同步工具协同使用时，10.2ms 即可感知磁盘变化。遇到冲突绝不静默覆盖，优雅弹窗由你决定保留哪一份。
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Deep Dive Features (Alternate Rows) -->
+    <section class="section-spacing" id="features" style="background: var(--bg-sidebar); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border);">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow">Crafted for Pure Writing</div>
+          <h2 class="section-title">为苛求品质的书写者雕琢</h2>
+          <p class="section-desc">每一个像素、每一次交互，都遵循 Mac 原生规范与人文美学。</p>
+        </div>
+
+        <!-- Row 1: Literary Typography -->
+        <div class="feature-row">
+          <div class="feature-text-block">
+            <span class="feature-tag">排版之美</span>
+            <h3 class="feature-heading">纸墨温润，文质相合</h3>
+            <p class="feature-paragraph">
+              深研中文字体在屏幕上的呼吸感。精细调校字间距与段落行高，搭配宛如古籍宣纸般的温润色泽，让每一次书写都如沉浸于静谧书斋。
+            </p>
+            <ul class="feature-points">
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>精确校正字间距与行高，长时间写作阅读不累眼</span>
+              </li>
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>严苛的明暗对比度规范（深色 12.26，浅色 15.91）</span>
+              </li>
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>去除冗余界面装饰，目光自然汇聚于笔尖</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="feature-visual-panel">
+            <div class="typography-demo-box">
+              <div class="typo-sample-title">“水积而鱼聚，木茂而鸟集。”</div>
+              <p class="typo-sample-content">
+                文字是思考的容器。在沉静的宣纸底色上，横平竖直、撇捺舒展。去除了繁复控件的喧嚣，屏幕中只留下墨色与灵感的交汇。
+              </p>
+              <div style="margin-top:16px; font-size:0.82rem; color:var(--accent);">
+                —— 选自 mote 核心设计手记 · 论书写之专注
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 2: Performance & Sub-millisecond Search -->
+        <div class="feature-row reverse">
+          <div class="feature-text-block">
+            <span class="feature-tag">极致性能</span>
+            <h3 class="feature-heading">毫秒级中文全文检索与快速打开</h3>
+            <p class="feature-paragraph">
+              绝大多数第三方应用使用外部繁重的分词库，面对中文笔记频频出现“搜不到、搜不全、断词错乱”。mote 采用主进程常驻内存子串匹配算法，无论几十篇还是上万篇笔记，搜寻瞬刻完成。
+            </p>
+            <ul class="feature-points">
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>快速打开（⌘O）：毫秒级模糊匹配，输入即可定位</span>
+              </li>
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>中文全文检索（⌘⇧F）：输入法选字期间不扰乱，回车即精准高亮</span>
+              </li>
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>跨文件快速跳转，历史记录（⌘⌥←/→）轻松往返</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="feature-visual-panel">
+            <div class="benchmark-grid">
+              <div class="metric-card">
+                <div class="metric-number">0.28s</div>
+                <div class="metric-label">冷启动时间</div>
+                <div class="metric-sub">传统笔记工具通常需 1.8s+</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-number">10.2ms</div>
+                <div class="metric-label">外部修改同步刷新</div>
+                <div class="metric-sub">远超 100ms 黄金响应基准</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-number">0 误差</div>
+                <div class="metric-label">双链解析稳定性</div>
+                <div class="metric-sub">跨库测试全量一致</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-number">65MB</div>
+                <div class="metric-label">常驻内存消耗</div>
+                <div class="metric-sub">不到传统工具的四分之一</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 3: Live Preview & TitleRibbon -->
+        <div class="feature-row">
+          <div class="feature-text-block">
+            <span class="feature-tag">沉浸双栏</span>
+            <h3 class="feature-heading">彻底砍掉右侧死栏，灵动互联纽带</h3>
+            <p class="feature-paragraph">
+              许多笔记工具常驻三栏，右侧面板白白消耗 25% 的宝贵屏幕空间。mote 独创 <strong>TitleRibbon（标题互联纽带）</strong>：反向链接化为标题旁的精致徽标，需要时轻触弹出，阅毕自然隐退。
+            </p>
+            <ul class="feature-points">
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>860px 舒适阅读行宽，视线自然收敛</span>
+              </li>
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>Callouts 彩色状态提示块、Mermaid 图表、KaTeX 就地渲染</span>
+              </li>
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>支持图片、PDF、本地音视频与网络视频内嵌阅读</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="feature-visual-panel">
+            <div style="background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-md); padding:20px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:14px; border-bottom:1px solid var(--border-subtle); padding-bottom:8px;">
+                <span style="font-weight:700; font-size:0.9rem;">媒体与富文本嵌入示例</span>
+                <span class="tag-pill">#多媒体支持</span>
+              </div>
+              <div style="background:var(--code-bg); border-radius:var(--radius-sm); padding:12px; margin-bottom:12px; font-family:var(--font-mono); font-size:0.8rem; color:var(--accent);">
+                ![[架构示意图.png|450x200]]<br/>
+                ![[读书报告.pdf]]<br/>
+                ![](https://example.com/video.mp4)
+              </div>
+              <p style="font-size:0.88rem; color:var(--text-muted); line-height:1.6;">
+                无需依赖系统弹窗。所有图片、PDF 文档以及视频均在应用内以独立原生标签页或行内嵌入优雅预览。
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Interactive Live Playground (Try mote directly in the browser) -->
+    <section class="playground-section" id="playground">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow">Interactive Demo</div>
+          <h2 class="section-title">实时体验 mote Markdown 渲染</h2>
+          <p class="section-desc">在下方左侧输入或修改语法，右侧即时呈现 mote 优雅的实时排版：</p>
+        </div>
+
+        <div class="playground-container">
+          <div class="playground-header">
+            <div style="display:flex; align-items:center; gap:8px;">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 20h9"/><path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"/></svg>
+              <span style="font-size:0.85rem; font-weight:600;">Markdown 试验田</span>
+            </div>
+
+            <div class="preset-btns-group">
+              <span style="font-size:0.8rem; color:var(--text-subtle);">快速示例：</span>
+              <button class="preset-btn active" onclick="loadPlaygroundPreset('card')">知识卡片</button>
+              <button class="preset-btn" onclick="loadPlaygroundPreset('callout')">Callouts</button>
+              <button class="preset-btn" onclick="loadPlaygroundPreset('tasks')">待办计划</button>
+            </div>
+          </div>
+
+          <div class="playground-grid">
+            <div class="playground-editor-wrap">
+              <textarea id="playground-input" class="playground-textarea" spellcheck="false" placeholder="在此输入 Markdown..."></textarea>
+            </div>
+            <div class="playground-preview-wrap" id="playground-output">
+              <!-- Rendered content will appear here dynamically -->
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Comparison Table Section -->
+    <section class="section-spacing" id="comparison">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow">Fair & Transparent Comparison</div>
+          <h2 class="section-title">为什么选择 mote 作为 Mac 上的日常主力？</h2>
+          <p class="section-desc">专注核心读写，舍弃非必要负担。更懂 Mac，更懂中文书写。</p>
+        </div>
+
+        <div class="comparison-table-wrap">
+          <table class="compare-table">
+            <thead>
+              <tr>
+                <th style="width:28%;">维度</th>
+                <th style="width:36%;">mote (Mac 原生体验)</th>
+                <th style="width:36%;">传统跨平台笔记工具</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>设计与排版质感</strong></td>
+                <td>
+                  <span class="table-badge-winner">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    温润宣纸色调、860px 黄金版心、沉浸双栏
+                  </span>
+                </td>
+                <td>常规默认排版，依赖大量复杂样式片段微调</td>
+              </tr>
+              <tr>
+                <td><strong>启动速度与内存占用</strong></td>
+                <td>
+                  <span class="table-badge-winner">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    0.28s 极速启动，常驻仅 ~65MB
+                  </span>
+                </td>
+                <td>依赖沉重沙盒与复杂插件层，启动迟缓 (~300MB+)</td>
+              </tr>
+              <tr>
+                <td><strong>中文全文检索</strong></td>
+                <td>
+                  <span class="table-badge-winner">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    内存级纯文本子串匹配，12ms 定位，零漏词
+                  </span>
+                </td>
+                <td>外部分词库易对专有中文词汇漏检或断词</td>
+              </tr>
+              <tr>
+                <td><strong>反向链接展现</strong></td>
+                <td>
+                  <span class="table-badge-winner">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    TitleRibbon 按需轻盈浮窗，不占屏幕宽度
+                  </span>
+                </td>
+                <td>常驻右侧死栏，挤占横向书写空间</td>
+              </tr>
+              <tr>
+                <td><strong>笔记库数据安全</strong></td>
+                <td>
+                  <span class="table-badge-winner">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                    0 写入私有配置，绝不改动已有字符
+                  </span>
+                </td>
+                <td>会在库根目录下写入大量专有配置与隐藏缓存</td>
+              </tr>
+              <tr>
+                <td><strong>跨生态无缝切换</strong></td>
+                <td>纯净开放的本地 Markdown 纯文本，任何外部编辑器随时打开</td>
+                <td>常绑定复杂的专有插件体系与私有元数据</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- macOS Shortcuts Showcase -->
+    <section class="shortcuts-section" id="shortcuts">
+      <div class="container">
+        <div class="section-header" style="margin-bottom:32px;">
+          <div class="section-eyebrow">Keyboard Driven</div>
+          <h2 class="section-title">双手不离键盘，效率自然流淌</h2>
+        </div>
+
+        <div class="shortcuts-grid">
+          <div class="shortcut-card">
+            <span style="font-size:0.92rem; font-weight:600;">快速打开笔记</span>
+            <span class="key-badge">⌘ O</span>
+          </div>
+          <div class="shortcut-card">
+            <span style="font-size:0.92rem; font-weight:600;">全局全文搜索</span>
+            <span class="key-badge">⌘ ⇧ F</span>
+          </div>
+          <div class="shortcut-card">
+            <span style="font-size:0.92rem; font-weight:600;">新建笔记</span>
+            <span class="key-badge">⌘ N</span>
+          </div>
+          <div class="shortcut-card">
+            <span style="font-size:0.92rem; font-weight:600;">切换编辑/阅读模式</span>
+            <span class="key-badge">⌘ E</span>
+          </div>
+          <div class="shortcut-card">
+            <span style="font-size:0.92rem; font-weight:600;">切换深色/浅色外观</span>
+            <span class="key-badge">⌘ ⇧ D</span>
+          </div>
+          <div class="shortcut-card">
+            <span style="font-size:0.92rem; font-weight:600;">收起/展开文件树</span>
+            <span class="key-badge">⌘ \</span>
+          </div>
+          <div class="shortcut-card">
+            <span style="font-size:0.92rem; font-weight:600;">前后历史导航</span>
+            <span class="key-badge">⌘ ⌥ ← / →</span>
+          </div>
+          <div class="shortcut-card">
+            <span style="font-size:0.92rem; font-weight:600;">关闭当前标签页</span>
+            <span class="key-badge">⌘ W</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Download Section -->
+    <section class="download-section" id="download">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow">Get Started Now</div>
+          <h2 class="section-title">下载 mote for Mac</h2>
+          <p class="section-desc">当前稳定版本 v1.0.6 · 支持 macOS 12.0+ (Monterey, Ventura, Sonoma, Sequoia)</p>
+        </div>
+
+        <div class="download-grid">
+          <!-- Apple Silicon -->
+          <div class="download-card highlight" id="card-arm64">
+            <span class="download-chip" id="chip-arm64">最推荐 · 本机匹配</span>
+            <svg class="download-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <rect x="4" y="4" width="16" height="16" rx="2"/>
+              <rect x="9" y="9" width="6" height="6"/>
+              <path d="M9 1v3M15 1v3M9 20v3M15 20v3M20 9h3M20 14h3M1 9h3M1 14h3"/>
+            </svg>
+            <h3 class="download-arch-name">Apple Silicon</h3>
+            <p class="download-arch-desc">专为 M1 / M2 / M3 / M4 芯片深度调优，瞬时冷启，极度省电。</p>
+            <a href="https://github.com/toywen/mote-mac/releases/download/v1.0.6/mote-1.0.6-arm64.dmg" class="btn-download-card">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              <span>下载 .dmg (ARM64)</span>
+            </a>
+          </div>
+
+          <!-- Intel Mac -->
+          <div class="download-card" id="card-x64">
+            <svg class="download-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2"/>
+              <line x1="8" y1="21" x2="16" y2="21"/>
+              <line x1="12" y1="17" x2="12" y2="21"/>
+            </svg>
+            <h3 class="download-arch-name">Intel 架构</h3>
+            <p class="download-arch-desc">适配基于 Intel Core 处理器的旧款 Mac 机型，运行稳定流畅。</p>
+            <a href="https://github.com/toywen/mote-mac/releases/download/v1.0.6/mote-1.0.6.dmg" class="btn-download-card">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              <span>下载 .dmg (x64)</span>
+            </a>
+          </div>
+
+          <!-- Universal DMG -->
+          <div class="download-card" id="card-universal">
+            <svg class="download-icon" fill="none" stroke="currentColor" stroke-width="1.8" viewBox="0 0 24 24">
+              <circle cx="12" cy="12" r="10"/>
+              <line x1="2" y1="12" x2="22" y2="12"/>
+              <path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+            </svg>
+            <h3 class="download-arch-name">Universal 通用包</h3>
+            <p class="download-arch-desc">包含双架构原生二进制，跨设备迁移或分发的不二之选。</p>
+            <a href="https://github.com/toywen/mote-mac/releases/download/v1.0.6/mote-1.0.6-universal.dmg" class="btn-download-card">
+              <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
+              <span>下载 .dmg (Universal)</span>
+            </a>
+          </div>
+        </div>
+
+        <!-- Installation Tip -->
+        <div class="install-instruction-box">
+          <svg width="24" height="24" style="flex-shrink:0; color:var(--accent);" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
+          <div>
+            <strong>安装说明：</strong>双击下载的 <code>.dmg</code> 镜像，将 <code>mote</code> 图标拖动到 <code>Applications</code> 即可完成安装。首次启动选择你的本地 Markdown 笔记库文件夹，即刻开启使用。内置自动检测与平滑更新。
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <!-- Site Footer -->
+  <footer class="site-footer">
+    <div class="container">
+      <div class="footer-inner">
+        <div class="footer-brand">
+          <div style="display:flex; align-items:center; gap:8px; margin-bottom:12px;">
+            <svg class="brand-logo-icon" style="width:24px; height:24px;" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+              <rect x="100" y="100" width="824" height="824" rx="185" fill="#1f1e1b"/>
+              <circle cx="694" cy="640" r="50" fill="#f0b45c"/>
+              <path d="M330 690V333M330 470a91 91 0 0 1 182 0V690M512 470a91 91 0 0 1 182 0V556" fill="none" stroke="#faf8f2" stroke-width="92"/>
+            </svg>
+            <span style="font-weight:700; font-size:1.15rem; color:var(--text);">mote</span>
+          </div>
+          <p style="font-size:0.85rem; line-height:1.6; color:var(--text-muted);">
+            专注书写的 Mac 原生 Markdown 笔记软件，完全本地优先。
+          </p>
+        </div>
+
+        <div class="footer-links-group">
+          <div>
+            <div class="footer-col-title">产品</div>
+            <ul class="footer-list">
+              <li><a href="#features">功能特性</a></li>
+              <li><a href="#philosophy">设计哲学</a></li>
+              <li><a href="#comparison">深度对比</a></li>
+              <li><a href="#download">下载 macOS 版</a></li>
+            </ul>
+          </div>
+          <div>
+            <div class="footer-col-title">开源与社区</div>
+            <ul class="footer-list">
+              <li><a href="https://github.com/toywen/mote-mac" target="_blank" rel="noopener">GitHub 仓库</a></li>
+              <li><a href="https://github.com/toywen/mote-mac/releases" target="_blank" rel="noopener">Releases 版本发布</a></li>
+              <li><a href="https://github.com/toywen/mote-mac/issues" target="_blank" rel="noopener">提交反馈 (Issues)</a></li>
+            </ul>
+          </div>
+          <div>
+            <div class="footer-col-title">技术细节</div>
+            <ul class="footer-list">
+              <li><span>CodeMirror 6 引擎</span></li>
+              <li><span>Lezer 解析器</span></li>
+              <li><span>Electron 原生沙盒</span></li>
+              <li><span>无损哈希校验机制</span></li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer-bottom">
+        <span>© 2026 mote 由 toywen 精心构建 · 自由与专注</span>
+        <span>Made with passion for Mac note-takers.</span>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Script: Theme, Interactive Mockup & Playground -->
+  <script>
+    // 1. Theme Management (Light / Dark)
+    const htmlEl = document.documentElement;
+    const themeBtn = document.getElementById('btn-toggle-theme');
+    const sunIcon = document.getElementById('theme-sun-icon');
+    const moonIcon = document.getElementById('theme-moon-icon');
+
+    function applyTheme(theme) {
+      htmlEl.dataset.theme = theme;
+      localStorage.setItem('mote-landing-theme', theme);
+      if (theme === 'dark') {
+        sunIcon.style.display = 'block';
+        moonIcon.style.display = 'none';
+      } else {
+        sunIcon.style.display = 'none';
+        moonIcon.style.display = 'block';
+      }
+    }
+
+    const savedTheme = localStorage.getItem('mote-landing-theme');
+    if (savedTheme) {
+      applyTheme(savedTheme);
+    } else if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      applyTheme('dark');
+    } else {
+      applyTheme('light');
+    }
+
+    themeBtn.addEventListener('click', () => {
+      const nextTheme = htmlEl.dataset.theme === 'dark' ? 'light' : 'dark';
+      applyTheme(nextTheme);
+    });
+
+    // 2. Mockup Sidebar Folder Toggle
+    function toggleFolder(headerEl) {
+      const folderGroup = headerEl.closest('.tree-folder-group');
+      if (folderGroup) {
+        folderGroup.classList.toggle('collapsed');
+      }
+    }
+
+    // 3. Mockup Sidebar & Tabs Interaction
+    const toggleSidebarBtn = document.getElementById('mockup-toggle-sidebar');
+    const appBody = document.getElementById('app-body');
+    toggleSidebarBtn.addEventListener('click', () => {
+      appBody.classList.toggle('sidebar-closed');
+    });
+
+    const tabPanels = {
+      philosophy: document.getElementById('content-philosophy'),
+      architecture: document.getElementById('content-architecture'),
+      weekly: document.getElementById('content-weekly'),
+      daily: document.getElementById('content-daily'),
+      shortcuts: document.getElementById('content-shortcuts')
+    };
+
+    function switchMockupTab(tabKey) {
+      // If panel doesn't exist, default to philosophy
+      const targetKey = tabPanels[tabKey] ? tabKey : 'philosophy';
+
+      // Update tab buttons
+      ['philosophy', 'architecture', 'weekly', 'daily'].forEach(key => {
+        const btn = document.getElementById('tab-btn-' + key);
+        if (btn) btn.classList.toggle('active', key === targetKey);
+      });
+
+      // Show the selected tab panel
+      Object.keys(tabPanels).forEach(key => {
+        if (tabPanels[key]) {
+          tabPanels[key].style.display = key === targetKey ? 'block' : 'none';
+        }
+      });
+
+      // Update tree items active
+      document.querySelectorAll('.file-tree-list .tree-item').forEach(item => {
+        item.classList.toggle('active', item.dataset.tab === targetKey);
+      });
+    }
+
+    // Backlinks Popover toggle
+    const backlinkBtn = document.getElementById('btn-toggle-backlinks');
+    const backlinksPopover = document.getElementById('mockup-backlinks-popover');
+    if (backlinkBtn && backlinksPopover) {
+      backlinkBtn.addEventListener('click', (e) => {
+        e.stopPropagation();
+        backlinksPopover.classList.toggle('open');
+      });
+      document.addEventListener('click', (e) => {
+        if (!backlinksPopover.contains(e.target) && e.target !== backlinkBtn) {
+          backlinksPopover.classList.remove('open');
+        }
+      });
+    }
+
+    // Task checkbox toggle
+    function toggleTask(item) {
+      const box = item.querySelector('.task-checkbox');
+      const text = item.querySelector('.task-text');
+      const svg = box.querySelector('svg');
+      const isChecked = box.classList.toggle('checked');
+      text.classList.toggle('checked', isChecked);
+      if (svg) svg.style.display = isChecked ? 'block' : 'none';
+    }
+
+    // 4. Interactive Live Playground
+    const playgroundPresets = {
+      card: `## 认知与知识复利
+
+在知识网络中，每一个观念都不应是一座孤岛。通过 [[双向链接]] 与灵活的反向索引，笔记可以像突触般自然生长。
+
+- 保持最小概念卡片：一事一记
+- 沉浸式阅读与反思：==定期回溯反向链接==
+- 专注心流：不被冗长侧边栏分心
+
+> “博观而约取，厚积而薄发。”`,
+
+      callout: `[!note] 设计的不妥协
+mote 的所有代码均经过严格的基准回归测试，确保在成千上万篇笔记的大型库中依然保持 0 阻塞。
+
+[!tip] 快捷操作小窍门
+按下 \`Cmd + O\` 即可瞬间调出快速打开窗口，支持拼音与模糊匹配。
+
+[!warning] 外部修改提醒
+即使第三方程序强行修改了正在编辑的文档，mote 也会立即锁死保存流并提示比对。`,
+
+      tasks: `### 今日专注计划
+
+- [x] 重构知识图谱的底层索引结构
+- [x] 测试 Markdown 表格行内编辑与即时对齐
+- [ ] 导出周报并整理反向链接网络
+- [ ] 享受无干扰的书写之夜`
+    };
+
+    const playgroundInput = document.getElementById('playground-input');
+    const playgroundOutput = document.getElementById('playground-output');
+
+    function renderSimpleMarkdown(md) {
+      let html = md
+        // Escape basic HTML
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;');
+
+      // Headings
+      html = html.replace(/^### (.*$)/gim, '<h3 style="font-size:1.25rem; font-weight:700; margin:14px 0 8px;">$1</h3>');
+      html = html.replace(/^## (.*$)/gim, '<h2 style="font-size:1.55rem; font-weight:700; margin:16px 0 10px;">$1</h2>');
+
+      // Callouts
+      html = html.replace(/\[!note\]\s*(.*)\n([\s\S]*?)(?=\n\n|$)/gi, '<div class="callout-box"><div class="callout-title"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/></svg><span>$1</span></div>$2</div>');
+      html = html.replace(/\[!tip\]\s*(.*)\n([\s\S]*?)(?=\n\n|$)/gi, '<div class="callout-box tip"><div class="callout-title"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg><span>$1</span></div>$2</div>');
+      html = html.replace(/\[!warning\]\s*(.*)\n([\s\S]*?)(?=\n\n|$)/gi, '<div class="callout-box" style="border-left-color:var(--callout-warn); background:var(--callout-warn-bg);"><div class="callout-title" style="color:var(--callout-warn);"><svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg><span>$1</span></div>$2</div>');
+
+      // Task checkboxes
+      html = html.replace(/^- \[x\] (.*$)/gim, '<div class="task-item"><span class="task-checkbox checked"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span><span class="task-text checked">$1</span></div>');
+      html = html.replace(/^- \[ \] (.*$)/gim, '<div class="task-item"><span class="task-checkbox"></span><span class="task-text">$1</span></div>');
+
+      // List items
+      html = html.replace(/^- (.*$)/gim, '<li style="margin:4px 0 4px 18px;">$1</li>');
+
+      // Blockquotes
+      html = html.replace(/^&gt; (.*$)/gim, '<blockquote style="border-left:3px solid var(--accent); padding-left:12px; color:var(--text-muted); margin:12px 0; font-style:italic;">$1</blockquote>');
+
+      // Wikilinks
+      html = html.replace(/\[\[(.*?)\]\]/g, '<span class="wiki-link">$1</span>');
+
+      // Highlights
+      html = html.replace(/==(.*?)==/g, '<span class="highlight-text">$1</span>');
+
+      // Inline code
+      html = html.replace(/`(.*?)`/g, '<code style="background:var(--code-bg); padding:2px 5px; border-radius:4px; font-family:var(--font-mono); font-size:0.85em;">$1</code>');
+
+      // Bold
+      html = html.replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>');
+
+      // Paragraphs
+      html = html.split('\n\n').map(p => {
+        p = p.trim();
+        if (!p) return '';
+        if (p.startsWith('<h') || p.startsWith('<div') || p.startsWith('<blockquote') || p.startsWith('<li')) return p;
+        return `<p style="margin-bottom:12px; line-height:1.75;">${p}</p>`;
+      }).join('');
+
+      return html;
+    }
+
+    function updatePlayground() {
+      const val = playgroundInput.value;
+      playgroundOutput.innerHTML = renderSimpleMarkdown(val);
+    }
+
+    function loadPlaygroundPreset(key) {
+      if (!playgroundPresets[key]) return;
+      playgroundInput.value = playgroundPresets[key];
+      updatePlayground();
+      document.querySelectorAll('.preset-btns-group .preset-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.textContent.toLowerCase().includes(key) || 
+          (key === 'card' && btn.textContent.includes('卡片')) ||
+          (key === 'callout' && btn.textContent.includes('Callouts')) ||
+          (key === 'tasks' && btn.textContent.includes('待办')));
+      });
+    }
+
+    playgroundInput.addEventListener('input', updatePlayground);
+    // Initialize playground
+    loadPlaygroundPreset('card');
+  </script>
+</body>
+</html>
