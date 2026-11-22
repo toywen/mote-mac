@@ -86,7 +86,7 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | --------- | -------- | -------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
 | ✅ 已实现 | 文件树-3 | 新建笔记和文件夹。新笔记的位置按笔记库配置决定                                         | 测试：creates a new note, renames it, and updates inbound links；sidebar blank area context menu creates notes and folders at root | 2026-11-22。支持顶部工具栏、笔记项右键与侧栏空白区域右键根目录操作，自动防重名递增 |
 | ✅ 已实现 | 文件树-4 | 改名和移动笔记或文件夹。笔记库配置要求时，更新指向它的链接和它里面的 Markdown 相对链接 | Vitest：rewriteNoteLinks；测试：creates a new note, renames it...；verify：verify-step4（life-os 与 Pesemic 副本 diff -r 验证） | 2026-11-21。见 ADR 0006，支持 journal 崩溃自愈，alwaysUpdateLinks 为 false 时弹窗询问 |
-| ✅ 已实现 | 文件树-5 | 删除笔记时，移到 macOS 废纸篓                                                          | 测试：confirms before deleting non-empty folder；verify：verify-step4                                                           | 2026-11-21。单篇笔记静默移入废纸篓，非空文件夹二次弹窗确认                            |
+| ✅ 已实现 | 文件树-5 | 删除笔记时，移到 macOS 废纸篓                                                          | 测试：confirms before deleting file with cancel and confirm；verify：verify-step4                                                | 2026-11-22。删除文件与文件夹均弹出二次确认弹窗后移入废纸篓                            |
 | ✅ 已实现 | 文件树-6 | 侧栏头部支持搜索与排序按钮，文件树可按文件名正序（A-Z）与倒序（Z-A）排序               | 测试：sidebar header supports search and sort actions；单元测试：tree.test.ts                                                   | 2026-11-21。侧栏操作栏新增搜索入口与排序下拉菜单，支持持久化排序设置                 |
 
 ## 第 5 步：视频阅读和性能

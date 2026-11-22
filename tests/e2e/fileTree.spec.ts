@@ -74,6 +74,9 @@ test('creates a new note, renames it, and updates inbound links', async () => {
     const myNote = tree.getByRole('treeitem', { name: 'my-new-note', exact: true })
     await myNote.click({ button: 'right' })
     await window.getByRole('menuitem', { name: '移到废纸篓' }).click()
+    const deleteDialog = window.getByRole('dialog', { name: '删除文件' })
+    await expect(deleteDialog).toBeVisible()
+    await deleteDialog.getByRole('button', { name: '移到废纸篓' }).click()
     await expect(tree.getByRole('treeitem', { name: 'my-new-note', exact: true })).toHaveCount(0)
   } finally {
     await app.close()
@@ -165,6 +168,49 @@ test('confirms before deleting non-empty folder', async () => {
     await window.getByRole('button', { name: '移到废纸篓' }).click()
 
     await expect(folder).toHaveCount(0)
+  } finally {
+    await app.close()
+  }
+})
+
+test('confirms before deleting file with cancel and confirm', async () => {
+  const info = test.info()
+  const vault = info.outputPath('file-delete-vault')
+  await mkdir(vault, { recursive: true })
+  await writeFile(join(vault, 'to-delete.md'), '# To Delete')
+
+  const app = await launch(info.outputPath('settings'))
+  try {
+    const window = await app.firstWindow()
+    await openVault(app, window, vault)
+
+    const tree = window.getByRole('tree', { name: '文件树' })
+    const note = tree.getByRole('treeitem', { name: 'to-delete', exact: true })
+    await expect(note).toBeVisible()
+
+    // 1. Right click -> 移到废纸篓
+    await note.click({ button: 'right' })
+    await window.getByRole('menuitem', { name: '移到废纸篓' }).click()
+
+    // 2. Dialog appears
+    const dialog = window.getByRole('dialog', { name: '删除文件' })
+    await expect(dialog).toBeVisible()
+    await expect(dialog.getByText('确定要将 “to-delete” 移入废纸篓吗？')).toBeVisible()
+
+    // 3. Cancel
+    await dialog.getByRole('button', { name: '取消' }).click()
+    await expect(dialog).toHaveCount(0)
+    await expect(note).toBeVisible()
+
+    // 4. Delete again and confirm
+    await note.click({ button: 'right' })
+    await window.getByRole('menuitem', { name: '移到废纸篓' }).click()
+    await window
+      .getByRole('dialog', { name: '删除文件' })
+      .getByRole('button', { name: '移到废纸篓' })
+      .click()
+
+    await expect(note).toHaveCount(0)
   } finally {
     await app.close()
   }

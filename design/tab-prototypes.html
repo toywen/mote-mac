@@ -1,0 +1,744 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mote 标签页设计方案预览 (Tab Bar Prototypes)</title>
+<style>
+  :root {
+    --bg-warm: #fcfbf8;
+    --sidebar-warm: #f5f3ec;
+    --border-warm: #ebe7db;
+    --text-warm: #22201c;
+    --muted-warm: #656157;
+    --t3-warm: #9b978b;
+    --accent-warm: #2c447c;
+    --hover-warm: rgba(70, 55, 30, 0.055);
+
+    --bg-ink: #1c1b18;
+    --sidebar-ink: #161513;
+    --border-ink: #2b2925;
+    --text-ink: #e9e6de;
+    --muted-ink: #9d998d;
+    --t3-ink: #656259;
+    --accent-ink: #9fb0e8;
+    --hover-ink: rgba(255, 245, 225, 0.065);
+
+    --font-ui: -apple-system, BlinkMacSystemFont, "SF Pro Text", "PingFang SC", "Hiragino Sans GB", sans-serif;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: var(--font-ui);
+    background: #eae8e1;
+    color: #2c2a26;
+    padding: 32px 24px 64px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 32px;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  .intro-header {
+    max-width: 860px;
+    width: 100%;
+    text-align: center;
+  }
+  .intro-header h1 {
+    font-size: 24px;
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    margin-bottom: 8px;
+    color: #1f1d1a;
+  }
+  .intro-header p {
+    font-size: 14px;
+    color: #656157;
+    line-height: 1.6;
+  }
+
+  /* Global Toolbar / Controller */
+  .control-panel {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    background: #ffffff;
+    padding: 8px 16px;
+    border-radius: 30px;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+  }
+  .control-group {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .control-label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #888;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    margin-right: 4px;
+  }
+  .pill-switch {
+    display: flex;
+    background: #f0ede6;
+    padding: 3px;
+    border-radius: 20px;
+    gap: 2px;
+  }
+  .pill-btn {
+    border: none;
+    background: transparent;
+    padding: 5px 14px;
+    border-radius: 16px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #555;
+    cursor: pointer;
+    transition: all 140ms ease;
+  }
+  .pill-btn.active {
+    background: #ffffff;
+    color: #111;
+    font-weight: 600;
+    box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+  }
+
+  /* Main Container */
+  .container {
+    max-width: 860px;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+  }
+
+  /* Design Cards */
+  .design-card {
+    background: #ffffff;
+    border-radius: 14px;
+    box-shadow: 0 6px 24px rgba(0,0,0,0.06), 0 0 0 1px rgba(0,0,0,0.04);
+    overflow: hidden;
+    transition: transform 180ms ease, box-shadow 180ms ease;
+  }
+  .design-card.highlight {
+    box-shadow: 0 8px 32px rgba(44, 68, 124, 0.15), 0 0 0 2px var(--accent-warm);
+  }
+
+  .design-header {
+    padding: 16px 20px;
+    border-bottom: 1px solid #eeebe3;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    background: #faf8f5;
+  }
+  .design-title-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .design-num {
+    width: 24px;
+    height: 24px;
+    background: var(--accent-warm);
+    color: #ffffff;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+  }
+  .design-name {
+    font-size: 15px;
+    font-weight: 600;
+    color: #222;
+  }
+  .design-badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 8px;
+    border-radius: 6px;
+    background: #2c447c18;
+    color: var(--accent-warm);
+  }
+  .design-desc {
+    font-size: 13px;
+    color: #666;
+    margin-top: 4px;
+    padding-left: 34px;
+  }
+
+  /* Window Simulator */
+  .mac-window {
+    width: 100%;
+    height: 220px;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    background: var(--bg-warm);
+    transition: background 200ms ease;
+  }
+  .theme-dark .mac-window {
+    background: var(--bg-ink);
+  }
+
+  /* Traffic lights + Nav button */
+  .window-topbar {
+    display: flex;
+    align-items: center;
+    padding: 0 14px;
+    gap: 12px;
+    flex-shrink: 0;
+    box-sizing: border-box;
+    transition: background 200ms ease, border-color 200ms ease;
+  }
+  .traffic-lights {
+    display: flex;
+    gap: 7px;
+  }
+  .tl {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .tl-red { background: #ff5f56; }
+  .tl-yellow { background: #ffbd2e; }
+  .tl-green { background: #27c93f; }
+
+  .icon-btn {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: none;
+    background: transparent;
+    color: #656157;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .theme-dark .icon-btn {
+    color: #9d998d;
+  }
+  .icon-btn:hover {
+    background: rgba(0,0,0,0.06);
+    color: #111;
+  }
+  .theme-dark .icon-btn:hover {
+    background: rgba(255,255,255,0.08);
+    color: #eee;
+  }
+
+  /* Editor Canvas Mock */
+  .editor-canvas {
+    flex: 1;
+    padding: 24px 32px;
+    background: #ffffff;
+    transition: background 200ms ease, color 200ms ease;
+    overflow: hidden;
+  }
+  .theme-dark .editor-canvas {
+    background: #1c1b18;
+  }
+  .canvas-h1 {
+    font-size: 22px;
+    font-weight: 700;
+    color: #222;
+    margin-bottom: 8px;
+    letter-spacing: -0.01em;
+  }
+  .theme-dark .canvas-h1 {
+    color: #e9e6de;
+  }
+  .canvas-p {
+    font-size: 13.5px;
+    color: #666;
+    line-height: 1.6;
+  }
+  .theme-dark .canvas-p {
+    color: #9d998d;
+  }
+
+  /* =========================================================================
+     方案 1: Safari 分段凹槽栏 (Segmented Tab Shelf)
+     ========================================================================= */
+  .s1-bar {
+    height: 42px;
+    background: var(--sidebar-warm);
+    border-bottom: 1px solid var(--border-warm);
+  }
+  .theme-dark .s1-bar {
+    background: var(--sidebar-ink);
+    border-bottom-color: var(--border-ink);
+  }
+  .s1-shelf {
+    display: inline-flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.05);
+    padding: 3px;
+    border-radius: 8px;
+    gap: 2px;
+    max-width: calc(100% - 100px);
+    overflow-x: auto;
+  }
+  .theme-dark .s1-shelf {
+    background: rgba(255, 255, 255, 0.06);
+  }
+  .s1-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 8px 0 10px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--muted-warm);
+    cursor: pointer;
+    user-select: none;
+    transition: all 120ms ease;
+    white-space: nowrap;
+  }
+  .theme-dark .s1-tab {
+    color: var(--muted-ink);
+  }
+  .s1-tab:hover:not(.active) {
+    color: var(--text-warm);
+    background: rgba(0, 0, 0, 0.03);
+  }
+  .theme-dark .s1-tab:hover:not(.active) {
+    color: var(--text-ink);
+    background: rgba(255, 255, 255, 0.04);
+  }
+  .s1-tab.active {
+    background: #ffffff;
+    color: var(--text-warm);
+    font-weight: 500;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+  }
+  .theme-dark .s1-tab.active {
+    background: #2a2925;
+    color: var(--text-ink);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.35), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+  }
+  .s1-close {
+    width: 15px;
+    height: 15px;
+    border-radius: 50%;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: #999;
+    opacity: 0.5;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .s1-close:hover {
+    background: rgba(0, 0, 0, 0.1);
+    color: #222;
+    opacity: 1;
+  }
+  .theme-dark .s1-close:hover {
+    background: rgba(255, 255, 255, 0.15);
+    color: #fff;
+  }
+  .s1-add {
+    width: 24px;
+    height: 24px;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--muted-warm);
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .theme-dark .s1-add {
+    color: var(--muted-ink);
+  }
+  .s1-add:hover {
+    background: rgba(0,0,0,0.06);
+    color: #111;
+  }
+  .theme-dark .s1-add:hover {
+    background: rgba(255,255,255,0.08);
+    color: #eee;
+  }
+
+  /* =========================================================================
+     方案 2: Zed / Craft 连通卡片栏 (Connected Document Tabs)
+     ========================================================================= */
+  .s2-bar {
+    height: 38px;
+    background: var(--sidebar-warm);
+    border-bottom: 1px solid var(--border-warm);
+    align-items: flex-end;
+    padding-bottom: 0;
+  }
+  .theme-dark .s2-bar {
+    background: var(--sidebar-ink);
+    border-bottom-color: var(--border-ink);
+  }
+  .s2-tabs {
+    display: flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 100%;
+  }
+  .s2-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 32px;
+    padding: 0 10px 0 12px;
+    border-radius: 8px 8px 0 0;
+    font-size: 12px;
+    color: var(--muted-warm);
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid transparent;
+    border-bottom: none;
+    margin-bottom: -1px;
+    position: relative;
+    transition: all 120ms ease;
+  }
+  .theme-dark .s2-tab {
+    color: var(--muted-ink);
+  }
+  .s2-tab:hover:not(.active) {
+    background: rgba(0, 0, 0, 0.035);
+    color: var(--text-warm);
+  }
+  .theme-dark .s2-tab:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.04);
+    color: var(--text-ink);
+  }
+  .s2-tab.active {
+    background: #ffffff;
+    color: var(--text-warm);
+    font-weight: 500;
+    border-color: var(--border-warm);
+    border-bottom: 1px solid #ffffff;
+    box-shadow: 0 -2px 8px rgba(0,0,0,0.02);
+  }
+  .theme-dark .s2-tab.active {
+    background: #1c1b18;
+    color: var(--text-ink);
+    border-color: var(--border-ink);
+    border-bottom: 1px solid #1c1b18;
+  }
+  .s2-tab .s2-accent-bar {
+    position: absolute;
+    top: 0;
+    left: 8px;
+    right: 8px;
+    height: 2px;
+    background: var(--accent-warm);
+    border-radius: 2px 2px 0 0;
+    display: none;
+  }
+  .theme-dark .s2-tab .s2-accent-bar {
+    background: var(--accent-ink);
+  }
+  .s2-tab.active .s2-accent-bar {
+    display: block;
+  }
+
+  /* =========================================================================
+     方案 3: 现代极简胶囊岛 (Refined Modern Capsule Island)
+     ========================================================================= */
+  .s3-bar {
+    height: 42px;
+    background: var(--bg-warm);
+    border-bottom: 1px solid var(--border-warm);
+  }
+  .theme-dark .s3-bar {
+    background: var(--bg-ink);
+    border-bottom-color: var(--border-ink);
+  }
+  .s3-tabs {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .s3-tab {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 28px;
+    padding: 0 8px 0 10px;
+    border-radius: 7px;
+    font-size: 12px;
+    color: var(--muted-warm);
+    cursor: pointer;
+    user-select: none;
+    border: 1px solid rgba(0, 0, 0, 0.06);
+    background: rgba(0, 0, 0, 0.02);
+    transition: all 120ms ease;
+  }
+  .theme-dark .s3-tab {
+    color: var(--muted-ink);
+    border-color: rgba(255, 255, 255, 0.08);
+    background: rgba(255, 255, 255, 0.03);
+  }
+  .s3-tab:hover:not(.active) {
+    background: rgba(0, 0, 0, 0.045);
+    border-color: rgba(0, 0, 0, 0.1);
+    color: var(--text-warm);
+  }
+  .theme-dark .s3-tab:hover:not(.active) {
+    background: rgba(255, 255, 255, 0.06);
+    border-color: rgba(255, 255, 255, 0.14);
+    color: var(--text-ink);
+  }
+  .s3-tab.active {
+    background: #ffffff;
+    color: var(--text-warm);
+    font-weight: 500;
+    border-color: rgba(0, 0, 0, 0.14);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 0 0 0.5px rgba(0,0,0,0.02);
+  }
+  .theme-dark .s3-tab.active {
+    background: #2a2925;
+    color: var(--text-ink);
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.4);
+  }
+
+  /* File icon inside tab */
+  .tab-svg-icon {
+    width: 13px;
+    height: 13px;
+    opacity: 0.65;
+    flex-shrink: 0;
+  }
+  .active .tab-svg-icon {
+    opacity: 0.95;
+    color: var(--accent-warm);
+  }
+  .theme-dark .active .tab-svg-icon {
+    color: var(--accent-ink);
+  }
+</style>
+</head>
+<body>
+
+  <header class="intro-header">
+    <h1>mote 标签页设计候选方案 (Prototypes)</h1>
+    <p>为解决当前标签“孤立漂浮、像表单框”的视觉脱节问题，按 macOS 人机交互指南重构 3 套完整交互原型，供您点击体验与选择。</p>
+  </header>
+
+  <!-- Global Mode Switcher -->
+  <div class="control-panel">
+    <div class="control-group">
+      <span class="control-label">外观主题:</span>
+      <div class="pill-switch">
+        <button type="button" class="pill-btn active" id="btnThemeLight" onclick="setTheme('light')">☀️ 暖宣纸 (Light)</button>
+        <button type="button" class="pill-btn" id="btnThemeDark" onclick="setTheme('dark')">🌙 端砚墨 (Dark)</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="container" id="container">
+
+    <!-- 方案 1: Safari 分段凹槽栏 -->
+    <div class="design-card highlight" id="card1">
+      <div class="design-header">
+        <div>
+          <div class="design-title-row">
+            <span class="design-num">1</span>
+            <span class="design-name">Safari 分段凹槽栏 (Segmented Tab Shelf)</span>
+            <span class="design-badge">推荐 · 最像 Mac 原生</span>
+          </div>
+          <p class="design-desc">
+            <strong>解决痛点：</strong>将所有标签收纳进一个轻量半透明凹槽跑道中。激活标签如物理卡片凸起，未激活项整齐分段排列，彻底终结“孤立散落感”。
+          </p>
+        </div>
+      </div>
+      <div class="mac-window">
+        <div class="window-topbar s1-bar">
+          <div class="traffic-lights">
+            <div class="tl tl-red"></div>
+            <div class="tl tl-yellow"></div>
+            <div class="tl tl-green"></div>
+          </div>
+          <button class="icon-btn" title="切换侧边栏">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+          </button>
+          <div class="s1-shelf" id="s1-shelf">
+            <div class="s1-tab" onclick="switchS1(this, '2026-11-22')">
+              <svg class="tab-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>2026-11-22</span>
+              <span class="s1-close" onclick="closeTab(event, this)">×</span>
+            </div>
+            <div class="s1-tab active" onclick="switchS1(this, '未命名笔记')">
+              <svg class="tab-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>
+              <span>未命名笔记</span>
+              <span class="s1-close" onclick="closeTab(event, this)">×</span>
+            </div>
+            <div class="s1-tab" onclick="switchS1(this, '架构设计')">
+              <svg class="tab-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>架构设计</span>
+              <span class="s1-close" onclick="closeTab(event, this)">×</span>
+            </div>
+          </div>
+          <div class="s1-add" title="新建标签页" onclick="addTabS1()">+</div>
+        </div>
+        <div class="editor-canvas" id="canvas1">
+          <div class="canvas-h1"># 未命名笔记</div>
+          <div class="canvas-p">点击上方标签可实时切换体验，感受 Safari 分段式跑道的一体性与原生秩序感。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 方案 2: Zed / Craft 连通卡片栏 -->
+    <div class="design-card" id="card2">
+      <div class="design-header">
+        <div>
+          <div class="design-title-row">
+            <span class="design-num">2</span>
+            <span class="design-name">Zed / Craft 连通卡片栏 (Connected Document Tabs)</span>
+            <span class="design-badge">专业编辑器感</span>
+          </div>
+          <p class="design-desc">
+            <strong>解决痛点：</strong>激活标签直接与下方编辑器画布“物理连通”（底边融合为一，顶端配以品牌蓝细条）。强力建立“当前标签即当前页面”的视觉从属感。
+          </p>
+        </div>
+      </div>
+      <div class="mac-window">
+        <div class="window-topbar s2-bar">
+          <div class="traffic-lights" style="margin-bottom: 10px;">
+            <div class="tl tl-red"></div>
+            <div class="tl tl-yellow"></div>
+            <div class="tl tl-green"></div>
+          </div>
+          <button class="icon-btn" title="切换侧边栏" style="margin-bottom: 6px;">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+          </button>
+          <div class="s2-tabs">
+            <div class="s2-tab" onclick="switchS2(this, '2026-11-22')">
+              <div class="s2-accent-bar"></div>
+              <svg class="tab-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>2026-11-22</span>
+              <span class="s1-close" onclick="closeTab(event, this)">×</span>
+            </div>
+            <div class="s2-tab active" onclick="switchS2(this, '未命名笔记')">
+              <div class="s2-accent-bar"></div>
+              <svg class="tab-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>
+              <span>未命名笔记</span>
+              <span class="s1-close" onclick="closeTab(event, this)">×</span>
+            </div>
+            <div class="s2-tab" onclick="switchS2(this, '架构设计')">
+              <div class="s2-accent-bar"></div>
+              <svg class="tab-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>架构设计</span>
+              <span class="s1-close" onclick="closeTab(event, this)">×</span>
+            </div>
+          </div>
+          <div class="s1-add" style="margin-bottom: 6px;" title="新建标签页">+</div>
+        </div>
+        <div class="editor-canvas" id="canvas2">
+          <div class="canvas-h1"># 未命名笔记</div>
+          <div class="canvas-p">顶部连通式卡片：激活状态如文件夹索引卡伸入文档，无底边干扰，极具工匠感。</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 方案 3: 现代极简胶囊岛 -->
+    <div class="design-card" id="card3">
+      <div class="design-header">
+        <div>
+          <div class="design-title-row">
+            <span class="design-num">3</span>
+            <span class="design-name">现代极简胶囊岛 (Refined Modern Capsule Island)</span>
+            <span class="design-badge">轻盈通透</span>
+          </div>
+          <p class="design-desc">
+            <strong>解决痛点：</strong>未激活标签不再是光秃秃的散落文字，赋予精致的半透明浅色底与极细微轮廓；激活项加深对比并投射柔和弥散阴影。
+          </p>
+        </div>
+      </div>
+      <div class="mac-window">
+        <div class="window-topbar s3-bar">
+          <div class="traffic-lights">
+            <div class="tl tl-red"></div>
+            <div class="tl tl-yellow"></div>
+            <div class="tl tl-green"></div>
+          </div>
+          <button class="icon-btn" title="切换侧边栏">
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><rect width="18" height="18" x="3" y="3" rx="2"/><path d="M9 3v18"/></svg>
+          </button>
+          <div class="s3-tabs">
+            <div class="s3-tab" onclick="switchS3(this, '2026-11-22')">
+              <svg class="tab-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>2026-11-22</span>
+              <span class="s1-close" onclick="closeTab(event, this)">×</span>
+            </div>
+            <div class="s3-tab active" onclick="switchS3(this, '未命名笔记')">
+              <svg class="tab-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/><line x1="16" x2="8" y1="13" y2="13"/><line x1="16" x2="8" y1="17" y2="17"/></svg>
+              <span>未命名笔记</span>
+              <span class="s1-close" onclick="closeTab(event, this)">×</span>
+            </div>
+            <div class="s3-tab" onclick="switchS3(this, '架构设计')">
+              <svg class="tab-svg-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8"><path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z"/><polyline points="14 2 14 8 20 8"/></svg>
+              <span>架构设计</span>
+              <span class="s1-close" onclick="closeTab(event, this)">×</span>
+            </div>
+          </div>
+          <div class="s1-add" title="新建标签页">+</div>
+        </div>
+        <div class="editor-canvas" id="canvas3">
+          <div class="canvas-h1"># 未命名笔记</div>
+          <div class="canvas-p">独立胶囊形态：每个标签皆有实体轮廓与悬停反馈，未激活项绝不散落飘浮。</div>
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <script>
+    function setTheme(mode) {
+      const container = document.getElementById('container');
+      const btnLight = document.getElementById('btnThemeLight');
+      const btnDark = document.getElementById('btnThemeDark');
+      if (mode === 'dark') {
+        container.classList.add('theme-dark');
+        btnDark.classList.add('active');
+        btnLight.classList.remove('active');
+      } else {
+        container.classList.remove('theme-dark');
+        btnLight.classList.add('active');
+        btnDark.classList.remove('active');
+      }
+    }
+
+    function switchS1(el, title) {
+      document.querySelectorAll('#s1-shelf .s1-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.querySelector('#canvas1 .canvas-h1').innerText = '# ' + title;
+    }
+
+    function switchS2(el, title) {
+      document.querySelectorAll('.s2-tabs .s2-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.querySelector('#canvas2 .canvas-h1').innerText = '# ' + title;
+    }
+
+    function switchS3(el, title) {
+      document.querySelectorAll('.s3-tabs .s3-tab').forEach(t => t.classList.remove('active'));
+      el.classList.add('active');
+      document.querySelector('#canvas3 .canvas-h1').innerText = '# ' + title;
+    }
+
+    function closeTab(e, closeEl) {
+      e.stopPropagation();
+      const tab = closeEl.closest('.s1-tab, .s2-tab, .s3-tab');
+      if (tab) tab.remove();
+    }
+  </script>
+</body>
+</html>

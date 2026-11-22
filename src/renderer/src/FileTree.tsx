@@ -22,6 +22,7 @@ import { parseVaultPath, type VaultInfo, type VaultPath } from '../../core/ipc'
 import { isHtmlPath, isImagePath, isPdfPath } from '../../core/fileUrl'
 import { buildTree, type SortOrder, type TreeNode } from './tree'
 import { workspace } from './workspace'
+import { createPortal } from 'react-dom'
 
 function RenameInput({
   initialValue,
@@ -89,7 +90,7 @@ export const FileTree = forwardRef<
     newPath: VaultPath
     count: number
   } | null>(null)
-  const [confirmDeleteFolder, setConfirmDeleteFolder] = useState<TreeNode | null>(null)
+  const [confirmDeleteEntry, setConfirmDeleteEntry] = useState<TreeNode | null>(null)
 
   function toggle(path: VaultPath): void {
     setExpandedFolders((previous) => {
@@ -184,14 +185,7 @@ export const FileTree = forwardRef<
   }
 
   async function handleDelete(node: TreeNode): Promise<void> {
-    if (node.kind === 'folder' && node.children.length > 0) {
-      setConfirmDeleteFolder(node)
-      return
-    }
-    await window.mote.deleteEntry(vault.dir, node.path)
-    if (node.kind === 'note') {
-      void workspace.closeTab(node.path)
-    }
+    setConfirmDeleteEntry(node)
   }
 
   function keyDown(
@@ -472,78 +466,104 @@ export const FileTree = forwardRef<
         </>
       )}
 
-      {confirmLinkUpdate && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="更新内部链接">
-          <div className="modal-box">
-            <h2 className="modal-title">更新内部链接</h2>
-            <p className="modal-message">
-              检测到 {confirmLinkUpdate.count} 处链接引用此
-              {confirmLinkUpdate.oldPath.endsWith('.md') ? '笔记' : '文件夹'}
-              。是否自动更新内部链接？
-            </p>
-            <div className="modal-actions">
-              <button type="button" className="button" onClick={() => setConfirmLinkUpdate(null)}>
-                取消
-              </button>
-              <button
-                type="button"
-                className="button"
-                onClick={async () => {
-                  const { oldPath, newPath } = confirmLinkUpdate
-                  setConfirmLinkUpdate(null)
-                  await window.mote.renameOrMove(vault.dir, oldPath, newPath, false)
-                  workspace.renameTab(oldPath, newPath)
-                  if (selected === oldPath) void workspace.open(newPath)
-                }}
-              >
-                不更新
-              </button>
-              <button
-                type="button"
-                className="button primary"
-                autoFocus
-                onClick={async () => {
-                  const { oldPath, newPath } = confirmLinkUpdate
-                  setConfirmLinkUpdate(null)
-                  await window.mote.renameOrMove(vault.dir, oldPath, newPath, true)
-                  workspace.renameTab(oldPath, newPath)
-                  if (selected === oldPath) void workspace.open(newPath)
-                }}
-              >
-                更新链接
-              </button>
+      {confirmLinkUpdate &&
+        createPortal(
+          <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="更新内部链接">
+            <div className="modal-box">
+              <h2 className="modal-title">更新内部链接</h2>
+              <p className="modal-message">
+                检测到 {confirmLinkUpdate.count} 处链接引用此
+                {confirmLinkUpdate.oldPath.endsWith('.md') ? '笔记' : '文件夹'}
+                。是否自动更新内部链接？
+              </p>
+              <div className="modal-actions">
+                <button type="button" className="button" onClick={() => setConfirmLinkUpdate(null)}>
+                  取消
+                </button>
+                <button
+                  type="button"
+                  className="button"
+                  onClick={async () => {
+                    const { oldPath, newPath } = confirmLinkUpdate
+                    setConfirmLinkUpdate(null)
+                    await window.mote.renameOrMove(vault.dir, oldPath, newPath, false)
+                    workspace.renameTab(oldPath, newPath)
+                    if (selected === oldPath) void workspace.open(newPath)
+                  }}
+                >
+                  不更新
+                </button>
+                <button
+                  type="button"
+                  className="button primary"
+                  autoFocus
+                  onClick={async () => {
+                    const { oldPath, newPath } = confirmLinkUpdate
+                    setConfirmLinkUpdate(null)
+                    await window.mote.renameOrMove(vault.dir, oldPath, newPath, true)
+                    workspace.renameTab(oldPath, newPath)
+                    if (selected === oldPath) void workspace.open(newPath)
+                  }}
+                >
+                  更新链接
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
 
-      {confirmDeleteFolder && (
-        <div className="modal-backdrop" role="dialog" aria-modal="true" aria-label="删除文件夹">
-          <div className="modal-box">
-            <h2 className="modal-title">移到废纸篓</h2>
-            <p className="modal-message">
-              确定要将文件夹 “{confirmDeleteFolder.name}” 及其所有内容移入废纸篓吗？
-            </p>
-            <div className="modal-actions">
-              <button type="button" className="button" onClick={() => setConfirmDeleteFolder(null)}>
-                取消
-              </button>
-              <button
-                type="button"
-                className="button danger"
-                autoFocus
-                onClick={async () => {
-                  const node = confirmDeleteFolder
-                  setConfirmDeleteFolder(null)
-                  await window.mote.deleteEntry(vault.dir, node.path)
-                }}
-              >
-                移到废纸篓
-              </button>
+      {confirmDeleteEntry &&
+        createPortal(
+          <div
+            className="modal-backdrop"
+            role="dialog"
+            aria-modal="true"
+            aria-label={confirmDeleteEntry.kind === 'folder' ? '删除文件夹' : '删除文件'}
+            onKeyDown={(e) => {
+              if (e.key === 'Escape') {
+                e.preventDefault()
+                setConfirmDeleteEntry(null)
+              }
+            }}
+          >
+            <div className="modal-box">
+              <h2 className="modal-title">移到废纸篓</h2>
+              <p className="modal-message">
+                {confirmDeleteEntry.kind === 'folder'
+                  ? confirmDeleteEntry.children.length > 0
+                    ? `确定要将文件夹 “${confirmDeleteEntry.name}” 及其所有内容移入废纸篓吗？`
+                    : `确定要将文件夹 “${confirmDeleteEntry.name}” 移入废纸篓吗？`
+                  : `确定要将 “${confirmDeleteEntry.name}” 移入废纸篓吗？`}
+              </p>
+              <div className="modal-actions">
+                <button
+                  type="button"
+                  className="button"
+                  onClick={() => setConfirmDeleteEntry(null)}
+                >
+                  取消
+                </button>
+                <button
+                  type="button"
+                  className="button danger"
+                  autoFocus
+                  onClick={async () => {
+                    const node = confirmDeleteEntry
+                    setConfirmDeleteEntry(null)
+                    await window.mote.deleteEntry(vault.dir, node.path)
+                    if (node.kind === 'note') {
+                      void workspace.closeTab(node.path)
+                    }
+                  }}
+                >
+                  移到废纸篓
+                </button>
+              </div>
             </div>
-          </div>
-        </div>
-      )}
+          </div>,
+          document.body
+        )}
     </>
   )
 })

@@ -1,4 +1,6 @@
-import { Plus, X } from 'lucide-react'
+import { File, FileCode, FileImage, FileText, FileType, Plus, X } from 'lucide-react'
+import { useMemo } from 'react'
+import { isHtmlPath, isImagePath, isPdfPath } from '../../core/fileUrl'
 import type { VaultPath } from '../../core/ipc'
 import { workspace } from './workspace'
 
@@ -13,6 +15,17 @@ export function TabBar({
   dirtyPath?: VaultPath
   onNewTab: () => void
 }): React.JSX.Element {
+  const nameCounts = useMemo(() => {
+    const counts = new Map<string, number>()
+    for (const p of tabs) {
+      const isMd = p.toLowerCase().endsWith('.md')
+      const baseName = p.slice(p.lastIndexOf('/') + 1)
+      const name = isMd ? baseName.replace(/\.md$/i, '') : baseName
+      counts.set(name, (counts.get(name) ?? 0) + 1)
+    }
+    return counts
+  }, [tabs])
+
   if (tabs.length === 0) {
     return (
       <div className="tab-bar is-empty" role="tablist" aria-label="标签页">
@@ -23,7 +36,7 @@ export function TabBar({
           aria-label="新建标签页"
           onClick={onNewTab}
         >
-          <Plus size={13} strokeWidth={1.5} />
+          <Plus size={13} strokeWidth={1.6} />
         </button>
       </div>
     )
@@ -35,8 +48,22 @@ export function TabBar({
         {tabs.map((path) => {
           const isActive = path === activePath
           const isDirty = path === dirtyPath
-          const name = path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/i, '')
+          const isMd = path.toLowerCase().endsWith('.md')
+          const baseName = path.slice(path.lastIndexOf('/') + 1)
+          const name = isMd ? baseName.replace(/\.md$/i, '') : baseName
           const folder = path.includes('/') ? path.slice(0, path.lastIndexOf('/')) : null
+          const parentFolder = folder ? folder.slice(folder.lastIndexOf('/') + 1) : null
+          const showFolderHint = (nameCounts.get(name) ?? 0) > 1 && parentFolder
+
+          const Icon = isHtmlPath(path)
+            ? FileCode
+            : isImagePath(path)
+              ? FileImage
+              : isPdfPath(path)
+                ? FileType
+                : isMd
+                  ? FileText
+                  : File
 
           return (
             <div
@@ -54,13 +81,10 @@ export function TabBar({
                 }
               }}
             >
-              {folder && <span className="tab-folder">{folder}/</span>}
+              <Icon size={13} strokeWidth={1.5} className="tab-icon" aria-hidden="true" />
               <span className="tab-name">{name}</span>
-              {isDirty && (
-                <span className="tab-dirty" title="未保存修改" aria-label="未保存">
-                  •
-                </span>
-              )}
+              {showFolderHint && <span className="tab-folder-hint">({parentFolder})</span>}
+              {isDirty && <span className="tab-dirty" title="未保存修改" aria-label="未保存" />}
               <button
                 type="button"
                 className="tab-close"
@@ -71,7 +95,7 @@ export function TabBar({
                   void workspace.closeTab(path)
                 }}
               >
-                <X size={11} strokeWidth={1.6} />
+                <X size={10.5} strokeWidth={2} />
               </button>
             </div>
           )
@@ -84,7 +108,7 @@ export function TabBar({
         aria-label="新建标签页"
         onClick={onNewTab}
       >
-        <Plus size={13} strokeWidth={1.5} />
+        <Plus size={13} strokeWidth={1.6} />
       </button>
     </div>
   )
