@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useRef, useState, type KeyboardEvent } from 'react'
 import type { VaultEntry, VaultPath } from '../../core/ipc'
+import { isHtmlPath } from '../../core/fileUrl'
 import { Highlighted } from './HitList'
 import { suggest } from './quickOpenMatch'
 import { workspace } from './workspace'
@@ -15,7 +16,10 @@ export function QuickOpen({
   const [selected, setSelected] = useState(0)
   const input = useRef<HTMLInputElement>(null)
   const notes = useMemo(
-    () => entries.filter((entry) => entry.kind === 'note').map((entry) => entry.path),
+    () =>
+      entries
+        .filter((entry) => entry.kind === 'note' || isHtmlPath(entry.path))
+        .map((entry) => entry.path),
     [entries]
   )
   const recent = useMemo(() => workspace.recent(), [])

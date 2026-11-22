@@ -1,5 +1,13 @@
 import { describe, expect, it } from 'vitest'
-import { fileUrl, imageType, mediaType, parseFileUrl, videoType } from './fileUrl.ts'
+import {
+  fileUrl,
+  htmlType,
+  imageType,
+  isHtmlPath,
+  mediaType,
+  parseFileUrl,
+  videoType
+} from './fileUrl.ts'
 import { parseVaultPath } from './ipc.ts'
 
 describe('fileUrl and parseFileUrl', () => {
@@ -99,9 +107,19 @@ describe('videoType and mediaType', () => {
     expect(videoType('note.md')).toBeNull()
   })
 
-  it('mediaType covers both images and videos', () => {
+  it('mediaType covers images, videos and html', () => {
     expect(mediaType('image.png')).toBe('image/png')
     expect(mediaType('video.mp4')).toBe('video/mp4')
+    expect(mediaType('page.html')).toBe('text/html; charset=utf-8')
     expect(mediaType('doc.pdf')).toBeNull()
+  })
+
+  it('identifies html formats with htmlType and isHtmlPath', () => {
+    expect(htmlType('index.html')).toBe('text/html; charset=utf-8')
+    expect(htmlType('docs/guide.HTM')).toBe('text/html; charset=utf-8')
+    expect(htmlType('image.png')).toBeNull()
+    expect(isHtmlPath('index.html')).toBe(true)
+    expect(isHtmlPath('folder/test.htm')).toBe(true)
+    expect(isHtmlPath('note.md')).toBe(false)
   })
 })

@@ -25,6 +25,12 @@ const videoTypes = new Map([
   ['ogv', 'video/ogg']
 ])
 
+// The HTML types supported for in-app viewing.
+const htmlTypes = new Map([
+  ['html', 'text/html; charset=utf-8'],
+  ['htm', 'text/html; charset=utf-8']
+])
+
 // The MIME type of an image path, or null when its extension is not an image type.
 export function imageType(path: string): string | null {
   const name = path.slice(path.lastIndexOf('/') + 1)
@@ -39,9 +45,21 @@ export function videoType(path: string): string | null {
   return dot < 0 ? null : (videoTypes.get(name.slice(dot + 1).toLowerCase()) ?? null)
 }
 
-// The MIME type of any supported media path (image or video), or null.
+// The MIME type of an HTML path, or null when its extension is not an HTML type.
+export function htmlType(path: string): string | null {
+  const name = path.slice(path.lastIndexOf('/') + 1)
+  const dot = name.lastIndexOf('.')
+  return dot < 0 ? null : (htmlTypes.get(name.slice(dot + 1).toLowerCase()) ?? null)
+}
+
+// True when the path represents an HTML file (.html or .htm).
+export function isHtmlPath(path: string): boolean {
+  return /\.html?$/i.test(path)
+}
+
+// The MIME type of any supported media path (image, video, or HTML), or null.
 export function mediaType(path: string): string | null {
-  return imageType(path) ?? videoType(path)
+  return imageType(path) ?? videoType(path) ?? htmlType(path)
 }
 
 export function fileUrl(path: VaultPath): string {

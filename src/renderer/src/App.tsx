@@ -4,6 +4,7 @@ import {
   Check,
   ChevronDown,
   ChevronUp,
+  ExternalLink,
   FilePlus,
   FolderOpen,
   FolderPlus,
@@ -22,7 +23,9 @@ import { type SortOrder } from './tree'
 import { type FontMode } from '../../core/ipc'
 import { groupHits } from '../../core/hits'
 import { buildLinkIndex } from '../../core/resolve'
+import { isHtmlPath } from '../../core/fileUrl'
 import { HitList } from './HitList'
+import { HtmlViewer } from './HtmlViewer'
 import { NoteEditor } from './NoteEditor'
 import { QuickOpen } from './QuickOpen'
 import { SearchPanel } from './SearchPanel'
@@ -32,10 +35,8 @@ import { executeFormatting, type FormatAction } from './editor/formatting'
 import { workspace } from './workspace'
 
 function App(): React.JSX.Element {
-  const { vault, tabs, doc, busy, error, backlinks, selection, mode } = useSyncExternalStore(
-    workspace.subscribe,
-    workspace.snapshot
-  )
+  const { vault, tabs, doc, busy, error, backlinks, selection, mode, revision } =
+    useSyncExternalStore(workspace.subscribe, workspace.snapshot)
   const modeAction = mode === 'live' ? '切换到阅读模式' : '切换到实时预览'
   // The editor resolves links against the same file list, in the same order, as main. Folders
   // and the vault config say where a click on a missing link creates the note.
@@ -516,7 +517,18 @@ function App(): React.JSX.Element {
                 )}
               </button>
             )}
-            {doc && (
+            {doc?.kind === 'html' && (
+              <button
+                className="icon-button"
+                type="button"
+                title="在默认浏览器中打开"
+                aria-label="在默认浏览器中打开"
+                onClick={() => void workspace.openFile(doc.path)}
+              >
+                <ExternalLink size={16} strokeWidth={1.5} />
+              </button>
+            )}
+            {doc && doc.kind !== 'html' && (
               <button
                 className="icon-button"
                 type="button"
@@ -571,16 +583,20 @@ function App(): React.JSX.Element {
           </section>
         )}
         {doc && doc.kind !== 'missing' ? (
-          <NoteEditor
-            key={doc.path}
-            path={doc.path}
-            source={doc.source}
-            locked={busy}
-            selection={selection}
-            mode={mode}
-            links={links}
-            vault={vault}
-          />
+          doc.kind === 'html' ? (
+            <HtmlViewer key={doc.path} path={doc.path} revision={revision} />
+          ) : (
+            <NoteEditor
+              key={doc.path}
+              path={doc.path}
+              source={doc.source}
+              locked={busy}
+              selection={selection}
+              mode={mode}
+              links={links}
+              vault={vault}
+            />
+          )
         ) : (
           <div className="empty">
             {!vault && !busy && (
@@ -593,7 +609,12 @@ function App(): React.JSX.Element {
                 打开笔记库
               </button>
             )}
-            {vault && (doc ? '笔记已从磁盘删除' : '选择一篇笔记')}
+            {vault &&
+              (doc
+                ? isHtmlPath(doc.path)
+                  ? '文件已从磁盘删除'
+                  : '笔记已从磁盘删除'
+                : '选择一篇笔记')}
           </div>
         )}
       </main>

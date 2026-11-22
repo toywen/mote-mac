@@ -313,6 +313,15 @@ function createWindow(): void {
     if (isAllowedExternal(details.url)) void shell.openExternal(details.url)
     return { action: 'deny' }
   })
+  mainWindow.webContents.on('will-frame-navigate', (event) => {
+    if (event.isMainFrame) return
+    const url = event.url
+    if (url.startsWith('mote-file:')) return
+    if (isAllowedExternal(url)) {
+      event.preventDefault()
+      void shell.openExternal(url)
+    }
+  })
   // The window only ever shows mote. A page from anywhere else, such as a file dropped on the
   // window, would get window.mote and with it the vault.
   mainWindow.webContents.on('will-navigate', (event, url) => {

@@ -36,6 +36,15 @@ export async function serveFile(vault: Vault | undefined, request: Request): Pro
       if (!stats.isFile()) return refuse(404)
       const total = stats.size
 
+      const isHtml = type.startsWith('text/html')
+      const securityHeaders = isHtml
+        ? {
+            'Content-Security-Policy':
+              "default-src 'self' mote-file: data: blob: https: 'unsafe-inline' 'unsafe-eval'; style-src 'self' mote-file: data: https: 'unsafe-inline'; img-src 'self' mote-file: data: blob: https:; media-src 'self' mote-file: data: blob: https:;",
+            'X-Content-Type-Options': 'nosniff'
+          }
+        : inert
+
       const rangeHeader = request.headers.get('range')
       if (rangeHeader && rangeHeader.startsWith('bytes=')) {
         const parts = rangeHeader.slice(6).split('-')
@@ -53,7 +62,7 @@ export async function serveFile(vault: Vault | undefined, request: Request): Pro
         return new Response(buffer, {
           status: 206,
           headers: {
-            ...inert,
+            ...securityHeaders,
             'Content-Type': type,
             'Content-Range': `bytes ${start}-${end}/${total}`,
             'Content-Length': String(length),
@@ -64,7 +73,7 @@ export async function serveFile(vault: Vault | undefined, request: Request): Pro
 
       return new Response(await file.readFile(), {
         headers: {
-          ...inert,
+          ...securityHeaders,
           'Content-Type': type,
           'Content-Length': String(total),
           'Accept-Ranges': 'bytes'

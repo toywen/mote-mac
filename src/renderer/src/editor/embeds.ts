@@ -66,7 +66,7 @@ class Embed {
   // Reads again after any vault change or save, and, for the open note, after any edit.
   private check(): void {
     const { revision, doc } = workspace.snapshot()
-    const openText = doc?.path === this.widget.shown.path ? doc.text : null
+    const openText = doc?.path === this.widget.shown.path && 'text' in doc ? doc.text : null
     if (revision === this.revision && openText === this.openText) return
     this.revision = revision
     this.openText = openText

@@ -7,6 +7,7 @@ import type {
   VaultInfo,
   VaultPath
 } from '../../core/ipc'
+import { isHtmlPath } from '../../core/fileUrl'
 import type { LinkDest } from '../../core/linkDest'
 import { resolveSubpath } from '../../core/subpath'
 import { sourceText } from '../../core/text'
@@ -15,11 +16,13 @@ import type { EditorMode } from './editor/preview'
 type Draft = { path: VaultPath; text: string; source: { text: string } }
 type DirtyDoc = Draft & { kind: 'dirty'; baseHash: ContentHash }
 type ConflictDoc = Draft & { kind: 'conflict'; disk: NoteVersion | null }
-type Doc =
+export type HtmlDoc = { kind: 'html'; path: VaultPath }
+export type Doc =
   | (Draft & { kind: 'clean' | 'saving'; baseHash: ContentHash })
   | (Draft & { kind: 'missing' })
   | DirtyDoc
   | ConflictDoc
+  | HtmlDoc
 
 type Range = { from: number; to: number }
 
@@ -170,6 +173,7 @@ class Workspace {
         case 'note':
           return await this.open(dest.path, dest.subpath ? { subpath: dest.subpath } : undefined)
         case 'file':
+          if (isHtmlPath(dest.path)) return await this.open(dest.path)
           return await this.openFile(dest.path)
         case 'missing':
           await window.mote.createNote(vault.dir, dest.path)
@@ -226,6 +230,26 @@ class Workspace {
     this.set({ busy: true, error: '' })
     try {
       if (!(await this.flush())) return
+      if (isHtmlPath(path)) {
+        this.refreshId++
+        const exists = vault.entries.some((e) => e.path === path)
+        if (!exists) {
+          this.set({
+            tabs,
+            doc: { kind: 'missing', path, text: '', source: { text: '' } },
+            selection: null,
+            backlinks: null
+          })
+          return
+        }
+        this.set({ tabs, doc: { kind: 'html', path }, selection: null, backlinks: null })
+        this.remember(vault.dir, path)
+        if (visit === null) {
+          this.visits = [...this.visits.slice(0, this.visit + 1), { path, cursor: null }]
+          this.visit = this.visits.length - 1
+        } else this.visit = visit
+        return
+      }
       const version = await window.mote.readNote(vault.dir, path)
       this.load(path, version, tabs)
       if (version) {
@@ -268,15 +292,35 @@ class Workspace {
         this.set({ tabs: nextTabs, doc: null })
         return
       }
-      const version = await window.mote.readNote(vault.dir, nextPath)
-      this.load(nextPath, version, nextTabs)
-      if (version) {
-        this.remember(vault.dir, nextPath)
-        const at = this.cursors.get(nextPath)
-        if (at) this.place(nextPath, at)
+      if (isHtmlPath(nextPath)) {
+        const exists = vault.entries.some((e) => e.path === nextPath)
+        if (!exists) {
+          this.set({
+            tabs: nextTabs,
+            doc: { kind: 'missing', path: nextPath, text: '', source: { text: '' } },
+            selection: null,
+            backlinks: null
+          })
+        } else {
+          this.set({
+            tabs: nextTabs,
+            doc: { kind: 'html', path: nextPath },
+            selection: null,
+            backlinks: null
+          })
+          this.remember(vault.dir, nextPath)
+        }
+      } else {
+        const version = await window.mote.readNote(vault.dir, nextPath)
+        this.load(nextPath, version, nextTabs)
+        if (version) {
+          this.remember(vault.dir, nextPath)
+          const at = this.cursors.get(nextPath)
+          if (at) this.place(nextPath, at)
+        }
+        void this.loadBacklinks()
+        void this.refresh()
       }
-      void this.loadBacklinks()
-      void this.refresh()
     } catch (error) {
       this.fail(error)
     } finally {
@@ -324,7 +368,10 @@ class Workspace {
       this.select(path, at, false)
       return
     }
-    const from = doc?.path === path ? resolveSubpath(sourceText(doc.text).text, at.subpath) : null
+    const from =
+      doc?.path === path && doc.kind !== 'html'
+        ? resolveSubpath(sourceText(doc.text).text, at.subpath)
+        : null
     if (from !== null) this.select(path, { from, to: from }, true)
   }
 
@@ -356,7 +403,7 @@ class Workspace {
   async noteText(path: VaultPath): Promise<string | null> {
     const { vault, doc } = this.state
     if (!vault) return null
-    if (doc?.path === path && doc.kind !== 'missing') return doc.text
+    if (doc?.path === path && doc.kind !== 'missing' && doc.kind !== 'html') return doc.text
     return (await window.mote.readNote(vault.dir, path))?.text ?? null
   }
 
@@ -405,7 +452,8 @@ class Workspace {
 
   edit(path: VaultPath, text: string): void {
     const { doc } = this.state
-    if (doc?.path !== path || doc.kind === 'missing' || doc.text === text) return
+    if (doc?.path !== path || doc.kind === 'missing' || doc.kind === 'html' || doc.text === text)
+      return
     if (doc.kind === 'conflict' || doc.kind === 'saving') {
       this.set({ doc: { ...doc, text } })
     } else {
@@ -453,7 +501,7 @@ class Workspace {
     this.clearSaveTimers()
     if (this.saving) return this.saving
     const { doc, vault } = this.state
-    if (!doc || !vault || doc.kind === 'clean' || doc.kind === 'missing')
+    if (!doc || !vault || doc.kind === 'clean' || doc.kind === 'missing' || doc.kind === 'html')
       return Promise.resolve(true)
     if (doc.kind !== 'dirty' && (doc.kind !== 'conflict' || !keepMine))
       return Promise.resolve(false)
@@ -469,20 +517,32 @@ class Workspace {
     try {
       const result = await window.mote.writeNote(dir, doc.path, doc.text, baseHash)
       const current = this.state.doc
-      if (current?.path !== doc.path) return false
+      if (
+        !current ||
+        current.path !== doc.path ||
+        current.kind === 'html' ||
+        current.kind === 'missing'
+      )
+        return false
       if (!result.ok) {
         this.receiveConflict(current, result.disk)
         return this.state.doc?.kind === 'clean'
       }
-      const kind = current.text === doc.text ? 'clean' : 'dirty'
-      this.set({ doc: { ...current, kind, baseHash: result.hash }, error: '' })
-      if (kind === 'dirty') this.scheduleSave()
+      const isClean = current.text === doc.text
+      this.set({
+        doc: isClean
+          ? { ...current, kind: 'clean', baseHash: result.hash }
+          : { ...current, kind: 'dirty', baseHash: result.hash },
+        error: ''
+      })
+      if (!isClean) this.scheduleSave()
       this.set({ revision: this.state.revision + 1 })
       void this.loadBacklinks()
       return this.refresh()
     } catch (error) {
       const current = this.state.doc
-      if (current?.path === doc.path) this.set({ doc: { ...doc, text: current.text } })
+      if (current?.path === doc.path && current.kind !== 'html')
+        this.set({ doc: { ...doc, text: current.text } })
       this.fail(error)
       return false
     }
@@ -501,7 +561,7 @@ class Workspace {
     }
   }
 
-  private receiveConflict(doc: Doc, disk: NoteVersion | null): void {
+  private receiveConflict(doc: Exclude<Doc, HtmlDoc>, disk: NoteVersion | null): void {
     this.clearSaveTimers()
     if (disk?.text === doc.text) this.load(doc.path, disk)
     else this.set({ doc: { ...doc, kind: 'conflict', disk }, error: '' })
@@ -514,13 +574,19 @@ class Workspace {
     this.set({ revision: this.state.revision + 1 })
     void this.loadBacklinks()
     if (doc && (change.changed.includes(doc.path) || change.removed.includes(doc.path))) {
-      void this.refresh()
+      if (doc.kind === 'html') {
+        if (change.removed.includes(doc.path)) {
+          this.set({ doc: { kind: 'missing', path: doc.path, text: '', source: { text: '' } } })
+        }
+      } else {
+        void this.refresh()
+      }
     }
   }
 
   private async refresh(): Promise<boolean> {
     const { doc, vault } = this.state
-    if (!doc || !vault || doc.kind === 'saving') return true
+    if (!doc || !vault || doc.kind === 'saving' || doc.kind === 'html') return true
     const refreshId = ++this.refreshId
     try {
       const disk = await window.mote.readNote(vault.dir, doc.path)
@@ -535,12 +601,12 @@ class Workspace {
       const knownHash =
         current.kind === 'conflict'
           ? current.disk?.hash
-          : current.kind === 'missing'
+          : current.kind === 'missing' || current.kind === 'html'
             ? undefined
             : current.baseHash
       if (disk?.hash !== knownHash) {
         if (current.kind === 'clean' || current.kind === 'missing') this.load(current.path, disk)
-        else this.receiveConflict(current, disk)
+        else if (current.kind !== 'html') this.receiveConflict(current, disk)
       }
       return this.state.doc?.kind !== 'conflict'
     } catch (error) {
