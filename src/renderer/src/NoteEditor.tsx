@@ -214,5 +214,5 @@ export function NoteEditor({
     view.focus()
   }, [path, selection])
 
-  return <div className="editor-content" ref={host} />
+  return <div className="editor-content" data-mode={mode} ref={host} />
 }

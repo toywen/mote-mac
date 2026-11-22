@@ -25,7 +25,7 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | P0     | 4    | 新建、改名、移动、删除                               | ✅ 已完成（2026-11-21），见 [step-4.md](plans/step-4.md)                     | 验收-3                                                                                          |
 | P0     | 5    | 视频阅读（本地/YouTube）、性能                       | ✅ 已完成（2026-11-21）                                                      | 验收-6、验收-10、验收-11                                                                        |
 | P0     | 6    | 打包与自动更新：通过 GitHub 打包成 dmg，支持检查更新 | ✅ 已完成（2026-11-21）                                                      | 验收-8、验收-9，见 [step-6.md](plans/step-6.md)                                                 |
-| P0     | 7    | Markdown 快捷键与应用菜单                            | ✅ 已完成（2026-11-21），见 [step-7.md](plans/step-7.md)                     | 验收-12                                                                                         |
+| P0     | 7    | Markdown 快捷键与应用菜单                            | 🟡 部分                                                                      | 快捷键与顶栏菜单已完成，菜单-2（内容区右键）待实现，见 [step-7.md](plans/step-7.md)             |
 | P0     | 8    | HTML 格式可读                                        | ⬜ 下一步                                                                    | 验收-13                                                                                         |
 | P0     | 9    | 试用一周                                             | ⬜ 未开始                                                                    | 验收-7。安装打包出的 dmg，试用期间让 Obsidian 在后台开着，obsidian-git 才会继续备份 `~/life-os` |
 | P0     | 10   | 同步                                                 | ⬜ 未开始                                                                    | 见同步-1                                                                                        |
@@ -59,7 +59,7 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | ✅ 已实现 | 链接-6 | 链接解析和 Obsidian 一致                         | `npm test`（links 测试笔记库对照）；`node tools/compare-links.mjs ~/mote-link-check/*-copy`，5 个副本 2171 处 0 不一致，输出在 `docs/plans/compare-log/`             | 2026-11-20。规则照搬 Obsidian 1.15.1，见 ADR 0003、0008、0009。反向链接面板用到解析结果                                             |
 | ✅ 已实现 | 链接-7 | 右侧面板列出当前笔记的反向链接，两种链接都算     | 测试：the backlinks pane lists links to the open note and jumps to them；verify：backlinks（5 个副本 810 篇笔记逐篇对照 Obsidian，1923 处 0 不一致）                 | 2026-11-20。嵌入和属性里的链接也算，和 Obsidian 的 resolvedLinks 一致。来源按路径排序，Obsidian 按文件名                            |
 | ✅ 已实现 | 查找-1 | `Cmd+O` 按文件名快速打开笔记                     | 测试：quick open ranks notes like Obsidian and lists recent notes for an empty query；verify：quick-open                                                             | 2026-11-20。规则照搬 Obsidian 1.15.1，见 step-2.md PR A。结果顺序还没和 Obsidian 的快速打开并排对照过，要你在 Obsidian 里看一次     |
-| ✅ 已实现 | 查找-2 | `Cmd+Shift+F` 全文搜索。点击结果，跳到匹配的位置 | 测试：search finds notes by body and file name, jumps to matches, and follows changes；verify：search（`workspace-copy` 4 个查询和 grep 计数一致）                   | 2026-11-20。规则见 step-2.md PR D，做法见 ADR 0004。不做 `path:`、`tag:`、正则、`OR`、`-`。结果顺序还没和 Obsidian 的搜索面板对照过 |
+| ✅ 已实现 | 查找-2 | `Cmd+Shift+F` 全文搜索。点击结果，跳到匹配的位置 | 测试：search finds notes by body and file name, jumps to matches, and follows changes；verify：search（`workspace-copy` 4 个查询和 grep 计数一致）                   | 2026-11-22。重构搜索面板 UI，增加搜索与清空图标、macOS 风格聚焦环、无内容提示与 Esc 快捷键指引。规则见 step-2.md PR D，做法见 ADR 0004 |
 | ✅ 已实现 | 查找-3 | 快速打开和全文搜索都支持中文                     | 测试：quick open ranks notes like Obsidian…；search finds notes by body and file name…                                                                               | 2026-11-20。全文搜索用子串匹配，输入法选字期间不搜索                                                                                |
 
 ## 第 3 步：实时预览、阅读模式和点击链接
@@ -113,6 +113,7 @@ mote 第一版在 Mac 上替换 Obsidian。它能打开任何一个 Obsidian 笔
 | --------- | -------- | ------------------------------------------------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------------------------- | --------------------------------------------------------------------------------------------------------- |
 | ✅ 已实现 | 快捷键-1 | Markdown 编辑格式化快捷键：支持粗体 `Cmd+B`、斜体 `Cmd+I`、链接 `Cmd+K`、删除线 `Cmd+Shift+X`、高亮 `Cmd+Shift+H`、代码等快捷键 | 单元测试：formatting.test.ts（24 项全过）；脚本：tools/verify-step7.mjs；E2E：tests/e2e/menu.spec.ts | 2026-11-21。选中文本智能包裹，无选区时光标居中，支持反选取消格式化与网址智能转换，见 ADR 0015             |
 | ✅ 已实现 | 菜单-1   | 原生 macOS 应用菜单（文件、编辑、格式、查看、窗口、帮助）                                                                       | 脚本：tools/verify-step7.mjs；主进程菜单：src/main/menu.ts；IPC：channels.menuAction                 | 2026-11-21。规范化 macOS 7 项顶栏菜单结构，绑定常用快捷键与操作，通过 IPC 与渲染进程双向联动，见 ADR 0015 |
+| ⬜ 未实现 | 菜单-2   | 笔记内容区右键菜单：支持剪切、复制、粘贴、全选，Markdown 格式化（粗体/斜体/高亮/代码/链接）以及切换阅读/编辑模式               |                                                                                                      | 右键点击编辑器或阅读区时弹出上下文菜单，与当前选区及编辑状态联动                                          |
 
 ## 第 8 步：HTML 格式可读
 

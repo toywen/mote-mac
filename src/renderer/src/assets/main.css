@@ -934,6 +934,21 @@ svg.lucide {
 .cm-dropCursor {
   border-left: 1.5px solid var(--text) !important;
 }
+.editor-content[data-mode='reading'] .cm-cursor,
+.editor-content[data-mode='reading'] .cm-dropCursor {
+  display: none !important;
+}
+.editor-content[data-mode='reading'] .cm-content {
+  cursor: default;
+}
+.editor-content[data-mode='reading'] .cm-line {
+  cursor: text;
+}
+.editor-content[data-mode='reading'] a,
+.editor-content[data-mode='reading'] .cm-link,
+.editor-content[data-mode='reading'] input[type='checkbox'] {
+  cursor: pointer;
+}
 .cm-selectionBackground,
 .cm-content ::selection {
   background: var(--selected) !important;
@@ -1195,21 +1210,31 @@ svg.lucide {
 }
 
 .search-header {
-  padding: 6px 10px 2px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 38px;
+  padding: 0 10px;
+  border-bottom: 1px solid var(--border);
+  box-sizing: border-box;
 }
 
 .search-back-button {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  padding: 3px 8px;
+  gap: 5px;
+  padding: 4px 8px;
   border: 0;
-  border-radius: 5px;
+  border-radius: 6px;
   background: transparent;
   color: var(--muted);
-  font-size: 12px;
+  font-family: var(--font-hei);
+  font-size: 12.5px;
+  font-weight: 500;
   cursor: pointer;
-  transition: all 120ms ease;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
 }
 
 .search-back-button:hover {
@@ -1217,26 +1242,139 @@ svg.lucide {
   color: var(--text);
 }
 
-.search-panel input {
-  margin: 10px 10px 4px;
-  padding: 6px 10px;
+.search-esc-badge {
+  font-size: 10.5px;
+  font-family: var(--font-mono);
+  color: var(--t3);
+  background: var(--hover);
   border: 1px solid var(--border);
-  border-radius: 6px;
-  background: var(--background);
-  color: var(--text);
-  font: inherit;
-  font-size: 13px;
-  outline: none;
+  border-radius: 4px;
+  padding: 1px 5px;
+  letter-spacing: 0.02em;
 }
 
-.search-panel input:focus {
-  border-color: var(--accent);
+.search-box-wrap {
+  padding: 8px 10px 6px;
+}
+
+.search-input-container {
+  display: flex;
+  align-items: center;
+  height: 30px;
+  padding: 0 8px;
+  gap: 6px;
+  background: var(--background);
+  border: 1px solid var(--border);
+  border-radius: 7px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.03);
+  transition:
+    border-color 150ms ease,
+    box-shadow 150ms ease;
+}
+
+.search-input-container:focus-within {
+  border-color: #007aff;
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.16);
+}
+
+@media (prefers-color-scheme: dark) {
+  .search-input-container:focus-within {
+    border-color: #0a84ff;
+    box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.22);
+  }
+}
+
+html[data-theme='dark'] .search-input-container:focus-within {
+  border-color: #0a84ff;
+  box-shadow: 0 0 0 3px rgba(10, 132, 255, 0.22);
+}
+
+.search-input-icon {
+  color: var(--t3);
+  flex-shrink: 0;
+}
+
+.search-input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-hei);
+  font-size: 12.5px;
+  outline: none;
+  padding: 0;
+}
+
+.search-input::-webkit-search-cancel-button {
+  display: none;
+}
+
+.search-input::placeholder {
+  color: var(--t3);
+}
+
+.search-clear-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 999px;
+  border: none;
+  background: var(--hover);
+  color: var(--muted);
+  cursor: pointer;
+  padding: 0;
+  transition:
+    background 100ms ease,
+    color 100ms ease;
+}
+
+.search-clear-btn:hover {
+  background: var(--border);
+  color: var(--text);
 }
 
 .search-summary {
-  padding: 4px 10px 6px;
+  padding: 6px 12px 6px;
   color: var(--muted);
+  font-family: var(--font-hei);
   font-size: 11.5px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+}
+
+.search-empty-hint {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 36px 20px;
+  text-align: center;
+  color: var(--t3);
+  user-select: none;
+}
+
+.search-hint-icon {
+  margin-bottom: 8px;
+  opacity: 0.55;
+  color: var(--t3);
+}
+
+.search-hint-title {
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--muted);
+  margin: 0 0 4px;
+}
+
+.search-hint-sub {
+  font-size: 11.5px;
+  line-height: 1.45;
+  margin: 0;
+  color: var(--t3);
 }
 
 .search-more {
@@ -1249,6 +1387,7 @@ svg.lucide {
   cursor: pointer;
   transition: background 120ms ease;
 }
+
 .search-more:hover {
   background: var(--hover);
 }

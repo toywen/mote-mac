@@ -1,4 +1,4 @@
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, Search, X } from 'lucide-react'
 import { useEffect, useRef, useState, useSyncExternalStore } from 'react'
 import type { SearchResult } from '../../core/ipc'
 import { parseQuery } from '../../core/search'
@@ -65,35 +65,64 @@ export function SearchPanel({
             className="search-back-button"
             onClick={onClose}
             title="返回文件列表（Esc）"
+            aria-label="文件"
           >
-            <ArrowLeft size={13} strokeWidth={1.5} />
+            <ArrowLeft size={13} strokeWidth={2} />
             <span>文件</span>
           </button>
+          <span className="search-esc-badge">Esc</span>
         </div>
       )}
-      <input
-        ref={input}
-        type="search"
-        aria-label="搜索"
-        placeholder="搜索笔记"
-        value={query}
-        spellCheck={false}
-        onChange={(event) => onQuery(event.target.value)}
-        onKeyDown={(event) => {
-          if (event.key === 'Escape') {
-            event.preventDefault()
-            onClose?.()
-          }
-        }}
-        onCompositionStart={() => setComposing(true)}
-        onCompositionEnd={() => setComposing(false)}
-      />
-      {result && (
+      <div className="search-box-wrap">
+        <div className="search-input-container">
+          <Search size={13} strokeWidth={2} className="search-input-icon" />
+          <input
+            ref={input}
+            type="search"
+            className="search-input"
+            aria-label="搜索"
+            placeholder="搜索笔记..."
+            value={query}
+            spellCheck={false}
+            onChange={(event) => onQuery(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === 'Escape') {
+                event.preventDefault()
+                onClose?.()
+              }
+            }}
+            onCompositionStart={() => setComposing(true)}
+            onCompositionEnd={() => setComposing(false)}
+          />
+          {query && (
+            <button
+              type="button"
+              className="search-clear-btn"
+              title="清空搜索"
+              aria-label="清空搜索"
+              onClick={() => {
+                onQuery('')
+                input.current?.focus()
+              }}
+            >
+              <X size={11} strokeWidth={2.4} />
+            </button>
+          )}
+        </div>
+      </div>
+      {result ? (
         <div className="hit-scroll" data-query={result.query}>
           <div className="search-summary" role="status" aria-label="搜索结果数">
             {result.notes} 篇笔记，{result.total} 处
           </div>
-          {result.notes > 0 && <HitList groups={result.groups} label="搜索结果" />}
+          {result.notes > 0 ? (
+            <HitList groups={result.groups} label="搜索结果" />
+          ) : (
+            <div className="search-empty-hint">
+              <p className="search-hint-title">未找到匹配内容</p>
+              <p className="search-hint-sub">没有笔记包含 “{query}”</p>
+            </div>
+          )}
           {result.groups.length < result.notes && (
             <button
               type="button"
@@ -104,6 +133,14 @@ export function SearchPanel({
             </button>
           )}
         </div>
+      ) : (
+        !query.trim() && (
+          <div className="search-empty-hint">
+            <Search size={22} strokeWidth={1.4} className="search-hint-icon" />
+            <p className="search-hint-title">搜索全部笔记</p>
+            <p className="search-hint-sub">支持中英文全文搜索，输入关键词即可查找</p>
+          </div>
+        )
       )}
     </div>
   )
