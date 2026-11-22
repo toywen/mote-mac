@@ -110,6 +110,8 @@ export type MenuAction =
   | 'format-link'
   | 'format-codeblock'
   | 'format-quote'
+  | 'format-task'
+  | 'format-bullet'
 
 export interface MoteApi {
   getVault(): Promise<VaultInfo | null>

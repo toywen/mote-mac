@@ -8,11 +8,13 @@ import {
   insertCodeBlock,
   insertQuote,
   toggleBold,
+  toggleBulletList,
   toggleHighlight,
   toggleInlineCode,
   toggleItalic,
   toggleLink,
-  toggleStrikethrough
+  toggleStrikethrough,
+  toggleTaskList
 } from '../src/renderer/src/editor/formatting.ts'
 import { channels } from '../src/core/ipc.ts'
 
@@ -96,14 +98,16 @@ assert(
   menuCode.includes("'编辑'") && menuCode.includes('CmdOrCtrl+Shift+F')
 )
 assert(
-  '包含“格式”菜单且含有全部 8 类格式化命令',
+  '包含“格式”菜单且含有全部格式化命令（粗体/斜体/高亮/链接/待办/无序列表等）',
   menuCode.includes("'格式'") &&
     menuCode.includes('format-bold') &&
     menuCode.includes('format-italic') &&
     menuCode.includes('format-strike') &&
     menuCode.includes('format-highlight') &&
     menuCode.includes('format-code') &&
-    menuCode.includes('format-link')
+    menuCode.includes('format-link') &&
+    menuCode.includes('format-task') &&
+    menuCode.includes('format-bullet')
 )
 assert(
   '包含“查看”菜单且含有模式切换、字体与主题切换',
@@ -114,18 +118,33 @@ assert(
 )
 assert('包含“窗口”和“帮助”菜单', menuCode.includes("'窗口'") && menuCode.includes("'帮助'"))
 
-// 4. CodeMirror 快捷键注册检查
-console.log('\n--- 4. CodeMirror 快捷键与编辑器集成检查 ---')
+// 4. CodeMirror 快捷键与编辑器右键菜单检查
+console.log('\n--- 4. CodeMirror 快捷键与编辑器右键菜单集成检查 ---')
 const noteEditorCode = readFileSync(resolve('src/renderer/src/NoteEditor.tsx'), 'utf8')
 assert('NoteEditor 引入了 formatKeymap', noteEditorCode.includes('formatKeymap'))
 assert(
-  'formatKeymap 包含 Mod-b, Mod-i, Mod-k, Mod-Shift-x, Mod-Shift-h, Mod-` 等',
+  'formatKeymap 包含 Mod-b, Mod-i, Mod-k, Mod-Shift-x, Mod-Shift-h, Mod-`, Mod-Enter 等',
   formatKeymap.some((k) => k.key === 'Mod-b') &&
     formatKeymap.some((k) => k.key === 'Mod-i') &&
     formatKeymap.some((k) => k.key === 'Mod-k') &&
     formatKeymap.some((k) => k.key === 'Mod-Shift-x') &&
     formatKeymap.some((k) => k.key === 'Mod-Shift-h') &&
-    formatKeymap.some((k) => k.key === 'Mod-`')
+    formatKeymap.some((k) => k.key === 'Mod-`') &&
+    formatKeymap.some((k) => k.key === 'Mod-Enter')
+)
+assert(
+  'NoteEditor 实现了笔记内容区右键菜单（aria-label="笔记内容菜单"）',
+  noteEditorCode.includes('aria-label="笔记内容菜单"') &&
+    noteEditorCode.includes('handleContextMenu') &&
+    noteEditorCode.includes('editor-context-menu')
+)
+assert(
+  '右键菜单包含剪切、复制、粘贴、全选及模式切换',
+  noteEditorCode.includes('handleCut') &&
+    noteEditorCode.includes('handleCopy') &&
+    noteEditorCode.includes('handlePaste') &&
+    noteEditorCode.includes('handleSelectAll') &&
+    noteEditorCode.includes('handleToggleMode')
 )
 
 // 5. 格式化逻辑直接功能走查
@@ -224,6 +243,34 @@ console.log('\n--- 5. 格式化逻辑核心功能走查 ---')
   assert('在行首插入 > ', tQuote.state.doc.toString() === '> quoted sentence')
   insertQuote(tQuote)
   assert('再次按下取消行首引用', tQuote.state.doc.toString() === 'quoted sentence')
+}
+
+// 5.7 无序列表测试
+{
+  const tBullet = createTarget('bullet item', { from: 3 })
+  toggleBulletList(tBullet)
+  assert('在行首插入 - ', tBullet.state.doc.toString() === '- bullet item')
+  toggleBulletList(tBullet)
+  assert('再次按下取消无序列表', tBullet.state.doc.toString() === 'bullet item')
+
+  const tTaskToBullet = createTarget('- [ ] task item', { from: 5 })
+  toggleBulletList(tTaskToBullet)
+  assert('任务列表转换为无序列表', tTaskToBullet.state.doc.toString() === '- task item')
+}
+
+// 5.8 待办任务测试
+{
+  const tTask = createTarget('buy groceries', { from: 4 })
+  toggleTaskList(tTask)
+  assert('行首插入 - [ ] ', tTask.state.doc.toString() === '- [ ] buy groceries')
+  toggleTaskList(tTask)
+  assert('再次触发切换为完成状态 - [x] ', tTask.state.doc.toString() === '- [x] buy groceries')
+  toggleTaskList(tTask)
+  assert('第三次触发还原为普通文本', tTask.state.doc.toString() === 'buy groceries')
+
+  const tBulletToTask = createTarget('- list item', { from: 3 })
+  toggleTaskList(tBulletToTask)
+  assert('无序列表升级为待办列表', tBulletToTask.state.doc.toString() === '- [ ] list item')
 }
 
 console.log('\n=============================================')

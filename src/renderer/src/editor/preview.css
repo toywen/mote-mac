@@ -96,7 +96,8 @@
 /* A list line hangs: the marker fills the indent, and wrapped lines start under the text.
    The prefix holds the raw marker while it shows source; the marker widget replaces it. */
 .cm-content .cm-line.mote-list {
-  --mote-list-indent: calc(var(--mote-list-depth) * 1.6em);
+  --mote-list-step: 1.4em;
+  --mote-list-indent: calc(var(--mote-list-depth) * var(--mote-list-step));
   padding-left: calc(6px + var(--mote-list-indent));
   text-indent: calc(-1 * var(--mote-list-indent));
 }
@@ -108,9 +109,17 @@
   text-indent: 0;
   white-space: pre;
 }
+.mote-list-prefix {
+  padding-left: calc(var(--mote-list-indent) - var(--mote-list-step));
+}
 .mote-list-marker {
-  padding-left: calc(var(--mote-list-indent) - 1.6em);
+  padding-left: calc(var(--mote-list-indent) - var(--mote-list-step));
+  padding-right: 0.35em;
+  text-align: right;
   color: var(--muted);
+}
+.mote-list-marker-bullet {
+  padding-right: 0.4em;
 }
 
 .cm-content .cm-line.mote-quote {

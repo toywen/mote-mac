@@ -3,14 +3,17 @@ import { EditorView } from '@codemirror/view'
 import { describe, expect, it } from 'vitest'
 import {
   type FormatTarget,
+  formatKeymap,
   insertCodeBlock,
   insertQuote,
   toggleBold,
+  toggleBulletList,
   toggleHighlight,
   toggleInlineCode,
   toggleItalic,
   toggleLink,
-  toggleStrikethrough
+  toggleStrikethrough,
+  toggleTaskList
 } from './formatting'
 
 function createTarget(
@@ -223,6 +226,77 @@ describe('Markdown formatting commands', () => {
       expect(target.state.doc.toString()).toBe('> Hello quote')
       insertQuote(target)
       expect(target.state.doc.toString()).toBe('Hello quote')
+    })
+  })
+
+  describe('toggleBulletList', () => {
+    it('prepends - to plain text line and toggles off on repeat', () => {
+      const target = createTarget('Item one', { from: 3 })
+      toggleBulletList(target)
+      expect(target.state.doc.toString()).toBe('- Item one')
+      toggleBulletList(target)
+      expect(target.state.doc.toString()).toBe('Item one')
+    })
+
+    it('converts tasks to bullet list', () => {
+      const target = createTarget('- [ ] Task item', { from: 5 })
+      toggleBulletList(target)
+      expect(target.state.doc.toString()).toBe('- Task item')
+    })
+
+    it('converts numbered list to bullet list', () => {
+      const target = createTarget('1. Numbered item', { from: 5 })
+      toggleBulletList(target)
+      expect(target.state.doc.toString()).toBe('- Numbered item')
+    })
+
+    it('toggles multiple lines in selection', () => {
+      const target = createTarget('First\nSecond\nThird', { from: 2, to: 15 })
+      toggleBulletList(target)
+      expect(target.state.doc.toString()).toBe('- First\n- Second\n- Third')
+      toggleBulletList(target)
+      expect(target.state.doc.toString()).toBe('First\nSecond\nThird')
+    })
+  })
+
+  describe('toggleTaskList', () => {
+    it('cycles: plain text -> unchecked -> checked -> plain text', () => {
+      const target = createTarget('Buy milk', { from: 3 })
+      // 1. Plain to unchecked task
+      toggleTaskList(target)
+      expect(target.state.doc.toString()).toBe('- [ ] Buy milk')
+
+      // 2. Unchecked task to checked task
+      toggleTaskList(target)
+      expect(target.state.doc.toString()).toBe('- [x] Buy milk')
+
+      // 3. Checked task back to plain text
+      toggleTaskList(target)
+      expect(target.state.doc.toString()).toBe('Buy milk')
+    })
+
+    it('upgrades bullet list to task list', () => {
+      const target = createTarget('- Buy apples', { from: 4 })
+      toggleTaskList(target)
+      expect(target.state.doc.toString()).toBe('- [ ] Buy apples')
+    })
+
+    it('toggles multiple lines simultaneously', () => {
+      const target = createTarget('Task 1\nTask 2', { from: 0, to: 12 })
+      toggleTaskList(target)
+      expect(target.state.doc.toString()).toBe('- [ ] Task 1\n- [ ] Task 2')
+      toggleTaskList(target)
+      expect(target.state.doc.toString()).toBe('- [x] Task 1\n- [x] Task 2')
+      toggleTaskList(target)
+      expect(target.state.doc.toString()).toBe('Task 1\nTask 2')
+    })
+  })
+
+  describe('formatKeymap', () => {
+    it('binds Mod-Enter to toggleTaskList', () => {
+      const binding = formatKeymap.find((k) => k.key === 'Mod-Enter')
+      expect(binding).toBeDefined()
+      expect(binding?.run).toBe(toggleTaskList)
     })
   })
 })

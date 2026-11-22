@@ -201,6 +201,16 @@ export function buildApplicationMenu(): Menu {
         },
         { type: 'separator' as const },
         {
+          label: '待办列表',
+          accelerator: 'CmdOrCtrl+Enter',
+          click: (_item, win) => sendAction('format-task', win)
+        },
+        {
+          label: '无序列表',
+          click: (_item, win) => sendAction('format-bullet', win)
+        },
+        { type: 'separator' as const },
+        {
           label: '代码块',
           accelerator: 'CmdOrCtrl+Alt+C',
           click: (_item, win) => sendAction('format-codeblock', win)

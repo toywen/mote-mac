@@ -8,7 +8,7 @@ import {
   type Text
 } from '@codemirror/state'
 import { EditorView, keymap, drawSelection } from '@codemirror/view'
-import { useLayoutEffect, useMemo, useRef } from 'react'
+import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { VaultInfo, VaultPath } from '../../core/ipc'
 import { sourceText, type LineFormat } from '../../core/text'
 import { completeContext, linkCompletion } from './editor/complete'
@@ -16,7 +16,20 @@ import { editorMode, linkContext } from './editor/livePreview'
 import { noteView } from './editor/noteView'
 import type { EditorMode, LinkContext } from './editor/preview'
 import { editorLocked } from './editor/tasks'
-import { formatKeymap } from './editor/formatting'
+import {
+  formatKeymap,
+  type FormatCommand,
+  insertCodeBlock,
+  insertQuote,
+  toggleBold,
+  toggleBulletList,
+  toggleHighlight,
+  toggleInlineCode,
+  toggleItalic,
+  toggleLink,
+  toggleStrikethrough,
+  toggleTaskList
+} from './editor/formatting'
 import { attachmentContext, imagePasteAndDrop } from './editor/attachments'
 import { workspace, type Selection } from './workspace'
 
@@ -214,5 +227,332 @@ export function NoteEditor({
     view.focus()
   }, [path, selection])
 
-  return <div className="editor-content" data-mode={mode} ref={host} />
+  const [contextMenu, setContextMenu] = useState<{
+    x: number
+    y: number
+    hasSelection: boolean
+    isEditable: boolean
+  } | null>(null)
+
+  useEffect(() => {
+    if (!contextMenu) return
+    const onKeyDown = (e: KeyboardEvent): void => {
+      if (e.key === 'Escape') setContextMenu(null)
+    }
+    const onScroll = (): void => setContextMenu(null)
+    window.addEventListener('keydown', onKeyDown)
+    window.addEventListener('scroll', onScroll, true)
+    return () => {
+      window.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('scroll', onScroll, true)
+    }
+  }, [contextMenu])
+
+  const handleContextMenu = (e: React.MouseEvent): void => {
+    e.preventDefault()
+    const view = editor.current
+    if (!view) return
+
+    const pos = view.posAtCoords({ x: e.clientX, y: e.clientY })
+    if (pos !== null) {
+      const { from, to } = view.state.selection.main
+      if (from === to || pos < from || pos > to) {
+        view.dispatch({ selection: { anchor: pos } })
+      }
+    }
+
+    const { from, to } = view.state.selection.main
+    setContextMenu({
+      x: e.clientX,
+      y: e.clientY,
+      hasSelection: from < to,
+      isEditable: mode === 'live' && !locked
+    })
+  }
+
+  const runFormat = (cmd: FormatCommand): void => {
+    const view = editor.current
+    setContextMenu(null)
+    if (view) {
+      cmd(view)
+      view.focus()
+    }
+  }
+
+  const handleCut = (): void => {
+    const view = editor.current
+    setContextMenu(null)
+    if (!view) return
+    const { from, to } = view.state.selection.main
+    if (from < to) {
+      const text = view.state.sliceDoc(from, to)
+      void navigator.clipboard.writeText(text)
+      view.dispatch({ changes: { from, to, insert: '' }, selection: { anchor: from } })
+    }
+    view.focus()
+  }
+
+  const handleCopy = (): void => {
+    const view = editor.current
+    setContextMenu(null)
+    if (!view) return
+    const { from, to } = view.state.selection.main
+    if (from < to) {
+      const text = view.state.sliceDoc(from, to)
+      void navigator.clipboard.writeText(text)
+    }
+    view.focus()
+  }
+
+  const handlePaste = (): void => {
+    const view = editor.current
+    setContextMenu(null)
+    if (!view) return
+    void (async () => {
+      try {
+        const text = await navigator.clipboard.readText()
+        if (text && editor.current) {
+          const v = editor.current
+          const { from, to } = v.state.selection.main
+          v.dispatch({
+            changes: { from, to, insert: text },
+            selection: { anchor: from + text.length },
+            scrollIntoView: true
+          })
+          v.focus()
+        }
+      } catch {
+        // Clipboard read may be blocked if permissions denied
+      }
+    })()
+  }
+
+  const handleSelectAll = (): void => {
+    const view = editor.current
+    setContextMenu(null)
+    if (!view) return
+    view.dispatch({ selection: { anchor: 0, head: view.state.doc.length } })
+    view.focus()
+  }
+
+  const handleToggleMode = (): void => {
+    setContextMenu(null)
+    workspace.toggleMode()
+  }
+
+  return (
+    <>
+      <div
+        className="editor-content"
+        data-mode={mode}
+        ref={host}
+        onContextMenu={handleContextMenu}
+      />
+      {contextMenu && (
+        <>
+          <div
+            className="context-menu-backdrop"
+            onClick={() => setContextMenu(null)}
+            onContextMenu={(e) => {
+              e.preventDefault()
+              setContextMenu(null)
+            }}
+          />
+          <ul
+            className="context-menu editor-context-menu"
+            role="menu"
+            aria-label="笔记内容菜单"
+            style={{
+              left: Math.max(8, Math.min(contextMenu.x, window.innerWidth - 216)),
+              top: Math.max(32, Math.min(contextMenu.y, window.innerHeight - 448)),
+              minWidth: 200
+            }}
+          >
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.isEditable || !contextMenu.hasSelection}
+                onClick={handleCut}
+              >
+                <span className="context-menu-label">剪切</span>
+                <span className="context-menu-shortcut">⌘X</span>
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.hasSelection}
+                onClick={handleCopy}
+              >
+                <span className="context-menu-label">复制</span>
+                <span className="context-menu-shortcut">⌘C</span>
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.isEditable}
+                onClick={handlePaste}
+              >
+                <span className="context-menu-label">粘贴</span>
+                <span className="context-menu-shortcut">⌘V</span>
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                onClick={handleSelectAll}
+              >
+                <span className="context-menu-label">全选</span>
+                <span className="context-menu-shortcut">⌘A</span>
+              </button>
+            </li>
+            <li className="context-menu-separator" role="separator" />
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.isEditable}
+                onClick={() => runFormat(toggleBold)}
+              >
+                <span className="context-menu-label">粗体</span>
+                <span className="context-menu-shortcut">⌘B</span>
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.isEditable}
+                onClick={() => runFormat(toggleItalic)}
+              >
+                <span className="context-menu-label">斜体</span>
+                <span className="context-menu-shortcut">⌘I</span>
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.isEditable}
+                onClick={() => runFormat(toggleHighlight)}
+              >
+                <span className="context-menu-label">高亮</span>
+                <span className="context-menu-shortcut">⇧⌘H</span>
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.isEditable}
+                onClick={() => runFormat(toggleInlineCode)}
+              >
+                <span className="context-menu-label">行内代码</span>
+                <span className="context-menu-shortcut">⌘`</span>
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.isEditable}
+                onClick={() => runFormat(toggleLink)}
+              >
+                <span className="context-menu-label">插入链接</span>
+                <span className="context-menu-shortcut">⌘K</span>
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.isEditable}
+                onClick={() => runFormat(toggleStrikethrough)}
+              >
+                <span className="context-menu-label">删除线</span>
+                <span className="context-menu-shortcut">⇧⌘X</span>
+              </button>
+            </li>
+            <li className="context-menu-separator" role="separator" />
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.isEditable}
+                onClick={() => runFormat(toggleTaskList)}
+              >
+                <span className="context-menu-label">待办列表</span>
+                <span className="context-menu-shortcut">⌘↵</span>
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.isEditable}
+                onClick={() => runFormat(toggleBulletList)}
+              >
+                <span className="context-menu-label">无序列表</span>
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.isEditable}
+                onClick={() => runFormat(insertQuote)}
+              >
+                <span className="context-menu-label">引用</span>
+                <span className="context-menu-shortcut">⇧⌘.</span>
+              </button>
+            </li>
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                disabled={!contextMenu.isEditable}
+                onClick={() => runFormat(insertCodeBlock)}
+              >
+                <span className="context-menu-label">代码块</span>
+                <span className="context-menu-shortcut">⌥⌘C</span>
+              </button>
+            </li>
+            <li className="context-menu-separator" role="separator" />
+            <li role="none">
+              <button
+                type="button"
+                role="menuitem"
+                className="context-menu-item"
+                onClick={handleToggleMode}
+              >
+                <span className="context-menu-label">
+                  {mode === 'reading' ? '切换到编辑模式' : '切换到阅读模式'}
+                </span>
+                <span className="context-menu-shortcut">⌘E</span>
+              </button>
+            </li>
+          </ul>
+        </>
+      )}
+    </>
+  )
 }

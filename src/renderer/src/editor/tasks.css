@@ -16,14 +16,14 @@
 }
 
 /* In a bullet list the checkbox takes the bullet's place: the bullet keeps its width but not
-   its glyph, and the checkbox sits in the bullet's 1.6em slot, so the text starts where the
+   its glyph, and the checkbox sits in the bullet's slot, so the text starts where the
    list's wrapped lines start. */
 .cm-line.mote-task-bullet .mote-list-marker {
   visibility: hidden;
 }
 .cm-line.mote-task-bullet .mote-task-box {
-  width: 1.6em;
-  margin-left: -1.6em;
+  width: var(--mote-list-step, 1.4em);
+  margin-left: calc(-1 * var(--mote-list-step, 1.4em));
 }
 
 .mote-task-done {

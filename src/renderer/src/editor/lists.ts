@@ -2,23 +2,26 @@ import { Decoration, WidgetType } from '@codemirror/view'
 import { lineAt, type Renderer } from './preview'
 
 class MarkerWidget extends WidgetType {
-  constructor(readonly text: string) {
+  constructor(
+    readonly text: string,
+    readonly kind: 'bullet' | 'ordered' = 'bullet'
+  ) {
     super()
   }
 
   eq(other: MarkerWidget): boolean {
-    return other.text === this.text
+    return other.text === this.text && other.kind === this.kind
   }
 
   toDOM(): HTMLElement {
     const span = document.createElement('span')
-    span.className = 'mote-list-marker'
+    span.className = `mote-list-marker mote-list-marker-${this.kind}`
     span.textContent = this.text
     return span
   }
 }
 
-const bullet = Decoration.replace({ widget: new MarkerWidget('•') })
+const bullet = Decoration.replace({ widget: new MarkerWidget('•', 'bullet') })
 const prefix = Decoration.mark({ class: 'mote-list-prefix' })
 const depthLines: Decoration[] = []
 
@@ -42,7 +45,9 @@ const listMark: Renderer = (node, cx) => {
   const to = /[ \t]/.test(doc.sliceString(node.to, node.to + 1)) ? node.to + 1 : node.to
   const ordered = node.node.parent?.parent?.name === 'OrderedList'
   const marker = ordered
-    ? Decoration.replace({ widget: new MarkerWidget(doc.sliceString(node.from, node.to)) })
+    ? Decoration.replace({
+        widget: new MarkerWidget(doc.sliceString(node.from, node.to), 'ordered')
+      })
     : bullet
   return [
     {

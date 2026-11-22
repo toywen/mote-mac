@@ -331,6 +331,169 @@ export const insertQuote: FormatCommand = (target) => {
   return true
 }
 
+/**
+ * Toggles bullet list marker (- ) for all lines covered by the selection.
+ * - If all lines are bullet lists, removes the bullet marker.
+ * - If a line is a task (- [ ] or - [x]), converts it to a bullet list (- ).
+ * - If a line is a numbered list (1. ), converts it to a bullet list (- ).
+ * - If a line is plain text, prepends "- " (preserving indentation).
+ */
+export const toggleBulletList: FormatCommand = (target) => {
+  if (target.state.facet(EditorView.editable) === false || target.state.readOnly) {
+    return false
+  }
+
+  const { state } = target
+  const { from, to } = state.selection.main
+  const startLine = state.doc.lineAt(from)
+  const endLine = state.doc.lineAt(to)
+
+  const lineNumbers: number[] = []
+  for (let l = startLine.number; l <= endLine.number; l++) {
+    lineNumbers.push(l)
+  }
+
+  const lines = lineNumbers.map((num) => state.doc.line(num))
+  const allBullets = lines.every((l) => /^\s*[-*+]\s+(?!\[[ xX]\]\s)/.test(l.text))
+
+  const changes: { from: number; to: number; insert: string }[] = []
+
+  for (const line of lines) {
+    const text = line.text
+    const taskMatch = /^(\s*)-\s*\[[ xX]\]\s+(.*)$/.exec(text)
+    const bulletMatch = /^(\s*)[-*+]\s+(?!\[[ xX]\]\s)(.*)$/.exec(text)
+    const numberedMatch = /^(\s*)\d+\.\s+(.*)$/.exec(text)
+
+    if (allBullets) {
+      if (bulletMatch) {
+        changes.push({
+          from: line.from,
+          to: line.to,
+          insert: `${bulletMatch[1]}${bulletMatch[2]}`
+        })
+      }
+    } else {
+      if (taskMatch) {
+        changes.push({
+          from: line.from,
+          to: line.to,
+          insert: `${taskMatch[1]}- ${taskMatch[2]}`
+        })
+      } else if (bulletMatch) {
+        changes.push({
+          from: line.from,
+          to: line.to,
+          insert: `${bulletMatch[1]}- ${bulletMatch[2]}`
+        })
+      } else if (numberedMatch) {
+        changes.push({
+          from: line.from,
+          to: line.to,
+          insert: `${numberedMatch[1]}- ${numberedMatch[2]}`
+        })
+      } else {
+        const indentMatch = /^(\s*)(.*)$/.exec(text)
+        const indent = indentMatch ? indentMatch[1] : ''
+        const rest = indentMatch ? indentMatch[2] : text
+        changes.push({
+          from: line.from,
+          to: line.to,
+          insert: `${indent}- ${rest}`
+        })
+      }
+    }
+  }
+
+  target.dispatch({ changes, scrollIntoView: true })
+  return true
+}
+
+/**
+ * Toggles task list marker (- [ ] / - [x]) for all lines covered by the selection.
+ * Cycling:
+ * - If all lines are unchecked (- [ ] ), marks them checked (- [x] ).
+ * - If all lines are checked (- [x] ), clears task marker to plain text.
+ * - Otherwise (plain text, bullet, or mixed), sets them to unchecked (- [ ] ).
+ */
+export const toggleTaskList: FormatCommand = (target) => {
+  if (target.state.facet(EditorView.editable) === false || target.state.readOnly) {
+    return false
+  }
+
+  const { state } = target
+  const { from, to } = state.selection.main
+  const startLine = state.doc.lineAt(from)
+  const endLine = state.doc.lineAt(to)
+
+  const lineNumbers: number[] = []
+  for (let l = startLine.number; l <= endLine.number; l++) {
+    lineNumbers.push(l)
+  }
+
+  const lines = lineNumbers.map((num) => state.doc.line(num))
+  const allUnchecked = lines.every((l) => /^\s*-\s*\[ \]\s+/.test(l.text))
+  const allChecked = lines.every((l) => /^\s*-\s*\[[xX]\]\s+/.test(l.text))
+
+  const changes: { from: number; to: number; insert: string }[] = []
+
+  for (const line of lines) {
+    const text = line.text
+    const taskMatch = /^(\s*)-\s*\[([ xX])\]\s+(.*)$/.exec(text)
+    const bulletMatch = /^(\s*)[-*+]\s+(.*)$/.exec(text)
+    const numberedMatch = /^(\s*)\d+\.\s+(.*)$/.exec(text)
+
+    if (allUnchecked) {
+      if (taskMatch) {
+        changes.push({
+          from: line.from,
+          to: line.to,
+          insert: `${taskMatch[1]}- [x] ${taskMatch[3]}`
+        })
+      }
+    } else if (allChecked) {
+      if (taskMatch) {
+        changes.push({
+          from: line.from,
+          to: line.to,
+          insert: `${taskMatch[1]}${taskMatch[3]}`
+        })
+      }
+    } else {
+      if (taskMatch) {
+        changes.push({
+          from: line.from,
+          to: line.to,
+          insert: `${taskMatch[1]}- [ ] ${taskMatch[3]}`
+        })
+      } else if (bulletMatch) {
+        changes.push({
+          from: line.from,
+          to: line.to,
+          insert: `${bulletMatch[1]}- [ ] ${bulletMatch[2]}`
+        })
+      } else if (numberedMatch) {
+        changes.push({
+          from: line.from,
+          to: line.to,
+          insert: `${numberedMatch[1]}- [ ] ${numberedMatch[2]}`
+        })
+      } else {
+        const indentMatch = /^(\s*)(.*)$/.exec(text)
+        const indent = indentMatch ? indentMatch[1] : ''
+        const rest = indentMatch ? indentMatch[2] : text
+        changes.push({
+          from: line.from,
+          to: line.to,
+          insert: `${indent}- [ ] ${rest}`
+        })
+      }
+    }
+  }
+
+  target.dispatch({ changes, scrollIntoView: true })
+  return true
+}
+
 export const formatKeymap: KeyBinding[] = [
   { key: 'Mod-b', run: toggleBold },
   { key: 'Mod-i', run: toggleItalic },
@@ -341,7 +504,8 @@ export const formatKeymap: KeyBinding[] = [
   { key: 'Mod-`', run: toggleInlineCode },
   { key: 'Mod-Shift-c', run: toggleInlineCode },
   { key: 'Mod-Alt-c', run: insertCodeBlock },
-  { key: 'Mod-Shift-.', run: insertQuote }
+  { key: 'Mod-Shift-.', run: insertQuote },
+  { key: 'Mod-Enter', run: toggleTaskList }
 ]
 
 export type FormatAction =
@@ -353,6 +517,8 @@ export type FormatAction =
   | 'format-link'
   | 'format-codeblock'
   | 'format-quote'
+  | 'format-task'
+  | 'format-bullet'
 
 export function executeFormatting(action: FormatAction): boolean {
   const cmEl = document.querySelector('.cm-editor')
@@ -377,6 +543,10 @@ export function executeFormatting(action: FormatAction): boolean {
       return insertCodeBlock(view)
     case 'format-quote':
       return insertQuote(view)
+    case 'format-task':
+      return toggleTaskList(view)
+    case 'format-bullet':
+      return toggleBulletList(view)
     default:
       return false
   }

@@ -279,6 +279,8 @@ function App(): React.JSX.Element {
         case 'format-link':
         case 'format-codeblock':
         case 'format-quote':
+        case 'format-task':
+        case 'format-bullet':
           executeFormatting(action as FormatAction)
           break
       }
