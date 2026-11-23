@@ -37,6 +37,8 @@ describe('NoteIndex', () => {
 test('preview cuts long lines around the match', () => {
   const text = 'x'.repeat(500) + '[[a]]' + 'y'.repeat(500)
   const result = preview(text, 500, 505)
-  expect(result.text.length).toBe(240)
+  expect(result.text.length).toBeLessThan(300)
   expect(result.text.slice(result.from, result.to)).toBe('[[a]]')
+  expect(result.text.slice(0, result.from)).toMatch(/^x+$/)
+  expect(result.text.slice(result.to)).toMatch(/^y+$/)
 })

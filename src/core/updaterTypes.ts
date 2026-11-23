@@ -40,7 +40,7 @@ export interface UpdateStatus {
   error?: string
 }
 
-export function parseSemver(v: string): [number, number, number] {
+function parseSemver(v: string): [number, number, number] {
   const clean = v.trim().replace(/^v/i, '')
   const mainPart = clean.split('-')[0].split('+')[0]
   const segments = mainPart.split('.').map((s) => Number.parseInt(s, 10))
@@ -51,7 +51,7 @@ export function parseSemver(v: string): [number, number, number] {
   ]
 }
 
-export function compareSemver(v1: string, v2: string): number {
+function compareSemver(v1: string, v2: string): number {
   const [maj1, min1, pat1] = parseSemver(v1)
   const [maj2, min2, pat2] = parseSemver(v2)
 

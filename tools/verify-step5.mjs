@@ -35,20 +35,15 @@ async function main() {
   console.log('       Step 5 Acceptance Verification Suite         ')
   console.log('====================================================\n')
 
-  // 1. Unit Tests (fileUrl & videos)
-  console.log('== 1. Unit Tests (fileUrl & videos) ==')
-  run('npx', [
-    'vitest',
-    'run',
-    'src/core/fileUrl.test.ts',
-    'src/renderer/src/editor/videos.test.ts'
-  ])
+  // 1. Unit Tests (fileUrl)
+  console.log('== 1. Unit Tests (fileUrl) ==')
+  run('npx', ['vitest', 'run', 'src/core/fileUrl.test.ts'])
   console.log('✓ Unit tests passed.\n')
 
   // 2. E2E Tests (videos & youtube embeds)
   console.log('== 2. Playwright E2E Tests (videos & YouTube embeds) ==')
   run('npx', ['electron-vite', 'build'])
-  run('npx', ['playwright', 'test', 'tests/e2e/videos.spec.ts'])
+  run('npx', ['playwright', 'test', 'tests/e2e/videos.spec.ts', 'tests/e2e/youtube.spec.ts'])
   console.log('✓ E2E tests passed.\n')
 
   // 3. Scale and Benchmarks (10k notes)

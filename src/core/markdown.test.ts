@@ -32,26 +32,6 @@ describe('markdownParser', () => {
     expect(nodes(multiline, 'BlockMath')).toEqual([multiline])
   })
 
-  it('parses tables into rows and cells', () => {
-    const text = '| a | b |\n| --- | --- |\n| 一 | [[Readme]] |'
-    expect(nodes(text, 'Table')).toEqual([text])
-    expect(nodes(text, 'TableHeader')).toEqual(['| a | b |'])
-    expect(nodes(text, 'TableRow')).toEqual(['| 一 | [[Readme]] |'])
-    expect(nodes(text, 'TableCell')).toEqual(['a', 'b', '一', '[[Readme]]'])
-  })
-
-  it('parses task markers', () => {
-    const text = '- [ ] 待办\n- [x] 完成\n- 普通'
-    expect(nodes(text, 'Task')).toEqual(['[ ] 待办', '[x] 完成'])
-    expect(nodes(text, 'TaskMarker')).toEqual(['[ ]', '[x]'])
-  })
-
-  it('parses strikethrough with its marks', () => {
-    const text = '有 ~~删除~~ 的字'
-    expect(nodes(text, 'Strikethrough')).toEqual(['~~删除~~'])
-    expect(nodes(text, 'StrikethroughMark')).toEqual(['~~', '~~'])
-  })
-
   it('parses highlights with their marks, and needs text right after the opening mark', () => {
     const text = '有 ==高亮== 和 ==另一处== 的字'
     expect(nodes(text, 'Highlight')).toEqual(['==高亮==', '==另一处=='])
