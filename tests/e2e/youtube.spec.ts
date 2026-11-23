@@ -2,10 +2,6 @@ import { test, expect } from '@playwright/test'
 import { cp } from 'node:fs/promises'
 import { launch, openVault } from './app'
 
-// Quitting waits up to 30 s for the update check that starts 3 s after launch, when
-// api.github.com does not resolve. Leave room for that.
-test.describe.configure({ timeout: 60_000 })
-
 test('YouTube short links, start times and sizes become players, and other addresses do not', async () => {
   const info = test.info()
   const vault = info.outputPath('vault')

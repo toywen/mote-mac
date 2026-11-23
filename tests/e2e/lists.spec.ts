@@ -5,10 +5,6 @@ import { launch, openVault } from './app'
 
 const fixture = 'tests/fixtures/vaults/lists'
 
-// Quitting waits up to 30 s for the update check that starts 3 s after launch, when
-// api.github.com does not resolve. Leave room for that.
-test.describe.configure({ timeout: 60_000 })
-
 async function start(): Promise<{
   app: ElectronApplication
   window: Page
