@@ -192,17 +192,13 @@ export const FileTree = forwardRef<
     if (targetPath === node.path) return
 
     if (vault.config.alwaysUpdateLinks) {
-      await window.mote.renameOrMove(vault.dir, node.path, targetPath, true)
-      workspace.renameTab(node.path, targetPath)
-      if (selected === node.path) void workspace.open(targetPath)
+      await workspace.rename(node.path, targetPath, true)
     } else {
       const count = await window.mote.countInboundLinks(vault.dir, node.path)
       if (count > 0) {
         setConfirmLinkUpdate({ oldPath: node.path, newPath: targetPath, count })
       } else {
-        await window.mote.renameOrMove(vault.dir, node.path, targetPath, true)
-        workspace.renameTab(node.path, targetPath)
-        if (selected === node.path) void workspace.open(targetPath)
+        await workspace.rename(node.path, targetPath, true)
       }
     }
   }
@@ -510,9 +506,7 @@ export const FileTree = forwardRef<
                   onClick={async () => {
                     const { oldPath, newPath } = confirmLinkUpdate
                     setConfirmLinkUpdate(null)
-                    await window.mote.renameOrMove(vault.dir, oldPath, newPath, false)
-                    workspace.renameTab(oldPath, newPath)
-                    if (selected === oldPath) void workspace.open(newPath)
+                    await workspace.rename(oldPath, newPath, false)
                   }}
                 >
                   不更新
@@ -524,9 +518,7 @@ export const FileTree = forwardRef<
                   onClick={async () => {
                     const { oldPath, newPath } = confirmLinkUpdate
                     setConfirmLinkUpdate(null)
-                    await window.mote.renameOrMove(vault.dir, oldPath, newPath, true)
-                    workspace.renameTab(oldPath, newPath)
-                    if (selected === oldPath) void workspace.open(newPath)
+                    await workspace.rename(oldPath, newPath, true)
                   }}
                 >
                   更新链接

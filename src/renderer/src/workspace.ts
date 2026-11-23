@@ -60,7 +60,7 @@ const AUTOSAVE_MAX_WAIT_MS = 800
 const RECENT_LIMIT = 50
 const recentKey = (dir: string): string => `mote.recent:${dir}`
 
-class Workspace {
+export class Workspace {
   private state: WorkspaceState = {
     vault: null,
     tabs: [],
@@ -352,6 +352,16 @@ class Workspace {
     void this.open(tabs[nextIndex])
   }
 
+  // Renames or moves a note or folder from the file tree.
+  async rename(from: VaultPath, to: VaultPath, updateLinks: boolean): Promise<void> {
+    const { vault, doc } = this.state
+    if (!vault) return
+    const selected = doc?.path
+    await window.mote.renameOrMove(vault.dir, from, to, updateLinks)
+    this.renameTab(from, to)
+    if (selected === from) void this.open(to)
+  }
+
   renameTab(from: VaultPath, to: VaultPath): void {
     const { tabs, doc } = this.state
     if (!tabs.includes(from)) return
@@ -485,7 +495,7 @@ class Workspace {
 
   private scheduleSave(): void {
     if (this.saveTimer) {
-      clearTimeout(this.saveTimer)
+      window.clearTimeout(this.saveTimer)
     }
     this.saveTimer = window.setTimeout(() => {
       this.clearSaveTimers()
@@ -502,11 +512,11 @@ class Workspace {
 
   private clearSaveTimers(): void {
     if (this.saveTimer) {
-      clearTimeout(this.saveTimer)
+      window.clearTimeout(this.saveTimer)
       this.saveTimer = undefined
     }
     if (this.maxWaitTimer) {
-      clearTimeout(this.maxWaitTimer)
+      window.clearTimeout(this.maxWaitTimer)
       this.maxWaitTimer = undefined
     }
   }
