@@ -95,18 +95,23 @@
 
 ## 一篇打开的笔记的状态
 
-渲染进程用一个状态机管理打开的笔记，不用多个布尔值。定义在 `src/renderer/src/workspace.ts`。
+渲染进程用一个状态机管理打开的笔记，不用多个布尔值。定义在 `src/renderer/src/workspace.ts`。`src/renderer/src/workspace.check.ts` 穷举事件顺序检查它，用法见 `.claude/skills/verify-open-note/SKILL.md`。
 
-| 当前状态 | 事件                             | 下一个状态                |
-| -------- | -------------------------------- | ------------------------- |
-| clean    | 你输入                           | dirty                     |
-| clean    | 外部修改                         | 重新读取，仍是 clean      |
-| dirty    | 停止输入，或切换笔记、退出       | saving                    |
-| saving   | 写入成功                         | clean，基准哈希换成新哈希 |
-| saving   | 主进程报告磁盘哈希和基准哈希不同 | conflict                  |
-| dirty    | 外部修改                         | conflict                  |
-| conflict | 你选了保留哪份                   | saving                    |
-| 任意     | 磁盘上的文件被删除               | missing                   |
+| 当前状态 | 事件                                   | 下一个状态                                        |
+| -------- | -------------------------------------- | ------------------------------------------------- |
+| clean    | 你输入                                 | dirty                                             |
+| clean    | 外部修改                               | 重新读取，仍是 clean                              |
+| dirty    | 停止输入，或切换笔记、退出             | saving                                            |
+| saving   | 写入成功                               | clean，基准哈希换成新哈希。期间又输入了就是 dirty |
+| saving   | 主进程报告磁盘哈希和基准哈希不同       | conflict                                          |
+| saving   | 写盘出错                               | dirty，显示错误和「重试保存」                     |
+| dirty    | 外部修改                               | conflict                                          |
+| conflict | 你选了保留哪份                         | saving                                            |
+| 任意     | 主进程改名或移动了这篇笔记（任何窗口） | 状态、文字和打开会话不变，只换路径                |
+| saving   | 写入在改名前发出，旧路径上找不到文件   | 按新路径重发，仍是 saving                         |
+| 任意     | 磁盘上的文件被删除                     | missing                                           |
+
+保存的回复只交给发起它的打开会话。改名经主进程的笔记库变化（`VaultChange.renamed`）通知每个窗口，不由文件树直接改路径。保存进行中又要保存时，排在它后面，不丢弃。
 
 ## 不变式
 
