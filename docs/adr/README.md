@@ -33,3 +33,6 @@ ADR（Architecture Decision Record）是架构决策记录。每个文件记一�
 | [0020](0020-image-and-pdf-in-app-preview.md)                              | 在应用内支持图片与 PDF 格式文件的独立标签页预览           | 已实现                       |
 | [0021](0021-own-sync-service-without-claude-connector.md)                 | 同步用 mote 自己的服务，不考虑 Claude 连接器              | 已接受，替代 0005            |
 | [0022](0022-sync-service-deployment-and-latency.md)                       | 同步服务部署在自己的阿里云服务器，按文件同步，延迟约 2 秒 | 已接受                       |
+| [0023](0023-sync-repo-split.md)                                           | 同步服务和协议独立成 mote-sync 仓库                       | 已接受                       |
+| [0024](0024-no-account-system-in-v1.md)                                   | 同步第一版不做账户体系，只用设备令牌                      | 被 0025 替代                 |
+| [0025](0025-accounts-in-data-model-from-v1.md)                            | 同步从第一版就按账户建模，登录界面留到以后                | 已接受，替代 0024            |
