@@ -9,7 +9,7 @@ import {
   FolderOpen,
   FolderPlus,
   Link2,
-  LocateFixed,
+  Locate,
   Moon,
   PanelLeft,
   PencilLine,
@@ -372,7 +372,7 @@ function App(): React.JSX.Element {
                     }
                   }}
                 >
-                  <LocateFixed size={14} strokeWidth={1.5} />
+                  <Locate size={14} strokeWidth={1.5} />
                 </button>
                 <button
                   className="icon-button"
