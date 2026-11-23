@@ -106,7 +106,7 @@ It prints JSON:
 
 The metric counts work, not time to the next frame, so the display refresh rate does not bound it. It misses work on the compositor and GPU threads and in the main process.
 
-The gap must stay below mote's 750 ms autosave delay, so no save runs during the measurement. The run leaves the note edited. mote saves it after the run, and `vault-diff` will list that note.
+The gap must stay below `AUTOSAVE_DEBOUNCE_MS` in `src/core/autosave.ts`, so no pause between keys starts a save. A save still runs every `AUTOSAVE_MAX_WAIT_MS` while typing goes on, so a run longer than that includes saves. The run leaves the note edited. mote saves it after the run, and `vault-diff` will list that note.
 
 Run every number at least twice in a row. If two medians differ by more than 30 percent, find out why before you record one.
 
