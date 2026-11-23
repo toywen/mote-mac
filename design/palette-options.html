@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh-CN" data-palette="songyan" data-theme="light">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>mote 强调色方案对比</title>
+<style>
+  @font-face {
+    font-family: 'Kai';
+    font-weight: 400;
+    src: local('STKaitiSC-Regular'), local('Kaiti SC'), local('STKaiti'), serif;
+  }
+  * { box-sizing: border-box; }
+  :root {
+    --background: #fcfbf8;
+    --sidebar: #f5f3ec;
+    --border: #ebe7db;
+    --text: #22201c;
+    --muted: #656157;
+    --t3: #9b978b;
+    --hover: rgba(70, 55, 30, 0.055);
+    --selected: rgba(70, 55, 30, 0.095);
+    --code-background: rgba(70, 55, 30, 0.055);
+    --highlight: rgba(223, 170, 70, 0.28);
+    --tag-text: #205c4a;
+    --tag-background: rgba(32, 92, 74, 0.09);
+    --link-missing: #b45309;
+    --quote: #9b978b;
+    --accent: #0969da;
+    --link: #0969da;
+    --accent-bg: rgba(9, 105, 218, 0.07);
+    --font-kai: 'Kai', 'Kaiti SC', 'STKaiti', 'Songti SC', 'STSong', Georgia, serif;
+    --font-hei: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    color-scheme: light;
+  }
+  [data-theme='dark'] {
+    --background: #1c1b18;
+    --sidebar: #161513;
+    --border: #2b2925;
+    --text: #e9e6de;
+    --muted: #9d998d;
+    --t3: #656259;
+    --hover: rgba(255, 245, 225, 0.065);
+    --selected: rgba(255, 245, 225, 0.12);
+    --code-background: rgba(255, 245, 225, 0.065);
+    --highlight: rgba(223, 182, 114, 0.25);
+    --tag-text: #7ec4a8;
+    --tag-background: rgba(126, 196, 168, 0.12);
+    --link-missing: #f59e0b;
+    --quote: #656259;
+    --accent: #58a6ff;
+    --link: #58a6ff;
+    --accent-bg: rgba(88, 166, 255, 0.1);
+    color-scheme: dark;
+  }
+
+  /* 方案 A：朱砂（印章红，推荐） */
+  [data-palette='zhusha'] { --accent: #b3261e; --link: #b3261e; --accent-bg: rgba(179, 38, 30, 0.075); }
+  [data-theme='dark'][data-palette='zhusha'] { --accent: #f2867a; --link: #f2867a; --accent-bg: rgba(242, 134, 122, 0.12); }
+
+  /* 方案 B：松烟（墨绿） */
+  [data-palette='songyan'] { --accent: #2f5d50; --link: #2f5d50; --accent-bg: rgba(47, 93, 80, 0.08); }
+  [data-theme='dark'][data-palette='songyan'] { --accent: #8fc7b3; --link: #8fc7b3; --accent-bg: rgba(143, 199, 179, 0.12); }
+
+  /* 方案 C：藏青（压深的墨蓝，不再刺眼） */
+  [data-palette='zangqing'] { --accent: #2d4463; --link: #2d4463; --accent-bg: rgba(45, 68, 99, 0.075); }
+  [data-theme='dark'][data-palette='zangqing'] { --accent: #9fb0e8; --link: #9fb0e8; --accent-bg: rgba(159, 176, 232, 0.12); }
+
+  /* 方案 0：现状（GitHub 蓝） */
+  [data-palette='current'] { --accent: #2c447c; --link: #0969da; --accent-bg: rgba(44, 68, 124, 0.08); }
+  [data-theme='dark'][data-palette='current'] { --accent: #9fb0e8; --link: #58a6ff; --accent-bg: rgba(159, 176, 232, 0.12); }
+
+  html, body { margin: 0; min-height: 100%; }
+  body {
+    background: #e9e6de;
+    color: var(--text);
+    font-family: var(--font-hei);
+    padding: 28px 24px 40px;
+    transition: background 160ms ease;
+  }
+  [data-theme='dark'] body { background: #0f0e0c; }
+
+  .page-head { max-width: 1020px; margin: 0 auto 18px; color: #22201c; }
+  [data-theme='dark'] .page-head { color: #e9e6de; }
+  .page-head h1 { font-size: 18px; font-weight: 600; margin: 0 0 6px; letter-spacing: 0.01em; }
+  .page-head p { margin: 0; font-size: 12.5px; line-height: 1.6; color: #656157; }
+  [data-theme='dark'] .page-head p { color: #9d998d; }
+
+  .controls { max-width: 1020px; margin: 0 auto 16px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+  .palette-btn {
+    font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: 999px;
+    border: 1px solid #cfc9b8; background: transparent; color: inherit; cursor: pointer;
+    display: inline-flex; align-items: center; gap: 7px; transition: background 120ms ease;
+  }
+  [data-theme='dark'] .palette-btn { border-color: #3a3730; color: #e9e6de; }
+  .palette-btn .swatch { width: 10px; height: 10px; border-radius: 50%; background: var(--sw); }
+  .palette-btn[aria-pressed='true'] { background: #fcfbf8; border-color: var(--text); }
+  [data-theme='dark'] .palette-btn[aria-pressed='true'] { background: #1c1b18; }
+  .spacer { flex: 1; }
+  .mode-btn {
+    font: inherit; font-size: 12.5px; padding: 7px 14px; border-radius: 999px;
+    border: 1px solid #cfc9b8; background: transparent; cursor: pointer; color: inherit;
+  }
+  [data-theme='dark'] .mode-btn { border-color: #3a3730; color: #e9e6de; }
+
+  .window {
+    max-width: 1020px; margin: 0 auto; border-radius: 12px; overflow: hidden;
+    border: 1px solid var(--border); background: var(--background); color: var(--text);
+    box-shadow: 0 18px 48px rgba(30, 25, 15, 0.14);
+    display: grid; grid-template-rows: 38px 1fr; font-family: var(--font-kai);
+    transition: background 160ms ease, color 160ms ease;
+  }
+  [data-theme='dark'] .window { box-shadow: 0 18px 48px rgba(0, 0, 0, 0.5); }
+
+  .titlebar {
+    display: flex; align-items: center; gap: 8px; padding: 0 14px;
+    background: var(--sidebar); border-bottom: 1px solid var(--border);
+  }
+  .light { width: 11px; height: 11px; border-radius: 50%; }
+  .light.r { background: #ff5f57; } .light.y { background: #febc2e; } .light.g { background: #28c840; }
+
+  .body { display: grid; grid-template-columns: 216px 1fr; min-height: 460px; }
+  .side {
+    background: var(--sidebar); border-right: 1px solid var(--border);
+    padding: 12px 8px; font-size: 12.5px; color: var(--muted);
+  }
+  .side-title { font-family: var(--font-hei); font-size: 11px; font-weight: 600; padding: 2px 8px 10px; color: var(--muted); }
+  .row { display: flex; align-items: center; gap: 7px; height: 27px; padding: 0 8px; border-radius: 6px; position: relative; }
+  .row.sel { background: var(--selected); color: var(--text); font-weight: 550; }
+  .row.sel::before {
+    content: ''; position: absolute; left: 2px; top: 5px; bottom: 5px; width: 3px;
+    border-radius: 2px; background: var(--accent);
+  }
+  .row.indent { padding-left: 26px; }
+  .row .dot { width: 5px; height: 5px; border-radius: 50%; background: var(--accent); margin-left: auto; }
+
+  .main { display: flex; flex-direction: column; min-width: 0; }
+  .tabbar { display: flex; align-items: center; gap: 6px; padding: 7px 12px; border-bottom: 1px solid var(--border); }
+  .tab {
+    display: inline-flex; align-items: center; gap: 6px; height: 26px; padding: 0 12px;
+    border-radius: 6px; font-family: var(--font-hei); font-size: 12px; color: var(--muted);
+  }
+  .tab.active { background: #ffffff; color: var(--text); }
+  [data-theme='dark'] .tab.active { background: #282622; }
+
+  .doc { padding: 26px 40px 34px; max-width: 760px; font-size: 15.5px; line-height: 1.85; }
+
+  h2.doc-h { font-size: 21px; font-weight: 700; margin: 22px 0 8px; letter-spacing: -0.01em; }
+  h2.doc-h:first-child { margin-top: 0; }
+  p { margin: 0 0 14px; }
+
+  .task { display: flex; align-items: baseline; gap: 2px; margin: 2px 0; }
+  .task input { width: 14px; height: 14px; margin: 0 8px 0 0; accent-color: var(--accent); }
+  .task.done .text { color: var(--muted); text-decoration: line-through; }
+
+  .link {
+    color: var(--link); text-decoration: underline;
+    text-decoration-color: color-mix(in srgb, var(--link) 40%, transparent);
+    text-underline-offset: 3px; cursor: pointer; border-radius: 3px;
+  }
+  .link:hover { text-decoration-color: var(--link); background: color-mix(in srgb, var(--link) 10%, transparent); }
+  .missing { color: var(--link-missing); text-decoration: underline dashed; text-decoration-color: color-mix(in srgb, var(--link-missing) 50%, transparent); text-underline-offset: 3px; }
+
+  .quote {
+    border-left: 2.5px solid var(--quote); background: var(--hover);
+    padding: 2px 14px; margin: 16px 0; border-radius: 0 6px 6px 0;
+  }
+
+  .tag {
+    color: var(--tag-text); background: var(--tag-background);
+    border-radius: 1em; padding: 0 0.45em; font-size: 0.9em;
+  }
+  code { font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.86em; background: var(--code-background); border-radius: 3px; padding: 0.1em 0.3em; }
+  mark { background: var(--highlight); color: inherit; border-radius: 2px; padding: 0 0.1em; }
+
+  .widgets {
+    border-top: 1px dashed var(--border); margin-top: 24px; padding-top: 16px;
+    font-family: var(--font-hei); font-size: 12.5px; display: flex; flex-wrap: wrap; gap: 14px; align-items: center;
+  }
+  .focus {
+    padding: 5px 10px; border-radius: 6px; background: var(--background); color: var(--muted);
+    border: 1px solid var(--accent); box-shadow: 0 0 0 3px color-mix(in srgb, var(--accent) 16%, transparent);
+  }
+  .primary {
+    padding: 6px 14px; border-radius: 6px; border: 1px solid var(--accent);
+    background: var(--accent); color: #fff; font-family: var(--font-hei);
+  }
+  .badge {
+    padding: 2px 10px; border-radius: 999px; background: var(--accent-bg); color: var(--accent);
+    border: 1px solid transparent; font-synthesis: none;
+  }
+  .caption { max-width: 1020px; margin: 14px auto 0; font-size: 12px; color: #656157; line-height: 1.7; }
+  [data-theme='dark'] .caption { color: #9d998d; }
+  .caption strong { font-weight: 600; color: #22201c; }
+  [data-theme='dark'] .caption strong { color: #e9e6de; }
+</style>
+</head>
+<body>
+  <div class="page-head">
+    <h1>mote 强调色方案对比</h1>
+    <p>同一个编辑器界面，只换强调色。当前的双链是 GitHub 蓝（#0969da），和暖色宣纸不搭。下面四套用同一份纸墨底色和字体，点按钮切换。</p>
+  </div>
+
+  <div class="controls">
+    <button class="palette-btn" data-set="zhusha" aria-pressed="false"><span class="swatch" style="--sw:#b3261e"></span>朱砂（印章红）</button>
+    <button class="palette-btn" data-set="songyan" aria-pressed="true"><span class="swatch" style="--sw:#2f5d50"></span>松烟（墨绿）</button>
+    <button class="palette-btn" data-set="zangqing" aria-pressed="false"><span class="swatch" style="--sw:#2d4463"></span>藏青（墨蓝）</button>
+    <button class="palette-btn" data-set="current" aria-pressed="false"><span class="swatch" style="--sw:#0969da"></span>现状</button>
+    <span class="spacer"></span>
+    <button class="mode-btn" id="mode">切到深色</button>
+  </div>
+
+  <div class="window">
+    <div class="titlebar"><span class="light r"></span><span class="light y"></span><span class="light g"></span></div>
+    <div class="body">
+      <aside class="side">
+        <div class="side-title">2026-11-23</div>
+        <div class="row">AI</div>
+        <div class="row">Daily</div>
+        <div class="row indent">2026</div>
+        <div class="row indent sel">2026-11-23 <span class="dot"></span></div>
+        <div class="row indent">2026-11-22</div>
+        <div class="row">Projects</div>
+        <div class="row">Templates</div>
+      </aside>
+      <section class="main">
+        <div class="tabbar">
+          <span class="tab active">2026-11-23 ×</span>
+          <span class="tab">PLAN</span>
+        </div>
+        <article class="doc">
+          <h2 class="doc-h">生活</h2>
+          <p>今日周一，天气渐冷，上班起床逐渐困难了。昨天买的养生壶到了，看着挺好看的。工位上目前只有桂圆，养生的食材有些少。</p>
+
+          <h2 class="doc-h">工作</h2>
+          <div class="task done"><input type="checkbox" checked /><span class="text">深度使用 <span class="link">mote</span>，优化用户体验</span></div>
+          <div class="task"><input type="checkbox" /><span class="text">将 <span class="link">Cheeky</span> iOS 重构成极简风格</span></div>
+          <div class="task"><input type="checkbox" /><span class="text">整理 <span class="missing">周报模板</span>，标签 <span class="tag">#周记</span></span></div>
+
+          <div class="quote">AI 时代，成为一个 builder 除了 create 一些 app 或工具以外，还需要提炼出一些我们工作的 skill。因为我们的产品可能是没有人用，但是我们的思考、工作范式是可以重复应用到其它场景的。</div>
+
+          <p>输入 <code>npm run dev</code> 启动，<mark>重点</mark>看链接和复选框的颜色。</p>
+
+          <div class="widgets">
+            <span class="focus">搜索框聚焦</span>
+            <span class="primary">主按钮</span>
+            <span class="badge">反向链接 3</span>
+            <span class="tag">#标签</span>
+            <span class="link">双链</span>
+            <span class="missing">失效双链</span>
+          </div>
+        </article>
+      </section>
+    </div>
+  </div>
+
+  <p class="caption">
+    <strong>朱砂</strong>：印章红，中文批注叫朱批，和纸墨最有渊源。复选框、选中条、聚焦环同色。<br />
+    <strong>松烟</strong>：墨绿，最安静，链接弱于正文，适合链接很多的笔记。<br />
+    <strong>藏青</strong>：保留蓝的语义，但压深去饱和，不再像 GitHub。<br />
+    <strong>现状</strong>：GitHub 蓝 #0969da 加靛蓝 #2c447c，就是你圈出来的那套。
+  </p>
+
+  <script>
+    const html = document.documentElement;
+    document.querySelectorAll('.palette-btn').forEach((btn) => {
+      btn.addEventListener('click', () => {
+        html.dataset.palette = btn.dataset.set;
+        document.querySelectorAll('.palette-btn').forEach((b) => b.setAttribute('aria-pressed', String(b === btn)));
+      });
+    });
+    document.getElementById('mode').addEventListener('click', (e) => {
+      const dark = html.dataset.theme === 'dark';
+      html.dataset.theme = dark ? 'light' : 'dark';
+      e.currentTarget.textContent = dark ? '切到深色' : '切到浅色';
+    });
+  </script>
+</body>
+</html>

@@ -53,18 +53,8 @@
 }
 
 .update-sparkle-icon {
-  color: #007aff;
+  color: var(--accent);
   flex-shrink: 0;
-}
-
-@media (prefers-color-scheme: dark) {
-  .update-sparkle-icon {
-    color: #0a84ff;
-  }
-}
-
-html[data-theme='dark'] .update-sparkle-icon {
-  color: #0a84ff;
 }
 
 .update-banner-badge {
@@ -101,57 +91,25 @@ html[data-theme='dark'] .update-sparkle-icon {
   font-family: var(--font-hei);
   cursor: pointer;
   border: none;
-  background: #007aff;
+  background: var(--accent);
   color: #ffffff !important;
-  box-shadow: 0 1px 3px rgba(0, 122, 255, 0.28);
+  box-shadow: 0 1px 3px color-mix(in srgb, var(--accent) 28%, transparent);
   user-select: none;
   white-space: nowrap;
   transition:
-    background 120ms ease,
+    filter 120ms ease,
     transform 80ms ease,
     box-shadow 120ms ease;
 }
 
 .update-btn-primary:hover {
-  background: #0071e3;
-  box-shadow: 0 2px 5px rgba(0, 122, 255, 0.35);
+  filter: brightness(1.08);
+  box-shadow: 0 2px 5px color-mix(in srgb, var(--accent) 35%, transparent);
 }
 
 .update-btn-primary:active {
-  background: #0064cc;
+  filter: brightness(0.95);
   transform: scale(0.97);
-}
-
-@media (prefers-color-scheme: dark) {
-  .update-btn-primary {
-    background: #0a84ff;
-    color: #ffffff !important;
-    box-shadow: 0 1px 3px rgba(10, 132, 255, 0.35);
-  }
-
-  .update-btn-primary:hover {
-    background: #0077e6;
-    box-shadow: 0 2px 5px rgba(10, 132, 255, 0.45);
-  }
-
-  .update-btn-primary:active {
-    background: #006bd1;
-  }
-}
-
-html[data-theme='dark'] .update-btn-primary {
-  background: #0a84ff;
-  color: #ffffff !important;
-  box-shadow: 0 1px 3px rgba(10, 132, 255, 0.35);
-}
-
-html[data-theme='dark'] .update-btn-primary:hover {
-  background: #0077e6;
-  box-shadow: 0 2px 5px rgba(10, 132, 255, 0.45);
-}
-
-html[data-theme='dark'] .update-btn-primary:active {
-  background: #006bd1;
 }
 
 .update-btn-link {
