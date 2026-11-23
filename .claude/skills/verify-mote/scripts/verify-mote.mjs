@@ -10,6 +10,9 @@ import path from 'node:path'
 import { fileURLToPath, pathToFileURL } from 'node:url'
 import { chromium } from 'playwright-core'
 
+process.removeAllListeners('warning')
+const { AUTOSAVE_DEBOUNCE_MS } = await import('../../../../src/core/autosave.ts')
+
 const REPO = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '../../../..')
 const SCRATCH_ROOT = path.join(os.tmpdir(), 'mote-verify')
 const EVIDENCE_ROOT = path.join(REPO, 'verify-artifacts')
@@ -1087,8 +1090,10 @@ async function main() {
       const gap = Number(opts.gap ?? 50)
       const where = opts.where ?? 'end'
       if (!['end', 'start'].includes(where)) throw new UsageError('give --where end|start')
-      if (!(chars > 0) || !(gap >= 0 && gap < 750))
-        throw new UsageError('give --chars N > 0 and --gap ms below the 750 ms autosave delay')
+      if (!(chars > 0) || !(gap >= 0 && gap < AUTOSAVE_DEBOUNCE_MS))
+        throw new UsageError(
+          `give --chars N > 0 and --gap ms below AUTOSAVE_DEBOUNCE_MS (${AUTOSAVE_DEBOUNCE_MS} ms)`
+        )
       result = await act((page) => benchTyping(page, { chars, gap, where }))
       break
     }

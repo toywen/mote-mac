@@ -7,6 +7,7 @@ import type {
   VaultInfo,
   VaultPath
 } from '../../core/ipc'
+import { AUTOSAVE_DEBOUNCE_MS, AUTOSAVE_MAX_WAIT_MS } from '../../core/autosave'
 import { isHtmlPath, isImagePath, isPdfPath } from '../../core/fileUrl'
 import type { LinkDest } from '../../core/linkDest'
 import { resolveSubpath } from '../../core/subpath'
@@ -55,8 +56,6 @@ type WorkspaceState = {
   mode: EditorMode
 }
 
-const AUTOSAVE_DEBOUNCE_MS = 150
-const AUTOSAVE_MAX_WAIT_MS = 800
 const RECENT_LIMIT = 50
 const recentKey = (dir: string): string => `mote.recent:${dir}`
 
