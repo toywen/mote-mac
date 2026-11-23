@@ -7,9 +7,9 @@ import { imageRenderers, decorateEmbedSource } from './images'
 import { hidden, type PreviewItem, type PreviewContext, type Renderer } from './preview'
 import './videos.css'
 
-export type VideoSize = { width: number | null; height: number | null; alt: string }
+type VideoSize = { width: number | null; height: number | null; alt: string }
 
-export function parseVideoSize(title: string): VideoSize {
+function parseVideoSize(title: string): VideoSize {
   const parse = (text: string): RegExpMatchArray | null =>
     text.match(/^\s*([0-9]+)\s*(?:x\s*([0-9]+)\s*)?$/)
   const bar = title.lastIndexOf('|')
@@ -22,7 +22,7 @@ export function parseVideoSize(title: string): VideoSize {
   }
 }
 
-export type YouTubeInfo = {
+type YouTubeInfo = {
   videoId: string
   start: number | null
   width: number | null
@@ -32,7 +32,7 @@ export type YouTubeInfo = {
 const YOUTUBE_REGEX =
   /(?:youtube(?:-nocookie)?\.com\/(?:[^/\n\s]+\/\S+\/|(?:v|e(?:mbed)?)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/i
 
-export function parseYouTubeUrl(raw: string, defaultSize?: VideoSize): YouTubeInfo | null {
+function parseYouTubeUrl(raw: string, defaultSize?: VideoSize): YouTubeInfo | null {
   const bar = raw.indexOf('|')
   const url = bar < 0 ? raw : raw.slice(0, bar)
   const sizeFromUrl = bar < 0 ? null : parseVideoSize(raw)
@@ -52,7 +52,7 @@ export function parseYouTubeUrl(raw: string, defaultSize?: VideoSize): YouTubeIn
   }
 }
 
-export function parseYouTubeIframe(html: string): YouTubeInfo | null {
+function parseYouTubeIframe(html: string): YouTubeInfo | null {
   const iframeMatch = html.match(/<iframe\b([^>]*?)>/i)
   if (!iframeMatch) return null
   const attrs = iframeMatch[1]
