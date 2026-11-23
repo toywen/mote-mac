@@ -86,5 +86,22 @@ export default defineConfig(
       ]
     }
   },
+  {
+    files: ['tests/e2e/**/*.ts'],
+    rules: {
+      'no-restricted-syntax': [
+        'error',
+        ...[
+          "CallExpression[callee.property.name='waitForTimeout']",
+          "CallExpression[callee.name='setTimeout']",
+          "CallExpression[callee.property.name='setTimeout']"
+        ].map((selector) => ({
+          selector,
+          message:
+            'A fixed sleep slows the test, and before a negative assertion it proves nothing. Wait for what the sleep stands for: a locator or state (await expect(locator)...), a value (expect.poll), or an event the app emits. To copy a typing gap, use typingPause from ./app.'
+        }))
+      ]
+    }
+  },
   eslintConfigPrettier
 )

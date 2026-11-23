@@ -7,10 +7,12 @@ import {
   rmSync,
   writeFileSync
 } from 'node:fs'
-import https from 'node:https'
 import { homedir, tmpdir } from 'node:os'
 import path from 'node:path'
-import { app, BrowserWindow, ipcMain, shell } from 'electron'
+import { Readable } from 'node:stream'
+import { pipeline } from 'node:stream/promises'
+import type { ReadableStream as WebStream } from 'node:stream/web'
+import { app, BrowserWindow, ipcMain, net, shell } from 'electron'
 import { channels } from '../core/ipc.js'
 import {
   isNewerVersion,
@@ -303,117 +305,65 @@ open "${currentAppPath}"
     }
   }
 
-  private fetchLatestRelease(): Promise<GitHubReleaseResponse> {
-    const url = `https://api.github.com/repos/${this.repo}/releases/latest`
-    return new Promise((resolve, reject) => {
-      const headers: Record<string, string> = {
-        'User-Agent': 'mote-desktop-app',
-        Accept: 'application/vnd.github.v3+json'
-      }
-      const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
-      if (token) {
-        headers['Authorization'] = `token ${token}`
-      }
-      const options = { headers }
-
-      https
-        .get(url, options, (res) => {
-          if (res.statusCode === 404) {
-            reject(
-              new Error(
-                '未能获取 Release 信息 (HTTP 404)。若仓库为私有（Private），未授权客户端无法访问 GitHub Releases API。'
-              )
-            )
-            return
-          }
-          if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-            reject(new Error(`GitHub API 响应异常 HTTP ${res.statusCode}`))
-            return
-          }
-
-          let data = ''
-          res.on('data', (chunk) => (data += chunk))
-          res.on('end', () => {
-            try {
-              resolve(JSON.parse(data) as GitHubReleaseResponse)
-            } catch {
-              reject(new Error('解析 GitHub Release 数据失败'))
-            }
-          })
-        })
-        .on('error', reject)
-    })
+  // Electron's net, not node:https: a DNS lookup that node:https starts holds the process at
+  // quit until it returns, up to 30 s when the network is bad. A net request ends with the app.
+  private request(url: string, accept: string): Promise<Response> {
+    const headers: Record<string, string> = { 'User-Agent': 'mote-desktop-app', Accept: accept }
+    const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
+    if (token) {
+      headers['Authorization'] = `token ${token}`
+    }
+    return net.fetch(url, { headers })
   }
 
-  private downloadFile(
+  private async fetchLatestRelease(): Promise<GitHubReleaseResponse> {
+    const url = `https://api.github.com/repos/${this.repo}/releases/latest`
+    const res = await this.request(url, 'application/vnd.github.v3+json')
+    if (res.status === 404) {
+      throw new Error(
+        '未能获取 Release 信息 (HTTP 404)。若仓库为私有（Private），未授权客户端无法访问 GitHub Releases API。'
+      )
+    }
+    if (!res.ok) {
+      throw new Error(`GitHub API 响应异常 HTTP ${res.status}`)
+    }
+    try {
+      return (await res.json()) as GitHubReleaseResponse
+    } catch {
+      throw new Error('解析 GitHub Release 数据失败')
+    }
+  }
+
+  // net follows the redirect to the asset's storage host.
+  private async downloadFile(
     url: string,
     dest: string,
     onProgress: (downloaded: number, total: number) => void
   ): Promise<void> {
-    return new Promise((resolve, reject) => {
-      const requestWithRedirect = (currentUrl: string, maxRedirects = 5): void => {
-        if (maxRedirects <= 0) {
-          reject(new Error('下载重定向次数过多'))
-          return
-        }
+    const res = await this.request(url, 'application/octet-stream')
+    if (!res.ok || !res.body) {
+      throw new Error(`下载响应失败 HTTP ${res.status}`)
+    }
 
-        const headers: Record<string, string> = {
-          'User-Agent': 'mote-desktop-app',
-          Accept: 'application/octet-stream'
-        }
-        const token = process.env.GH_TOKEN || process.env.GITHUB_TOKEN
-        if (token) {
-          headers['Authorization'] = `token ${token}`
-        }
-        const options = { headers }
-
-        https
-          .get(currentUrl, options, (res) => {
-            if (
-              res.statusCode &&
-              [301, 302, 303, 307, 308].includes(res.statusCode) &&
-              res.headers.location
-            ) {
-              requestWithRedirect(res.headers.location, maxRedirects - 1)
-              return
-            }
-
-            if (res.statusCode && (res.statusCode < 200 || res.statusCode >= 300)) {
-              reject(new Error(`下载响应失败 HTTP ${res.statusCode}`))
-              return
-            }
-
-            const totalBytes = Number.parseInt(res.headers['content-length'] || '0', 10)
-            let downloadedBytes = 0
-
-            const fileStream = createWriteStream(dest)
-            let lastUpdate = 0
-
-            res.on('data', (chunk) => {
-              downloadedBytes += chunk.length
-              const now = Date.now()
-              if (now - lastUpdate > 100 || downloadedBytes === totalBytes) {
-                lastUpdate = now
-                onProgress(downloadedBytes, totalBytes)
-              }
-            })
-
-            res.pipe(fileStream)
-
-            fileStream.on('finish', () => {
-              fileStream.close(() => resolve())
-            })
-
-            fileStream.on('error', (err) => {
-              rmSync(dest, { force: true })
-              reject(err)
-            })
-          })
-          .on('error', reject)
+    const totalBytes = Number.parseInt(res.headers.get('content-length') || '0', 10)
+    let downloadedBytes = 0
+    let lastUpdate = 0
+    const body = Readable.fromWeb(res.body as WebStream<Uint8Array>)
+    body.on('data', (chunk: Buffer) => {
+      downloadedBytes += chunk.length
+      const now = Date.now()
+      if (now - lastUpdate > 100 || downloadedBytes === totalBytes) {
+        lastUpdate = now
+        onProgress(downloadedBytes, totalBytes)
       }
-
-      requestWithRedirect(url)
     })
+
+    try {
+      await pipeline(body, createWriteStream(dest))
+    } catch (err) {
+      rmSync(dest, { force: true })
+      throw err
+    }
   }
 
   private runCommand(cmd: string, args: string[]): Promise<string> {

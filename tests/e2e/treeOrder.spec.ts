@@ -2,10 +2,6 @@ import { test, expect } from '@playwright/test'
 import { cp } from 'node:fs/promises'
 import { launch, openVault } from './app'
 
-// Quitting waits up to 30 s for the update check that starts 3 s after launch, when
-// api.github.com does not resolve. Leave room for that.
-test.describe.configure({ timeout: 60_000 })
-
 test('the file tree sorts Chinese names by pinyin, numbers by value, and folders first', async () => {
   const info = test.info()
   const vault = info.outputPath('vault')

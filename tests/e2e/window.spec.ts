@@ -68,8 +68,10 @@ test('the window does not navigate away from mote, and vault images come with in
     for (const url of [svg, 'https://example.com/', 'file:///etc/hosts']) {
       const after = await app.evaluate(async ({ BrowserWindow }, to) => {
         const contents = BrowserWindow.getAllWindows()[0].webContents
+        // The page stops loading once the navigation is cancelled, or once the new page loads.
+        const stopped = new Promise((done) => contents.once('did-stop-loading', done))
         await contents.executeJavaScript(`location.href = ${JSON.stringify(to)}; 0`)
-        await new Promise((resolve) => setTimeout(resolve, 300))
+        await stopped
         return {
           url: contents.getURL(),
           tree: await contents.executeJavaScript(`!!document.querySelector('[role="tree"]')`)

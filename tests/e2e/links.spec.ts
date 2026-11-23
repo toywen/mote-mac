@@ -39,10 +39,11 @@ test('clicking a link opens its target and Cmd+Option+Left goes back', async () 
   const { app, window, vault, editor } = await start({
     '起点.md':
       '---\nrelated: "[[项目/计划]]"\n---\n# 起点\n\n光标会停在这句话的末尾。\n\n' +
-      '去 [[项目/计划]]，去标题 [[长笔记#第三节|第三节]]，附件 [[图片.png]]，网址 [网站](https://example.com/页)。\n',
+      '去 [[项目/计划]]，去标题 [[长笔记#第三节|第三节]]，附件 [[图片.png]] 与 [[表格.xlsx]]，网址 [网站](https://example.com/页)。\n',
     '项目/计划.md': '# 计划\n\n回到 [[起点]] 再说。\n',
     '长笔记.md': `# 长笔记\n\n## 第一节\n\n${filler}\n\n## 第三节\n\n标题下面的字。\n\n${filler}\n`,
-    '附件/图片.png': 'png'
+    '附件/图片.png': 'png',
+    '附件/表格.xlsx': 'xlsx'
   })
   try {
     // Opening a file or an address goes to the system; the test records what it would open.
@@ -106,16 +107,30 @@ test('clicking a link opens its target and Cmd+Option+Left goes back', async () 
     // Opened again from the file tree, that note starts at the top.
     await window.getByRole('treeitem', { name: '长笔记', exact: true }).click()
     await expect(editor).toHaveAttribute('data-note-path', '长笔记.md')
-    await window.waitForTimeout(500)
+    // The editor scrolls when it next measures, in an animation frame. Two frames later any
+    // scroll it was asked for has happened.
+    await window.evaluate(
+      () => new Promise((done) => requestAnimationFrame(() => requestAnimationFrame(done)))
+    )
     expect(await scroller.evaluate((node) => node.scrollTop)).toBe(0)
     await window.keyboard.press('Meta+Alt+ArrowLeft')
     await expect(editor).toHaveAttribute('data-note-path', '起点.md')
 
-    // A file opens in the default app and an address in the browser. The note stays open.
+    // An image opens in its own tab (ADR 0020).
     await links.getByText('图片.png', { exact: true }).click()
+    await expect(window.locator('.image-viewer-container')).toHaveAttribute(
+      'data-image-path',
+      '附件/图片.png'
+    )
+    await window.keyboard.press('Meta+Alt+ArrowLeft')
+    await expect(editor).toHaveAttribute('data-note-path', '起点.md')
+
+    // A file mote cannot show opens in the default app and an address in the browser. The
+    // note stays open.
+    await links.getByText('表格.xlsx', { exact: true }).click()
     await links.getByText('网站', { exact: true }).click()
     await expect.poll(recorded).toEqual({
-      opened: [join(await realpath(vault), '附件/图片.png')],
+      opened: [join(await realpath(vault), '附件/表格.xlsx')],
       external: ['https://example.com/页']
     })
     await expect(editor).toHaveAttribute('data-note-path', '起点.md')
@@ -175,8 +190,8 @@ test('clicking a missing link creates the note where the vault config says', asy
     '收件箱/已有.md': '已有的笔记\n',
     '源/笔记.md': '想到 [[新想法]]，放到 [[深/层/新笔记]]，还有 [新的](新的.md)。\n'
   })
+  const before = await listFiles(vault)
   try {
-    const before = await listFiles(vault)
     await window.getByRole('treeitem', { name: '源', exact: true }).click()
     await window.getByRole('treeitem', { name: '笔记', exact: true }).click()
     await expect(editor).toHaveAttribute('data-note-path', '源/笔记.md')
@@ -202,16 +217,16 @@ test('clicking a missing link creates the note where the vault config says', asy
     await window.keyboard.press('Meta+Alt+ArrowLeft')
     await line.getByText('新的', { exact: true }).click()
     await expect(editor).toHaveAttribute('data-note-path', '收件箱/新的.md')
-
-    // Only the three empty notes were added. Opening them wrote nothing else.
-    await window.waitForTimeout(1000)
-    const added = (await listFiles(vault)).filter((path) => !before.includes(path))
-    expect(added).toEqual(['收件箱/新想法.md', '收件箱/新的.md', '深/层/新笔记.md'])
-    for (const path of added) expect(await readFile(join(vault, path), 'utf8')).toBe('')
-    expect(await readFile(join(vault, '源/笔记.md'), 'utf8')).toBe(
-      '想到 [[新想法]]，放到 [[深/层/新笔记]]，还有 [新的](新的.md)。\n'
-    )
   } finally {
     await app.close()
   }
+
+  // Only the three empty notes were added. Opening them wrote nothing else. mote saves every
+  // changed note before it quits, so the vault now holds all it would ever write.
+  const added = (await listFiles(vault)).filter((path) => !before.includes(path))
+  expect(added).toEqual(['收件箱/新想法.md', '收件箱/新的.md', '深/层/新笔记.md'])
+  for (const path of added) expect(await readFile(join(vault, path), 'utf8')).toBe('')
+  expect(await readFile(join(vault, '源/笔记.md'), 'utf8')).toBe(
+    '想到 [[新想法]]，放到 [[深/层/新笔记]]，还有 [新的](新的.md)。\n'
+  )
 })

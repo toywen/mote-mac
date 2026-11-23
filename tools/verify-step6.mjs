@@ -76,9 +76,17 @@ assert(
   steps.some((s) => s.run?.includes('npm ci'))
 )
 assert(
-  '包含 npm test 测试验证步骤',
-  steps.some((s) => s.run?.includes('npm test'))
+  '构建前先通过 ci.yml 的检查',
+  workflowConfig.jobs?.checks?.uses === './.github/workflows/ci.yml' &&
+    [workflowConfig.jobs?.['build-and-release']?.needs].flat().includes('checks')
 )
+const ciSteps =
+  parseYaml(readFileSync(resolve('.github/workflows/ci.yml'), 'utf8')).jobs?.checks?.steps || []
+for (const command of ['npm run typecheck', 'npm run lint', 'npm test', 'npm run test:e2e'])
+  assert(
+    `ci.yml 运行 ${command}`,
+    ciSteps.some((s) => s.run === command)
+  )
 assert(
   '包含 npm run build 构建步骤',
   steps.some((s) => s.run?.includes('npm run build'))

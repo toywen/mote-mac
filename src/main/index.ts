@@ -441,9 +441,11 @@ app.whenReady().then(async () => {
     }
   })
   await createWindow(defaultDir)
-  setTimeout(() => {
-    void Updater.getInstance().checkForUpdates()
-  }, 3000)
+  // Only a packaged app can install an update. Dev and e2e builds must not reach the network.
+  if (app.isPackaged)
+    setTimeout(() => {
+      void Updater.getInstance().checkForUpdates()
+    }, 3000)
   app.on('activate', () => {
     if (windows.size === 0) void createWindow()
   })
