@@ -1,12 +1,14 @@
 import {
   autocompletion,
+  completionStatus,
   pickedCompletion,
   type Completion,
   type CompletionContext,
   type CompletionResult
 } from '@codemirror/autocomplete'
 import { syntaxTree } from '@codemirror/language'
-import { EditorState, Facet, type Extension } from '@codemirror/state'
+import { EditorState, Facet, Prec, type Extension } from '@codemirror/state'
+import { keymap, type EditorView } from '@codemirror/view'
 import type { SyntaxNode } from '@lezer/common'
 import type { VaultPath } from '../../../core/ipc'
 import { linkText, type LinkFormat } from '../../../core/linkText'
@@ -42,14 +44,17 @@ function linkQuery(state: EditorState, pos: number): string | null {
   return query
 }
 
-type Row = Completion & { matched: number[] }
+type Row = Completion & {
+  matched: number[]
+  apply: (view: EditorView, row: Completion, from: number, to: number) => void
+}
 
 // Rows come from quick open's matcher, in its order. The library's own filtering stays off.
 // Picking a row replaces the [[ and the query, and whatever Obsidian replaces after the cursor.
-function linkSource(context: CompletionContext): CompletionResult | null {
-  const vault = context.state.facet(completeContext)
-  const links = context.state.facet(linkContext)
-  const query = linkQuery(context.state, context.pos)
+function linkRows(state: EditorState, pos: number): { from: number; options: Row[] } | null {
+  const vault = state.facet(completeContext)
+  const links = state.facet(linkContext)
+  const query = linkQuery(state, pos)
   if (!vault || !links || query === null) return null
   const options = suggest(vault.notes, vault.recent, query).map(({ path, label, match }): Row => {
     const name = label.lastIndexOf('/') + 1
@@ -72,18 +77,30 @@ function linkSource(context: CompletionContext): CompletionResult | null {
       }
     }
   })
-  return {
-    from: context.pos - query.length,
-    options,
-    filter: false,
-    getMatch: (row) => (row as Row).matched
-  }
+  return { from: pos - query.length, options }
+}
+
+function linkSource(context: CompletionContext): CompletionResult | null {
+  const rows = linkRows(context.state, context.pos)
+  return rows && { ...rows, filter: false, getMatch: (row) => (row as Row).matched }
+}
+
+// The library fills the list a task after each key, and until then its own Enter does nothing.
+// Enter in that gap picks the first row the list is about to show.
+function pickPending(view: EditorView): boolean {
+  const { state } = view
+  const { head, empty } = state.selection.main
+  if (!empty || state.readOnly || view.composing || completionStatus(state) !== 'pending')
+    return false
+  const rows = linkRows(state, head)
+  const first = rows?.options[0]
+  if (!rows || !first) return false
+  first.apply(view, first, rows.from, head)
+  return true
 }
 
 export const linkCompletion: Extension = [
-  // CodeMirror waits 100 ms after a key before it asks for rows, and ignores Enter for 75 ms
-  // after the list opens. Enter in either gap would break the line instead of picking the note.
-  // Obsidian's [[ list has no such gaps, and here the rows cost about a millisecond.
+  Prec.highest(keymap.of([{ key: 'Enter', run: pickPending }])),
   autocompletion({
     override: [linkSource],
     icons: false,
