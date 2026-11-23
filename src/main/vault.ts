@@ -730,7 +730,6 @@ export class Vault {
         }
         throw error
       }
-      this.ownWrites.set(clean, hash(bytes))
       const added = !this.entries.has(clean)
       if (added) {
         this.entries.set(clean, { path: clean, kind: kind(clean) })
@@ -738,10 +737,13 @@ export class Vault {
       }
       const note = kind(clean) === 'note'
       if (note) {
+        // refresh reads an own write back as text, so a note that is not UTF-8 is left to it.
         try {
           this.index.set(clean, noteVersion(bytes).text)
+          this.ownWrites.set(clean, hash(bytes))
         } catch {
           this.index.delete(clean)
+          this.ownWrites.delete(clean)
         }
       }
       this.notify({
