@@ -1,2097 +1,997 @@
 <!doctype html>
 <html lang="zh-CN" data-theme="light" data-font="kai">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-  <title>mote iOS 原型 - 宣纸墨色与流体交互</title>
-  <style>
-    /* ========================================================= */
-    /* 1. mote 官方设计系统 Tokens (纸墨设计规范)                   */
-    /* ========================================================= */
-    @font-face {
-      font-family: 'Kai';
-      font-weight: 400;
-      src: local('STKaitiSC-Regular'), local('Kaiti SC'), local('STKaiti'), local('Songti SC'), serif;
-    }
-    @font-face {
-      font-family: 'Kai';
-      font-weight: 700;
-      src: local('STKaitiSC-Bold'), local('Kaiti SC Bold'), serif;
-    }
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+<title>mote iOS 原型（第 2 版）</title>
+<style>
+  /* ---------- 颜色和字体：和 Mac 端 main.css 用同一套纸墨色 ---------- */
+  :root {
+    --bg: #fcfbf8; --bg2: #f3f0e8; --card: #ffffff;
+    --line: #ebe7db; --line2: #dcd6c7;
+    --text: #22201c; --muted: #656157; --faint: #9b978b;
+    --accent: #2c447c; --accent-soft: rgba(44, 68, 124, 0.09); --on-accent: #ffffff;
+    --fill: rgba(70, 55, 30, 0.07); --hover: rgba(70, 55, 30, 0.055); --active-line: rgba(70, 55, 30, 0.05);
+    --tag: #205c4a; --tag-bg: rgba(32, 92, 74, 0.09);
+    --hl: rgba(223, 170, 70, 0.3); --code: rgba(70, 55, 30, 0.06);
+    --missing: #b45309; --danger: #b3261e;
+    --glass: rgba(252, 251, 248, 0.76);
+    --page: #e6e2d8; --kb: #d3d0c9; --key: #ffffff; --key2: #b5b1a8;
+    --font-kai: 'Kaiti SC', 'STKaiti', 'Songti SC', 'STSong', Georgia, serif;
+    --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    --mono: ui-monospace, 'SF Mono', Menlo, 'PingFang SC', monospace;
+    --font-body: var(--font-kai); --font-heading: var(--font-kai);
+    --fs: 16.5px;
+    --ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  }
+  html[data-theme='dark'] {
+    --bg: #1c1b18; --bg2: #141311; --card: #262521;
+    --line: #2f2d28; --line2: #45423b;
+    --text: #e9e6de; --muted: #9d998d; --faint: #6f6b61;
+    --accent: #9fb0e8; --accent-soft: rgba(159, 176, 232, 0.13); --on-accent: #1c1b18;
+    --fill: rgba(255, 245, 225, 0.08); --hover: rgba(255, 245, 225, 0.065); --active-line: rgba(255, 245, 225, 0.055);
+    --tag: #7ec4a8; --tag-bg: rgba(126, 196, 168, 0.12);
+    --hl: rgba(223, 182, 114, 0.3); --code: rgba(255, 245, 225, 0.07);
+    --missing: #f59e0b; --danger: #f2867a;
+    --glass: rgba(38, 37, 33, 0.74);
+    --page: #0e0d0c; --kb: #2b2a27; --key: #5a5750; --key2: #3d3b36;
+  }
+  html[data-font='hei'] { --font-body: var(--font-ui); --font-heading: var(--font-ui); }
 
-    :root {
-      color-scheme: light dark;
-      /* 浅色：暖色宣纸与徽墨 (Paper & Ink) */
-      --bg: #fcfbf8;
-      --bg-subtle: #f5f3ec;
-      --bg-card: #ffffff;
-      --border: #ebe7db;
-      --border-strong: #dcd6c7;
-      --text: #22201c;
-      --text-muted: #656157;
-      --text-tertiary: #9b978b;
-      --hover: rgba(70, 55, 30, 0.055);
-      --selected: rgba(70, 55, 30, 0.095);
-      --accent: #2c447c;
-      --accent-bg: rgba(44, 68, 124, 0.08);
-      --accent-active: #1d3058;
-      --link: #2c447c;
-      --link-missing: #b45309;
-      --tag-bg: rgba(32, 92, 74, 0.09);
-      --tag-text: #205c4a;
-      --highlight: rgba(223, 170, 70, 0.28);
-      --code-bg: rgba(70, 55, 30, 0.055);
-      --quote: #9b978b;
-      --save-dot: #205c4a;
-      --callout-note: #2c447c;
-      --callout-note-bg: rgba(44, 68, 124, 0.06);
-      --callout-tip: #205c4a;
-      --callout-tip-bg: rgba(32, 92, 74, 0.07);
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
+  input { font: inherit; color: inherit; background: none; border: 0; outline: none; }
+  html, body { height: 100%; }
+  body { background: var(--page); color: var(--text); font-family: var(--font-ui); -webkit-font-smoothing: antialiased; transition: background 0.3s; }
 
-      --font-kai: 'Kai', 'Kaiti SC', 'STKaiti', 'Songti SC', 'STSong', Georgia, serif;
-      --font-hei: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
-      --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
-      --font-body: var(--font-kai);
-      --font-heading: var(--font-kai);
-      --font-ui: var(--font-hei);
+  /* ---------- 页面：左边说明，右边手机 ---------- */
+  .page { min-height: 100%; display: flex; justify-content: center; align-items: flex-start; gap: 44px; padding: 16px 20px; }
+  aside { width: 250px; padding-top: 28px; flex: none; }
+  .brand { font-size: 20px; font-weight: 700; letter-spacing: 0.2px; }
+  .brand span { font-size: 12px; font-weight: 500; color: var(--faint); margin-left: 8px; }
+  .lead { font-size: 13.5px; line-height: 1.65; color: var(--muted); margin-top: 8px; }
+  aside h4 { font-size: 12px; font-weight: 600; color: var(--faint); margin: 24px 0 8px; }
+  .jumps { display: flex; flex-wrap: wrap; gap: 6px; }
+  .jumps button { font-size: 13px; padding: 6px 11px; border-radius: 99px; background: var(--fill); color: var(--text); }
+  .jumps button:hover { background: var(--accent-soft); color: var(--accent); }
+  aside ul { list-style: none; font-size: 13px; line-height: 1.6; color: var(--muted); }
+  aside li { padding-left: 14px; position: relative; margin-bottom: 6px; }
+  aside li::before { content: ''; position: absolute; left: 2px; top: 0.65em; width: 4px; height: 4px; border-radius: 50%; background: var(--faint); }
+  aside .seg { margin-bottom: 8px; }
+  main { flex: none; }
+  @media (max-width: 760px) {
+    .page { flex-direction: column; align-items: center; gap: 10px; padding: 10px; }
+    aside { width: 100%; max-width: 420px; padding-top: 0; }
+    .lead, aside ul, aside h4 { display: none; }
+    .brand { margin-bottom: 8px; }
+    aside .seg { display: none; }
+  }
 
-      --ios-radius-sheet: 28px;
-      --ios-radius-card: 14px;
-      --ios-radius-chip: 8px;
-      --ios-radius-pill: 999px;
-      --ios-blur: blur(24px) saturate(180%);
-    }
+  /* ---------- 手机外壳 ---------- */
+  .phone { width: 393px; height: 852px; margin: 12px; position: relative; overflow: hidden; border-radius: 56px; background: var(--bg);
+    box-shadow: 0 0 0 10px #1b1a18, 0 0 0 11.5px #45423c, 0 30px 70px rgba(0, 0, 0, 0.32);
+    user-select: none; -webkit-user-select: none; font-size: 16px; }
+  .status { position: absolute; top: 0; left: 0; right: 0; height: 54px; z-index: 60; pointer-events: none; display: flex; align-items: center; justify-content: space-between; padding: 6px 34px 0; font-size: 16px; font-weight: 600; }
+  .island { position: absolute; top: 11px; left: 50%; transform: translateX(-50%); width: 124px; height: 36px; border-radius: 20px; background: #000; }
+  .status svg { display: block; }
+  .homebar { position: absolute; bottom: 8px; left: 50%; transform: translateX(-50%); width: 138px; height: 5px; border-radius: 3px; background: var(--text); opacity: 0.28; z-index: 70; pointer-events: none; }
 
-    html[data-theme="dark"] {
-      /* 深色：端砚墨池与宣纸月白 (Inkstone & Moonlit Rice Paper) */
-      --bg: #1c1b18;
-      --bg-subtle: #161513;
-      --bg-card: #23221e;
-      --border: #2b2925;
-      --border-strong: #3b3832;
-      --text: #e9e6de;
-      --text-muted: #9d998d;
-      --text-tertiary: #656259;
-      --hover: rgba(255, 245, 225, 0.065);
-      --selected: rgba(255, 245, 225, 0.12);
-      --accent: #9fb0e8;
-      --accent-bg: rgba(159, 176, 232, 0.12);
-      --accent-active: #b8c6f3;
-      --link: #9fb0e8;
-      --link-missing: #f59e0b;
-      --tag-bg: rgba(126, 196, 168, 0.12);
-      --tag-text: #7ec4a8;
-      --highlight: rgba(223, 182, 114, 0.25);
-      --code-bg: rgba(255, 245, 225, 0.065);
-      --quote: #656259;
-      --save-dot: #7ec4a8;
-      --callout-note: #9fb0e8;
-      --callout-note-bg: rgba(159, 176, 232, 0.09);
-      --callout-tip: #7ec4a8;
-      --callout-tip-bg: rgba(126, 196, 168, 0.09);
-    }
+  /* ---------- 屏幕和转场 ---------- */
+  #screens { position: absolute; inset: 0; overflow: hidden; }
+  .screen { position: absolute; inset: 0; padding-top: 54px; display: flex; flex-direction: column; background: var(--sbg, var(--bg)); z-index: 2;
+    transition: transform 0.36s var(--ease), opacity 0.3s; }
+  .screen.grouped { --sbg: var(--bg2); }
+  .screen.from-right { transform: translateX(100%); }
+  .screen.to-left, .screen.from-left { transform: translateX(-28%); opacity: 0.5; z-index: 1; }
+  .screen.to-right { transform: translateX(100%); z-index: 3; }
+  .screen.fade { opacity: 0; }
+  .screen.gone { display: none; }
+  .screen::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 104px; pointer-events: none;
+    background: linear-gradient(transparent, var(--sbg, var(--bg)) 78%); }
+  .scroll { flex: 1; overflow-y: auto; overflow-x: hidden; position: relative; padding-bottom: 130px; scrollbar-width: none; }
+  .scroll::-webkit-scrollbar { display: none; }
+  .scroll.editing { padding-bottom: 350px; }
 
-    html[data-font="kai"] {
-      --font-body: var(--font-kai);
-      --font-heading: var(--font-kai);
-    }
-    html[data-font="hei"] {
-      --font-body: var(--font-hei);
-      --font-heading: var(--font-hei);
-    }
+  /* ---------- 顶部导航 ---------- */
+  .nav { flex: none; height: 44px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 8px; position: relative; background: var(--sbg, var(--bg)); z-index: 4; }
+  .nav::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--line); opacity: 0; transition: opacity 0.2s; }
+  .nav.scrolled::after { opacity: 1; }
+  .nl { justify-self: start; display: flex; align-items: center; min-width: 0; }
+  .nr { justify-self: end; display: flex; align-items: center; gap: 2px; }
+  .nc { max-width: 168px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; font-weight: 600; opacity: 0; transition: opacity 0.2s; }
+  .nav.titled .nc, .nav.always .nc { opacity: 1; }
+  .back { display: flex; align-items: center; color: var(--accent); font-size: 16px; padding: 6px 8px 6px 0; }
+  .back span { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .tbtn { font-size: 16px; color: var(--accent); padding: 6px 10px; border-radius: 99px; }
+  .tbtn.strong { font-weight: 600; }
+  .ibtn { width: 38px; height: 38px; display: grid; place-items: center; color: var(--accent); border-radius: 50%; }
+  .ibtn:active, .tbtn:active, .back:active { opacity: 0.5; }
+  .vault { display: flex; align-items: center; gap: 4px; margin-left: 6px; padding: 6px 9px 6px 12px; border-radius: 99px; background: var(--fill); font-size: 14px; font-weight: 600; }
+  .vault svg { color: var(--faint); }
+  .sync { display: flex; align-items: center; gap: 5px; padding-right: 10px; font-size: 12.5px; color: var(--faint); }
 
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-      -webkit-tap-highlight-color: transparent;
-      user-select: none;
-    }
+  /* ---------- 列表 ---------- */
+  .lt { font: 700 34px/1.2 var(--font-heading); padding: 4px 20px 2px; letter-spacing: 0.5px; }
+  .lsub { font-size: 13px; color: var(--faint); padding: 2px 20px 6px; }
+  .sec { font-size: 13px; font-weight: 600; color: var(--faint); padding: 20px 20px 6px; }
+  .row { position: relative; padding: 13px 20px; cursor: pointer; }
+  .row::after { content: ''; position: absolute; left: 20px; right: 0; bottom: 0; height: 1px; background: var(--line); }
+  .row:active { background: var(--hover); }
+  .rt { font: 600 17.5px/1.35 var(--font-heading); }
+  .rs { font-size: 13.5px; line-height: 1.5; color: var(--muted); margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .rm { font-size: 12px; color: var(--faint); margin-top: 6px; }
+  .row.f { display: flex; align-items: center; gap: 13px; padding: 13px 20px; }
+  .row.f::after { left: 55px; }
+  .fi { flex: none; color: var(--faint); display: grid; }
+  .fi.dir { color: var(--accent); }
+  .fn { flex: 1; min-width: 0; font-size: 16.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fn.note { font-family: var(--font-heading); font-size: 17px; }
+  .fn small { display: block; font: 12px var(--font-ui); color: var(--faint); margin-top: 2px; }
+  .fx { flex: none; display: flex; align-items: center; gap: 4px; font-size: 13px; color: var(--faint); }
+  .empty { padding: 56px 40px; text-align: center; font-size: 14px; line-height: 1.7; color: var(--faint); }
+  .empty button { display: block; margin: 14px auto 0; padding: 9px 18px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-weight: 600; font-size: 14.5px; }
+  mark { background: var(--hl); color: inherit; border-radius: 3px; padding: 0 1px; }
 
-    body {
-      background: #0f1013;
-      color: var(--text);
-      font-family: var(--font-body);
-      min-height: 100%;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: flex-start;
-      overflow-x: hidden;
-      padding: 20px 10px 40px;
-      -webkit-font-smoothing: antialiased;
-    }
+  /* ---------- 搜索 ---------- */
+  .sbox { display: flex; align-items: center; gap: 8px; margin: 8px 16px 10px; height: 44px; padding: 0 12px; border-radius: 14px; background: var(--fill); color: var(--faint); }
+  .sbox input { flex: 1; min-width: 0; font-size: 16.5px; color: var(--text); user-select: text; -webkit-user-select: text; }
+  .sbox input::placeholder { color: var(--faint); }
+  .clr { width: 20px; height: 20px; border-radius: 50%; background: var(--faint); color: var(--bg); display: grid; place-items: center; }
+  .clr[hidden] { display: none; }
+  .seg { display: flex; padding: 2px; border-radius: 10px; background: var(--fill); }
+  .seg button { flex: 1; height: 30px; border-radius: 8px; font-size: 13.5px; color: var(--muted); white-space: nowrap; padding: 0 10px; }
+  .seg button.on { background: var(--card); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.13); }
+  html[data-theme='dark'] .seg button.on { background: #55524b; }
+  .search .seg { margin: 0 16px 4px; }
+  .hit { padding: 12px 20px 10px; position: relative; }
+  .hit::after { content: ''; position: absolute; left: 20px; right: 0; bottom: 0; height: 1px; background: var(--line); }
+  .hit-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+  .hit-h b { font: 600 17px var(--font-heading); }
+  .hit-h span { font-size: 12px; color: var(--faint); flex: none; }
+  .hl { font-size: 14px; line-height: 1.55; color: var(--muted); padding: 6px 10px; margin: 6px -10px 0; border-radius: 10px; cursor: pointer; }
+  .hl:active { background: var(--hover); }
 
-    /* ========================================================= */
-    /* 2. 外部控制器 (演示工具条: 切换设备模式/外观/字体/快速跳转)   */
-    /* ========================================================= */
-    .demo-bar {
-      width: 100%;
-      max-width: 900px;
-      background: rgba(30, 32, 38, 0.85);
-      backdrop-filter: blur(16px);
-      -webkit-backdrop-filter: blur(16px);
-      border: 1px solid rgba(255, 255, 255, 0.12);
-      border-radius: 16px;
-      padding: 10px 16px;
-      margin-bottom: 24px;
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      justify-content: space-between;
-      gap: 12px;
-      z-index: 999;
-      font-family: var(--font-ui);
-      color: #f1f2f6;
-    }
-    .demo-title-group {
-      display: flex;
-      align-items: center;
-      gap: 10px;
-    }
-    .demo-badge {
-      background: linear-gradient(135deg, #2c447c, #4a6fa5);
-      color: #fff;
-      font-size: 11px;
-      font-weight: 700;
-      padding: 2px 8px;
-      border-radius: 6px;
-      letter-spacing: 0.5px;
-    }
-    .demo-title {
-      font-size: 14px;
-      font-weight: 600;
-      color: #fff;
-    }
-    .demo-controls {
-      display: flex;
-      flex-wrap: wrap;
-      align-items: center;
-      gap: 8px;
-    }
-    .demo-btn {
-      background: rgba(255, 255, 255, 0.08);
-      border: 1px solid rgba(255, 255, 255, 0.15);
-      color: #e4e6eb;
-      font-size: 12px;
-      font-weight: 500;
-      padding: 6px 12px;
-      border-radius: 8px;
-      cursor: pointer;
-      display: inline-flex;
-      align-items: center;
-      gap: 5px;
-      transition: all 140ms ease;
-    }
-    .demo-btn:hover {
-      background: rgba(255, 255, 255, 0.16);
-      color: #fff;
-    }
-    .demo-btn.active {
-      background: #2c447c;
-      border-color: #4a6fa5;
-      color: #fff;
-      box-shadow: 0 2px 8px rgba(44, 68, 124, 0.4);
-    }
+  /* ---------- 设置 ---------- */
+  .gh { font-size: 13px; font-weight: 600; color: var(--faint); padding: 22px 32px 7px; }
+  .grp { margin: 0 16px; border-radius: 16px; background: var(--card); overflow: hidden; }
+  .set { display: flex; align-items: center; justify-content: space-between; gap: 12px; min-height: 52px; padding: 9px 16px; position: relative; }
+  .set + .set::before { content: ''; position: absolute; left: 16px; right: 0; top: 0; height: 1px; background: var(--line); }
+  .set[data-act] { cursor: pointer; }
+  .set[data-act]:active { background: var(--hover); }
+  .set .v { display: flex; align-items: center; gap: 4px; color: var(--faint); font-size: 15px; }
+  .set .seg { width: 190px; flex: none; }
+  .set small { display: block; font-size: 12.5px; color: var(--faint); margin-top: 2px; }
 
-    /* ========================================================= */
-    /* 3. iPhone 16 Pro 硬件外壳 (Simulator Shell)              */
-    /* ========================================================= */
-    .stage {
-      position: relative;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      width: 100%;
-    }
+  /* ---------- 笔记 ---------- */
+  .nt { font: 700 30px/1.25 var(--font-heading); padding: 6px 22px 0; }
+  .nmeta { display: flex; flex-wrap: wrap; align-items: center; gap: 8px 10px; padding: 9px 22px 0; font-size: 12.5px; color: var(--faint); }
+  .blbtn { display: inline-flex; align-items: center; gap: 4px; padding: 3px 9px; border-radius: 99px; background: var(--accent-soft); color: var(--accent); font-size: 12px; font-weight: 600; }
+  .fm { margin: 14px 22px 0; border: 1px solid var(--line); border-radius: 12px; font-size: 13px; overflow: hidden; }
+  .fmh { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: 8px 10px 8px 12px; cursor: pointer; }
+  .fmh .more { margin-left: auto; display: flex; align-items: center; gap: 2px; color: var(--faint); font-size: 12px; }
+  .chip { padding: 2px 8px; border-radius: 99px; background: var(--fill); color: var(--muted); font-size: 12px; }
+  .chip.t { background: var(--tag-bg); color: var(--tag); }
+  .kv { display: flex; gap: 10px; padding: 8px 12px; border-top: 1px solid var(--line); }
+  .kv .k { width: 70px; flex: none; color: var(--faint); }
+  .body { padding: 18px 22px 0; font-family: var(--font-body); font-size: var(--fs); line-height: 1.75; user-select: text; -webkit-user-select: text; }
+  .blk { position: relative; margin: 0 0 12px; border-radius: 4px; }
+  .b-h1 { font: 700 1.45em/1.35 var(--font-heading); margin: 22px 0 10px; }
+  .b-h2 { font: 700 1.22em/1.4 var(--font-heading); margin: 26px 0 8px; }
+  .b-h3, .b-h4, .b-h5, .b-h6 { font: 700 1.08em/1.4 var(--font-heading); margin: 18px 0 6px; }
+  .body > .blk:first-child { margin-top: 0; }
+  .b-task, .b-li, .b-ol { display: flex; gap: 10px; margin-bottom: 5px; }
+  .b-task + .b-p, .b-li + .b-p, .b-ol + .b-p { margin-top: 13px; }
+  .cb { flex: none; width: 21px; height: 21px; margin-top: 0.3em; border: 1.6px solid var(--faint); border-radius: 7px; display: grid; place-items: center; color: var(--on-accent); cursor: pointer; transition: background 0.15s, border-color 0.15s; }
+  .cb.on { background: var(--accent); border-color: var(--accent); }
+  .done { color: var(--faint); text-decoration: line-through; }
+  .dot { flex: none; width: 5px; height: 5px; margin: 0.74em 8px 0 8px; border-radius: 50%; background: var(--faint); }
+  .num { flex: none; min-width: 21px; text-align: right; color: var(--faint); font: 0.9em/1.95 var(--font-ui); }
+  .b-quote { border-left: 3px solid var(--line2); padding: 1px 0 1px 14px; color: var(--muted); }
+  .b-callout { padding: 12px 14px; border-radius: 12px; background: var(--accent-soft); font-size: 0.95em; }
+  .ct { font: 600 0.88em var(--font-ui); color: var(--accent); margin-bottom: 3px; }
+  .b-code pre { padding: 12px 14px; border-radius: 10px; background: var(--code); font: 13px/1.6 var(--mono); overflow-x: auto; }
+  .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
+  table { width: 100%; border-collapse: collapse; font: 14px var(--font-ui); }
+  th, td { padding: 9px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
+  th { background: var(--bg2); color: var(--muted); font-weight: 600; }
+  tr:last-child td { border-bottom: 0; }
+  .b-hr { height: 1px; background: var(--line); margin: 22px 0; }
+  .wl { color: var(--accent); cursor: pointer; text-decoration: underline; text-decoration-color: color-mix(in srgb, var(--accent) 32%, transparent); text-underline-offset: 4px; }
+  .wl.missing { color: var(--missing); text-decoration-color: color-mix(in srgb, var(--missing) 40%, transparent); }
+  code { font: 0.85em var(--mono); background: var(--code); padding: 2px 5px; border-radius: 5px; }
+  .tag { font: 0.8em var(--font-ui); color: var(--tag); background: var(--tag-bg); padding: 2px 8px; border-radius: 99px; }
+  .empty-note { font: 15px var(--font-ui); color: var(--faint); padding: 20px 0; }
+  /* 编辑：当前行显示 Markdown 源码 */
+  .editing .blk { cursor: text; }
+  .blk.active { display: block; background: var(--active-line); box-shadow: -8px 0 0 var(--active-line), 8px 0 0 var(--active-line); }
+  .src { outline: none; white-space: pre-wrap; word-break: break-word; min-height: 1.75em; caret-color: var(--accent); }
+  .active.b-code .src, .active.b-table .src { font: 13px/1.7 var(--mono); white-space: pre; overflow-x: auto; }
+  .flash { animation: flash 1.8s; }
+  @keyframes flash { 0%, 45% { background: var(--hl); box-shadow: -8px 0 0 var(--hl), 8px 0 0 var(--hl); } 100% { background: transparent; box-shadow: none; } }
 
-    /* 模拟器模式 */
-    .device-shell {
-      position: relative;
-      width: 393px;
-      height: 852px;
-      background: var(--bg);
-      border-radius: 54px;
-      box-shadow:
-        0 0 0 12px #22242a,
-        0 0 0 14px #3d414d,
-        0 25px 70px rgba(0, 0, 0, 0.65),
-        0 10px 25px rgba(0, 0, 0, 0.4);
-      overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      transform: translateZ(0);
-      transition: width 240ms ease, height 240ms ease, border-radius 240ms ease, box-shadow 240ms ease;
-    }
+  /* ---------- 底部 tab ---------- */
+  .tabbar { position: absolute; left: 14px; right: 14px; bottom: 24px; z-index: 15; display: flex; gap: 10px; transition: transform 0.36s var(--ease); }
+  .tabs { flex: 1; display: flex; height: 64px; padding: 4px; border-radius: 32px; background: var(--glass);
+    -webkit-backdrop-filter: blur(24px) saturate(1.7); backdrop-filter: blur(24px) saturate(1.7);
+    box-shadow: 0 0 0 0.5px var(--line2), 0 8px 28px rgba(40, 30, 10, 0.14); }
+  .tab { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 3px; border-radius: 28px; color: var(--muted); font-size: 10.5px; font-weight: 500; transition: background 0.2s, color 0.2s; }
+  .tab.on { background: var(--fill); color: var(--accent); font-weight: 600; }
+  .fab { flex: none; width: 64px; height: 64px; border-radius: 50%; background: var(--accent); color: var(--on-accent); display: grid; place-items: center;
+    box-shadow: 0 8px 22px color-mix(in srgb, var(--accent) 36%, transparent); transition: transform 0.15s; }
+  .fab:active { transform: scale(0.93); }
+  .phone.kb .tabbar { transform: translateY(130px); }
 
-    /* 全屏手机视图模式 */
-    body.is-fullscreen {
-      padding: 0;
-      background: var(--bg);
-    }
-    body.is-fullscreen .demo-bar {
-      position: fixed;
-      bottom: 12px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: calc(100% - 24px);
-      margin-bottom: 0;
-    }
-    body.is-fullscreen .device-shell {
-      width: 100%;
-      height: 852px;
-      border-radius: 0;
-      box-shadow: none;
-    }
+  /* ---------- 键盘和格式栏 ---------- */
+  .kbd { position: absolute; left: 0; right: 0; bottom: 0; z-index: 20; background: var(--kb); transform: translateY(100%); transition: transform 0.36s var(--ease); padding-bottom: 26px; }
+  .phone.kb .kbd { transform: none; }
+  .fbar { display: flex; align-items: center; gap: 2px; height: 46px; padding: 0 6px; background: var(--sbg, var(--bg)); border-top: 1px solid var(--line); overflow-x: auto; scrollbar-width: none; }
+  .fbar::-webkit-scrollbar { display: none; }
+  .fbar button { flex: none; min-width: 38px; height: 36px; padding: 0 8px; border-radius: 9px; font: 600 15px var(--mono); color: var(--text); display: grid; place-items: center; }
+  .fbar button:active { background: var(--fill); }
+  .fbar .sp { flex: 1; min-width: 6px; }
+  .fbar .dn { color: var(--accent); position: sticky; right: -6px; margin-right: -6px; padding: 0 12px; border-radius: 0; background: var(--sbg, var(--bg)); box-shadow: -10px 0 10px -4px var(--sbg, var(--bg)); }
+  .keys { padding: 8px 3px 0; }
+  .kr { display: flex; justify-content: center; gap: 6px; margin-bottom: 11px; }
+  .kr button { flex: 1; max-width: 33px; height: 43px; border-radius: 6px; background: var(--key); font-size: 21px; box-shadow: 0 1px 0 rgba(0, 0, 0, 0.3); display: grid; place-items: center; }
+  .kr button:active { background: var(--key2); }
+  .kr .w { max-width: 44px; background: var(--key2); font-size: 15px; }
+  .kr .w2 { max-width: 92px; flex: 2.6; background: var(--key2); font-size: 15px; }
+  .kr .space { max-width: none; flex: 5; font-size: 15px; }
+  .kr .gap { flex: 0.5; }
 
-    /* 侧面按钮细节装饰 (仅在 iPhone 模式显示) */
-    .device-shell::before {
-      content: '';
-      position: absolute;
-      left: -16px;
-      top: 140px;
-      width: 4px;
-      height: 50px;
-      background: #474b57;
-      border-radius: 2px 0 0 2px;
-      box-shadow: 0 70px 0 #474b57, 0 130px 0 #474b57;
-      pointer-events: none;
-    }
-    .device-shell::after {
-      content: '';
-      position: absolute;
-      right: -16px;
-      top: 180px;
-      width: 4px;
-      height: 75px;
-      background: #474b57;
-      border-radius: 0 2px 2px 0;
-      pointer-events: none;
-    }
-    body.is-fullscreen .device-shell::before,
-    body.is-fullscreen .device-shell::after {
-      display: none;
-    }
-
-    /* ========================================================= */
-    /* 4. iOS 顶部灵动岛与状态栏 (Dynamic Island & Status Bar)     */
-    /* ========================================================= */
-    .ios-status-bar {
-      height: 50px;
-      padding: 12px 28px 0;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      position: relative;
-      z-index: 100;
-      flex-shrink: 0;
-      font-family: var(--font-ui);
-      font-size: 14px;
-      font-weight: 600;
-      color: var(--text);
-    }
-    .status-time {
-      letter-spacing: -0.2px;
-    }
-    .dynamic-island {
-      position: absolute;
-      top: 11px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 120px;
-      height: 35px;
-      background: #000;
-      border-radius: 22px;
-      z-index: 110;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 10px;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.35);
-      cursor: pointer;
-      transition: all 260ms cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .dynamic-island:active {
-      transform: translateX(-50%) scale(0.96);
-    }
-    .island-dot {
-      width: 10px;
-      height: 10px;
-      border-radius: 50%;
-      background: #111;
-      border: 1px solid #1a1a1a;
-    }
-    .island-cam {
-      width: 11px;
-      height: 11px;
-      border-radius: 50%;
-      background: #0d1a2d;
-      border: 1.5px solid #152238;
-    }
-    .status-icons {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-
-    /* ========================================================= */
-    /* 5. 视图导航栈容器 (Navigation Stack Router)               */
-    /* ========================================================= */
-    .app-viewport {
-      position: relative;
-      flex: 1;
-      width: 100%;
-      height: calc(100% - 50px);
-      overflow: hidden;
-      background: var(--bg);
-    }
-
-    .screen-view {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      display: flex;
-      flex-direction: column;
-      background: var(--bg);
-      transition: transform 320ms cubic-bezier(0.16, 1, 0.3, 1), opacity 280ms ease;
-      will-change: transform, opacity;
-      pointer-events: none;
-      opacity: 0;
-      z-index: 10;
-    }
-    .screen-view.active {
-      transform: translateX(0) !important;
-      opacity: 1 !important;
-      pointer-events: auto;
-      z-index: 20;
-    }
-    .screen-view.prev {
-      transform: translateX(-26%) !important;
-      opacity: 0.65;
-      pointer-events: none;
-      z-index: 10;
-    }
-    .screen-view.next {
-      transform: translateX(100%) !important;
-      opacity: 0;
-      pointer-events: none;
-      z-index: 30;
-    }
-
-    /* ========================================================= */
-    /* 6. iOS 顶部导航栏 (iOS Navigation Bar)                    */
-    /* ========================================================= */
-    .ios-nav-bar {
-      height: 48px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 0 16px;
-      background: var(--bg);
-      border-bottom: 0.5px solid var(--border);
-      flex-shrink: 0;
-      font-family: var(--font-ui);
-      position: relative;
-      z-index: 50;
-    }
-    .nav-bar-blur {
-      background: rgba(252, 251, 248, 0.82);
-      backdrop-filter: var(--ios-blur);
-      -webkit-backdrop-filter: var(--ios-blur);
-    }
-    html[data-theme="dark"] .nav-bar-blur {
-      background: rgba(28, 27, 24, 0.82);
-    }
-
-    .nav-left, .nav-right {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      min-width: 70px;
-    }
-    .nav-right {
-      justify-content: flex-end;
-    }
-    .nav-center {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      max-width: 190px;
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .nav-title {
-      font-size: 15.5px;
-      font-weight: 600;
-      color: var(--text);
-      overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-    }
-    .nav-subtitle {
-      font-size: 10.5px;
-      color: var(--text-tertiary);
-      display: flex;
-      align-items: center;
-      gap: 4px;
-    }
-
-    .ios-back-btn {
-      border: none;
-      background: transparent;
-      color: var(--accent);
-      font-size: 15px;
-      font-weight: 500;
-      display: inline-flex;
-      align-items: center;
-      gap: 3px;
-      cursor: pointer;
-      padding: 6px 4px 6px 0;
-      border-radius: 8px;
-      transition: opacity 120ms ease;
-    }
-    .ios-back-btn:active {
-      opacity: 0.6;
-    }
-
-    .ios-icon-btn {
-      width: 32px;
-      height: 32px;
-      border: none;
-      background: transparent;
-      color: var(--text-muted);
-      border-radius: 8px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 120ms ease, color 120ms ease, transform 100ms ease;
-    }
-    .ios-icon-btn:hover {
-      background: var(--hover);
-      color: var(--text);
-    }
-    .ios-icon-btn:active {
-      transform: scale(0.92);
-      background: var(--selected);
-    }
-
-    /* 标题级反链胶囊微标 (Title Ribbon Badge on iOS) */
-    .title-relation-badge {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 3px 8px;
-      border-radius: 12px;
-      font-size: 11px;
-      font-weight: 600;
-      background: var(--accent-bg);
-      color: var(--accent);
-      cursor: pointer;
-      border: 1px solid transparent;
-      font-family: var(--font-ui);
-      transition: all 120ms ease;
-    }
-    .title-relation-badge:active {
-      background: rgba(44, 68, 124, 0.18);
-      transform: scale(0.95);
-    }
-
-    /* ========================================================= */
-    /* 7. 视图 1：笔记库根目录导航 (Vault & Folders Screen)       */
-    /* ========================================================= */
-    .scrollable-body {
-      flex: 1;
-      overflow-y: auto;
-      overflow-x: hidden;
-      padding-bottom: 90px;
-      -webkit-overflow-scrolling: touch;
-    }
-    .scrollable-body::-webkit-scrollbar {
-      display: none;
-    }
-
-    .ios-large-header {
-      padding: 8px 18px 12px;
-      display: flex;
-      align-items: baseline;
-      justify-content: space-between;
-    }
-    .large-title {
-      font-size: 27px;
-      font-weight: 700;
-      letter-spacing: -0.4px;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .vault-chip {
-      font-size: 11px;
-      font-weight: 600;
-      color: var(--accent);
-      background: var(--accent-bg);
-      padding: 3px 8px;
-      border-radius: 6px;
-      font-family: var(--font-ui);
-    }
-
-    /* iOS 原生圆角搜索栏 */
-    .search-bar-wrap {
-      padding: 0 16px 14px;
-    }
-    .ios-search-input {
-      width: 100%;
-      height: 38px;
-      background: rgba(142, 142, 147, 0.12);
-      border: none;
-      border-radius: 10px;
-      padding: 0 12px 0 34px;
-      font-size: 14px;
-      font-family: var(--font-ui);
-      color: var(--text);
-      position: relative;
-      outline: none;
-      transition: background 150ms ease;
-    }
-    .ios-search-input:focus {
-      background: rgba(142, 142, 147, 0.18);
-    }
-    .search-icon-wrap {
-      position: absolute;
-      left: 27px;
-      top: 79px;
-      pointer-events: none;
-      color: var(--text-tertiary);
-      display: flex;
-      align-items: center;
-    }
-
-    /* iOS Section 分组卡片列表 */
-    .ios-group-title {
-      font-size: 11.5px;
-      font-weight: 600;
-      color: var(--text-tertiary);
-      text-transform: uppercase;
-      letter-spacing: 0.4px;
-      padding: 10px 18px 5px;
-      font-family: var(--font-ui);
-    }
-    .ios-card-list {
-      margin: 0 16px 14px;
-      background: var(--bg-card);
-      border-radius: var(--ios-radius-card);
-      border: 0.5px solid var(--border);
-      overflow: hidden;
-      font-family: var(--font-ui);
-    }
-    .ios-list-row {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 11px 14px;
-      background: var(--bg-card);
-      border-bottom: 0.5px solid var(--border);
-      cursor: pointer;
-      transition: background 100ms ease;
-    }
-    .ios-list-row:last-child {
-      border-bottom: none;
-    }
-    .ios-list-row:active {
-      background: var(--hover);
-    }
-    .row-left {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      min-width: 0;
-    }
-    .row-icon {
-      width: 26px;
-      height: 26px;
-      border-radius: 6px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-    }
-    .icon-blue { background: rgba(44, 68, 124, 0.12); color: var(--accent); }
-    .icon-green { background: rgba(32, 92, 74, 0.12); color: #205c4a; }
-    .icon-orange { background: rgba(220, 120, 30, 0.12); color: #c86812; }
-    .icon-purple { background: rgba(130, 60, 180, 0.12); color: #823cb4; }
-
-    .row-text {
-      font-size: 14.5px;
-      font-weight: 500;
-      color: var(--text);
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .row-right {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--text-tertiary);
-      font-size: 13px;
-    }
-
-    /* ========================================================= */
-    /* 8. 视图 2：文件夹内笔记列表 (Note List Screen)             */
-    /* ========================================================= */
-    .note-card-item {
-      padding: 13px 16px;
-      background: var(--bg-card);
-      border-bottom: 0.5px solid var(--border);
-      cursor: pointer;
-      display: flex;
-      flex-direction: column;
-      gap: 5px;
-      transition: background 100ms ease;
-    }
-    .note-card-item:active {
-      background: var(--hover);
-    }
-    .note-card-item.selected {
-      background: var(--selected);
-      border-left: 3px solid var(--accent);
-    }
-    .note-card-top {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    .note-card-title {
-      font-size: 15.5px;
-      font-weight: 600;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .note-card-date {
-      font-size: 11.5px;
-      color: var(--text-tertiary);
-      font-family: var(--font-ui);
-    }
-    .note-card-snippet {
-      font-size: 13px;
-      color: var(--text-muted);
-      line-height: 1.45;
-      display: -webkit-box;
-      -webkit-line-clamp: 2;
-      -webkit-box-orient: vertical;
-      overflow: hidden;
-    }
-    .note-card-meta {
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      margin-top: 2px;
-      font-family: var(--font-ui);
-    }
-    .meta-tag {
-      font-size: 11px;
-      padding: 1px 6px;
-      border-radius: 4px;
-      background: var(--tag-bg);
-      color: var(--tag-text);
-      font-weight: 500;
-    }
-    .meta-ref-badge {
-      font-size: 10.5px;
-      color: var(--accent);
-      background: var(--accent-bg);
-      padding: 1px 6px;
-      border-radius: 4px;
-      font-weight: 600;
-    }
-
-    /* ========================================================= */
-    /* 9. 视图 3：笔记详情与编辑器 (Note Detail & Editor)        */
-    /* ========================================================= */
-    .editor-body {
-      padding: 14px 18px 120px;
-      background: var(--bg);
-      min-height: 100%;
-    }
-
-    /* Sidenote 属性卡片 (从 Mac 继承的折叠卡片) */
-    .fm-foldable-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      margin-bottom: 20px;
-      overflow: hidden;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
-    }
-    .fm-card-summary {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 7px 11px;
-      cursor: pointer;
-      background: var(--bg-subtle);
-      font-family: var(--font-ui);
-      font-size: 11.5px;
-    }
-    .fm-card-badges {
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 5px;
-    }
-    .chip-pill {
-      display: inline-flex;
-      align-items: center;
-      gap: 4px;
-      padding: 1px 6px;
-      border-radius: 4px;
-      font-size: 11px;
-      font-weight: 500;
-    }
-    .chip-link { background: var(--accent-bg); color: var(--accent); }
-    .chip-status { background: rgba(32, 92, 74, 0.12); color: #205c4a; font-weight: 600; }
-    .chip-tag { background: var(--tag-bg); color: var(--tag-text); }
-    .status-dot { width: 5px; height: 5px; border-radius: 50%; background: #205c4a; }
-
-    .fm-card-body {
-      padding: 10px 12px;
-      border-top: 1px dashed var(--border);
-      background: var(--bg-card);
-      display: grid;
-      grid-template-columns: 1fr;
-      gap: 8px;
-      font-family: var(--font-ui);
-      font-size: 12px;
-    }
-    .fm-grid-item {
-      display: flex;
-      align-items: baseline;
-    }
-    .fm-grid-key {
-      width: 78px;
-      flex-shrink: 0;
-      font-size: 10.5px;
-      color: var(--text-tertiary);
-      font-weight: 600;
-      text-transform: uppercase;
-    }
-    .fm-grid-val {
-      flex: 1;
-      color: var(--text);
-    }
-
-    /* 正文 Markdown 排版 */
-    .mote-article {
-      line-height: 1.75;
-      font-size: 15.5px;
-      color: var(--text);
-    }
-    .mote-h1 {
-      font-size: 24px;
-      font-weight: 700;
-      margin: 10px 0 14px;
-      display: flex;
-      align-items: center;
-      flex-wrap: wrap;
-      gap: 8px;
-      letter-spacing: -0.3px;
-    }
-    .mote-h2 {
-      font-size: 19px;
-      font-weight: 700;
-      margin: 22px 0 10px;
-      padding-bottom: 4px;
-      border-bottom: 0.5px solid var(--border);
-    }
-    .mote-p {
-      margin-bottom: 14px;
-      text-align: justify;
-    }
-
-    /* 双链 WikiLink */
-    .wikilink {
-      color: var(--link);
-      background: var(--accent-bg);
-      padding: 1px 5px;
-      border-radius: 4px;
-      font-weight: 550;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 2px;
-      transition: background 120ms ease;
-    }
-    .wikilink:active {
-      background: rgba(44, 68, 124, 0.2);
-    }
-
-    /* Callout 引用框 */
-    .mote-callout {
-      border-left: 3.5px solid var(--callout-note);
-      background: var(--callout-note-bg);
-      border-radius: 0 8px 8px 0;
-      padding: 10px 14px;
-      margin: 16px 0;
-      font-size: 14px;
-    }
-    .callout-title {
-      font-weight: 700;
-      display: flex;
-      align-items: center;
-      gap: 6px;
-      color: var(--callout-note);
-      margin-bottom: 4px;
-      font-family: var(--font-ui);
-    }
-    .callout-tip {
-      border-left-color: var(--callout-tip);
-      background: var(--callout-tip-bg);
-    }
-    .callout-tip .callout-title {
-      color: var(--callout-tip);
-    }
-
-    /* 任务复选框 (交互式点击) */
-    .task-list {
-      list-style: none;
-      margin: 12px 0;
-    }
-    .task-item {
-      display: flex;
-      align-items: flex-start;
-      gap: 10px;
-      padding: 6px 0;
-      cursor: pointer;
-    }
-    .task-checkbox {
-      width: 18px;
-      height: 18px;
-      border-radius: 5px;
-      border: 1.5px solid var(--text-muted);
-      margin-top: 3px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      flex-shrink: 0;
-      transition: all 140ms cubic-bezier(0.16, 1, 0.3, 1);
-    }
-    .task-checkbox.checked {
-      background: var(--accent);
-      border-color: var(--accent);
-      color: #fff;
-    }
-    .task-label {
-      flex: 1;
-      font-size: 15px;
-    }
-    .task-label.done {
-      text-decoration: line-through;
-      color: var(--text-tertiary);
-    }
-
-    /* 真实表格 */
-    .mote-table-wrap {
-      overflow-x: auto;
-      margin: 16px 0;
-      border-radius: 8px;
-      border: 1px solid var(--border);
-    }
-    .mote-table {
-      width: 100%;
-      border-collapse: collapse;
-      font-size: 13.5px;
-      font-family: var(--font-ui);
-    }
-    .mote-table th, .mote-table td {
-      padding: 8px 12px;
-      border-bottom: 0.5px solid var(--border);
-      text-align: left;
-    }
-    .mote-table th {
-      background: var(--bg-subtle);
-      font-weight: 600;
-      color: var(--text-muted);
-    }
-
-    /* 数学公式 */
-    .mote-math-block {
-      background: var(--code-bg);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px;
-      text-align: center;
-      font-family: var(--font-mono);
-      font-size: 14px;
-      margin: 14px 0;
-      color: var(--accent);
-    }
-
-    /* ========================================================= */
-    /* 10. iOS 键盘/底部 Markdown 快捷辅助工具条 (Accessory Bar)   */
-    /* ========================================================= */
-    .ios-accessory-bar {
-      position: absolute;
-      bottom: 24px;
-      left: 12px;
-      right: 12px;
-      height: 44px;
-      background: rgba(252, 251, 248, 0.92);
-      backdrop-filter: var(--ios-blur);
-      -webkit-backdrop-filter: var(--ios-blur);
-      border: 0.5px solid var(--border-strong);
-      border-radius: 22px;
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-      display: flex;
-      align-items: center;
-      padding: 0 6px;
-      overflow-x: auto;
-      gap: 3px;
-      z-index: 60;
-      font-family: var(--font-ui);
-    }
-    html[data-theme="dark"] .ios-accessory-bar {
-      background: rgba(35, 34, 30, 0.92);
-      box-shadow: 0 6px 20px rgba(0, 0, 0, 0.35);
-    }
-    .ios-accessory-bar::-webkit-scrollbar {
-      display: none;
-    }
-    .acc-btn {
-      flex-shrink: 0;
-      height: 32px;
-      min-width: 32px;
-      padding: 0 7px;
-      border: none;
-      background: transparent;
-      color: var(--text);
-      font-size: 13px;
-      font-weight: 500;
-      border-radius: 16px;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: background 100ms ease;
-    }
-    .acc-btn:active {
-      background: var(--selected);
-      transform: scale(0.95);
-    }
-    .acc-sep {
-      width: 1px;
-      height: 18px;
-      background: var(--border);
-      flex-shrink: 0;
-      margin: 0 2px;
-    }
-
-    /* ========================================================= */
-    /* 11. iOS 底部反向链接半屏抽屉 (Backlinks Bottom Sheet)      */
-    /* ========================================================= */
-    .sheet-scrim {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(0, 0, 0, 0.45);
-      z-index: 200;
-      opacity: 0;
-      pointer-events: none;
-      transition: opacity 280ms ease;
-    }
-    .sheet-scrim.visible {
-      opacity: 1;
-      pointer-events: auto;
-    }
-    .bottom-sheet {
-      position: absolute;
-      bottom: 0;
-      left: 0;
-      width: 100%;
-      height: 66%;
-      max-height: 520px;
-      background: var(--bg);
-      border-radius: var(--ios-radius-sheet) var(--ios-radius-sheet) 0 0;
-      box-shadow: 0 -8px 32px rgba(0, 0, 0, 0.28);
-      z-index: 210;
-      display: flex;
-      flex-direction: column;
-      transform: translateY(105%);
-      transition: transform 340ms cubic-bezier(0.16, 1, 0.3, 1);
-      font-family: var(--font-ui);
-    }
-    .bottom-sheet.open {
-      transform: translateY(0);
-    }
-    .sheet-grabber {
-      width: 38px;
-      height: 5px;
-      background: var(--border-strong);
-      border-radius: 3px;
-      margin: 10px auto 4px;
-      cursor: grab;
-      flex-shrink: 0;
-    }
-    .sheet-header {
-      padding: 10px 18px 12px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      border-bottom: 0.5px solid var(--border);
-      flex-shrink: 0;
-    }
-    .sheet-title {
-      font-size: 16px;
-      font-weight: 700;
-      color: var(--text);
-      display: flex;
-      align-items: center;
-      gap: 6px;
-    }
-    .sheet-body {
-      flex: 1;
-      overflow-y: auto;
-      padding: 14px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 10px;
-    }
-    .backlink-card {
-      background: var(--bg-card);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      padding: 11px 14px;
-      cursor: pointer;
-      transition: all 120ms ease;
-    }
-    .backlink-card:active {
-      border-color: var(--accent);
-      transform: scale(0.98);
-      background: var(--hover);
-    }
-    .backlink-card-title {
-      color: var(--accent);
-      font-weight: 600;
-      font-size: 13.5px;
-      display: flex;
-      align-items: center;
-      gap: 5px;
-      margin-bottom: 4px;
-    }
-    .backlink-snippet {
-      font-size: 12.5px;
-      color: var(--text-muted);
-      line-height: 1.45;
-    }
-
-    /* ========================================================= */
-    /* 12. 全局快速打开与搜索 (Quick Open Modal)                 */
-    /* ========================================================= */
-    .quick-open-modal {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      background: rgba(252, 251, 248, 0.95);
-      backdrop-filter: var(--ios-blur);
-      -webkit-backdrop-filter: var(--ios-blur);
-      z-index: 300;
-      display: flex;
-      flex-direction: column;
-      transform: translateY(-100%);
-      transition: transform 300ms cubic-bezier(0.16, 1, 0.3, 1);
-      font-family: var(--font-ui);
-    }
-    html[data-theme="dark"] .quick-open-modal {
-      background: rgba(28, 27, 24, 0.95);
-    }
-    .quick-open-modal.open {
-      transform: translateY(0);
-    }
-    .quick-header {
-      padding: 55px 16px 12px;
-      display: flex;
-      align-items: center;
-      gap: 10px;
-      border-bottom: 0.5px solid var(--border);
-    }
-    .quick-input-wrap {
-      flex: 1;
-      position: relative;
-    }
-    .quick-input {
-      width: 100%;
-      height: 40px;
-      border-radius: 12px;
-      border: 1px solid var(--border-strong);
-      background: var(--bg-card);
-      padding: 0 12px 0 34px;
-      font-size: 15px;
-      color: var(--text);
-      outline: none;
-    }
-    .quick-cancel-btn {
-      border: none;
-      background: transparent;
-      color: var(--accent);
-      font-size: 15px;
-      font-weight: 500;
-      cursor: pointer;
-    }
-    .quick-results {
-      flex: 1;
-      overflow-y: auto;
-      padding: 12px 16px;
-      display: flex;
-      flex-direction: column;
-      gap: 6px;
-    }
-    .quick-item {
-      padding: 10px 14px;
-      border-radius: 10px;
-      background: var(--bg-card);
-      border: 0.5px solid var(--border);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      transition: background 100ms ease;
-    }
-    .quick-item:active {
-      background: var(--hover);
-    }
-    .quick-item-title {
-      font-size: 14.5px;
-      font-weight: 600;
-      color: var(--text);
-    }
-    .quick-item-path {
-      font-size: 11px;
-      color: var(--text-tertiary);
-    }
-
-    /* ========================================================= */
-    /* 13. iOS 底部 Home Indicator                               */
-    /* ========================================================= */
-    .ios-home-bar {
-      position: absolute;
-      bottom: 8px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 136px;
-      height: 5px;
-      background: var(--text);
-      opacity: 0.25;
-      border-radius: 3px;
-      z-index: 100;
-      pointer-events: none;
-    }
-
-    /* 浮动操作气泡 Toast */
-    .ios-toast {
-      position: absolute;
-      top: 60px;
-      left: 50%;
-      transform: translateX(-50%) translateY(-20px);
-      background: rgba(34, 32, 28, 0.9);
-      color: #fff;
-      font-size: 12.5px;
-      font-weight: 500;
-      padding: 6px 14px;
-      border-radius: 20px;
-      font-family: var(--font-ui);
-      backdrop-filter: blur(12px);
-      box-shadow: 0 4px 14px rgba(0, 0, 0, 0.25);
-      z-index: 400;
-      opacity: 0;
-      pointer-events: none;
-      transition: all 220ms ease;
-    }
-    .ios-toast.show {
-      transform: translateX(-50%) translateY(0);
-      opacity: 1;
-    }
-  </style>
+  /* ---------- 底部面板、对话框、提示 ---------- */
+  .scrim { position: absolute; inset: 0; z-index: 30; background: rgba(0, 0, 0, 0.36); opacity: 0; pointer-events: none; transition: opacity 0.3s; }
+  .scrim.on { opacity: 1; pointer-events: auto; }
+  .sheet { position: absolute; left: 0; right: 0; bottom: 0; z-index: 31; max-height: 74%; display: flex; flex-direction: column; border-radius: 30px 30px 0 0; background: var(--bg); transform: translateY(104%); transition: transform 0.38s var(--ease); padding-bottom: 30px; }
+  .sheet.on { transform: none; box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.22); }
+  .grab { width: 38px; height: 5px; border-radius: 3px; background: var(--line2); margin: 9px auto 0; flex: none; }
+  .sh { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 12px 12px 8px 22px; }
+  .sh b { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sh button { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--fill); color: var(--muted); display: grid; place-items: center; }
+  .sb { overflow-y: auto; scrollbar-width: none; }
+  .mi { display: flex; align-items: center; gap: 15px; padding: 14px 22px; font-size: 16.5px; cursor: pointer; }
+  .mi:active { background: var(--hover); }
+  .mi svg { color: var(--muted); flex: none; }
+  .mi span { margin-left: auto; color: var(--faint); font-size: 14px; display: flex; align-items: center; }
+  .mi.danger, .mi.danger svg { color: var(--danger); }
+  .mi.cur { color: var(--accent); font-weight: 600; }
+  .mi small { display: block; font-size: 12.5px; color: var(--faint); font-weight: 400; margin-top: 1px; }
+  .bl { padding: 12px 22px; cursor: pointer; position: relative; }
+  .bl + .bl::before { content: ''; position: absolute; left: 22px; right: 0; top: 0; height: 1px; background: var(--line); }
+  .bl:active { background: var(--hover); }
+  .bl b { font: 600 16.5px var(--font-heading); color: var(--accent); }
+  .bl i { font-style: normal; font-size: 12px; color: var(--faint); margin-left: 8px; }
+  .bl p { font-size: 14px; line-height: 1.55; color: var(--muted); margin-top: 4px; }
+  .dwrap { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(0, 0, 0, 0.32); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
+  .dwrap.on { opacity: 1; pointer-events: auto; }
+  .dlg { width: 286px; border-radius: 22px; background: var(--card); overflow: hidden; text-align: center; transform: scale(1.06); transition: transform 0.25s var(--ease); }
+  .dwrap.on .dlg { transform: none; }
+  .dt { font-size: 17px; font-weight: 600; padding: 20px 20px 0; }
+  .dm { font-size: 13.5px; line-height: 1.5; color: var(--muted); padding: 6px 20px 0; }
+  .dlg input { display: block; width: calc(100% - 36px); margin: 14px 18px 0; height: 40px; padding: 0 12px; border-radius: 11px; background: var(--fill); font-size: 16px; user-select: text; -webkit-user-select: text; }
+  .dbtn { display: flex; margin-top: 18px; border-top: 1px solid var(--line); }
+  .dbtn button { flex: 1; height: 48px; font-size: 16.5px; color: var(--accent); }
+  .dbtn button + button { border-left: 1px solid var(--line); font-weight: 600; }
+  .dbtn .danger { color: var(--danger); }
+  .toast { position: absolute; left: 50%; bottom: 106px; z-index: 45; transform: translate(-50%, 12px); padding: 9px 16px; border-radius: 99px; background: rgba(34, 32, 28, 0.92); color: #fff; font-size: 13.5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.22s, transform 0.22s; }
+  .toast.on { opacity: 1; transform: translate(-50%, 0); }
+  .phone.kb .toast { bottom: 330px; }
+</style>
 </head>
 <body>
-
-  <!-- 外部演示控制器 -->
-  <div class="demo-bar">
-    <div class="demo-title-group">
-      <span class="demo-badge">mote iOS</span>
-      <span class="demo-title">iPhone 原型 (纸墨体系与手势流体架构)</span>
+<div class="page">
+  <aside>
+    <div class="brand">mote iOS 原型<span>第 2 版</span></div>
+    <p class="lead">底部有 4 个 tab 和一个新建按钮。手机里的每个地方都可以点。</p>
+    <h4>跳到</h4>
+    <div class="jumps">
+      <button data-jump="recent">最近</button><button data-jump="files">文件</button><button data-jump="search">搜索</button><button data-jump="fulltext">全文搜索</button><button data-jump="settings">设置</button><button data-jump="note">笔记 · 阅读</button><button data-jump="edit">笔记 · 编辑</button><button data-jump="backlinks">反向链接</button>
     </div>
-    <div class="demo-controls">
-      <button class="demo-btn active" id="btn-device-mode" onclick="toggleDeviceMode()">
-        📱 iPhone 16 Pro 框架
-      </button>
-      <button class="demo-btn" id="btn-theme" onclick="toggleTheme()">
-        ☀️ 宣纸暖白
-      </button>
-      <button class="demo-btn" id="btn-font" onclick="toggleFont()">
-        🖋 楷体
-      </button>
-      <button class="demo-btn" onclick="openQuickOpen()">
-        🔍 快速打开 (⌘O)
-      </button>
-      <div style="width: 1px; height: 18px; background: rgba(255,255,255,0.2); margin: 0 4px;"></div>
-      <button class="demo-btn" id="btn-jump-vault" onclick="jumpToScreen('vault')">📁 目录导航</button>
-      <button class="demo-btn" id="btn-jump-list" onclick="jumpToScreen('list')">📑 笔记列表</button>
-      <button class="demo-btn active" id="btn-jump-editor" onclick="jumpToScreen('editor')">📝 笔记详情</button>
-      <button class="demo-btn" id="btn-jump-backlinks" onclick="jumpToScreen('backlinks')">🔗 反向链接</button>
+    <h4>外观</h4>
+    <div class="seg" id="side-theme"></div>
+    <div class="seg" id="side-font"></div>
+    <h4>可以试的操作</h4>
+    <ul>
+      <li>点笔记里的双链，跳到那篇笔记。橙色的双链指向还不存在的笔记，点它会新建。</li>
+      <li>点「编辑」，再点任意一行。这一行显示 Markdown 源码，可以直接打字。</li>
+      <li>长按（或右键）列表里的笔记：改名、移动、删除。改名会更新指向它的双链。</li>
+      <li>在「搜索」里切到「全文」，输入中文。点结果会跳到那一行。</li>
+      <li>再点一次当前 tab，回到这个 tab 的第一页。</li>
+    </ul>
+  </aside>
+
+  <main>
+    <div class="phone" id="phone">
+      <div class="status">
+        <span>9:41</span>
+        <div class="island"></div>
+        <svg width="66" height="13" viewBox="0 0 66 13" fill="currentColor"><rect x="0" y="8" width="3" height="5" rx="1"/><rect x="5" y="5.5" width="3" height="7.5" rx="1"/><rect x="10" y="3" width="3" height="10" rx="1"/><rect x="15" y="0" width="3" height="13" rx="1"/><path d="M31 3.2c2.2 0 4.2.9 5.7 2.3l1.1-1.2A9.9 9.900 0 0 0 31 1.500a9.900 9.900 0 0 0-6.800 2.800l1.100 1.200A8.200 8.200 0 0 1 31 3.200Zm0 3.500c1.300 0 2.500.500 3.400 1.400l1.100-1.200A6.600 6.600 0 0 0 31 5a6.600 6.600 0 0 0-4.500 1.900l1.100 1.200c.900-.900 2.100-1.400 3.400-1.400Zm0 3.300 2.100 2.300L31 13l-2.100-.700Z"/><rect x="43.500" y="1" width="19" height="11" rx="3.200" fill="none" stroke="currentColor" opacity=".4"/><rect x="45" y="2.500" width="16" height="8" rx="2"/><rect x="63.500" y="4.500" width="1.500" height="4" rx=".7" opacity=".5"/></svg>
+      </div>
+      <div id="screens"></div>
+
+      <div class="tabbar">
+        <div class="tabs">
+          <button class="tab" data-act="tab" data-tab="recent"><i data-ic="clock"></i><span>最近</span></button>
+          <button class="tab" data-act="tab" data-tab="files"><i data-ic="folder"></i><span>文件</span></button>
+          <button class="tab" data-act="tab" data-tab="search"><i data-ic="search"></i><span>搜索</span></button>
+          <button class="tab" data-act="tab" data-tab="settings"><i data-ic="sliders"></i><span>设置</span></button>
+        </div>
+        <button class="fab" data-act="new" aria-label="新建笔记"><i data-ic="compose"></i></button>
+      </div>
+
+      <div class="kbd" id="kbd"></div>
+      <div class="scrim" id="scrim" data-act="sheet-x"></div>
+      <div class="sheet" id="sheet"></div>
+      <div class="dwrap" id="dwrap"></div>
+      <div class="toast" id="toast"></div>
+      <div class="homebar"></div>
     </div>
-  </div>
+  </main>
+</div>
 
-  <div class="stage">
-    <!-- iPhone 16 Pro 模拟器外壳 -->
-    <div class="device-shell" id="device-shell">
-      
-      <!-- iOS 状态栏与灵动岛 -->
-      <div class="ios-status-bar">
-        <span class="status-time" id="status-time">09:41</span>
-        
-        <div class="dynamic-island" onclick="triggerIslandAction()" title="点击灵动岛">
-          <div class="island-dot"></div>
-          <div class="island-cam"></div>
-        </div>
+<!-- ============ 示例笔记。原型把它们当成真的笔记库来解析、搜索和算反向链接 ============ -->
+<script type="text/markdown" data-path="项目/单词本/README.md" data-when="今天 14:32" data-t="100">
+---
+状态: 进行中
+tags: [英语, ios]
+开始: 2026-10-18
+优先级: P1
+---
+# 定位
+一款给自己用的英语学习 app，目标是提高词汇量和听力。
+> [!note] 设计准则
+> 按遗忘曲线安排复习。所有数据存成纯文本 Markdown，原因见 [[纯文本的好处]]。
+## 路线
+- [x] 完成离线词库的结构设计
+- [x] 写完 [[词库设计]] 初稿
+- [ ] 做音频和例句的时间对齐，见 [[听力对齐]]
+- [ ] 整理 [[发布清单]]
+## 进度
+| 模块 | 状态 | 备注 |
+| --- | --- | --- |
+| 词库 | 已完成 | 2 万词 |
+| 复习 | 进行中 | ==本周重点== |
+| 听力 | 未开始 | 等音频切片 |
+## 相关
+上一级见 [[项目索引]]。立项当天的想法记在 [[2026-10-18]]。
+</script>
+<script type="text/markdown" data-path="收件箱.md" data-when="今天 09:12" data-t="99">
+- [ ] 给 [[词库设计]] 补上例句字段
+- [ ] 周末整理 #读书 笔记
+- 想到一个点子：把复习提醒放到锁屏上
+</script>
+<script type="text/markdown" data-path="项目/单词本/词库设计.md" data-when="昨天 21:05" data-t="90">
+---
+状态: 初稿
+tags: [英语, 设计]
+---
+词库随 app 一起发布，离线可用。它服务于 [[README]] 里的复习功能。
+## 字段
+- `word`：单词原形
+- `level`：难度，1 到 5
+- `seen`：见过的次数
+## 复习间隔
+间隔按 **记住的次数** 翻倍：1 天、2 天、4 天、8 天。
+```ts
+const next = (n: number) => 2 ** n
+```
+> 先做最简单的版本，数据够了再调参数。
+</script>
+<script type="text/markdown" data-path="日记/2026-11-22.md" data-when="昨天 23:10" data-t="91">
+- [x] 修完改名的测试
+- [x] 看 iOS 原型
+- [ ] 读 [[设计中的设计]] 第三章
+今天把 [[README|单词本]] 的复习间隔定了下来。
+</script>
+<script type="text/markdown" data-path="项目/项目索引.md" data-when="11-20" data-t="80">
+本季度在做的事：
+- [[README|单词本]]：英语学习 app，==第四季度重点==
+- 读书：今年读完 [[设计中的设计]] 和 [[认知觉醒]]
+</script>
+<script type="text/markdown" data-path="项目/单词本/听力对齐.md" data-when="11-18" data-t="78">
+---
+tags: [英语, 音频]
+---
+把例句音频切成片段，每段对应一句文字。
+- [ ] 试用开源的强制对齐工具
+- [ ] 支持 0.75 倍和 1.25 倍速
+回到 [[README]]。
+</script>
+<script type="text/markdown" data-path="读书/设计中的设计.md" data-when="11-15" data-t="75">
+---
+作者: 原研哉
+评分: 5
+tags: [读书, 设计]
+---
+> 书里的主张：设计是看清事物本质的能力，不只是一门手艺。
+## 摘记
+- 再设计：把熟悉的东西当作第一次见到。
+- 白：不是一种颜色，是一种感受方式。
+## 我的想法
+笔记工具也该这样。界面退到后面，只留下纸和字。 #设计
+</script>
+<script type="text/markdown" data-path="想法/纯文本的好处.md" data-when="11-12" data-t="72">
+---
+tags: [想法]
+---
+1. 任何编辑器都能打开。
+2. 十年后还能读。
+3. 可以用脚本批量处理。
+所以笔记 app 不该锁住数据。*文件在，笔记就在。*
+</script>
+<script type="text/markdown" data-path="读书/认知觉醒.md" data-when="11-09" data-t="69">
+---
+作者: 周岭
+tags: [读书]
+---
+## 摘记
+- 耐心来自看清事情的规律，不来自忍耐。
+- 每天留一段不被打扰的时间。
+这和 [[纯文本的好处]] 想说的一样：少一点，才留得住。
+</script>
+<script type="text/markdown" data-path="日记/2026-10-18.md" data-when="10-18" data-t="40">
+今天立项：开始做 [[README|单词本]]。
+想验证一件事：只用本地纯文本，能不能撑起一个学习工具。
+</script>
 
-        <div class="status-icons">
-          <!-- 信号图标 -->
-          <svg width="15" height="11" viewBox="0 0 17 12" fill="currentColor">
-            <rect x="0" y="8" width="3" height="4" rx="1"/>
-            <rect x="4.5" y="6" width="3" height="6" rx="1"/>
-            <rect x="9" y="3" width="3" height="9" rx="1"/>
-            <rect x="13.5" y="0" width="3" height="12" rx="1"/>
-          </svg>
-          <!-- 5G 文本 -->
-          <span style="font-size: 11px; font-weight: 700;">5G</span>
-          <!-- 电池图标 -->
-          <svg width="22" height="11" viewBox="0 0 25 12" fill="currentColor">
-            <rect x="1" y="1" width="20" height="10" rx="3" fill="none" stroke="currentColor" stroke-width="1.5"/>
-            <rect x="3" y="3" width="14" height="6" rx="1.5"/>
-            <path d="M23 4v4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-        </div>
-      </div>
+<script>
+/* ================= 工具 ================= */
+const $ = (s, r = document) => r.querySelector(s);
+const phone = $('#phone'), host = $('#screens');
+const Q = (s) => host.lastElementChild && host.lastElementChild.querySelector(s);
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const escRe = (s) => s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+const VAULT = 'life-os';
+const KB_H = 312;
 
-      <!-- 应用视口容器 (Router Stack) -->
-      <div class="app-viewport">
+const ICONS = {
+  clock: '<circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/>',
+  folder: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2.500h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/>',
+  folderPlus: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2.500h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M12 11v5M9.500 13.500h5"/>',
+  move: '<path d="M3 7a2 2 0 0 1 2-2h4l2 2.500h8a2 2 0 0 1 2 2V18a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2Z"/><path d="M9 13.500h6m-2.500-2.500 2.500 2.500-2.500 2.500"/>',
+  search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.800-3.800"/>',
+  sliders: '<path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.500"/><circle cx="8" cy="17" r="2.500"/>',
+  compose: '<path d="M12 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><path d="M18.400 3.600a2 2 0 0 1 2.800 2.800L12 15.600l-3.500.900.900-3.500Z"/>',
+  chevR: '<path d="m9 6 6 6-6 6"/>', chevL: '<path d="m15 6-6 6 6 6"/>', chevD: '<path d="m6 9 6 6 6-6"/>', chevU: '<path d="m6 15 6-6 6 6"/>',
+  doc: '<path d="M7 3h7l5 5v11a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2Z"/><path d="M14 3v5h5"/>',
+  link: '<path d="M10 14a4.500 4.500 0 0 0 6.400 0l3-3A4.500 4.500 0 0 0 13 4.600l-1 1"/><path d="M14 10a4.500 4.500 0 0 0-6.400 0l-3 3a4.500 4.500 0 0 0 6.400 6.400l1-1"/>',
+  more: '<circle cx="5" cy="12" r="1.400" fill="currentColor"/><circle cx="12" cy="12" r="1.400" fill="currentColor"/><circle cx="19" cy="12" r="1.400" fill="currentColor"/>',
+  check: '<path d="m5 12.500 4.500 4.500L19 7.500"/>',
+  cloud: '<path d="M7 18a4.500 4.500 0 0 1-.600-8.960A6 6 0 0 1 18 10.500a3.800 3.800 0 0 1-.500 7.500Z"/><path d="m9.500 13.500 2 2 3.500-3.500"/>',
+  pencil: '<path d="M16.500 4.500a2.100 2.100 0 0 1 3 3L8 19l-4 1 1-4Z"/>',
+  trash: '<path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a2 2 0 0 0 2 2h6a2 2 0 0 0 2-2l1-12M9 7V4h6v3"/>',
+  copy: '<rect x="9" y="9" width="11" height="11" rx="2"/><path d="M5 15V6a2 2 0 0 1 2-2h9"/>',
+  x: '<path d="M6 6l12 12M18 6 6 18"/>',
+  kbDown: '<rect x="3" y="4" width="18" height="11" rx="2"/><path d="M7 8h.010M11 8h.010M15 8h.010M8 11.500h8M9 19l3 2 3-2"/>',
+  undo: '<path d="M9 14 4 9l5-5"/><path d="M4 9h10a6 6 0 0 1 0 12h-3"/>',
+  bs: '<path d="M9 6h10a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H9l-6-6Z"/><path d="m12 10 4 4m0-4-4 4"/>',
+  shift: '<path d="M12 4 4 12h4v7h8v-7h4Z"/>',
+  task: '<rect x="4" y="4" width="16" height="16" rx="4"/><path d="m8.500 12.500 2.500 2.500 4.500-5"/>',
+};
+const ic = (n, s = 22, w = 1.8) => `<svg width="${s}" height="${s}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="${w}" stroke-linecap="round" stroke-linejoin="round">${ICONS[n]}</svg>`;
+document.querySelectorAll('[data-ic]').forEach((el) => { el.outerHTML = ic(el.dataset.ic, el.closest('.fab') ? 26 : 23); });
 
-        <!-- ======================================================= -->
-        <!-- 页面 1：笔记库根导航 (Vault Folders View)               -->
-        <!-- ======================================================= -->
-        <div class="screen-view active" id="view-vault">
-          <div class="ios-nav-bar nav-bar-blur">
-            <div class="nav-left">
-              <button class="ios-back-btn" style="font-weight:700; font-size:16px;">
-                life-os <span style="font-size:12px; margin-left:2px;">▾</span>
-              </button>
-            </div>
-            <div class="nav-center"></div>
-            <div class="nav-right">
-              <button class="ios-icon-btn" onclick="openQuickOpen()" title="搜索笔记">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              </button>
-              <button class="ios-icon-btn" onclick="showToast('设置面板（支持配置同步与外观）')">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z"/><circle cx="12" cy="12" r="3"/></svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="scrollable-body">
-            <div class="ios-large-header">
-              <div class="large-title">
-                笔记库
-                <span class="vault-chip">life-os</span>
-              </div>
-            </div>
-
-            <div class="search-bar-wrap" style="position:relative;">
-              <span class="search-icon-wrap">
-                <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/></svg>
-              </span>
-              <input type="text" class="ios-search-input" placeholder="快速打开或搜索..." onfocus="openQuickOpen()" readonly />
-            </div>
-
-            <!-- 常用视图 -->
-            <div class="ios-group-title">快速访问</div>
-            <div class="ios-card-list">
-              <div class="ios-list-row" onclick="navigateToFolder('全部笔记')">
-                <div class="row-left">
-                  <div class="row-icon icon-blue">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
-                  </div>
-                  <span class="row-text">全部笔记</span>
-                </div>
-                <div class="row-right">
-                  <span>1,428</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-                </div>
-              </div>
-
-              <div class="ios-list-row" onclick="navigateToFolder('今日日记')">
-                <div class="row-left">
-                  <div class="row-icon icon-green">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect width="18" height="18" x="3" y="4" rx="2"/><path d="M16 2v4"/><path d="M8 2v4"/><path d="M3 10h18"/></svg>
-                  </div>
-                  <span class="row-text">今日日记</span>
-                </div>
-                <div class="row-right">
-                  <span>2026-11-22</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-                </div>
-              </div>
-
-              <div class="ios-list-row" onclick="navigateToFolder('星标收藏')">
-                <div class="row-left">
-                  <div class="row-icon icon-orange">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                  </div>
-                  <span class="row-text">星标收藏</span>
-                </div>
-                <div class="row-right">
-                  <span>12</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-                </div>
-              </div>
-            </div>
-
-            <!-- 文件夹分类 -->
-            <div class="ios-group-title">文件夹</div>
-            <div class="ios-card-list">
-              <div class="ios-list-row" onclick="navigateToFolder('Projects / Cherky')">
-                <div class="row-left">
-                  <div class="row-icon icon-blue">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
-                  </div>
-                  <span class="row-text">Projects / Cherky</span>
-                </div>
-                <div class="row-right">
-                  <span>3</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-                </div>
-              </div>
-
-              <div class="ios-list-row" onclick="navigateToFolder('AI')">
-                <div class="row-left">
-                  <div class="row-icon icon-purple">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
-                  </div>
-                  <span class="row-text">AI</span>
-                </div>
-                <div class="row-right">
-                  <span>18</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-                </div>
-              </div>
-
-              <div class="ios-list-row" onclick="navigateToFolder('Books')">
-                <div class="row-left">
-                  <div class="row-icon icon-orange">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
-                  </div>
-                  <span class="row-text">Books</span>
-                </div>
-                <div class="row-right">
-                  <span>42</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-                </div>
-              </div>
-
-              <div class="ios-list-row" onclick="navigateToFolder('Daily')">
-                <div class="row-left">
-                  <div class="row-icon icon-green">
-                    <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z"/></svg>
-                  </div>
-                  <span class="row-text">Daily</span>
-                </div>
-                <div class="row-right">
-                  <span>365</span>
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-                </div>
-              </div>
-            </div>
-
-            <!-- 标签 -->
-            <div class="ios-group-title">常用标签</div>
-            <div style="display:flex; flex-wrap:wrap; gap:8px; padding:0 18px 20px;">
-              <span class="meta-tag" style="padding:4px 10px; font-size:12.5px; cursor:pointer;" onclick="showToast('筛选标签 #english')">#english</span>
-              <span class="meta-tag" style="padding:4px 10px; font-size:12.5px; cursor:pointer;" onclick="showToast('筛选标签 #ios')">#ios</span>
-              <span class="meta-tag" style="padding:4px 10px; font-size:12.5px; cursor:pointer;" onclick="showToast('筛选标签 #reading')">#reading</span>
-              <span class="meta-tag" style="padding:4px 10px; font-size:12.5px; cursor:pointer;" onclick="showToast('筛选标签 #project')">#project</span>
-              <span class="meta-tag" style="padding:4px 10px; font-size:12.5px; cursor:pointer;" onclick="showToast('筛选标签 #ai')">#ai</span>
-            </div>
-          </div>
-        </div>
-
-        <!-- ======================================================= -->
-        <!-- 页面 2：文件夹笔记列表 (Note List View)                 -->
-        <!-- ======================================================= -->
-        <div class="screen-view next" id="view-list">
-          <div class="ios-nav-bar nav-bar-blur">
-            <div class="nav-left">
-              <button class="ios-back-btn" onclick="navigateBackToVault()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
-                <span>笔记库</span>
-              </button>
-            </div>
-            <div class="nav-center">
-              <span class="nav-title" id="folder-view-title">Projects / Cherky</span>
-            </div>
-            <div class="nav-right">
-              <button class="ios-icon-btn" onclick="showToast('切换笔记排序 (A-Z / 修改时间)')" title="排序">
-                <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m3 16 4 4 4-4"/><path d="M7 20V4"/><path d="m21 8-4-4-4 4"/><path d="M17 4v16"/></svg>
-              </button>
-              <button class="ios-icon-btn" onclick="createNewNote()" title="新建笔记">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
-              </button>
-            </div>
-          </div>
-
-          <div class="scrollable-body" id="note-list-container">
-            <!-- 笔记卡片 1 -->
-            <div class="note-card-item selected" onclick="navigateToNote('README')">
-              <div class="note-card-top">
-                <span class="note-card-title">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
-                  README
-                </span>
-                <span class="note-card-date">14:32</span>
-              </div>
-              <div class="note-card-snippet">
-                这是以我 作为第一用户的一款英语学习的iOS app，用于帮提高我的词汇量 和 Listening. 系统将依据艾宾浩斯遗忘曲线对高频生词进行智能复现...
-              </div>
-              <div class="note-card-meta">
-                <span class="meta-tag">#english</span>
-                <span class="meta-tag">#ios</span>
-                <span class="meta-ref-badge">🔗 2 处引用</span>
-              </div>
-            </div>
-
-            <!-- 笔记卡片 2 -->
-            <div class="note-card-item" onclick="navigateToNote('Vocabulary-Spec')">
-              <div class="note-card-top">
-                <span class="note-card-title">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
-                  Vocabulary-Spec
-                </span>
-                <span class="note-card-date">昨天 21:05</span>
-              </div>
-              <div class="note-card-snippet">
-                离线优先数据库选型与 Markdown 纯文本实时映射机制。采用 SQLite 本地缓存支撑毫秒级生词全文检索，底层以纯文本 .md 同步...
-              </div>
-              <div class="note-card-meta">
-                <span class="meta-tag">#spec</span>
-                <span class="meta-ref-badge">🔗 1 处引用</span>
-              </div>
-            </div>
-
-            <!-- 笔记卡片 3 -->
-            <div class="note-card-item" onclick="navigateToNote('Audio-Sync')">
-              <div class="note-card-top">
-                <span class="note-card-title">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
-                  Audio-Sync
-                </span>
-                <span class="note-card-date">11-18</span>
-              </div>
-              <div class="note-card-snippet">
-                听力例句音频切片与波形精准对齐。支持高保真倍速变速播放与断点自动标记...
-              </div>
-              <div class="note-card-meta">
-                <span class="meta-tag">#audio</span>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- ======================================================= -->
-        <!-- 页面 3：笔记详情与编辑器 (Note Editor View)             -->
-        <!-- ======================================================= -->
-        <div class="screen-view next" id="view-editor">
-          <div class="ios-nav-bar nav-bar-blur">
-            <div class="nav-left">
-              <button class="ios-back-btn" onclick="navigateBackToList()">
-                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m15 18-6-6 6-6"/></svg>
-                <span id="editor-back-label">Cherky</span>
-              </button>
-            </div>
-            
-            <div class="nav-center">
-              <span class="nav-title" id="editor-nav-title">README</span>
-              <div class="nav-subtitle">
-                <span style="width:5px; height:5px; border-radius:50%; background:var(--save-dot);"></span>
-                <span id="editor-save-state">已自动保存</span>
-              </div>
-            </div>
-
-            <div class="nav-right">
-              <!-- 反向链接徽标 -->
-              <button class="title-relation-badge" onclick="openBacklinksSheet()" title="查看反向链接">
-                <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-                <span>2</span>
-              </button>
-
-              <!-- 模式切换: 实时预览 / 阅读模式 -->
-              <button class="ios-icon-btn" id="btn-mode-toggle" onclick="toggleEditorMode()" title="切换实时预览 / 阅读模式">
-                <svg id="icon-mode-book" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>
-              </button>
-
-              <!-- 更多选项 -->
-              <button class="ios-icon-btn" onclick="showNoteMenu()" title="更多">
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/><circle cx="5" cy="12" r="1"/></svg>
-              </button>
-            </div>
-          </div>
-
-          <!-- 笔记内容区 -->
-          <div class="scrollable-body editor-body">
-            
-            <!-- Sidenote 属性卡片 (折叠状态 / 展开状态) -->
-            <div class="fm-foldable-card">
-              <div class="fm-card-summary" onclick="toggleProperties()">
-                <div class="fm-card-badges">
-                  <span class="chip-pill chip-link">⚑ [[Projects]]</span>
-                  <span class="chip-pill chip-status"><i class="status-dot"></i>active</span>
-                  <span class="chip-pill chip-tag">#english</span>
-                  <span style="font-size:10px; color:var(--text-tertiary); margin-left:2px;">10.18 → 11.30</span>
-                </div>
-                <div style="color:var(--text-tertiary); font-size:11px; font-weight:600;">
-                  <span id="fm-toggle-label">展开 (9项) ▾</span>
-                </div>
-              </div>
-
-              <div id="fm-detail-body" class="fm-card-body" style="display:none;">
-                <div class="fm-grid-item"><span class="fm-grid-key">categories</span><div class="fm-grid-val"><span class="chip-pill chip-link">[[Projects]]</span></div></div>
-                <div class="fm-grid-item"><span class="fm-grid-key">type</span><div class="fm-grid-val">个人实验</div></div>
-                <div class="fm-grid-item"><span class="fm-grid-key">status</span><div class="fm-grid-val"><span class="chip-pill chip-status"><i class="status-dot"></i>active</span></div></div>
-                <div class="fm-grid-item"><span class="fm-grid-key">tags</span><div class="fm-grid-val"><span class="chip-pill chip-tag">#english</span> <span class="chip-pill chip-tag">#ios</span></div></div>
-                <div class="fm-grid-item"><span class="fm-grid-key">priority</span><div class="fm-grid-val" style="color:#d9534f; font-weight:700;">P1</div></div>
-                <div class="fm-grid-item"><span class="fm-grid-key">schedule</span><div class="fm-grid-val" style="font-family:var(--font-mono);">2026-10-18 → 11-30</div></div>
-                <div class="fm-grid-item"><span class="fm-grid-key">author</span><div class="fm-grid-val">wenli</div></div>
-                <div class="fm-grid-item"><span class="fm-grid-key">rating</span><div class="fm-grid-val" style="color:#dea123;">★★★★★</div></div>
-              </div>
-            </div>
-
-            <!-- 正文区域 -->
-            <article class="mote-article" id="article-content">
-              <h1 class="mote-h1">
-                <span>定位</span>
-              </h1>
-
-              <p class="mote-p">
-                这是以我作为第一用户的一款英语学习 iOS app，用于帮提高我的词汇量和 Listening。
-              </p>
-
-              <!-- Callout 标注 -->
-              <div class="mote-callout">
-                <div class="callout-title">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4"/><path d="M12 8h.01"/></svg>
-                  <span>核心设计准则</span>
-                </div>
-                <div>
-                  系统将依据艾宾浩斯遗忘曲线对高频生词进行智能复现，打通划词抓取、例句回溯与真机同步。所有元数据直接沉淀为纯文本 Markdown 笔记，实现数据所有权的完全回归。
-                </div>
-              </div>
-
-              <!-- 任务复选框清单 -->
-              <h2 class="mote-h2">执行路线与进度</h2>
-              <ul class="task-list">
-                <li class="task-item" onclick="toggleTask(this)">
-                  <div class="task-checkbox checked">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                  </div>
-                  <span class="task-label done">完成第一期离线词库 schema 设计</span>
-                </li>
-                <li class="task-item" onclick="toggleTask(this)">
-                  <div class="task-checkbox checked">
-                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>
-                  </div>
-                  <span class="task-label done">验证与 <a class="wikilink" onclick="event.stopPropagation(); navigateToNote('Vocabulary-Spec')">[[Vocabulary-Spec]]</a> 双链联动</span>
-                </li>
-                <li class="task-item" onclick="toggleTask(this)">
-                  <div class="task-checkbox"></div>
-                  <span class="task-label">实现音频时间戳毫秒级对齐与波形渲染</span>
-                </li>
-                <li class="task-item" onclick="toggleTask(this)">
-                  <div class="task-checkbox"></div>
-                  <span class="task-label">接入真机 iCloud Drive 与本地沙箱</span>
-                </li>
-              </ul>
-
-              <!-- 双链关联展示 -->
-              <h2 class="mote-h2">关联上下文</h2>
-              <p class="mote-p">
-                上一级规划详见项目主页 <a class="wikilink" onclick="navigateToNote('Projects / Index')">[[Projects / Index]]</a>，关于立项初衷的完整心路历程，记录在 <a class="wikilink" onclick="navigateToNote('Daily / 2026-10-18')">[[Daily / 2026-10-18]]</a> 中。
-              </p>
-
-              <!-- 数学公式展示 -->
-              <div class="mote-math-block">
-                R = e^{-\frac{t}{S}} \quad \text{(艾宾浩斯记忆保留率)}
-              </div>
-
-              <!-- 表格展示 -->
-              <div class="mote-table-wrap">
-                <table class="mote-table">
-                  <thead>
-                    <tr>
-                      <th>端态</th>
-                      <th>架构</th>
-                      <th>状态</th>
-                      <th>核心目标</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr>
-                      <td>mote-mac</td>
-                      <td>Electron</td>
-                      <td>✅ 已完备</td>
-                      <td>替代桌面端 Obsidian</td>
-                    </tr>
-                    <tr>
-                      <td>mote-ios</td>
-                      <td>Swift / Web</td>
-                      <td>🚀 原型中</td>
-                      <td>随时随地流畅读写</td>
-                    </tr>
-                  </tbody>
-                </table>
-              </div>
-
-              <!-- Tip Callout -->
-              <div class="mote-callout callout-tip">
-                <div class="callout-title">
-                  <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4"/><path d="m4.93 4.93 2.83 2.83"/><path d="M2 12h4"/><path d="m4.93 19.07 2.83-2.83"/><path d="M12 18v4"/><path d="m19.07 19.07-2.83-2.83"/><path d="M20 12h4"/><path d="m19.07 4.93-2.83 2.83"/></svg>
-                  <span>双链回溯提示</span>
-                </div>
-                <div>
-                  点击顶部导航栏右上角的 <b>🔗 2 处引用</b> 徽标，随时呼出反向链接半屏抽屉，探索引用当前笔记的上下文。
-                </div>
-              </div>
-
-            </article>
-          </div>
-
-          <!-- iOS 底部快捷输入辅助工具条 (Accessory Bar) -->
-          <div class="ios-accessory-bar" id="editor-accessory-bar">
-            <button class="acc-btn" onclick="insertSyntax('[[', ']]')" title="双链">[[ ]]</button>
-            <button class="acc-btn" onclick="insertSyntax('# ', '')" title="大标题">#</button>
-            <button class="acc-btn" onclick="insertSyntax('- [ ] ', '')" title="待办任务">☑</button>
-            <div class="acc-sep"></div>
-            <button class="acc-btn" onclick="insertSyntax('**', '**')" style="font-weight:700;">B</button>
-            <button class="acc-btn" onclick="insertSyntax('*', '*')" style="font-style:italic;">I</button>
-            <button class="acc-btn" onclick="insertSyntax('==', '==')" title="高亮">==</button>
-            <button class="acc-btn" onclick="insertSyntax('> ', '')" title="引用">&gt;</button>
-            <div class="acc-sep"></div>
-            <button class="acc-btn" onclick="insertSyntax('[!note] ', '')" title="标注">💡</button>
-            <button class="acc-btn" onclick="insertSyntax('$', '$')" title="数学公式">$</button>
-            <button class="acc-btn" onclick="insertSyntax('![[', ']]')" title="插入附件">🖼</button>
-            <button class="acc-btn" onclick="showToast('已撤销上一步')" title="撤销">↶</button>
-          </div>
-        </div>
-
-      </div>
-
-      <!-- ======================================================= -->
-      <!-- 半屏浮动反向链接抽屉 (iOS Bottom Sheet)                  -->
-      <!-- ======================================================= -->
-      <div class="sheet-scrim" id="sheet-scrim" onclick="closeBacklinksSheet()"></div>
-      <div class="bottom-sheet" id="bottom-sheet">
-        <div class="sheet-grabber"></div>
-        <div class="sheet-header">
-          <div class="sheet-title">
-            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
-            <span>反向链接 (2 处引用)</span>
-          </div>
-          <button class="ios-icon-btn" onclick="closeBacklinksSheet()">
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 6 6 18"/><path d="m6 6 12 12"/></svg>
-          </button>
-        </div>
-
-        <div class="sheet-body">
-          <div class="backlink-card" onclick="navigateToNoteFromSheet('Projects / Index')">
-            <div class="backlink-card-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
-              <span>Projects / Index</span>
-            </div>
-            <div class="backlink-snippet">
-              “...在第四季度重点推进 <span style="color:var(--accent); font-weight:600;">[[Cherky/README]]</span> 第一期词汇沉淀闭环与听力语料导入，确保离线可用...”
-            </div>
-          </div>
-
-          <div class="backlink-card" onclick="navigateToNoteFromSheet('Daily / 2026-10-18')">
-            <div class="backlink-card-title">
-              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7Z"/><path d="M14 2v4a2 2 0 0 0 2 2h4"/></svg>
-              <span>Daily / 2026-10-18</span>
-            </div>
-            <div class="backlink-snippet">
-              “...今日正式立项：启动 <span style="color:var(--accent); font-weight:600;">[[Cherky/README]]</span> 个人实验项目，探索基于本地纯文本的高效记忆范式...”
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- ======================================================= -->
-      <!-- 全局快速打开搜索面板 (Spotlight Modal)                  -->
-      <!-- ======================================================= -->
-      <div class="quick-open-modal" id="quick-open-modal">
-        <div class="quick-header">
-          <div class="quick-input-wrap">
-            <input type="text" class="quick-input" id="quick-input" placeholder="输入笔记名或全文搜索..." oninput="filterQuickOpen(this.value)" />
-          </div>
-          <button class="quick-cancel-btn" onclick="closeQuickOpen()">取消</button>
-        </div>
-
-        <div class="quick-results" id="quick-results-list">
-          <!-- 默认列出近期笔记 -->
-          <div class="quick-item" onclick="selectQuickResult('README')">
-            <div>
-              <div class="quick-item-title">README</div>
-              <div class="quick-item-path">Projects / Cherky / README.md</div>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-          </div>
-
-          <div class="quick-item" onclick="selectQuickResult('Vocabulary-Spec')">
-            <div>
-              <div class="quick-item-title">Vocabulary-Spec</div>
-              <div class="quick-item-path">Projects / Cherky / Vocabulary-Spec.md</div>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-          </div>
-
-          <div class="quick-item" onclick="selectQuickResult('Audio-Sync')">
-            <div>
-              <div class="quick-item-title">Audio-Sync</div>
-              <div class="quick-item-path">Projects / Cherky / Audio-Sync.md</div>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-          </div>
-
-          <div class="quick-item" onclick="selectQuickResult('Projects / Index')">
-            <div>
-              <div class="quick-item-title">Index</div>
-              <div class="quick-item-path">Projects / Index.md</div>
-            </div>
-            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-          </div>
-        </div>
-      </div>
-
-      <!-- iOS Home 底部操作条条 -->
-      <div class="ios-home-bar"></div>
-
-      <!-- 浮动轻提示 (HUD Toast) -->
-      <div class="ios-toast" id="ios-toast">提示信息</div>
-
-    </div>
-  </div>
-
-  <!-- ========================================================= -->
-  <!-- 14. 原型核心交互驱动脚本                                   -->
-  <!-- ========================================================= */
-  <script>
-    // 状态机
-    let isDark = false;
-    let currentFont = 'kai';
-    let isFullscreenMode = false;
-    let editorMode = 'reading'; // 'reading' or 'live'
-    let propertiesExpanded = false;
-    let currentNote = 'README';
-
-    // 视图导航栈：'vault' -> 'list' -> 'editor'
-    let navigationStack = ['vault', 'list', 'editor'];
-
-    function updateNavViews() {
-      const viewVault = document.getElementById('view-vault');
-      const viewList = document.getElementById('view-list');
-      const viewEditor = document.getElementById('view-editor');
-      const current = navigationStack[navigationStack.length - 1];
-
-      // 重置类
-      [viewVault, viewList, viewEditor].forEach(el => {
-        el.classList.remove('active', 'prev', 'next');
-      });
-
-      if (current === 'vault') {
-        viewVault.classList.add('active');
-        viewList.classList.add('next');
-        viewEditor.classList.add('next');
-      } else if (current === 'list') {
-        viewVault.classList.add('prev');
-        viewList.classList.add('active');
-        viewEditor.classList.add('next');
-      } else if (current === 'editor') {
-        viewVault.classList.add('prev');
-        viewList.classList.add('prev');
-        viewEditor.classList.add('active');
-      }
-
-      // 同步顶部按钮指示
-      document.querySelectorAll('[id^="btn-jump-"]').forEach(b => b.classList.remove('active'));
-      const activeBtn = document.getElementById('btn-jump-' + current);
-      if (activeBtn) activeBtn.classList.add('active');
+/* ================= 笔记数据 ================= */
+function parseBlocks(text) {
+  const out = [], L = text.split('\n');
+  let i = 0;
+  while (i < L.length) {
+    const l = L[i];
+    if (!l.trim()) { i++; continue; }
+    if (l.startsWith('```')) {
+      let j = i + 1;
+      while (j < L.length && !L[j].startsWith('```')) j++;
+      out.push(L.slice(i, j + 1).join('\n')); i = j + 1; continue;
     }
-
-    function jumpToScreen(screen) {
-      if (screen === 'vault') {
-        closeBacklinksSheet();
-        closeQuickOpen();
-        navigationStack = ['vault'];
-        updateNavViews();
-      } else if (screen === 'list') {
-        closeBacklinksSheet();
-        closeQuickOpen();
-        navigationStack = ['vault', 'list'];
-        updateNavViews();
-      } else if (screen === 'editor') {
-        closeBacklinksSheet();
-        closeQuickOpen();
-        navigationStack = ['vault', 'list', 'editor'];
-        updateNavViews();
-      } else if (screen === 'backlinks') {
-        closeQuickOpen();
-        navigationStack = ['vault', 'list', 'editor'];
-        updateNavViews();
-        openBacklinksSheet();
-        const bBtn = document.getElementById('btn-jump-backlinks');
-        if (bBtn) bBtn.classList.add('active');
-      }
+    const g = l.startsWith('|') ? '|' : l.startsWith('>') ? '>' : null;
+    if (g) {
+      let j = i;
+      while (j < L.length && L[j].startsWith(g)) j++;
+      out.push(L.slice(i, j).join('\n')); i = j; continue;
     }
+    out.push(l); i++;
+  }
+  return out;
+}
+function blockType(src) {
+  const m = /^(#{1,6}) /.exec(src);
+  if (m) return 'h' + m[1].length;
+  if (/^- \[[ x]\] /.test(src)) return 'task';
+  if (/^[-*] /.test(src)) return 'li';
+  if (/^\d+\. /.test(src)) return 'ol';
+  if (src.startsWith('```')) return 'code';
+  if (src.startsWith('|')) return 'table';
+  if (src.startsWith('>')) return /^> ?\[!/.test(src) ? 'callout' : 'quote';
+  if (/^---+$/.test(src)) return 'hr';
+  return 'p';
+}
+let uid = 0;
+const NOTES = [...document.querySelectorAll('script[type="text/markdown"]')].map((el) => {
+  let md = el.textContent.replace(/^\n/, '');
+  const m = /^---\n([\s\S]*?)\n---\n/.exec(md);
+  const fm = m ? m[1].split('\n').map((l) => { const k = l.indexOf(':'); const v = l.slice(k + 1).trim(); return [l.slice(0, k).trim(), /^\[.*\]$/.test(v) ? v.slice(1, -1).split(',').map((x) => x.trim()) : v]; }) : [];
+  return { id: ++uid, path: el.dataset.path, when: el.dataset.when, t: +el.dataset.t, fm, blocks: parseBlocks(m ? md.slice(m[0].length) : md) };
+});
+const FOLDERS = new Set();
+const byId = (id) => NOTES.find((n) => n.id === id);
+const title = (n) => n.path.split('/').pop().replace(/\.md$/, '');
+const dir = (n) => n.path.split('/').slice(0, -1).join('/');
+const nicePath = (p) => p.replaceAll('/', ' / ');
+const resolve = (name) => { const t = name.split('/').pop(); return NOTES.find((n) => title(n) === t); };
+const touch = (n) => { n.when = '刚刚'; n.t = Date.now(); };
+function allFolders() {
+  const s = new Set(FOLDERS);
+  NOTES.forEach((n) => { const p = dir(n).split('/'); for (let i = 1; i <= p.length; i++) if (p[0]) s.add(p.slice(0, i).join('/')); });
+  return [...s].sort((a, b) => a.localeCompare(b, 'zh'));
+}
+const plain = (s) => s.replace(/^```.*$/gm, '').replace(/^\|[\s:|-]+\|?$/gm, '').replace(/^\||\|$/gm, '').replace(/\s*\|\s*/g, '  ').replace(/^(#{1,6} |- \[[ x]\] |[-*] |\d+\. |> ?(\[!\w+\] ?)?)/gm, '')
+  .replace(/\[\[([^\]|]+)\|([^\]]+)\]\]/g, '$2').replace(/\[\[([^\]]+)\]\]/g, '$1').replace(/\*\*|==|`|\*/g, '').replace(/\n+/g, ' ').trim();
+const snippet = (n) => n.blocks.filter((b) => !/^(h\d|table|code|hr)$/.test(blockType(b))).slice(0, 3).map(plain).join(' ').slice(0, 84);
+function backlinks(n) {
+  const out = [];
+  NOTES.forEach((m) => { if (m === n) return; m.blocks.forEach((src, i) => { for (const x of src.matchAll(/\[\[([^\]|]+)/g)) if (resolve(x[1]) === n) { out.push({ m, i, src }); break; } }); });
+  return out;
+}
+function create(name, folder) {
+  let nm = name, k = 1;
+  while (NOTES.some((n) => title(n) === nm)) nm = name + ' ' + ++k;
+  const n = { id: ++uid, path: (folder ? folder + '/' : '') + nm + '.md', when: '刚刚', t: Date.now(), fm: [], blocks: [] };
+  NOTES.push(n);
+  return n;
+}
 
-    // 导航行为
-    function navigateToFolder(folderName) {
-      document.getElementById('folder-view-title').innerText = folderName;
-      navigationStack.push('list');
-      updateNavViews();
+/* ================= 渲染 Markdown ================= */
+function inline(s) {
+  const codes = [];
+  s = esc(s).replace(/`([^`]+)`/g, (m, c) => { codes.push(c); return '\u0001' + (codes.length - 1) + '\u0001'; });
+  s = s.replace(/\[\[([^\]|]+)(?:\|([^\]]+))?\]\]/g, (m, to, al) => `<a class="wl${resolve(to) ? '' : ' missing'}" data-act="link" data-to="${to}">${al || to}</a>`)
+    .replace(/\*\*([^*]+)\*\*/g, '<b>$1</b>').replace(/\*([^*]+)\*/g, '<i>$1</i>').replace(/==([^=]+)==/g, '<mark>$1</mark>')
+    .replace(/(^|\s)#([^\s#<]+)/g, '$1<span class="tag">#$2</span>');
+  return s.replace(/\u0001(\d+)\u0001/g, (m, i) => `<code>${codes[i]}</code>`);
+}
+function blockHtml(src, i, active) {
+  const t = blockType(src);
+  if (active) return `<div class="blk b-${t} active" data-i="${i}"><div class="src" id="src" contenteditable="plaintext-only" spellcheck="false">${esc(src)}</div></div>`;
+  let h;
+  if (t === 'task') { const on = src[3] === 'x'; h = `<span class="cb${on ? ' on' : ''}" data-act="task">${on ? ic('check', 14, 3) : ''}</span><span class="${on ? 'done' : ''}">${inline(src.slice(6))}</span>`; }
+  else if (t === 'li') h = `<span class="dot"></span><span>${inline(src.slice(2))}</span>`;
+  else if (t === 'ol') { const m = /^(\d+)\. (.*)/.exec(src); h = `<span class="num">${m[1]}.</span><span>${inline(m[2])}</span>`; }
+  else if (t === 'code') { const L = src.split('\n'); h = `<pre>${esc(L.slice(1, L.length > 1 && L[L.length - 1].startsWith('```') ? -1 : undefined).join('\n'))}</pre>`; }
+  else if (t === 'table') {
+    const rows = src.split('\n').filter((r) => !/^\|[\s:|-]+$/.test(r)).map((r) => r.trim().replace(/^\||\|$/g, '').split('|').map((c) => c.trim()));
+    h = '<div class="tw"><table>' + rows.map((r, k) => '<tr>' + r.map((c) => (k ? `<td>${inline(c)}</td>` : `<th>${inline(c)}</th>`)).join('') + '</tr>').join('') + '</table></div>';
+  } else if (t === 'callout') { const L = src.split('\n').map((l) => l.replace(/^> ?/, '')); const m = /^\[!(\w+)\]\s*(.*)/.exec(L[0]); h = `<div class="ct">${inline(m[2] || m[1])}</div>${L.slice(1).map(inline).join('<br>')}`; }
+  else if (t === 'quote') h = src.split('\n').map((l) => inline(l.replace(/^> ?/, ''))).join('<br>');
+  else if (t === 'hr') h = '';
+  else if (t === 'p') h = inline(src);
+  else h = inline(src.replace(/^#+ /, ''));
+  return `<div class="blk b-${t}" data-i="${i}">${h}</div>`;
+}
+
+/* ================= 状态 ================= */
+const ROOT = { recent: () => ({ k: 'recent' }), files: () => ({ k: 'folder', path: '' }), search: () => ({ k: 'search' }), settings: () => ({ k: 'settings' }) };
+const S = {
+  tab: 'recent', stacks: { recent: [ROOT.recent()], files: [ROOT.files()], search: [ROOT.search()], settings: [ROOT.settings()] },
+  editing: false, active: -1, fmOpen: false, q: '', mode: 'name',
+  theme: 'light', font: 'kai', size: 'm', openMode: 'read',
+};
+const topE = () => { const s = S.stacks[S.tab]; return s[s.length - 1]; };
+const cur = () => (topE().k === 'note' ? byId(topE().id) : null);
+const screenTitle = (e) => (e.k === 'recent' ? '最近' : e.k === 'folder' ? (e.path ? e.path.split('/').pop() : '文件') : e.k === 'search' ? '搜索' : e.k === 'settings' ? '设置' : title(byId(e.id)));
+const seg = (key, opts) => `<div class="seg">${opts.map(([v, l]) => `<button data-act="seg" data-key="${key}" data-val="${v}" class="${S[key] === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+
+/* ================= 各个屏幕 ================= */
+function nav(e, right = '') {
+  const st = S.stacks[S.tab], root = st.length === 1;
+  const left = root
+    ? (e.k === 'recent' || e.k === 'folder' ? `<button class="vault" data-act="vaults">${VAULT}${ic('chevD', 14, 2.4)}</button>` : '')
+    : `<button class="back" data-act="back">${ic('chevL', 24, 2.2)}<span>${esc(screenTitle(st[st.length - 2]))}</span></button>`;
+  return `<div class="nav${!root && e.k === 'folder' ? ' always' : ''}"><div class="nl">${left}</div><div class="nc">${esc(screenTitle(e))}</div><div class="nr">${right}</div></div>`;
+}
+const shortWhen = (n) => n.when.replace(/^(今天|昨天) /, '');
+const noteRow = (n) => `<div class="row" data-act="open" data-id="${n.id}"><div class="rt">${esc(title(n))}</div>${snippet(n) ? `<div class="rs">${esc(snippet(n))}</div>` : ''}<div class="rm">${dir(n) ? esc(nicePath(dir(n))) + ' · ' : ''}${shortWhen(n)}</div></div>`;
+
+const VIEWS = {
+  recent() {
+    const groups = [['今天', []], ['昨天', []], ['更早', []]];
+    [...NOTES].sort((a, b) => b.t - a.t).forEach((n) => groups[/^(今天|刚刚)/.test(n.when) ? 0 : n.when.startsWith('昨天') ? 1 : 2][1].push(n));
+    return nav({ k: 'recent' }, `<span class="sync">${ic('cloud', 18)}已同步</span>`) + `<div class="scroll"><h1 class="lt">最近</h1>`
+      + groups.filter((g) => g[1].length).map(([g, ns]) => `<div class="sec">${g}</div>` + ns.map(noteRow).join('')).join('') + '</div>';
+  },
+  folder(e) {
+    const p = e.path, pre = p ? p + '/' : '';
+    const subs = [...new Set(allFolders().filter((f) => f.startsWith(pre) && f !== p).map((f) => f.slice(pre.length).split('/')[0]))];
+    const files = NOTES.filter((n) => dir(n) === p).sort((a, b) => title(a).localeCompare(title(b), 'zh'));
+    const count = (f) => NOTES.filter((n) => n.path.startsWith(f + '/')).length;
+    const rows = subs.map((s) => `<div class="row f" data-act="folder" data-path="${esc(pre + s)}"><span class="fi dir">${ic('folder', 23)}</span><span class="fn">${esc(s)}</span><span class="fx">${count(pre + s)}${ic('chevR', 16, 2)}</span></div>`).join('')
+      + files.map((n) => `<div class="row f" data-act="open" data-id="${n.id}"><span class="fi">${ic('doc', 23, 1.6)}</span><span class="fn note">${esc(title(n))}</span><span class="fx">${shortWhen(n)}</span></div>`).join('');
+    return nav(e, `<button class="ibtn" data-act="newfolder" aria-label="新建文件夹">${ic('folderPlus', 23)}</button>`)
+      + `<div class="scroll">${p ? '' : `<h1 class="lt">文件</h1><div class="lsub">${NOTES.length} 篇笔记</div>`}${rows || '<div class="empty">这个文件夹是空的。<br>点右下角的按钮，在这里新建笔记。</div>'}</div>`;
+  },
+  search() {
+    return nav({ k: 'search' }) + `<div class="scroll search"><h1 class="lt">搜索</h1>
+      <div class="sbox">${ic('search', 18, 2)}<input id="q" placeholder="${S.mode === 'name' ? '按笔记名找' : '找笔记里的文字'}" value="${esc(S.q)}" autocomplete="off" autocapitalize="off"><button class="clr" data-act="clear" ${S.q ? '' : 'hidden'}>${ic('x', 12, 3)}</button></div>
+      ${seg('mode', [['name', '笔记名'], ['text', '全文']])}<div id="results">${results()}</div></div>`;
+  },
+  settings() {
+    return nav({ k: 'settings' }) + `<div class="scroll"><h1 class="lt">设置</h1>
+      <div class="gh">笔记库</div><div class="grp">
+        <div class="set" data-act="vaults"><div>${VAULT}<small>${NOTES.length} 篇笔记 · ${allFolders().length} 个文件夹</small></div><span class="v">切换${ic('chevR', 16, 2)}</span></div>
+        <div class="set"><div>同步<small>改动会自动传到 Mac</small></div><span class="v">${ic('cloud', 18)}刚刚</span></div></div>
+      <div class="gh">外观</div><div class="grp">
+        <div class="set"><span>主题</span>${seg('theme', [['auto', '自动'], ['light', '浅色'], ['dark', '深色']])}</div>
+        <div class="set"><span>正文字体</span>${seg('font', [['kai', '楷体'], ['hei', '黑体']])}</div>
+        <div class="set"><span>字号</span>${seg('size', [['s', '小'], ['m', '中'], ['l', '大']])}</div></div>
+      <div class="gh">笔记</div><div class="grp">
+        <div class="set"><span>打开笔记时</span>${seg('openMode', [['read', '阅读'], ['edit', '编辑']])}</div></div>
+      <div class="gh">关于</div><div class="grp"><div class="set"><span>版本</span><span class="v">原型 第 2 版</span></div></div></div>`;
+  },
+  note(e) {
+    const n = byId(e.id), bl = backlinks(n);
+    const right = S.editing ? `<button class="tbtn strong" data-act="done">完成</button>`
+      : `<button class="tbtn" data-act="edit">编辑</button><button class="ibtn" data-act="menu" data-id="${n.id}" aria-label="更多">${ic('more', 24)}</button>`;
+    const tags = (n.fm.find((f) => f[0] === 'tags') || [0, []])[1], st = n.fm.find((f) => f[0] === '状态');
+    const fm = !n.fm.length ? '' : `<div class="fm"><div class="fmh" data-act="fm">${st ? `<span class="chip">${esc(st[1])}</span>` : ''}${[].concat(tags).map((t) => `<span class="chip t">#${esc(t)}</span>`).join('')}<span class="more">${n.fm.length} 项属性${ic(S.fmOpen ? 'chevU' : 'chevD', 14, 2.2)}</span></div>`
+      + (S.fmOpen ? n.fm.map(([k, v]) => `<div class="kv"><span class="k">${esc(k)}</span><span>${esc([].concat(v).join('、'))}</span></div>`).join('') : '') + '</div>';
+    return nav(e, right) + `<div class="scroll${S.editing ? ' editing' : ''}"><h1 class="nt">${esc(title(n))}</h1>
+      <div class="nmeta"><span>${dir(n) ? esc(nicePath(dir(n))) + ' · ' : ''}${n.when}</span>${bl.length ? `<button class="blbtn" data-act="backlinks">${ic('link', 13, 2.3)}${bl.length} 个反向链接</button>` : ''}</div>
+      ${fm}<div class="body" id="body">${bodyHtml(n)}</div></div>`;
+  },
+};
+const bodyHtml = (n) => n.blocks.map((b, i) => blockHtml(b, i, S.editing && i === S.active)).join('') || '<div class="empty-note">空白笔记。点右上角的「编辑」开始写。</div>';
+
+function hl(text, q) {
+  const low = text.toLowerCase(), ql = q.toLowerCase();
+  let out = '', i = 0, j;
+  while (ql && (j = low.indexOf(ql, i)) >= 0) { out += esc(text.slice(i, j)) + '<mark>' + esc(text.slice(j, j + q.length)) + '</mark>'; i = j + q.length; }
+  return out + esc(text.slice(i));
+}
+function results() {
+  const q = S.q.trim(), ql = q.toLowerCase();
+  const nameRow = (n) => `<div class="row f" data-act="open" data-id="${n.id}"><span class="fi">${ic('doc', 23, 1.6)}</span><span class="fn note">${hl(title(n), q)}<small>${hl(nicePath(n.path), q)}</small></span></div>`;
+  if (S.mode === 'name') {
+    if (!q) return '<div class="sec">最近打开</div>' + [...NOTES].sort((a, b) => b.t - a.t).slice(0, 5).map(nameRow).join('');
+    const r = NOTES.filter((n) => n.path.toLowerCase().includes(ql));
+    return r.length ? r.map(nameRow).join('') : `<div class="empty">没有名字里带「${esc(q)}」的笔记。<button data-act="new" data-name="${esc(q)}">新建「${esc(q)}」</button></div>`;
+  }
+  if (!q) return '<div class="empty">输入要找的文字。<br>中文按原样匹配，不用分词。</div>';
+  let total = 0;
+  const out = NOTES.map((n) => {
+    const hits = [];
+    n.blocks.forEach((src, i) => { const p = plain(src), k = p.toLowerCase().indexOf(ql); if (k >= 0) hits.push({ i, text: (k > 14 ? '…' : '') + p.slice(Math.max(0, k - 14), k + q.length + 34) }); });
+    if (!hits.length) return '';
+    total += hits.length;
+    return `<div class="hit"><div class="hit-h"><b>${esc(title(n))}</b><span>${hits.length} 处</span></div>${hits.slice(0, 3).map((h) => `<div class="hl" data-act="open" data-id="${n.id}" data-blk="${h.i}">${hl(h.text, q)}</div>`).join('')}</div>`;
+  }).join('');
+  return total ? `<div class="sec">${total} 处匹配</div>` + out : `<div class="empty">没有笔记包含「${esc(q)}」。</div>`;
+}
+
+/* ================= 显示和转场 ================= */
+function show(dir = 'none') {
+  if (dir === 'none' && S.editing) commit();
+  const e = topE(), html = VIEWS[e.k](e), cls = 'screen' + (e.k === 'settings' ? ' grouped' : '');
+  const old = host.lastElementChild;
+  phone.classList.toggle('kb', S.editing);
+  phone.querySelectorAll('.tab').forEach((t) => t.classList.toggle('on', t.dataset.tab === S.tab));
+  if (dir === 'none' && old) {
+    const y = old.querySelector('.scroll') ? old.querySelector('.scroll').scrollTop : 0;
+    old.className = cls; old.innerHTML = html;
+    if (old.querySelector('.scroll')) old.querySelector('.scroll').scrollTop = y;
+  } else {
+    const el = document.createElement('div');
+    el.className = cls + (old ? (dir === 'push' ? ' from-right' : dir === 'pop' ? ' from-left' : ' fade') : '');
+    el.innerHTML = html;
+    host.appendChild(el);
+    if (old) {
+      old.classList.add(dir === 'push' ? 'to-left' : dir === 'pop' ? 'to-right' : 'gone');
+      setTimeout(() => old.remove(), 380);
+      el.getBoundingClientRect();
+      requestAnimationFrame(() => el.classList.remove('from-right', 'from-left', 'fade'));
     }
+  }
+  const sc = Q('.scroll'), nv = Q('.nav');
+  const f = () => { nv.classList.toggle('scrolled', sc.scrollTop > 4); nv.classList.toggle('titled', sc.scrollTop > 46); };
+  sc.addEventListener('scroll', f, { passive: true }); f();
+  if (S.editing) focusSrc();
+}
+function push(entry) { S.stacks[S.tab].push(entry); show('push'); }
 
-    function navigateBackToVault() {
-      if (navigationStack.length > 1) {
-        navigationStack.pop();
-        updateNavViews();
-      }
-    }
+/* ================= 编辑 ================= */
+function caretOffset(el) {
+  const sel = getSelection();
+  if (!sel.rangeCount || !el.contains(sel.anchorNode)) return el.innerText.length;
+  const r = document.createRange(); r.selectNodeContents(el); r.setEnd(sel.anchorNode, sel.anchorOffset);
+  return r.toString().length;
+}
+function focusSrc(off) {
+  const el = Q('#src'); if (!el) return;
+  el.focus({ preventScroll: true });
+  const tn = el.firstChild, r = document.createRange();
+  if (tn && tn.nodeType === 3) r.setStart(tn, Math.min(off == null ? tn.length : off, tn.length)); else r.setStart(el, 0);
+  r.collapse(true);
+  const sel = getSelection(); sel.removeAllRanges(); sel.addRange(r);
+  const sc = Q('.scroll'), b = el.parentNode, vis = sc.clientHeight - KB_H - 16;
+  if (b.offsetTop + b.offsetHeight > sc.scrollTop + vis) sc.scrollTop = b.offsetTop + b.offsetHeight - vis;
+  else if (b.offsetTop < sc.scrollTop) sc.scrollTop = b.offsetTop - 12;
+}
+const srcText = (el) => el.innerText.replace(/\n+$/, '');
+/* 把当前行的文字写回笔记。返回块数的变化。 */
+function commit() {
+  const n = cur(), el = Q('#src');
+  if (!n || !el || S.active < 0) return 0;
+  const nb = parseBlocks(srcText(el));
+  if (nb.join('\n') !== n.blocks[S.active]) touch(n);
+  n.blocks.splice(S.active, 1, ...nb);
+  if (!n.blocks.length) n.blocks.push('');
+  S.active = Math.min(S.active, n.blocks.length - 1);
+  return nb.length - 1;
+}
+function renderBody(off) { Q('#body').innerHTML = bodyHtml(cur()); if (S.editing) focusSrc(off); }
+function activate(j) {
+  const was = S.active, d = commit();
+  if (was >= 0 && j > was) j += d;
+  S.active = Math.max(0, Math.min(j, cur().blocks.length - 1));
+  renderBody();
+}
+function startEdit() {
+  const n = cur(); if (!n) return;
+  if (!n.blocks.length) n.blocks.push('');
+  const sc = Q('.scroll');
+  const first = [...sc.querySelectorAll('.blk')].find((b) => b.offsetTop >= sc.scrollTop);
+  S.editing = true; S.active = first ? +first.dataset.i : n.blocks.length - 1;
+  show('none');
+}
+function finish(render = true) {
+  const n = cur();
+  commit();
+  if (n) n.blocks = n.blocks.filter((b) => b.trim());
+  S.editing = false; S.active = -1;
+  if (document.activeElement) document.activeElement.blur();
+  if (render) show('none'); else phone.classList.remove('kb');
+}
+function onEnter() {
+  const el = Q('#src'), n = cur(), text = srcText(el), t = blockType(text);
+  if (/^(code|table|callout|quote)$/.test(t) || (text.startsWith('```'))) return false;
+  const off = Math.min(caretOffset(el), text.length);
+  let pre = t === 'task' ? '- [ ] ' : t === 'li' ? '- ' : t === 'ol' ? +/^\d+/.exec(text)[0] + 1 + '. ' : '';
+  if (pre && text.replace(/^- \[[ x]\] |^[-*] |^\d+\. /, '') === '') { n.blocks[S.active] = ''; renderBody(0); return true; }
+  n.blocks.splice(S.active, 1, text.slice(0, off), pre + text.slice(off));
+  S.active++; touch(n); renderBody(pre.length);
+  return true;
+}
+function onBackspace() {
+  const el = Q('#src'), n = cur();
+  if (!getSelection().isCollapsed || caretOffset(el) !== 0 || S.active === 0) return false;
+  const prev = n.blocks[S.active - 1], text = srcText(el);
+  if (/^(code|table|callout|quote)$/.test(blockType(prev)) && text) return true;
+  n.blocks.splice(S.active - 1, 2, prev + text);
+  S.active--; touch(n); renderBody(prev.length);
+  return true;
+}
+const WRAP = { link: ['[[', ']]'], bold: ['**', '**'], italic: ['*', '*'], mark: ['==', '=='], code: ['`', '`'] };
+function fmt(k) {
+  const el = Q('#src'); if (!el) return;
+  if (k === 'undo') { document.execCommand('undo'); return; }
+  if (WRAP[k]) {
+    const [a, b] = WRAP[k], s = String(getSelection());
+    document.execCommand('insertText', false, a + s + b);
+    if (!s) for (let i = 0; i < b.length; i++) getSelection().modify('move', 'backward', 'character');
+    return;
+  }
+  const t = srcText(el), off = caretOffset(el);
+  let nt;
+  if (k === 'h') { const m = /^(#{1,6}) /.exec(t); nt = m ? (m[1].length >= 3 ? t.slice(m[0].length) : '#' + t) : '# ' + t; }
+  else if (k === 'task') nt = /^- \[[ x]\] /.test(t) ? t.slice(6) : '- [ ] ' + t.replace(/^[-*] /, '');
+  else nt = t.startsWith('> ') ? t.slice(2) : '> ' + t;
+  el.textContent = nt;
+  el.parentNode.className = `blk b-${blockType(nt)} active`;
+  focusSrc(Math.max(0, off + nt.length - t.length));
+}
+function key(k) {
+  const el = Q('#src'); if (!el) return;
+  if (k === 'bs') { if (!onBackspace()) document.execCommand('delete'); }
+  else if (k === 'ret') { if (!onEnter()) document.execCommand('insertText', false, '\n'); }
+  else if (k === 'sp') document.execCommand('insertText', false, ' ');
+  else if (k.length === 1) document.execCommand('insertText', false, k);
+}
+$('#kbd').innerHTML = `<div class="fbar">
+    <button data-act="fmt" data-k="link">[[ ]]</button><button data-act="fmt" data-k="h">#</button><button data-act="fmt" data-k="task">${ic('task', 21)}</button>
+    <button data-act="fmt" data-k="bold">B</button><button data-act="fmt" data-k="italic" style="font-style:italic">I</button><button data-act="fmt" data-k="mark">==</button>
+    <button data-act="fmt" data-k="quote">&gt;</button><button data-act="fmt" data-k="code">\`</button><button data-act="fmt" data-k="undo">${ic('undo', 20)}</button>
+    <span class="sp"></span><button class="dn" data-act="done" aria-label="收起键盘">${ic('kbDown', 23)}</button></div>
+  <div class="keys">${['qwertyuiop', 'asdfghjkl', 'zxcvbnm'].map((r, i) => `<div class="kr">${i === 1 ? '<span class="gap"></span>' : ''}${i === 2 ? `<button class="w" data-act="key" data-k="">${ic('shift', 20)}</button>` : ''}${[...r].map((c) => `<button data-act="key" data-k="${c}">${c}</button>`).join('')}${i === 2 ? `<button class="w" data-act="key" data-k="bs">${ic('bs', 22)}</button>` : ''}${i === 1 ? '<span class="gap"></span>' : ''}</div>`).join('')}
+    <div class="kr"><button class="w2" data-act="key" data-k="">123</button><button class="space" data-act="key" data-k="sp">空格</button><button class="w2" data-act="key" data-k="ret">换行</button></div></div>`;
+$('#kbd').addEventListener('mousedown', (ev) => ev.preventDefault());
 
-    function navigateToNote(noteTitle) {
-      currentNote = noteTitle;
-      document.getElementById('editor-nav-title').innerText = noteTitle.split('/').pop();
-      document.getElementById('editor-back-label').innerText = 'Cherky';
-      
-      // 切换到编辑器
-      if (navigationStack[navigationStack.length - 1] !== 'editor') {
-        navigationStack.push('editor');
-      }
-      updateNavViews();
-      showToast('已载入笔记：' + noteTitle);
-    }
+/* ================= 面板、对话框、提示 ================= */
+function openSheet(ttl, html) {
+  $('#sheet').innerHTML = `<div class="grab"></div><div class="sh"><b>${esc(ttl)}</b><button data-act="sheet-x" aria-label="关闭">${ic('x', 16, 2.4)}</button></div><div class="sb">${html}</div>`;
+  $('#sheet').classList.add('on'); $('#scrim').classList.add('on');
+}
+function closeSheet() { $('#sheet').classList.remove('on'); $('#scrim').classList.remove('on'); }
+let dlgOk = null;
+function dialog({ ttl, msg, input, ok = '好', danger, onOk }) {
+  $('#dwrap').innerHTML = `<div class="dlg"><div class="dt">${esc(ttl)}</div>${msg ? `<div class="dm">${esc(msg)}</div>` : ''}${input != null ? `<input id="dlg-in" value="${esc(input)}" autocomplete="off">` : ''}<div class="dbtn"><button data-act="dlg-x">取消</button><button data-act="dlg-ok" class="${danger ? 'danger' : ''}">${ok}</button></div></div>`;
+  $('#dwrap').classList.add('on'); dlgOk = onOk;
+  const i = $('#dlg-in'); if (i) { i.focus({ preventScroll: true }); i.select(); }
+}
+function closeDlg() { $('#dwrap').classList.remove('on'); dlgOk = null; }
+let toastT;
+function toast(msg) { const t = $('#toast'); t.textContent = msg; t.classList.add('on'); clearTimeout(toastT); toastT = setTimeout(() => t.classList.remove('on'), 2000); }
 
-    function navigateBackToList() {
-      if (navigationStack.length > 1) {
-        navigationStack.pop();
-        updateNavViews();
-      }
-    }
+function openNote(id, blk, edit) {
+  if (S.editing) finish(false);
+  closeSheet();
+  const n = byId(id), t = topE();
+  if (!(t.k === 'note' && t.id === id)) {
+    S.fmOpen = false;
+    S.editing = !!edit || S.openMode === 'edit';
+    if (S.editing) { if (!n.blocks.length) n.blocks.push(''); S.active = blk != null ? +blk : n.blocks.length - 1; }
+    push({ k: 'note', id });
+  } else show('none');
+  if (blk != null && !S.editing) setTimeout(() => { const b = Q(`.blk[data-i="${blk}"]`), sc = Q('.scroll'); if (!b) return; sc.scrollTop = b.offsetTop - 180; b.classList.add('flash'); }, 60);
+}
+function noteMenu(id) {
+  const n = byId(id), c = backlinks(n).length;
+  const mi = (act, icon, label, extra = '', cls = '') => `<div class="mi ${cls}" data-act="${act}" data-id="${id}">${ic(icon, 22)}${label}${extra}</div>`;
+  openSheet(title(n), mi('backlinks', 'link', '反向链接', `<span>${c}</span>`) + mi('rename', 'pencil', '改名') + mi('move', 'move', '移动到…') + mi('copy', 'copy', '复制双链') + mi('del', 'trash', '删除', '', 'danger'));
+}
+function applyLook() {
+  const t = S.theme === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : S.theme;
+  const r = document.documentElement;
+  r.dataset.theme = t; r.dataset.font = S.font;
+  r.style.setProperty('--fs', { s: '15px', m: '16.5px', l: '18.5px' }[S.size]);
+  $('#side-theme').innerHTML = [['light', '浅色'], ['dark', '深色']].map(([v, l]) => `<button data-set="theme" data-val="${v}" class="${t === v ? 'on' : ''}">${l}</button>`).join('');
+  $('#side-font').innerHTML = [['kai', '楷体'], ['hei', '黑体']].map(([v, l]) => `<button data-set="font" data-val="${v}" class="${S.font === v ? 'on' : ''}">${l}</button>`).join('');
+}
 
-    // 属性卡片折叠/展开
-    function toggleProperties() {
-      propertiesExpanded = !propertiesExpanded;
-      const body = document.getElementById('fm-detail-body');
-      const label = document.getElementById('fm-toggle-label');
-      body.style.display = propertiesExpanded ? 'grid' : 'none';
-      label.innerText = propertiesExpanded ? '收起 ▴' : '展开 (9项) ▾';
-    }
+/* ================= 操作 ================= */
+const ACT = {
+  tab(a) {
+    const t = a.dataset.tab;
+    if (S.editing) finish(false);
+    if (t !== S.tab) { S.tab = t; show('tab'); return; }
+    const st = S.stacks[t];
+    if (st.length > 1) { st.length = 1; show('pop'); } else Q('.scroll').scrollTo({ top: 0, behavior: 'smooth' });
+  },
+  back() { if (S.editing) finish(false); S.stacks[S.tab].pop(); show('pop'); },
+  open(a) { openNote(+a.dataset.id, a.dataset.blk); },
+  folder(a) { push({ k: 'folder', path: a.dataset.path }); },
+  link(a) {
+    const n = resolve(a.dataset.to);
+    if (n) return openNote(n.id);
+    const nn = create(a.dataset.to, ''); toast(`已新建「${title(nn)}」`); openNote(nn.id, null, true);
+  },
+  task(a) {
+    const n = cur(); let i = +a.closest('.blk').dataset.i;
+    if (S.editing) { const was = S.active, d = commit(); if (i > was) i += d; }
+    n.blocks[i] = n.blocks[i].replace(/^- \[(.)\]/, (m, c) => `- [${c === 'x' ? ' ' : 'x'}]`);
+    touch(n); renderBody();
+  },
+  edit() { startEdit(); },
+  done() { finish(); },
+  fm() { S.fmOpen = !S.fmOpen; show('none'); },
+  backlinks(a) {
+    const n = a && a.dataset.id ? byId(+a.dataset.id) : cur(), bl = backlinks(n);
+    openSheet(`反向链接 · ${title(n)}`, bl.length ? bl.map((b) => `<div class="bl" data-act="open" data-id="${b.m.id}" data-blk="${b.i}"><b>${esc(title(b.m))}</b><i>${esc(nicePath(dir(b.m)))}</i><p>${esc(plain(b.src).slice(0, 72))}</p></div>`).join('') : '<div class="empty">还没有笔记链接到这里。</div>');
+  },
+  menu(a) { noteMenu(+a.dataset.id); },
+  copy(a) { closeSheet(); toast(`已复制 [[${title(byId(+a.dataset.id))}]]`); },
+  rename(a) {
+    const n = byId(+a.dataset.id), old = title(n); closeSheet();
+    dialog({ ttl: '改名', input: old, ok: '改名', onOk(v) {
+      v = v.trim(); if (!v || v === old) return;
+      if (NOTES.some((m) => m !== n && title(m) === v)) { toast('已经有同名的笔记'); return false; }
+      let c = 0; const re = new RegExp('\\[\\[' + escRe(old) + '(?=[\\]|])', 'g');
+      NOTES.forEach((m) => { m.blocks = m.blocks.map((b) => b.replace(re, () => { c++; return '[[' + v; })); });
+      n.path = (dir(n) ? dir(n) + '/' : '') + v + '.md';
+      show('none'); toast(c ? `已改名，更新了 ${c} 处双链` : '已改名');
+    } });
+  },
+  move(a) {
+    const n = byId(+a.dataset.id), d = dir(n);
+    openSheet(`把「${title(n)}」移动到`, ['', ...allFolders()].map((f) => `<div class="mi${f === d ? ' cur' : ''}" data-act="moveto" data-id="${n.id}" data-path="${esc(f)}">${ic('folder', 22)}${f ? esc(nicePath(f)) : '笔记库根目录'}${f === d ? `<span>${ic('check', 18, 2.4)}</span>` : ''}</div>`).join(''));
+  },
+  moveto(a) {
+    const n = byId(+a.dataset.id), f = a.dataset.path; closeSheet();
+    if (f === dir(n)) return;
+    n.path = (f ? f + '/' : '') + title(n) + '.md'; show('none'); toast(`已移动到 ${f ? nicePath(f) : '根目录'}`);
+  },
+  del(a) {
+    const n = byId(+a.dataset.id), c = backlinks(n).length; closeSheet();
+    dialog({ ttl: `删除「${title(n)}」？`, msg: c ? `有 ${c} 处双链指向它。删除后这些双链会失效。` : '删除后不能在这里恢复。', ok: '删除', danger: true, onOk() {
+      const onTop = topE().k === 'note' && topE().id === n.id;
+      NOTES.splice(NOTES.indexOf(n), 1);
+      Object.values(S.stacks).forEach((st) => { for (let i = st.length - 1; i > 0; i--) if (st[i].k === 'note' && st[i].id === n.id) st.splice(i, 1); });
+      show(onTop ? 'pop' : 'none'); toast('已删除');
+    } });
+  },
+  new(a) {
+    if (S.editing) finish(false);
+    const t = topE(), folder = t.k === 'folder' ? t.path : t.k === 'note' ? dir(byId(t.id)) : '';
+    const n = create(a.dataset.name || '未命名', a.dataset.name ? '' : folder);
+    openNote(n.id, null, true);
+    toast(`已新建「${title(n)}」${dir(n) ? '，在 ' + nicePath(dir(n)) : ''}`);
+  },
+  newfolder() {
+    const p = topE().path;
+    dialog({ ttl: '新建文件夹', input: '新文件夹', ok: '新建', onOk(v) { v = v.trim().replaceAll('/', ''); if (!v) return false; FOLDERS.add((p ? p + '/' : '') + v); show('none'); } });
+  },
+  vaults() {
+    openSheet('笔记库', `<div class="mi cur" data-act="sheet-x">${ic('folder', 22)}<div>${VAULT}<small>${NOTES.length} 篇笔记 · 已同步</small></div><span>${ic('check', 18, 2.4)}</span></div>
+      <div class="mi" data-act="vault">${ic('folder', 22)}<div>Pesemic<small>上次打开：11-19</small></div></div>
+      <div class="mi" data-act="vault">${ic('folderPlus', 22)}连接其他笔记库…</div>`);
+  },
+  vault() { closeSheet(); toast('原型里只有一个笔记库'); },
+  seg(a) {
+    S[a.dataset.key] = a.dataset.val; applyLook();
+    show('none');
+    if (a.dataset.key === 'mode') { const i = Q('#q'); i.focus({ preventScroll: true }); i.setSelectionRange(i.value.length, i.value.length); }
+  },
+  clear() { S.q = ''; show('none'); Q('#q').focus({ preventScroll: true }); },
+  fmt(a) { fmt(a.dataset.k); },
+  key(a) { key(a.dataset.k); },
+  'sheet-x'() { closeSheet(); },
+  'dlg-x'() { closeDlg(); },
+  'dlg-ok'() { const i = $('#dlg-in'), f = dlgOk; if (f && f(i ? i.value : undefined) === false) return; closeDlg(); },
+};
 
-    // 任务复选框交互
-    function toggleTask(taskItem) {
-      const checkbox = taskItem.querySelector('.task-checkbox');
-      const label = taskItem.querySelector('.task-label');
-      const isChecked = checkbox.classList.contains('checked');
+let lp = null, suppress = false;
+phone.addEventListener('click', (ev) => {
+  if (suppress) { suppress = false; return; }
+  const a = ev.target.closest('[data-act]');
+  const blk = ev.target.closest('#body .blk');
+  if (S.editing && blk && !(a && a.dataset.act === 'task')) { if (!blk.classList.contains('active')) activate(+blk.dataset.i); return; }
+  if (a && ACT[a.dataset.act]) ACT[a.dataset.act](a, ev);
+});
+phone.addEventListener('pointerdown', (ev) => {
+  const r = ev.target.closest('.row[data-id]'); if (!r) return;
+  lp = setTimeout(() => { suppress = true; setTimeout(() => (suppress = false), 700); noteMenu(+r.dataset.id); }, 480);
+});
+['pointerup', 'pointercancel', 'pointerleave'].forEach((t) => phone.addEventListener(t, () => clearTimeout(lp)));
+host.addEventListener('scroll', () => clearTimeout(lp), true);
+phone.addEventListener('contextmenu', (ev) => { const r = ev.target.closest('.row[data-id]'); if (r) { ev.preventDefault(); clearTimeout(lp); noteMenu(+r.dataset.id); } });
+phone.addEventListener('input', (ev) => {
+  if (ev.target.id === 'q') { S.q = ev.target.value; Q('#results').innerHTML = results(); Q('.clr').hidden = !S.q; }
+  else if (ev.target.id === 'src') ev.target.parentNode.className = `blk b-${blockType(srcText(ev.target))} active`;
+});
+phone.addEventListener('keydown', (ev) => {
+  if (ev.isComposing || ev.keyCode === 229) return;
+  if (ev.target.id === 'dlg-in' && ev.key === 'Enter') { ACT['dlg-ok'](); return; }
+  if (ev.target.id !== 'src') return;
+  if (ev.key === 'Enter' && !ev.shiftKey && onEnter()) ev.preventDefault();
+  else if (ev.key === 'Backspace' && onBackspace()) ev.preventDefault();
+  else if (ev.key === 'Escape') finish();
+});
 
-      if (isChecked) {
-        checkbox.classList.remove('checked');
-        checkbox.innerHTML = '';
-        label.classList.remove('done');
-        showToast('已标记为未完成');
-      } else {
-        checkbox.classList.add('checked');
-        checkbox.innerHTML = '<svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><polyline points="20 6 9 17 4 12"/></svg>';
-        label.classList.add('done');
-        showToast('已完成任务');
-      }
-    }
+/* 手机外面的控制 */
+function jump(k) {
+  if (S.editing) finish(false);
+  closeSheet(); closeDlg();
+  if (ROOT[k]) { S.tab = k; S.stacks[k] = [ROOT[k]()]; if (k === 'search') { S.q = ''; S.mode = 'name'; } return show('tab'); }
+  if (k === 'fulltext') { S.tab = 'search'; S.stacks.search = [ROOT.search()]; S.q = '复习'; S.mode = 'text'; return show('tab'); }
+  const n = resolve('README') || NOTES[0];
+  S.tab = 'recent'; S.stacks.recent = [ROOT.recent(), { k: 'note', id: n.id }]; S.fmOpen = false;
+  S.editing = k === 'edit'; S.active = S.editing ? Math.max(0, n.blocks.findIndex((b) => blockType(b) === 'task')) : -1;
+  show('tab');
+  if (k === 'backlinks') ACT.backlinks();
+}
+document.addEventListener('click', (ev) => {
+  const j = ev.target.closest('[data-jump]'), s = ev.target.closest('[data-set]');
+  if (j) jump(j.dataset.jump);
+  if (s) { S[s.dataset.set] = s.dataset.val; applyLook(); show('none'); }
+});
+matchMedia('(prefers-color-scheme: dark)').addEventListener('change', applyLook);
+function fit() {
+  phone.style.zoom = 1;
+  const m = $('main'), top0 = m.getBoundingClientRect().top + scrollY;
+  const s = Math.min(1, (innerHeight - top0 - 16) / 876, (m.parentNode.clientWidth - 40) / 417);
+  phone.style.zoom = Math.max(0.55, s);
+}
+addEventListener('resize', fit);
 
-    // 模式切换 (实时预览 vs 阅读模式)
-    function toggleEditorMode() {
-      editorMode = editorMode === 'reading' ? 'live' : 'reading';
-      const btn = document.getElementById('btn-mode-toggle');
-      const accessory = document.getElementById('editor-accessory-bar');
-      
-      if (editorMode === 'live') {
-        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M17 3a2.85 2.83 0 1 1 4 4L7.5 20.5 2 22l1.5-5.5Z"/></svg>';
-        btn.title = '当前为实时预览（点击切到阅读模式）';
-        accessory.style.display = 'flex';
-        showToast('已切换至：实时预览（编辑中）');
-      } else {
-        btn.innerHTML = '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg>';
-        btn.title = '当前为阅读模式（点击切到实时预览）';
-        accessory.style.display = 'flex';
-        showToast('已切换至：阅读模式');
-      }
-    }
-
-    // 辅助工具条语法插入
-    function insertSyntax(prefix, suffix) {
-      showToast('已插入 Markdown 标记: ' + prefix + (suffix ? '...' + suffix : ''));
-    }
-
-    // 半屏反向链接抽屉
-    function openBacklinksSheet() {
-      document.getElementById('sheet-scrim').classList.add('visible');
-      document.getElementById('bottom-sheet').classList.add('open');
-    }
-
-    function closeBacklinksSheet() {
-      document.getElementById('sheet-scrim').classList.remove('visible');
-      document.getElementById('bottom-sheet').classList.remove('open');
-    }
-
-    function navigateToNoteFromSheet(noteName) {
-      closeBacklinksSheet();
-      setTimeout(() => {
-        navigateToNote(noteName);
-      }, 200);
-    }
-
-    // 快速打开 Spotlight
-    function openQuickOpen() {
-      const modal = document.getElementById('quick-open-modal');
-      modal.classList.add('open');
-      const input = document.getElementById('quick-input');
-      input.value = '';
-      input.focus();
-    }
-
-    function closeQuickOpen() {
-      document.getElementById('quick-open-modal').classList.remove('open');
-    }
-
-    function filterQuickOpen(query) {
-      const list = document.getElementById('quick-results-list');
-      const q = query.trim().toLowerCase();
-      const mockNotes = [
-        { name: 'README', path: 'Projects / Cherky / README.md' },
-        { name: 'Vocabulary-Spec', path: 'Projects / Cherky / Vocabulary-Spec.md' },
-        { name: 'Audio-Sync', path: 'Projects / Cherky / Audio-Sync.md' },
-        { name: 'Index', path: 'Projects / Index.md' },
-        { name: '2026-10-18', path: 'Daily / 2026-10-18.md' },
-        { name: 'Architecture-Decision-001', path: 'Projects / Architecture-Decision-001.md' }
-      ];
-
-      const filtered = q ? mockNotes.filter(n => n.name.toLowerCase().includes(q) || n.path.toLowerCase().includes(q)) : mockNotes;
-
-      list.innerHTML = filtered.map(item => `
-        <div class="quick-item" onclick="selectQuickResult('${item.name}')">
-          <div>
-            <div class="quick-item-title">${item.name}</div>
-            <div class="quick-item-path">${item.path}</div>
-          </div>
-          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="m9 18 6-6-6-6"/></svg>
-        </div>
-      `).join('');
-    }
-
-    function selectQuickResult(name) {
-      closeQuickOpen();
-      setTimeout(() => {
-        navigateToNote(name);
-      }, 150);
-    }
-
-    // 工具栏操作：外观与字体
-    function toggleTheme() {
-      isDark = !isDark;
-      document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
-      const btn = document.getElementById('btn-theme');
-      btn.innerText = isDark ? '🌙 端砚墨黑' : '☀️ 宣纸暖白';
-      showToast(isDark ? '已切换至端砚深色模式' : '已切换至宣纸浅色模式');
-    }
-
-    function toggleFont() {
-      currentFont = currentFont === 'kai' ? 'hei' : 'kai';
-      document.documentElement.setAttribute('data-font', currentFont);
-      const btn = document.getElementById('btn-font');
-      btn.innerText = currentFont === 'kai' ? '🖋 楷体' : '🔤 黑体';
-      showToast(currentFont === 'kai' ? '正文字体已设为：楷体 (Kai)' : '正文字体已设为：系统黑体 (Hei)');
-    }
-
-    function toggleDeviceMode() {
-      isFullscreenMode = !isFullscreenMode;
-      document.body.classList.toggle('is-fullscreen', isFullscreenMode);
-      const btn = document.getElementById('btn-device-mode');
-      btn.innerText = isFullscreenMode ? '📲 移动端全屏视图' : '📱 iPhone 16 Pro 框架';
-      btn.classList.toggle('active', !isFullscreenMode);
-    }
-
-    function triggerIslandAction() {
-      showToast('灵动岛：mote 同步服务在后台运行良好');
-    }
-
-    function showNoteMenu() {
-      showToast('更多操作：复制链接 / 分享 / 导出 PDF');
-    }
-
-    function createNewNote() {
-      showToast('已新建笔记：未命名笔记.md');
-      navigateToNote('未命名笔记');
-    }
-
-    // 轻提示
-    let toastTimer = null;
-    function showToast(msg) {
-      const toast = document.getElementById('ios-toast');
-      toast.innerText = msg;
-      toast.classList.add('show');
-      if (toastTimer) clearTimeout(toastTimer);
-      toastTimer = setTimeout(() => {
-        toast.classList.remove('show');
-      }, 1800);
-    }
-
-    // 初始化时钟
-    function updateClock() {
-      const now = new Date();
-      const h = String(now.getHours()).padStart(2, '0');
-      const m = String(now.getMinutes()).padStart(2, '0');
-      const clockEl = document.getElementById('status-time');
-      if (clockEl) clockEl.innerText = `${h}:${m}`;
-    }
-    updateClock();
-    setInterval(updateClock, 30000);
-
-    // 初始化视图与路由
-    if (window.location.hash === '#vault') {
-      jumpToScreen('vault');
-    } else if (window.location.hash === '#list') {
-      jumpToScreen('list');
-    } else if (window.location.hash === '#sheet' || window.location.hash === '#backlinks') {
-      jumpToScreen('backlinks');
-    } else {
-      updateNavViews();
-    }
-  </script>
+applyLook(); fit(); show('tab');
+const h = location.hash.slice(1); if (h) jump(h);
+</script>
 </body>
 </html>

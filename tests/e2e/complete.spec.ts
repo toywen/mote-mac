@@ -114,3 +114,26 @@ test("typing [[ completes note names in the vault's link format", async () => {
     await markdown.app.close()
   }
 })
+
+test('Enter picks the note even when it arrives before the list has caught up', async () => {
+  const original = await readFile(join(fixture, '欢迎.md'), 'utf8')
+  const { app, window, vault } = await start('slow')
+  try {
+    await open(window, '欢迎', '欢迎.md')
+    const editor = window.getByRole('textbox', { name: '编辑器' })
+    await editor.locator('.cm-line').filter({ hasText: line }).click()
+    await window.keyboard.press('End')
+    // The list fills in a task after each key. On a slow machine Enter gets in before that task.
+    const cdp = await window.context().newCDPSession(window)
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 20 })
+    await window.keyboard.type(' [[计')
+    await window.keyboard.press('Enter')
+    await window.keyboard.type('。')
+    await cdp.send('Emulation.setCPUThrottlingRate', { rate: 1 })
+    await expect
+      .poll(() => readFile(join(vault, '欢迎.md'), 'utf8'))
+      .toBe(original.replace(line, `${line} [[计划]]。`))
+  } finally {
+    await app.close()
+  }
+})
