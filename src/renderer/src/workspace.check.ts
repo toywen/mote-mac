@@ -1,4 +1,5 @@
-// Model check of the open note's save state machine. How to run it and read a failure:
+// Model check of the open note's save state machine. The workspace.check.*.test.ts files run it,
+// one group of scenarios each, so Vitest checks the groups in parallel. How to run it and read a failure:
 // .claude/skills/verify-open-note/SKILL.md.
 //
 // It drives the real Workspace. window.mote is a fake that copies main's Vault (src/main/vault.ts):
@@ -795,26 +796,32 @@ export const scenarios: Scenario[] = [
   }
 ]
 
-// SURVEY=1 lists every kind of violation in every scenario instead of failing on the first.
-// SURVEY=<text> does it for the scenarios whose name contains text.
-it.runIf(env.SURVEY)('survey', { timeout: 600_000 }, async () => {
-  const filter = env.SURVEY === '1' ? '' : (env.SURVEY ?? '')
-  for (const scenario of scenarios.filter((s) => s.name.includes(filter))) {
-    const started = Date.now()
-    const result = await survey(scenario)
-    const lines = [`${scenario.name}: ${result.states} states, ${Date.now() - started} ms`]
-    for (const [violation, ...trace] of result.violations.values())
-      lines.push(`* ${violation}`, ...trace.map((line, i) => `  ${i + 1}. ${line}`))
-    console.log(lines.join('\n'))
-  }
-})
-
-describe('open note save state machine, every order of events', () => {
-  for (const scenario of scenarios) {
-    it(scenario.name, async () => {
-      const result = await check(scenario)
-      const story = result.trace.map((line, i) => `${i + 1}. ${line}`).join('\n')
-      expect(result.violation ? `${result.violation}\n${story}` : null).toBeNull()
-    })
-  }
-})
+// Checks the named scenarios. SURVEY=1 lists every kind of violation in them instead of failing
+// on the first; SURVEY=<text> does it for the scenarios whose name contains text.
+export function verify(names: string[]): void {
+  const chosen = names.map((name) => {
+    const scenario = scenarios.find((s) => s.name === name)
+    if (!scenario) throw new Error(`no scenario named ${name}`)
+    return scenario
+  })
+  it.runIf(env.SURVEY)('survey', { timeout: 600_000 }, async () => {
+    const filter = env.SURVEY === '1' ? '' : (env.SURVEY ?? '')
+    for (const scenario of chosen.filter((s) => s.name.includes(filter))) {
+      const started = Date.now()
+      const result = await survey(scenario)
+      const lines = [`${scenario.name}: ${result.states} states, ${Date.now() - started} ms`]
+      for (const [violation, ...trace] of result.violations.values())
+        lines.push(`* ${violation}`, ...trace.map((line, i) => `  ${i + 1}. ${line}`))
+      console.log(lines.join('\n'))
+    }
+  })
+  describe.skipIf(env.SURVEY)('open note save state machine, every order of events', () => {
+    for (const scenario of chosen) {
+      it(scenario.name, { timeout: 60_000 }, async () => {
+        const result = await check(scenario)
+        const story = result.trace.map((line, i) => `${i + 1}. ${line}`).join('\n')
+        expect(result.violation ? `${result.violation}\n${story}` : null).toBeNull()
+      })
+    }
+  })
+}
