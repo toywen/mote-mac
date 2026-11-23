@@ -216,6 +216,45 @@ test('confirms before deleting file with cancel and confirm', async () => {
   }
 })
 
+test('reveals active note and expands parent folders when locate button is clicked', async () => {
+  const info = test.info()
+  const vault = info.outputPath('locate-note-vault')
+  const subDir = join(vault, 'nested-folder')
+  await mkdir(subDir, { recursive: true })
+  await writeFile(join(subDir, 'nested-note.md'), '# Nested')
+
+  const app = await launch(info.outputPath('settings'))
+  try {
+    const window = await app.firstWindow()
+    await openVault(app, window, vault)
+
+    const tree = window.getByRole('tree', { name: '文件树' })
+    const folder = tree.getByRole('treeitem', { name: 'nested-folder', exact: true })
+    await expect(folder).toBeVisible()
+
+    // 1. Expand folder and open note
+    await folder.click()
+    const note = tree.getByRole('treeitem', { name: 'nested-note', exact: true })
+    await expect(note).toBeVisible()
+    await note.click()
+
+    // 2. Collapse folder so note is no longer visible
+    await folder.click()
+    await expect(note).toHaveCount(0)
+
+    // 3. Click "定位当前笔记" button
+    const locateBtn = window.getByRole('button', { name: '定位当前笔记' })
+    await expect(locateBtn).toBeVisible()
+    await locateBtn.click()
+
+    // 4. Folder should auto expand and note should be visible again
+    await expect(note).toBeVisible()
+    await expect(note).toBeFocused()
+  } finally {
+    await app.close()
+  }
+})
+
 test('sidebar header supports search and sort actions', async () => {
   const info = test.info()
   const vault = info.outputPath('search-sort-vault')

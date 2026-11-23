@@ -66,6 +66,7 @@ export type FileTreeHandle = {
   createNote(folder?: VaultPath | null): Promise<void>
   createFolder(folder?: VaultPath | null): Promise<void>
   openRootContextMenu(x: number, y: number): void
+  reveal(targetPath: VaultPath): void
 }
 
 export const FileTree = forwardRef<
@@ -77,6 +78,7 @@ export const FileTree = forwardRef<
   }
 >(function FileTree({ vault, selected, sortOrder = 'name-asc' }, ref): React.JSX.Element {
   const roots = useMemo(() => buildTree(vault.entries, sortOrder), [vault.entries, sortOrder])
+  const treeRef = useRef<HTMLUListElement>(null)
   const [expandedFolders, setExpandedFolders] = useState<Set<VaultPath>>(() => new Set())
   const [focused, setFocused] = useState<VaultPath>()
   const [renamingPath, setRenamingPath] = useState<VaultPath | null>(null)
@@ -152,6 +154,27 @@ export const FileTree = forwardRef<
     createFolder: handleCreateFolder,
     openRootContextMenu: (x: number, y: number) => {
       setContextMenu({ x, y })
+    },
+    reveal: (targetPath: VaultPath) => {
+      if (!targetPath) return
+      const parts = targetPath.split('/')
+      if (parts.length > 1) {
+        setExpandedFolders((prev) => {
+          const next = new Set(prev)
+          for (let i = 1; i < parts.length; i++) {
+            next.add(parts.slice(0, i).join('/') as VaultPath)
+          }
+          return next
+        })
+      }
+      setFocused(targetPath)
+      setTimeout(() => {
+        const el = treeRef.current?.querySelector<HTMLElement>(
+          `[data-path="${CSS.escape(targetPath)}"]`
+        )
+        el?.scrollIntoView({ block: 'nearest', behavior: 'smooth' })
+        el?.focus()
+      }, 50)
     }
   }))
 
@@ -329,6 +352,7 @@ export const FileTree = forwardRef<
   return (
     <>
       <ul
+        ref={treeRef}
         className="file-tree"
         role="tree"
         aria-label="文件树"

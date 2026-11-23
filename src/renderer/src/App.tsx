@@ -9,6 +9,7 @@ import {
   FolderOpen,
   FolderPlus,
   Link2,
+  LocateFixed,
   Moon,
   PanelLeft,
   PencilLine,
@@ -356,6 +357,22 @@ function App(): React.JSX.Element {
                   }}
                 >
                   <ArrowUpDown size={14} strokeWidth={1.5} />
+                </button>
+                <button
+                  className="icon-button"
+                  type="button"
+                  title="定位当前笔记"
+                  aria-label="定位当前笔记"
+                  disabled={!doc}
+                  onClick={() => {
+                    setSidebarOpen(true)
+                    setSidebarView('files')
+                    if (doc?.path) {
+                      fileTreeRef.current?.reveal(doc.path)
+                    }
+                  }}
+                >
+                  <LocateFixed size={14} strokeWidth={1.5} />
                 </button>
                 <button
                   className="icon-button"

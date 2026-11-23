@@ -94,6 +94,7 @@ export type MenuAction =
   | 'next-tab'
   | 'prev-tab'
   | 'search'
+  | 'reveal-active-file'
   | 'choose-vault'
   | 'show-in-folder'
   | 'open-with-default-app'

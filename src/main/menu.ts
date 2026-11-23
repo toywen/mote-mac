@@ -243,6 +243,11 @@ export function buildApplicationMenu(onCreateWindow?: (win?: BaseWindow | null) 
           accelerator: 'CmdOrCtrl+\\',
           click: (_item, win) => sendAction('toggle-sidebar', win)
         },
+        {
+          label: '在侧边栏中定位当前笔记',
+          accelerator: 'CmdOrCtrl+Shift+J',
+          click: (_item, win) => sendAction('reveal-active-file', win)
+        },
         { type: 'separator' as const },
         {
           label: '切换文雅楷体/现代黑体',
