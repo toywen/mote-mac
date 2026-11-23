@@ -1087,16 +1087,19 @@ svg.lucide {
 .cm-content ::selection {
   background: var(--selected) !important;
 }
+/* The side gutters are the scroller's padding. CodeMirror measures a drawn selection from the
+   content's own edge, so side padding on the content would let the selection spill past the lines. */
 .editor-content .cm-scroller {
   font-family: var(--font-text);
   overflow-y: auto;
   overflow-x: hidden;
+  padding: 0 40px;
 }
 .editor-content .cm-content {
-  max-width: min(860px, 86vw);
+  max-width: calc(min(860px, 86vw) - 80px);
   box-sizing: border-box;
   margin: 0 auto;
-  padding: 30px 40px 64px;
+  padding: 30px 0 64px;
   font-size: 15.5px;
   line-height: 1.8;
   text-autospace: normal;

@@ -158,3 +158,25 @@ test('callouts, tables and task checkboxes render, and a checkbox click changes 
     await app.close()
   }
 })
+
+test('a selection dragged across quote lines stays inside the quote', async () => {
+  const { app, window } = await start()
+  try {
+    const editor = await openNote(window, '块')
+    const first = (await editor.locator('.cm-line.mote-quote').nth(0).boundingBox())!
+    const second = (await editor.locator('.cm-line.mote-quote').nth(1).boundingBox())!
+    await window.mouse.move(first.x + 60, first.y + first.height / 2)
+    await window.mouse.down()
+    await window.mouse.move(second.x + 90, second.y + second.height / 2, { steps: 5 })
+    await window.mouse.up()
+    const drawn = window.locator('.cm-selectionBackground')
+    await expect(drawn).toHaveCount(2)
+    for (const piece of await drawn.all()) {
+      const box = (await piece.boundingBox())!
+      expect(box.x).toBeGreaterThanOrEqual(first.x)
+      expect(box.x + box.width).toBeLessThanOrEqual(first.x + first.width)
+    }
+  } finally {
+    await app.close()
+  }
+})

@@ -28,6 +28,10 @@
   background: transparent;
 }
 
+.editor-content .mote-embed-content .cm-scroller {
+  padding: 0;
+}
+
 .editor-content .mote-embed-content .cm-content {
   max-width: none;
   margin: 0;
