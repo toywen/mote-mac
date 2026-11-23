@@ -18,7 +18,7 @@
          ▼
    笔记库文件夹  ◀── Obsidian、git、Claude 也会读写
          │
-   mote 同步模块：还没做，见同步-1、ADR 0021 到 0025
+   mote 同步模块：src/main/sync.ts，还没接进窗口，见同步-1、step-10.md
          ▼
    mote 同步服务（独立仓库 mote-sync）  ◀── 以后的 iOS 版也连这里
 ```
@@ -44,11 +44,14 @@
 | `src/core/autosave.ts`                                                                             | 自动保存的两个时间常量。渲染进程和 verify-mote 的脚本都从这里读                                                                                                                                         |
 | `src/main/index.ts`                                                                                | 窗口、IPC 处理                                                                                                                                                                                          |
 | `src/main/updater.ts`                                                                              | GitHub Releases 检查、流式下载、平滑更新替换脚本生成与 IPC 处理                                                                                                                                         |
-| `src/main/vault.ts`                                                                                | 打开笔记库、读取笔记库配置、监听外部修改、按哈希读写笔记                                                                                                                                                |
+| `src/main/vault.ts`                                                                                | 打开笔记库、读取笔记库配置、监听外部修改、按哈希读写笔记。给同步模块列出文件、按字节读写、转发文件监听                                                                                                  |
 | `src/main/vaultFs.ts`                                                                              | 改动笔记库文件的唯一模块。`locate` 和 `ensureFolder` 给出 `InVault` 路径，路上的文件夹是符号链接就拒绝。新建、覆盖、移动都只收 `InVault`。lint 禁止别的文件引入会写盘的 `fs` 函数                       |
 | `src/main/appData.ts`                                                                              | mote 自己的文件：机器级设置和改名 journal，都在 `~/Library/Application Support/mote`                                                                                                                    |
 | `src/main/fileProtocol.ts`                                                                         | `mote-file://` 的处理函数。只返回当前笔记库里的图片文件                                                                                                                                                 |
 | `src/main/notes.ts`                                                                                | 扫描文件和读取笔记。不引用 Electron，`tools/` 里的脚本也直接用它                                                                                                                                        |
+| `src/main/sync.ts`                                                                                 | 同步模块：上传、下载、合并、冲突文件、删除保护、断线重连。只经 `Vault` 读写笔记库。不引用 Electron，`tools/sync-sim.mjs` 直接跑它                                                                       |
+| `src/main/syncRemote.ts`                                                                           | 同步服务的客户端：HTTPS 请求和 WebSocket，两处都做证书固定。`Remote` 接口让测试换成假的同步服务                                                                                                         |
+| `src/main/syncState.ts`                                                                            | 同步状态表的读写。先写临时文件再改名，读不出或属于别的服务器时当作空表                                                                                                                                  |
 | `src/preload/`                                                                                     | 用 `contextBridge` 暴露 `window.mote`                                                                                                                                                                   |
 | `src/renderer/src/workspace.ts`                                                                    | 渲染进程的状态：当前笔记库、多标签页列表、打开的笔记和它的状态机                                                                                                                                        |
 | `src/renderer/src/NoteEditor.tsx`                                                                  | CodeMirror 编辑器，把规范化文本还原成原始字节                                                                                                                                                           |
@@ -124,7 +127,7 @@
 - 粘贴、拖拽或插入的新附件，集中保存到 `.mote/attachments/`，保证笔记库根目录与用户目录整洁。
 - 库级配置保存在 `.mote/settings.json`，工作区状态保存在 `.mote/workspace.json`。从不写 `.obsidian`。
 - mote 机器级全局设置和 journal 存在 `~/Library/Application Support/mote`。
-- 只在这些情况下改动笔记库：保存你编辑过的笔记，改名或移动，新建笔记或文件夹，存入新附件，把文件移到废纸篓。每一种都经过 `src/main/vaultFs.ts`，它不穿过符号链接。`src/main/vault.test.ts` 对 `Vault` 的每个公开方法检查这一条。
+- 只在这些情况下改动笔记库：保存你编辑过的笔记，改名或移动，新建笔记或文件夹，存入新附件，把文件移到废纸篓，同步模块写入或删除同步来的文件。同步模块的写入用 `Vault.writeFile`，删除用 `Vault.trash`，两者都先比较基准哈希。每一种都经过 `src/main/vaultFs.ts`，它不穿过符号链接。`src/main/vault.test.ts` 对 `Vault` 的每个公开方法检查这一条。
 - 新建笔记只建空的 `.md` 文件，路径要通过 `parseVaultPath`。缺的文件夹从笔记库根目录起逐级新建，已有的必须是真的文件夹，不穿过符号链接。文件用 `O_CREAT | O_EXCL` 新建，已经存在就直接打开，不覆盖。主进程先更新条目和索引，再通知渲染进程。
 - 除 `.mote/attachments/` 外，忽略所有以 `.` 开头的文件和文件夹。`parseVaultPath` 拒绝其他以 `.` 开头的路径。文件树对用户自动隐藏 `.mote/`。
 

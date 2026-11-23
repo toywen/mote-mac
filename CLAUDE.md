@@ -50,6 +50,8 @@ node tools/hash-vault.mjs <vault> > a.txt  # hash every file; diff two runs to p
 node tools/bench-quick-open.mjs <vault> <query>   # quick-open results in Node; add --bench N to time N paths
 node tools/obsidian-export.mjs <copy>       # Obsidian's resolvedLinks for a vault copy, via an isolated Obsidian
 node tools/compare-links.mjs <copy>...      # mote's link resolution vs that export; --bench N times it
+node tools/sync-sim.mjs                     # two simulated devices sync through a local mote-sync server (build ../mote-sync first)
+node tools/update-sync-protocol.mjs         # rebuild ../mote-sync's protocol into vendor/, then npm install
 ```
 
 ## Architecture
