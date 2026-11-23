@@ -10,8 +10,6 @@ import {
   type VaultPath
 } from '../core/ipc.ts'
 
-// Node-only helpers shared by the main process and tools/*.mjs. No Electron imports.
-
 export function missing(error: unknown): boolean {
   return ['ENOENT', 'ENOTDIR'].includes((error as NodeJS.ErrnoException).code ?? '')
 }
@@ -31,7 +29,6 @@ export function kind(name: string): 'note' | 'file' {
   return extname(name).toLowerCase() === '.md' ? 'note' : 'file'
 }
 
-// Depth first in readdir order. Skips every entry whose name starts with a dot, except .mote/attachments.
 export async function scanVault(root: string): Promise<Map<VaultPath, VaultEntry>> {
   const result = new Map<VaultPath, VaultEntry>()
   async function visit(dir: string, prefix: string): Promise<void> {
@@ -75,7 +72,6 @@ export async function scanVault(root: string): Promise<Map<VaultPath, VaultEntry
   return result
 }
 
-// Reads a note without following a symlink at the last component. Null when it is gone.
 export async function readNoteFile(full: string): Promise<NoteVersion | null> {
   try {
     const file = await open(full, constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK)
@@ -91,8 +87,6 @@ export async function readNoteFile(full: string): Promise<NoteVersion | null> {
   }
 }
 
-// Reads many notes with a bounded number of open files. Order follows paths.
-// A note that is gone or cannot be read or decoded gives null, so one bad file cannot stop the rest.
 export async function readNoteFiles(
   root: string,
   paths: VaultPath[],

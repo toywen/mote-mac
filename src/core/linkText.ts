@@ -13,7 +13,6 @@ const images = ['bmp', 'png', 'jpg', 'jpeg', 'gif', 'svg', 'webp', 'avif']
 const parent = (path: string): string => path.slice(0, Math.max(0, path.lastIndexOf('/')))
 const fileName = (path: string): string => path.slice(path.lastIndexOf('/') + 1)
 
-// Where a file name's extension starts. A leading or trailing dot starts none.
 function extensionDot(name: string): number {
   const dot = name.lastIndexOf('.')
   return dot <= 0 || dot === name.length - 1 ? -1 : dot
@@ -31,12 +30,10 @@ function basename(path: string): string {
   return dot < 0 ? name : name.slice(0, dot)
 }
 
-// Markdown link destinations encode spaces, backslashes and some control characters.
-const encode = (path: string): string =>
+export const encode = (path: string): string =>
   // eslint-disable-next-line no-control-regex
   path.replace(/[\\\x00\x08\x0B\x0C\x0E-\x1F ]/g, encodeURIComponent)
 
-// The link path to file from a note at source. omitMd drops a note's .md.
 export function fileToLinktext(
   index: LinkIndex,
   file: VaultPath,

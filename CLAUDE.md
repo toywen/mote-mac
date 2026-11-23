@@ -8,7 +8,7 @@ mote is an Electron app that replaces Obsidian on the Mac for any existing Obsid
 
 - `CONTEXT.md` is the glossary. Use its terms in docs, code, and replies. Add a new term there before a doc uses it.
 - `ARCHITECTURE.md` is the module map, the state owners, and the invariants.
-- `docs/features.md` is the single source for the goal, the scope and the data behind it, the only list of features with status and evidence, the development order (steps 0 to 7), performance targets, and the acceptance checklist. Plan work from it.
+- `docs/features.md` is the single source for the goal, the scope and the data behind it, the only list of features with status and evidence, the development order (its steps), performance targets, and the acceptance checklist. Plan work from it.
 - `docs/adr/` holds architecture decision records. Never edit a decision; write a new ADR that replaces it.
 - `docs/plans/step-N.md` is the implementation plan for one step.
 
@@ -30,7 +30,7 @@ Read `docs/features.md` and `ARCHITECTURE.md` before changing scope or architect
 ## Keeping docs current
 
 - When a change adds or changes a feature, update its row in `docs/features.md` in the same change: status, evidence, and notes.
-- Mark a feature 已实现 only with evidence: an e2e test name or a `verify-mote` feature file. Otherwise mark it 部分 and say what is missing.
+- `npm test` runs `tools/check-docs.mjs`. It fails when a done row in `docs/features.md` cites no existing test or verify-mote feature, when a row id repeats, or when `ARCHITECTURE.md`'s module table repeats a row or names a missing path. Its error says the fix.
 - When scope changes, edit `docs/features.md` and record the reason and date in the notes column.
 - When a change makes a new architecture decision, add an ADR. When an ADR gets implemented, change its status line.
 
@@ -40,7 +40,7 @@ Read `docs/features.md` and `ARCHITECTURE.md` before changing scope or architect
 npm run dev          # electron-vite dev server with HMR
 npm run typecheck    # tsc for the node side (main, preload) and the web side (renderer)
 npm run lint         # eslint + prettier
-npm test             # Vitest for src/core, then compare-links on the links fixture vault
+npm test             # Vitest, compare-links on the links fixture vault, then tools/check-docs.mjs
 npm run test:e2e     # build, then run the Playwright Electron tests in tests/e2e
 npx playwright test -g "three panes"   # one e2e test by name; run `npx electron-vite build` first
 npm run build:mac    # unsigned local .app in dist/
@@ -65,14 +65,14 @@ Each piece of state has one owner. Do not add a second copy that both sides writ
 
 ## Rules that are easy to break
 
-- Never write into the vault except to save a note the user edited, to apply a rename or move, or to create the empty note that a click on a link to a missing note asks for. Never write `.obsidian`. Read vault config from `.obsidian` read only, and fall back to Obsidian defaults.
+- Write into the vault only in the cases that `ARCHITECTURE.md` lists under 不变式, 笔记库. Never write `.obsidian`. Read vault config from `.obsidian` read only, and fall back to Obsidian defaults.
 - Store mote's own settings and journals in `~/Library/Application Support/mote`, never in the vault.
 - Opening a note without editing it must leave its bytes unchanged. Keep the file's line separator (CodeMirror joins lines with `\n` by default) and write only when the note is dirty.
 - Every save compares the disk hash with the hash the note was opened at. On mismatch, enter the conflict state instead of overwriting.
 - Editor, index, and rename all use one Markdown parser config. Reading mode is the same CodeMirror view with editing off, not a second renderer.
 - Link resolution must match Obsidian. Check it against Obsidian's own `app.metadataCache.resolvedLinks`, not against assumed rules.
 - Search does substring matching in memory, because notes are mostly Chinese and word-splitting search libraries miss CJK text.
-- Sync is out of scope until step 7, and it will not use git. Do not add git-based sync.
+- Sync is out of scope until its step in `docs/features.md`, and it will not use git. Do not add git-based sync.
 
 
 ## Current status

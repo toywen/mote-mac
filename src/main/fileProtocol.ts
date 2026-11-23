@@ -11,8 +11,6 @@ const inert = {
   'X-Content-Type-Options': 'nosniff'
 }
 
-// The mote-file:// handler. It serves an image or video file of the open vault and nothing else:
-// no note, no dot path, no symlink, nothing outside the vault. Every refusal carries no bytes.
 export async function serveFile(
   vaultOrVaults: Vault | Vault[] | Iterable<Vault> | undefined,
   request: Request
@@ -37,7 +35,6 @@ export async function serveFile(
 
   for (const vault of vaults) {
     try {
-      // filePath refuses a folder on the way that is a symlink; O_NOFOLLOW refuses the file itself.
       const file = await openExisting(await vault.filePath(path), 'read')
       try {
         const stats = await file.stat()

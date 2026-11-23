@@ -201,7 +201,6 @@ export class Vault {
     this.index.setFiles(files.map((entry) => entry.path))
   }
 
-  // Reads the notes from disk into the index. A note that is gone leaves the index.
   private async indexNotes(notes: VaultEntry[]): Promise<void> {
     const paths = notes.map((entry) => entry.path)
     const versions = await readNoteFiles(this.dir, paths)
@@ -216,7 +215,6 @@ export class Vault {
     return search(this.index.entries(), String(query), Math.max(1, Math.floor(Number(limit) || 50)))
   }
 
-  // Every link in the vault that resolves to path, ordered by source note and position.
   backlinks(path: VaultPath): Hit[] {
     return this.index
       .backlinks(parseVaultPath(path))
@@ -287,8 +285,6 @@ export class Vault {
         }
       }
     }
-    // The index is updated before the renderer hears about the change, so a backlinks
-    // request sent on the notification already sees it.
     await this.indexNotes(
       [...paths].flatMap((path) => {
         const entry = this.entries.get(path)
@@ -315,7 +311,6 @@ export class Vault {
     return locate(this.dir, path)
   }
 
-  // Makes the folder's missing parts on disk and lists them. '' is the vault's root.
   private async folder(folder: string): Promise<void> {
     await ensureFolder(this.dir, folder)
     let sub = ''
@@ -433,7 +428,6 @@ export class Vault {
     })
   }
 
-  // moveToTrash is the system's trash. It gets a path that passes through no symlink.
   trash(path: VaultPath, moveToTrash: (full: InVault) => Promise<void>): Promise<void> {
     return this.run(async () => {
       const clean = parseVaultPath(path)
@@ -575,13 +569,7 @@ export class Vault {
           if (this.entries.get(newP)?.kind === 'note') candidateNotes.add(newP)
         }
         for (const [oldP] of renames) {
-          const oldName = oldP.slice(oldP.lastIndexOf('/') + 1).replace(/\.md$/i, '')
-          const oldLower = oldName.toLowerCase()
-          for (const [notePath, indexed] of this.index.entries()) {
-            if (indexed.text.toLowerCase().includes(oldLower)) {
-              candidateNotes.add(notePath)
-            }
-          }
+          for (const [notePath] of this.index.mayLinkTo(oldP)) candidateNotes.add(notePath)
         }
 
         for (const notePath of candidateNotes) {
@@ -639,10 +627,6 @@ export class Vault {
     }
   }
 
-  // Creates an empty note for a link to a missing one. Missing folders are made one at a time
-  // from the vault root, and an existing one must be a real folder, so nothing passes through a
-  // symlink. A note that exists by then is left as it is. The entries and the index update before
-  // the renderer is told.
   createNote(path: VaultPath): Promise<void> {
     return this.run(async () => {
       const note = parseVaultPath(path)

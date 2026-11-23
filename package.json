@@ -21,7 +21,7 @@
     "build:dmg": "npm run build && electron-builder --mac dmg",
     "build:dmg:all": "npm run build && electron-builder --mac dmg --arm64 --x64 --universal",
     "build:release": "npm run build && electron-builder --mac dmg zip --arm64 --x64 --universal",
-    "test": "vitest run && node tools/compare-links.mjs tests/fixtures/vaults/links",
+    "test": "vitest run && node tools/compare-links.mjs tests/fixtures/vaults/links && node tools/check-docs.mjs",
     "test:e2e": "electron-vite build && playwright test"
   },
   "dependencies": {

@@ -24,7 +24,6 @@ const normalize = (text: string): string =>
     .replace(/\s+/g, ' ')
     .trim()
 
-// Where a heading's text ends: before closing #s or the setext underline.
 function contentEnd(node: SyntaxNode): number {
   const marks = node.getChildren('HeaderMark')
   if (node.name.startsWith('ATX')) return marks[1]?.from ?? node.to
@@ -53,7 +52,6 @@ function trailingId(node: SyntaxNode, text: string): string | null {
   return node.resolveInner(caret, 1) === node ? match[1] : null
 }
 
-// Block ids under node in document order. A list item leaves out its nested lists.
 function ids(node: SyntaxNode, text: string, skipLists: boolean): string[] {
   const found: string[] = []
   const visit = (current: SyntaxNode): void => {
@@ -72,7 +70,6 @@ function ids(node: SyntaxNode, text: string, skipLists: boolean): string[] {
 type Range = { from: number; to: number }
 type Block = Range & { id: string }
 
-// Every item of a top-level list, nested ones included, with the first block id of its own text.
 function listItems(list: SyntaxNode, text: string, items: Block[]): void {
   for (let item = list.firstChild; item; item = item.nextSibling) {
     if (item.name !== 'ListItem') continue
@@ -117,9 +114,6 @@ function outline(text: string): Outline {
   return { headings, blocks }
 }
 
-// The part of a note's normalized text that #heading, #parent#child or #^block names. A heading's
-// part runs to the next heading of the same or a higher level, without the blank lines before it.
-// A block's part is that block. Null when the note has no such heading or block.
 export function subpathRange(text: string, subpath: string): Range | null {
   const parts = subpath.split('#').filter(Boolean)
   if (parts.length === 0) return null
@@ -128,7 +122,6 @@ export function subpathRange(text: string, subpath: string): Range | null {
     const block = blocks.get(parts[0].slice(1).toLowerCase())
     if (block) return block
   }
-  // Each part matches a later heading that is deeper than the one before it.
   let matched = 0
   let level = 0
   for (const [i, heading] of headings.entries()) {
@@ -143,8 +136,6 @@ export function subpathRange(text: string, subpath: string): Range | null {
   return null
 }
 
-// Where #heading, #parent#child or #^block lands in a note's normalized text: the offset where
-// that heading or block starts. Null when the note has no such heading or block.
 export function resolveSubpath(text: string, subpath: string): number | null {
   return subpathRange(text, subpath)?.from ?? null
 }
