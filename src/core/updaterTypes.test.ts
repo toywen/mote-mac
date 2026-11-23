@@ -1,32 +1,17 @@
 import { describe, expect, it } from 'vitest'
-import {
-  compareSemver,
-  isNewerVersion,
-  parseSemver,
-  pickBestAsset,
-  type ReleaseAsset
-} from './updaterTypes.js'
+import { isNewerVersion, pickBestAsset, type ReleaseAsset } from './updaterTypes.js'
 
-describe('updaterTypes - semver', () => {
-  it('parses standard semver and prefixed versions', () => {
-    expect(parseSemver('1.0.0')).toEqual([1, 0, 0])
-    expect(parseSemver('v1.2.3')).toEqual([1, 2, 3])
-    expect(parseSemver('V2.10.5')).toEqual([2, 10, 5])
-    expect(parseSemver('1.0.0-beta.1')).toEqual([1, 0, 0])
-  })
-
-  it('correctly compares semantic versions', () => {
-    expect(compareSemver('1.0.1', '1.0.0')).toBeGreaterThan(0)
-    expect(compareSemver('1.1.0', '1.0.9')).toBeGreaterThan(0)
-    expect(compareSemver('2.0.0', '1.99.99')).toBeGreaterThan(0)
-    expect(compareSemver('v1.0.0', '1.0.0')).toBe(0)
-    expect(compareSemver('1.0.0', '1.0.1')).toBeLessThan(0)
-  })
-
-  it('evaluates isNewerVersion correctly', () => {
+describe('updaterTypes - isNewerVersion', () => {
+  it('is true only when the release tag is a higher version than the running app', () => {
     expect(isNewerVersion('v1.0.1', '1.0.0')).toBe(true)
+    expect(isNewerVersion('1.1.0', '1.0.9')).toBe(true)
+    expect(isNewerVersion('2.0.0', '1.99.99')).toBe(true)
+    expect(isNewerVersion('V2.10.5', '2.9.9')).toBe(true)
     expect(isNewerVersion('1.0.0', '1.0.0')).toBe(false)
+    expect(isNewerVersion('v1.0.0', '1.0.0')).toBe(false)
+    expect(isNewerVersion('1.0.0-beta.1', '1.0.0')).toBe(false)
     expect(isNewerVersion('0.9.9', '1.0.0')).toBe(false)
+    expect(isNewerVersion('1.0.0', '1.0.1')).toBe(false)
   })
 })
 

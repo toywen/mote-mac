@@ -48,7 +48,7 @@ export interface UpdateStatus {
 /**
  * Parses a semantic version string (e.g. "v1.2.3", "1.0.0-beta.1") into [major, minor, patch].
  */
-export function parseSemver(v: string): [number, number, number] {
+function parseSemver(v: string): [number, number, number] {
   const clean = v.trim().replace(/^v/i, '')
   const mainPart = clean.split('-')[0].split('+')[0]
   const segments = mainPart.split('.').map((s) => Number.parseInt(s, 10))
@@ -62,7 +62,7 @@ export function parseSemver(v: string): [number, number, number] {
 /**
  * Compares two versions. Returns > 0 if v1 > v2, < 0 if v1 < v2, 0 if equal.
  */
-export function compareSemver(v1: string, v2: string): number {
+function compareSemver(v1: string, v2: string): number {
   const [maj1, min1, pat1] = parseSemver(v1)
   const [maj2, min2, pat2] = parseSemver(v2)
 
