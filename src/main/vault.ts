@@ -1,6 +1,6 @@
-import { constants, watch, type FSWatcher } from 'node:fs'
-import { lstat, mkdir, open, readFile, realpath, rename as fsRename, stat } from 'node:fs/promises'
-import { dirname, join, resolve } from 'node:path'
+import { watch, type FSWatcher } from 'node:fs'
+import { lstat, readFile, realpath, stat } from 'node:fs/promises'
+import { join, resolve } from 'node:path'
 import {
   parseVaultPath,
   type ContentHash,
@@ -33,6 +33,15 @@ import {
   readNoteFiles,
   scanVault
 } from './notes.ts'
+import {
+  createFile,
+  ensureFolder,
+  locate,
+  move,
+  openExisting,
+  overwrite,
+  type InVault
+} from './vaultFs.ts'
 
 export type RenameJournal = {
   dir: string
@@ -302,19 +311,20 @@ export class Vault {
     }
   }
 
-  async filePath(path: VaultPath): Promise<string> {
-    const full = join(this.dir, parseVaultPath(path))
-    if ((await realpath(dirname(full))) !== dirname(full)) throw new Error('无法访问链接路径')
-    return full
+  filePath(path: VaultPath): Promise<InVault> {
+    return locate(this.dir, path)
   }
 
-  async resolvePath(path: VaultPath): Promise<string> {
-    const clean = parseVaultPath(path)
-    const full = resolve(join(this.dir, clean))
-    if (!full.startsWith(this.dir + '/') && full !== this.dir) {
-      throw new Error('无法访问路径')
+  // Makes the folder's missing parts on disk and lists them. '' is the vault's root.
+  private async folder(folder: string): Promise<void> {
+    await ensureFolder(this.dir, folder)
+    let sub = ''
+    for (const part of folder ? folder.split('/') : []) {
+      sub = sub ? `${sub}/${part}` : part
+      if (sub.startsWith('.')) continue
+      const path = parseVaultPath(sub)
+      if (!this.entries.has(path)) this.entries.set(path, { path, kind: 'folder' })
     }
-    return full
   }
 
   countInboundLinks(path: VaultPath): number {
@@ -351,27 +361,8 @@ export class Vault {
         candidatePath = parseVaultPath(folder ? `${folder}/${candidateName}` : candidateName)
       }
 
-      if (folder) {
-        let sub = ''
-        for (const part of folder.split('/')) {
-          sub = sub ? `${sub}/${part}` : part
-          const dir = join(this.dir, sub)
-          await mkdir(dir).catch((err: unknown) => {
-            if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err
-          })
-          if (!sub.startsWith('.')) {
-            const vp = parseVaultPath(sub)
-            if (!this.entries.has(vp)) {
-              this.entries.set(vp, { path: vp, kind: 'folder' })
-            }
-          }
-        }
-      }
-
-      const full = join(this.dir, candidatePath)
-      const flags = constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW
-      const handle = await open(full, flags, 0o666)
-      await handle.close()
+      await this.folder(folder)
+      await createFile(await locate(this.dir, candidatePath))
 
       this.ownWrites.set(candidatePath, hash(Buffer.alloc(0)))
       this.entries.set(candidatePath, { path: candidatePath, kind: 'note' })
@@ -392,31 +383,8 @@ export class Vault {
       const folder = resolveAttachmentFolder(this.config.attachmentFolderPath, notePath)
       const targetPath = nextAvailableAttachmentPath(folder, fileName, (p) => this.entries.has(p))
 
-      if (folder) {
-        let sub = ''
-        for (const part of folder.split('/')) {
-          sub = sub ? `${sub}/${part}` : part
-          const dir = join(this.dir, sub)
-          await mkdir(dir).catch((err: unknown) => {
-            if ((err as NodeJS.ErrnoException).code !== 'EEXIST') throw err
-          })
-          if (!sub.startsWith('.')) {
-            const vp = parseVaultPath(sub)
-            if (!this.entries.has(vp)) {
-              this.entries.set(vp, { path: vp, kind: 'folder' })
-            }
-          }
-        }
-      }
-
-      const full = join(this.dir, targetPath)
-      const flags = constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW
-      const handle = await open(full, flags, 0o666)
-      try {
-        await handle.writeFile(data)
-      } finally {
-        await handle.close()
-      }
+      await this.folder(folder)
+      await createFile(await locate(this.dir, targetPath), data)
 
       this.ownWrites.set(targetPath, hash(data))
       this.entries.set(targetPath, { path: targetPath, kind: 'file' })
@@ -452,17 +420,7 @@ export class Vault {
         candidatePath = parseVaultPath(folder ? `${folder}/${candidateName}` : candidateName)
       }
 
-      const full = join(this.dir, candidatePath)
-      await mkdir(full, { recursive: true })
-
-      let sub = ''
-      for (const part of candidatePath.split('/')) {
-        sub = sub ? `${sub}/${part}` : part
-        const vp = parseVaultPath(sub)
-        if (!this.entries.has(vp)) {
-          this.entries.set(vp, { path: vp, kind: 'folder' })
-        }
-      }
+      await this.folder(candidatePath)
 
       this.indexFiles()
       this.notify({
@@ -475,9 +433,11 @@ export class Vault {
     })
   }
 
-  deleteEntry(path: VaultPath): Promise<void> {
+  // moveToTrash is the system's trash. It gets a path that passes through no symlink.
+  trash(path: VaultPath, moveToTrash: (full: InVault) => Promise<void>): Promise<void> {
     return this.run(async () => {
       const clean = parseVaultPath(path)
+      await moveToTrash(await locate(this.dir, clean))
       const entry = this.entries.get(clean)
       if (!entry) return
       const removed: VaultPath[] = []
@@ -544,11 +504,12 @@ export class Vault {
       }
 
       if (fromExists) {
-        const fullFrom = join(this.dir, cleanFrom)
-        const fullTo = join(this.dir, cleanTo)
-        await mkdir(dirname(fullTo), { recursive: true })
+        const fullFrom = await locate(this.dir, cleanFrom)
+        const slash = cleanTo.lastIndexOf('/')
+        await ensureFolder(this.dir, cleanTo.slice(0, Math.max(slash, 0)))
+        const fullTo = await locate(this.dir, cleanTo)
         try {
-          await fsRename(fullFrom, fullTo)
+          await move(fullFrom, fullTo)
         } catch (error) {
           const code = (error as NodeJS.ErrnoException).code
           if (code === 'ENOENT') {
@@ -642,23 +603,9 @@ export class Vault {
           if (newText !== null && newText !== currentVersion.text) {
             const bytes = Buffer.from(newText, 'utf8')
             const nextHash = hash(bytes)
-            const full = await this.filePath(notePath)
-            const file = await open(
-              full,
-              constants.O_RDWR | constants.O_NOFOLLOW | constants.O_NONBLOCK
-            )
+            const file = await openExisting(await this.filePath(notePath), 'readWrite')
             try {
-              for (let offset = 0; offset < bytes.length;) {
-                const { bytesWritten } = await file.write(
-                  bytes,
-                  offset,
-                  bytes.length - offset,
-                  offset
-                )
-                if (!bytesWritten) throw new Error('无法写入笔记')
-                offset += bytesWritten
-              }
-              await file.truncate(bytes.length)
+              await overwrite(file, bytes)
               this.ownWrites.set(notePath, nextHash)
               this.index.set(notePath, newText)
               changedNotes.push(notePath)
@@ -700,18 +647,9 @@ export class Vault {
     return this.run(async () => {
       const note = parseVaultPath(path)
       if (this.closed || kind(note) !== 'note') throw new Error('笔记库已切换或路径无效')
-      let dir = this.dir
-      for (const part of note.split('/').slice(0, -1)) {
-        dir = join(dir, part)
-        await mkdir(dir).catch((error: unknown) => {
-          if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
-        })
-        if (!(await lstat(dir)).isDirectory()) throw new Error('无法在这里新建笔记')
-      }
+      await ensureFolder(this.dir, note.slice(0, Math.max(note.lastIndexOf('/'), 0)))
       try {
-        const flags =
-          constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW
-        await (await open(join(this.dir, note), flags)).close()
+        await createFile(await locate(this.dir, note))
         this.ownWrites.set(note, hash(Buffer.alloc(0)))
       } catch (error) {
         if ((error as NodeJS.ErrnoException).code !== 'EEXIST') throw error
@@ -727,35 +665,30 @@ export class Vault {
       const nextHash = hash(bytes)
       try {
         const full = await this.filePath(path)
-        const flags =
-          baseHash === null
-            ? constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL
-            : constants.O_RDWR | constants.O_NOFOLLOW | constants.O_NONBLOCK
-        const file = await open(full, flags)
+        if (baseHash === null) {
+          await createFile(full, bytes)
+          this.ownWrites.set(path, nextHash)
+          this.index.set(path, text)
+          return { ok: true, hash: nextHash }
+        }
+        const file = await openExisting(full, 'readWrite')
         try {
           const before = await file.stat()
           if (!before.isFile()) return { ok: false, disk: null }
-          if (baseHash !== null) {
-            const disk = noteVersion(await file.readFile())
-            const latest = await stat(full)
-            if (
-              before.ino !== latest.ino ||
-              before.dev !== latest.dev ||
-              before.mtimeMs !== latest.mtimeMs ||
-              before.ctimeMs !== latest.ctimeMs ||
-              before.size !== latest.size
-            ) {
-              return { ok: false, disk: await this.readNote(path) }
-            }
-            if (disk.hash !== baseHash) return { ok: false, disk }
-            if (disk.hash === nextHash) return { ok: true, hash: nextHash }
+          const disk = noteVersion(await file.readFile())
+          const latest = await stat(full)
+          if (
+            before.ino !== latest.ino ||
+            before.dev !== latest.dev ||
+            before.mtimeMs !== latest.mtimeMs ||
+            before.ctimeMs !== latest.ctimeMs ||
+            before.size !== latest.size
+          ) {
+            return { ok: false, disk: await this.readNote(path) }
           }
-          for (let offset = 0; offset < bytes.length;) {
-            const { bytesWritten } = await file.write(bytes, offset, bytes.length - offset, offset)
-            if (!bytesWritten) throw new Error('无法写入笔记')
-            offset += bytesWritten
-          }
-          await file.truncate(bytes.length)
+          if (disk.hash !== baseHash) return { ok: false, disk }
+          if (disk.hash === nextHash) return { ok: true, hash: nextHash }
+          await overwrite(file, bytes)
           this.ownWrites.set(path, nextHash)
           this.index.set(path, text)
           return { ok: true, hash: nextHash }

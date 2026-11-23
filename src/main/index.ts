@@ -10,7 +10,7 @@ import {
   webContents
 } from 'electron'
 import { basename, join } from 'path'
-import { lstat, mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
+import { lstat, readFile } from 'node:fs/promises'
 import { optimizer, is } from '@electron-toolkit/utils'
 import { fileScheme } from '../core/fileUrl'
 import {
@@ -23,7 +23,8 @@ import {
 } from '../core/ipc'
 import { serveFile } from './fileProtocol'
 import { isAllowedExternal } from '../core/linkDest'
-import { Vault, type JournalHandler, type RenameJournal } from './vault'
+import { Vault } from './vault'
+import { getJournalHandler, readSettings, writeSettings } from './appData'
 import { registerUpdaterIpc, Updater } from './updater'
 import { buildApplicationMenu } from './menu'
 
@@ -57,56 +58,7 @@ function currentVault(dir: string): Vault {
   return v
 }
 
-const settingsFile = (): string => join(app.getPath('userData'), 'settings.json')
-
-type AppSettings = {
-  lastVault?: string
-  theme?: ThemeSource
-  font?: FontMode
-}
-
 let currentFont: FontMode = 'kai'
-
-async function readSettings(): Promise<AppSettings> {
-  try {
-    return JSON.parse(await readFile(settingsFile(), 'utf8')) as AppSettings
-  } catch {
-    return {}
-  }
-}
-
-async function writeSettings(update: Partial<AppSettings>): Promise<void> {
-  const current = await readSettings()
-  const next = { ...current, ...update }
-  await mkdir(app.getPath('userData'), { recursive: true })
-  const tmp = settingsFile() + '.tmp'
-  await writeFile(tmp, JSON.stringify(next))
-  await rename(tmp, settingsFile())
-}
-
-function getJournalHandler(dir: string): JournalHandler {
-  const hash = Buffer.from(dir).toString('hex').slice(0, 16)
-  const file = join(app.getPath('userData'), `journal-${hash}.json`)
-  return {
-    async read() {
-      try {
-        const raw = await readFile(file, 'utf8')
-        return JSON.parse(raw) as RenameJournal
-      } catch {
-        return null
-      }
-    },
-    async write(journal: RenameJournal) {
-      await mkdir(app.getPath('userData'), { recursive: true })
-      const tmp = file + '.tmp'
-      await writeFile(tmp, JSON.stringify(journal))
-      await rename(tmp, file)
-    },
-    async clear() {
-      await rm(file).catch(() => {})
-    }
-  }
-}
 
 // The --background of src/renderer/src/assets/main.css, so a dark window never flashes white.
 const windowBackground = (): string => (nativeTheme.shouldUseDarkColors ? '#1c1b18' : '#fcfbf8')
@@ -250,10 +202,7 @@ ipcMain.handle(
     currentVault(dir).createFolder(parentFolder, initialName)
 )
 ipcMain.handle(channels.deleteEntry, async (_event, dir: string, path: VaultPath) => {
-  const v = currentVault(dir)
-  const full = await v.resolvePath(path)
-  await shell.trashItem(full)
-  await v.deleteEntry(path)
+  await currentVault(dir).trash(path, (full) => shell.trashItem(full))
 })
 ipcMain.handle(channels.showInFolder, async (_event, dir: string, path?: VaultPath) => {
   const v = currentVault(dir)
@@ -261,8 +210,7 @@ ipcMain.handle(channels.showInFolder, async (_event, dir: string, path?: VaultPa
     await shell.openPath(v.dir)
     return
   }
-  const full = await v.resolvePath(path)
-  shell.showItemInFolder(full)
+  shell.showItemInFolder(await v.filePath(path))
 })
 ipcMain.handle(
   channels.renameOrMove,

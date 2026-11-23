@@ -1,7 +1,6 @@
-import { constants } from 'node:fs'
-import { open } from 'node:fs/promises'
 import { mediaType, parseFileUrl } from '../core/fileUrl'
 import type { Vault } from './vault'
+import { openExisting } from './vaultFs'
 
 const refuse = (status: number): Response => new Response(null, { status })
 
@@ -39,10 +38,7 @@ export async function serveFile(
   for (const vault of vaults) {
     try {
       // filePath refuses a folder on the way that is a symlink; O_NOFOLLOW refuses the file itself.
-      const file = await open(
-        await vault.filePath(path),
-        constants.O_RDONLY | constants.O_NOFOLLOW | constants.O_NONBLOCK
-      )
+      const file = await openExisting(await vault.filePath(path), 'read')
       try {
         const stats = await file.stat()
         if (!stats.isFile()) {
