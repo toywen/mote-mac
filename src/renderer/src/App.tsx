@@ -392,16 +392,6 @@ function App(): React.JSX.Element {
                 >
                   <FolderPlus size={14} strokeWidth={1.5} />
                 </button>
-                <button
-                  className="icon-button"
-                  type="button"
-                  title="打开笔记库"
-                  aria-label="打开笔记库"
-                  disabled={busy}
-                  onClick={() => void workspace.chooseVault()}
-                >
-                  <FolderOpen size={14} strokeWidth={1.5} />
-                </button>
               </div>
             </div>
             {sortMenuPos && (
