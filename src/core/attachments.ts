@@ -2,13 +2,6 @@ import type { LinkIndex } from './resolve.ts'
 import type { VaultPath } from './ipc.ts'
 import { linkText, type LinkFormat } from './linkText.ts'
 
-/**
- * Resolves the destination folder for attachments according to Obsidian's app.json:
- * - "" or "/" or unset: vault root folder ""
- * - "./": same folder as note
- * - "./subfolder": subfolder in the same folder as note
- * - "folder": specific folder relative to vault root
- */
 export function resolveAttachmentFolder(
   attachmentFolderPath: string | undefined,
   notePath: string
@@ -36,10 +29,6 @@ export function resolveAttachmentFolder(
   return trimmed.replace(/^\/+|\/+$/g, '')
 }
 
-/**
- * Formats default filename for pasted image:
- * "Pasted image YYYYMMDDHHmmss.png"
- */
 export function formatPastedImageName(now: Date = new Date(), ext: string = 'png'): string {
   const pad = (n: number): string => String(n).padStart(2, '0')
   const YYYY = now.getFullYear()
@@ -52,11 +41,6 @@ export function formatPastedImageName(now: Date = new Date(), ext: string = 'png
   return `Pasted image ${YYYY}${MM}${DD}${HH}${mm}${ss}.${cleanExt}`
 }
 
-/**
- * Given an existing list or check function of paths, finds an available VaultPath in the target folder
- * without colliding with existing files.
- * If targetPath is taken, appends " 1", " 2", etc. before extension.
- */
 export function nextAvailableAttachmentPath(
   folder: string,
   fileName: string,
@@ -84,13 +68,6 @@ export function nextAvailableAttachmentPath(
   return candidatePath
 }
 
-/**
- * Formats the markdown embed string for an image attachment.
- * If format.useMarkdownLinks is true:
- *   ![name](path)
- * If format.useMarkdownLinks is false:
- *   ![[path]]
- */
 export function formatImageEmbed(
   index: LinkIndex,
   attachmentPath: VaultPath,

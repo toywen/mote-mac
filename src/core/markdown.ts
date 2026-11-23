@@ -44,8 +44,6 @@ function highlightClose(cx: InlineContext, open: number): number {
   return at < 0 ? -1 : at + cx.offset
 }
 
-// `==` opens unless whitespace or `==` follows it or nothing closes it. Highlights never nest:
-// an open one ends only at its own close.
 const highlight: InlineParser = {
   name: 'Highlight',
   parse(cx, next, pos) {
@@ -193,9 +191,6 @@ export const markdownParser = commonmark.configure([
   }
 ])
 
-// A callout's first line. type is lowercased with runs of whitespace as `-`. title is the title
-// Obsidian shows. marks is where `[!type]`, its fold mark and the spaces after them sit in the
-// line; it runs to the line's end when the line has no title of its own.
 export type CalloutHeader = { type: string; title: string; marks: { from: number; to: number } }
 
 // Ported from Obsidian 1.15.1 app.js: the blockquote tokenizer $ue reads the first line after
@@ -241,10 +236,8 @@ function decode(path: string): string {
   }
 }
 
-// What one link node points at: a file in the vault, or an address outside it.
 export type LinkTarget = { kind: 'vault'; ref: LinkRef } | { kind: 'external'; url: string }
 
-// Reads [from, to) of the text the node was parsed from.
 export type ReadText = (from: number, to: number) => string
 
 function markdownTarget(node: SyntaxNode, read: ReadText): LinkTarget | null {
@@ -271,9 +264,6 @@ function markdownTarget(node: SyntaxNode, read: ReadText): LinkTarget | null {
 
 const insideLink = new Set(['Link', 'Image', 'Autolink', 'LinkReference'])
 
-// The target of a WikiLink, WikiEmbed, Link, Image, Autolink or bare URL node. Null for any
-// other node, for a URL that is part of another link, and for a Link or Image with no
-// destination, such as a reference link. The editor and extractLinks both read links here.
 export function linkTarget(node: SyntaxNode, read: ReadText): LinkTarget | null {
   switch (node.name) {
     case 'WikiLink':

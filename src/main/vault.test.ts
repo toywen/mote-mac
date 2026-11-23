@@ -93,3 +93,38 @@ describe('folders that do not exist yet', () => {
     expect(listed).toEqual(expect.arrayContaining(['x', 'x/y', 'x/y/n.md', 'x/z']))
   })
 })
+
+describe('a Markdown link whose path is percent-encoded', () => {
+  beforeEach(async () => {
+    vault.close()
+    await writeFile(join(root, 'my note.md'), 'target')
+    await writeFile(join(root, 'c.md'), 'see [x](my%20note.md)')
+    vault = await Vault.open(root, () => {})
+  })
+
+  it('counts as a backlink', () => {
+    expect(vault.backlinks(p('my note.md')).map((hit) => hit.path)).toEqual(['c.md'])
+  })
+
+  it('follows the note when it is renamed', async () => {
+    await vault.renameOrMove(p('my note.md'), p('new name.md'), true)
+    expect((await vault.readNote(p('c.md')))?.text).toBe('see [x](new%20name.md)')
+  })
+})
+
+describe('a change made outside mote', () => {
+  it('is in the index by the time the renderer hears of it', async () => {
+    vault.close()
+    const seen = new Promise<string[]>((done) => {
+      void Vault.open(root, (change) => {
+        if (change.changed.includes(p('b.md'))) {
+          done(vault.backlinks(p('a.md')).map((hit) => hit.path))
+        }
+      }).then((opened) => {
+        vault = opened
+        return writeFile(join(root, 'b.md'), 'now links to [[a]]')
+      })
+    })
+    expect(await seen).toEqual(['b.md'])
+  })
+})

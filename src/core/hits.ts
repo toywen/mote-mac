@@ -3,7 +3,6 @@ import type { Hit, HitGroup } from './ipc.ts'
 const PREVIEW_BEFORE = 60
 const PREVIEW_MAX = 240
 
-// The line around [from, to), cut to PREVIEW_MAX characters, with the match offsets inside it.
 export function preview(text: string, from: number, to: number): Hit['preview'] {
   let start = text.lastIndexOf('\n', from - 1) + 1
   let end = text.indexOf('\n', to)
@@ -15,7 +14,6 @@ export function preview(text: string, from: number, to: number): Hit['preview'] 
   return { text: text.slice(start, end), from: from - start, to: to - start }
 }
 
-// Groups hits that are already ordered by note.
 export function groupHits(hits: Hit[]): HitGroup[] {
   const groups: HitGroup[] = []
   for (const hit of hits) {

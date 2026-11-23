@@ -1,20 +1,12 @@
 import type { LinkFormat } from './linkText.ts'
-import { fileToLinktext } from './linkText.ts'
+import { encode, fileToLinktext } from './linkText.ts'
 import type { LinkRef } from './model.ts'
 import { buildLinkIndex, resolveLink, type LinkIndex } from './resolve.ts'
 import type { VaultPath } from './ipc.ts'
 
-// Encodes characters that are forbidden in Markdown link URLs, matching linkText.ts
-const encode = (path: string): string =>
-  // eslint-disable-next-line no-control-regex
-  path.replace(/[\\\x00\x08\x0B\x0C\x0E-\x1F ]/g, encodeURIComponent)
-
 export type RenameMapping = {
-  // Map of old VaultPath to new VaultPath for every moved file
   renames: Map<VaultPath, VaultPath>
-  // Link index representing the state before renaming
   oldIndex: LinkIndex
-  // Link index representing the state after renaming
   newIndex: LinkIndex
 }
 
@@ -23,7 +15,6 @@ export function buildRenameMapping(
   currentFiles: Iterable<VaultPath>
 ): RenameMapping {
   const currentSet = new Set(currentFiles)
-  // Reconstruct old files by reverting the renames
   const oldFiles = new Set<VaultPath>()
   const newFiles = new Set<VaultPath>(currentSet)
 
@@ -45,8 +36,6 @@ export function buildRenameMapping(
   }
 }
 
-// Rewrites links in a single note after a rename/move operation.
-// Returns the updated text, or null if no links were changed.
 export function rewriteNoteLinks(
   currentSourcePath: VaultPath,
   oldSourcePath: VaultPath,
@@ -63,29 +52,21 @@ export function rewriteNoteLinks(
     const isWiki = link.syntax === 'wiki'
     const isMd = link.syntax === 'markdown'
 
-    // First check what this link resolved to before the move
     const oldResolved = resolveLink(oldIndex, link.target, oldSourcePath)
     if (!oldResolved) continue
 
     const wasRenamed = renames.has(oldResolved)
     const newTarget = wasRenamed ? renames.get(oldResolved)! : oldResolved
 
-    // Check if the link needs to be rewritten:
-    // 1. If target was renamed, check if it's already updated to newTarget
-    // 2. If source note itself moved and link was relative (Markdown or relative wiki)
     if (wasRenamed) {
-      // Check if it already resolves to newTarget in newIndex from currentSourcePath
       const currentResolved = resolveLink(newIndex, link.target, currentSourcePath)
       if (currentResolved === newTarget) {
-        // Already updated (e.g. idempotent re-run)
         continue
       }
     } else if (!sourceMoved) {
-      // Neither target nor source moved
       continue
     }
 
-    // Now format the new link target text
     if (isWiki) {
       const newTargetText = fileToLinktext(
         newIndex,
@@ -125,7 +106,6 @@ export function rewriteNoteLinks(
 
   if (replacements.length === 0) return null
 
-  // Sort descending by range.from to apply replacements backwards
   replacements.sort((a, b) => b.from - a.from)
 
   let result = text
