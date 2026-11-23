@@ -1,7 +1,7 @@
 {
   "name": "mote",
   "productName": "mote",
-  "version": "1.0.6",
+  "version": "1.0.7",
   "description": "A Markdown notes app compatible with Obsidian vaults",
   "main": "./out/main/index.js",
   "author": "wenli",
