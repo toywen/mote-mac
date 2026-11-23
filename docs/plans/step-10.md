@@ -14,9 +14,9 @@
 
 ```
 mote-sync(新仓库)                   mote-mac(现有仓库)
-├─ protocol/   @mote/sync-protocol  ├─ src/main/sync.ts   同步模块
+├─ protocol/   mote-sync-protocol  ├─ src/main/sync.ts   同步模块
 │    类型、合并规则、协议说明         ├─ src/core/sync/    只放转接代码
-├─ server/     同步服务             └─ 依赖 @mote/sync-protocol
+├─ server/     同步服务             └─ 依赖 mote-sync-protocol
 └─ Containerfile
 ```
 
@@ -155,6 +155,7 @@ B 和 E、C 和 E 可以并行。
 
 - 放在 `mote-sync` 仓库的 `protocol/` 目录。它不引用 Node 和 Electron 的 API，也不引用文件系统。
 - `merge.ts`：输入同步基准、本机内容、远程内容，输出合并后的内容。
+- `path.ts`：路径规则。相对路径、`/` 分隔、不超过 1024 字节；拒绝 `..`、反斜杠和所有以 `.` 开头的段。唯一的例外是 `.mote/attachments/` 下面，见 [CONTEXT.md](../../CONTEXT.md#同步)。
 - `protocol.ts`：设备和同步服务之间的请求和回应的类型。类型只写在这里，文档不抄。
 - `README.md`：协议说明。iOS 版按它用 Swift 实现，所以每个请求、回应和错误码都要写全。
 - 合并前把内容变成规范化文本。合并后还原本机文件的 BOM 和换行符。
@@ -165,9 +166,10 @@ B 和 E、C 和 E 可以并行。
 
 ## 单元 B：同步服务
 
-- 放在 `mote-sync` 仓库的 `server/` 目录，自己的 `package.json`。它依赖 `@mote/sync-protocol`。
+- 放在 `mote-sync` 仓库的 `server/` 目录，自己的 `package.json`。它依赖 `mote-sync-protocol`。
 - 一个 Node 进程。HTTPS 和 WebSocket 用同一个端口。
-- 存储：SQLite 存账户表、笔记库表、文件表、历史版本表和设备表。内容目录按哈希存文件，所有笔记库共用。
+- 存储：SQLite 存账户表、笔记库表、文件表、历史版本表和设备表，开 WAL 模式。内容按哈希存在 `/data/blobs/<哈希前两位>/<SHA-256>`，所有笔记库共用，同一个内容只存一份。见 [ADR 0026](../adr/0026-sync-storage-layout.md)。
+- 提交顺序：先写内容文件，再进数据库事务。崩溃最多留下没人引用的内容文件，由清理任务回收。
 - 上传和下载内容用流，不把整个文件读进内存。同步服务边收边算哈希，哈希不对就丢掉。
 - 设备表只存设备令牌的哈希。服务端按令牌找到账户，检查请求的笔记库属于这个账户。
 - 存储上限：同步服务记录内容目录的总大小。超过上限时拒绝上传。
@@ -182,11 +184,11 @@ B 和 E、C 和 E 可以并行。
   - 超过存储上限时上传被拒绝。
   - 哈希不对的内容被拒绝。
 
-待核实：SQLite 用 Node 自带的 `node:sqlite` 还是 `better-sqlite3`。前者不用编译原生模块，但在 Node 22 里还标着实验性。单元 B 开始时查文档再定。
+待核实：SQLite 用 Node 自带的 `node:sqlite` 还是 `better-sqlite3`。前者不用编译原生模块，但在 Node 22 里还标着实验性。单元 B 开始时查文档再定。客户端的状态文件不用 SQLite，用 JSON，见单元 C。
 
 ## 单元 C：同步模块
 
-- 放在 `src/main/sync.ts`。它依赖 `@mote/sync-protocol`，不引用 Electron，所以 `tools/sync-sim.mjs` 能直接跑它。
+- 放在 `src/main/sync.ts`。它依赖 `mote-sync-protocol`，不引用 Electron，所以 `tools/sync-sim.mjs` 能直接跑它。
 - 它通过 `Vault` 读写笔记库，不自己碰磁盘。写入走 `Vault` 的写入队列。
 - 它用 `ws` 包连 WebSocket，用 Node 的 `https` 发请求。两处都做证书固定。
 - 它跳过以 `.` 开头的目录，`.mote/attachments/` 除外。
@@ -231,15 +233,14 @@ lsblk
 4. 起容器：内存上限 300M，端口 8443，挂载 `/srv/mote-sync`，用自己的容器网络。
 5. 让 systemd 管这个容器，服务器重启后自动起来。
 6. 在阿里云安全组放行 8443 端口的入方向。
-7. 配置每天备份 `/srv/mote-sync` 到杭州的 OSS。备份 SQLite 用它的在线备份命令，不直接拷文件。
-8. 新建一个设备，记下设备令牌和证书指纹。
+7. 新建一个设备，记下设备令牌和证书指纹。
 
 证明：
 
 - 部署前后各跑一次 `podman ps`。ERP 的 4 个容器都在，启动时间没变。
 - 从 Mac 用证书指纹和设备令牌连通。用错的指纹连接被设备拒绝。
 - 重启同步服务的容器，ERP 不受影响，设备自动重连。
-- 从 OSS 的备份恢复到一个临时目录，同步服务能用它启动。
+- 删掉容器，按同样的参数重建，`/srv/mote-sync` 里的数据都还在。第一版不做备份，见 [ADR 0027](../adr/0027-no-backup-in-v1.md)。
 
 ## 单元 F：在副本上试，再切换
 
