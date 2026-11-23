@@ -91,7 +91,10 @@ test('what you type while the open note is being renamed is saved to the new nam
     await expect(tree.getByRole('treeitem', { name: '新主题', exact: true })).toBeVisible({
       timeout: 60_000
     })
-    await expect.poll(() => readFile(join(vault, '新主题.md'), 'utf8')).toBe('原文，新写的')
+    // The write waits in main's queue behind the watcher's events for the notes the rename rewrote.
+    await expect
+      .poll(() => readFile(join(vault, '新主题.md'), 'utf8'), { timeout: 30_000 })
+      .toBe('原文，新写的')
     await expect(window.getByRole('textbox', { name: '编辑器' })).toHaveText('原文，新写的')
   } finally {
     await app.close()
