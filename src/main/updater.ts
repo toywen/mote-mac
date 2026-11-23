@@ -215,7 +215,6 @@ export class Updater {
 
     this.setStatus({ state: 'installing' })
 
-    // Development mode safety check
     if (!app.isPackaged) {
       console.log('[Updater] Development mode: Simulated install for', filePath)
       this.setStatus({
@@ -243,7 +242,6 @@ export class Updater {
         }
         stagedAppPath = path.join(extractDir, appName)
       } else if (filePath.endsWith('.dmg')) {
-        // Mount DMG, copy .app, unmount DMG
         const mountPoint = path.join(tmpdir(), `mote-mount-${Date.now()}`)
         mkdirSync(mountPoint, { recursive: true })
         await this.runCommand('/usr/bin/hdiutil', [
@@ -274,7 +272,6 @@ export class Updater {
         throw new Error('不支持的更新文件格式: ' + path.extname(filePath))
       }
 
-      // Generate replacement launcher script
       const scriptPath = path.join(this.updateDir, 'apply-update.sh')
       const scriptContent = `#!/bin/bash
 while kill -0 ${currentPid} 2>/dev/null; do

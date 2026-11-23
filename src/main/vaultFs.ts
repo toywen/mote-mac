@@ -3,20 +3,16 @@ import { lstat, mkdir, open, realpath, rename, type FileHandle } from 'node:fs/p
 import { dirname, join } from 'node:path'
 import { parseVaultPath } from '../core/ipc.ts'
 
-// An absolute path inside the vault whose folders on the way are real folders, not symlinks.
-// Only locate and ensureFolder make one, and every function that changes the vault takes one.
 export type InVault = string & { readonly __brand: 'InVault' }
 
 const refuse = (): Error => new Error('路径经过符号链接，无法访问')
 
-// root must already be a real path, as Vault.open makes it.
 export async function locate(root: string, path: string): Promise<InVault> {
   const full = join(root, parseVaultPath(path))
   if ((await realpath(dirname(full))) !== dirname(full)) throw refuse()
   return full as InVault
 }
 
-// Makes the missing folders of a vault folder one at a time from the root. '' is the root.
 export async function ensureFolder(root: string, folder: string): Promise<InVault> {
   let dir = root
   for (const part of folder ? parseVaultPath(folder).split('/') : []) {

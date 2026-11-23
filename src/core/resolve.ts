@@ -6,7 +6,6 @@ import type { LinkRef, ResolvedLinks } from './model.ts'
 export type LinkIndex = {
   paths: Set<VaultPath>
   byName: Map<string, VaultPath[]>
-  // Where a new note can go: the folders, and every file and folder by its lower-case path.
   folders: Set<VaultPath>
   byLowerPath: Map<string, VaultPath>
 }
@@ -36,7 +35,6 @@ export function buildLinkIndex(
   return { paths, byName, folders, byLowerPath }
 }
 
-// Every file linkpath can mean from source, best first.
 export function linkpathDest(index: LinkIndex, linkpath: string, source: VaultPath): VaultPath[] {
   if (linkpath === '') return index.paths.has(source) ? [source] : []
   let path = linkpath.toLowerCase()

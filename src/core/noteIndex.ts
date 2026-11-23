@@ -7,9 +7,6 @@ import { sourceText } from './text.ts'
 
 export type IndexedNote = { readonly text: string; readonly links: LinkRef[] }
 
-// Every note's normalized text and links, plus the file list that links resolve against.
-// Links are parsed on demand when accessed. Backlinks use a substring quick-filter before
-// link resolution so cold queries on large vaults remain fast.
 export class NoteIndex {
   private readonly notes = new Map<VaultPath, IndexedNote>()
   private links: LinkIndex = buildLinkIndex([])
@@ -46,12 +43,21 @@ export class NoteIndex {
     return this.notes.entries()
   }
 
+  // Notes whose text could hold a link to a file of this name. A percent sign may encode any part of the name.
+  *mayLinkTo(path: VaultPath): IterableIterator<[VaultPath, IndexedNote]> {
+    const name = path
+      .slice(path.lastIndexOf('/') + 1)
+      .replace(/\.md$/i, '')
+      .toLowerCase()
+    for (const entry of this.notes) {
+      const text = entry[1].text
+      if (text.includes('%') || text.toLowerCase().includes(name)) yield entry
+    }
+  }
+
   backlinks(target: VaultPath): Hit[] {
     const hits: Hit[] = []
-    const targetName = target.slice(target.lastIndexOf('/') + 1).replace(/\.md$/i, '')
-    const targetLower = targetName.toLowerCase()
-    for (const [path, note] of this.notes) {
-      if (!note.text.toLowerCase().includes(targetLower)) continue
+    for (const [path, note] of this.mayLinkTo(target)) {
       for (const link of note.links) {
         if (resolveLink(this.links, link.target, path) !== target) continue
         const { from, to } = link.range
