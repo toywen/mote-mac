@@ -416,15 +416,6 @@ html[data-theme='light'] .tab-item.active {
   flex-shrink: 0;
 }
 
-.tab-dirty {
-  width: 5px;
-  height: 5px;
-  border-radius: 50%;
-  background: var(--accent);
-  flex-shrink: 0;
-  margin: 0 1px;
-}
-
 .tab-close {
   display: inline-flex;
   align-items: center;

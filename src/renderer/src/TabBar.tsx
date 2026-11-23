@@ -7,13 +7,11 @@ import { workspace } from './workspace'
 export function TabBar({
   tabs,
   activePath,
-  dirtyPath,
-  onNewTab
+  onNewPanel
 }: {
   tabs: VaultPath[]
   activePath?: VaultPath
-  dirtyPath?: VaultPath
-  onNewTab: () => void
+  onNewPanel: () => void
 }): React.JSX.Element {
   const nameCounts = useMemo(() => {
     const counts = new Map<string, number>()
@@ -32,9 +30,9 @@ export function TabBar({
         <button
           type="button"
           className="tab-add"
-          title="新建笔记（⌘N）"
-          aria-label="新建标签页"
-          onClick={onNewTab}
+          title="新面板"
+          aria-label="打开空面板"
+          onClick={onNewPanel}
         >
           <Plus size={13} strokeWidth={1.6} />
         </button>
@@ -47,7 +45,6 @@ export function TabBar({
       <div className="tab-scroll">
         {tabs.map((path) => {
           const isActive = path === activePath
-          const isDirty = path === dirtyPath
           const isMd = path.toLowerCase().endsWith('.md')
           const baseName = path.slice(path.lastIndexOf('/') + 1)
           const name = isMd ? baseName.replace(/\.md$/i, '') : baseName
@@ -84,7 +81,6 @@ export function TabBar({
               <Icon size={13} strokeWidth={1.5} className="tab-icon" aria-hidden="true" />
               <span className="tab-name">{name}</span>
               {showFolderHint && <span className="tab-folder-hint">({parentFolder})</span>}
-              {isDirty && <span className="tab-dirty" title="未保存修改" aria-label="未保存" />}
               <button
                 type="button"
                 className="tab-close"
@@ -104,9 +100,9 @@ export function TabBar({
       <button
         type="button"
         className="tab-add"
-        title="新建笔记（⌘N）"
-        aria-label="新建标签页"
-        onClick={onNewTab}
+        title="新面板"
+        aria-label="打开空面板"
+        onClick={onNewPanel}
       >
         <Plus size={13} strokeWidth={1.6} />
       </button>

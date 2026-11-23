@@ -494,12 +494,7 @@ function App(): React.JSX.Element {
               <TabBar
                 tabs={tabs}
                 activePath={doc?.path}
-                dirtyPath={doc?.kind === 'dirty' ? doc.path : undefined}
-                onNewTab={() => {
-                  setSidebarOpen(true)
-                  setSidebarView('files')
-                  void fileTreeRef.current?.createNote()
-                }}
+                onNewPanel={() => void workspace.newPanel()}
               />
             ) : (
               <h1>mote</h1>

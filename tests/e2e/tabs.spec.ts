@@ -53,12 +53,10 @@ test('multi-tab open, switch, dirty save, shortcut close and cycle', async () =>
     await expect(tabs.nth(0)).toHaveAttribute('aria-selected', 'true')
     await expect(tabs.nth(1)).toHaveAttribute('aria-selected', 'false')
 
-    // 4. Edit first note and verify dirty dot appears
+    // 4. Edit first note
     await editor.click()
     await window.keyboard.press('Meta+ArrowDown')
     await window.keyboard.insertText('新添加的一行内容')
-    const dirtyDot = tabs.nth(0).locator('.tab-dirty')
-    await expect(dirtyDot).toBeVisible({ timeout: 3000 })
 
     // 5. Switch to tab 2: should auto flush/save note 1 edits to disk
     await tabs.nth(1).click()
@@ -76,7 +74,20 @@ test('multi-tab open, switch, dirty save, shortcut close and cycle', async () =>
     await expect(tabs.first()).toContainText('表格')
     await expect(editor).toHaveAttribute('data-note-path', '表格.md')
 
-    // 8. Test closing tab with close button
+    // 8. The + button opens an empty panel, after saving the dirty note, and keeps the tabs.
+    await editor.click()
+    await window.keyboard.press('Meta+ArrowDown')
+    await window.keyboard.insertText('加在表格后面的内容')
+    await window.locator('.tab-add').click()
+    await expect(window.locator('.empty')).toContainText('选择一篇笔记')
+    await expect(tabBar.getByRole('tab')).toHaveCount(1)
+    expect(await readFile(join(vault, '表格.md'), 'utf8')).toContain('加在表格后面的内容')
+
+    // 9. Clicking a tab brings its note back.
+    await tabs.first().click()
+    await expect(editor).toHaveAttribute('data-note-path', '表格.md')
+
+    // 10. Test closing tab with close button
     const closeBtn = tabs.first().getByRole('button', { name: /关闭/ })
     await closeBtn.click()
     await expect(tabBar.getByRole('tab')).toHaveCount(0)

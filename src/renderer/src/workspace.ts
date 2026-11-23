@@ -348,6 +348,22 @@ export class Workspace {
     return Promise.resolve()
   }
 
+  // Opens an empty panel: no note is open, so the main area shows 选择一篇笔记 and the tabs stay.
+  // A dirty note saves first, as when its tab closes.
+  async newPanel(): Promise<void> {
+    const { doc, busy } = this.state
+    if (!doc || busy) return
+    this.set({ busy: true })
+    try {
+      if (!(await this.flush())) return
+      this.set({ doc: null, backlinks: null, selection: null })
+    } catch (error) {
+      this.fail(error)
+    } finally {
+      this.set({ busy: false })
+    }
+  }
+
   cycleTab(step: -1 | 1): void {
     const { tabs, doc } = this.state
     if (tabs.length <= 1) return
