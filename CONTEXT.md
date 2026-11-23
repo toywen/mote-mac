@@ -6,18 +6,18 @@
 
 ## 笔记库
 
-| 术语       | 英文名             | 定义                                                                                              |
-| ---------- | ------------------ | ------------------------------------------------------------------------------------------------- |
-| 笔记库     | vault              | 一个装 Markdown 文件的文件夹                                                                      |
-| 笔记       | note               | 笔记库里的一个 `.md` 文件                                                                         |
-| 附件       | file               | 笔记库里不是笔记的文件，例如图片和 PDF。用 macOS 的默认程序打开                                   |
-| 图片       | image              | 扩展名是 png、jpg、jpeg、gif、svg、webp、bmp 或 avif 的附件。编辑器经 `mote-file://` 读取并显示它 |
-| 视频       | video              | 扩展名是 mp4、webm、mov、m4v 或 ogv 的附件。编辑器经 `mote-file://` 渲染播放器并播放它            |
+| 术语       | 英文名             | 定义                                                                                                       |
+| ---------- | ------------------ | ---------------------------------------------------------------------------------------------------------- |
+| 笔记库     | vault              | 一个装 Markdown 文件的文件夹                                                                               |
+| 笔记       | note               | 笔记库里的一个 `.md` 文件                                                                                  |
+| 附件       | file               | 笔记库里不是笔记的文件，例如图片和 PDF。用 macOS 的默认程序打开                                            |
+| 图片       | image              | 扩展名是 png、jpg、jpeg、gif、svg、webp、bmp 或 avif 的附件。编辑器经 `mote-file://` 读取并显示它          |
+| 视频       | video              | 扩展名是 mp4、webm、mov、m4v 或 ogv 的附件。编辑器经 `mote-file://` 渲染播放器并播放它                     |
 | 库内路径   | `VaultPath`        | 笔记库内的相对路径，用 `/` 分隔。除 `.mote/attachments/` 外不含以 `.` 开头的部分。由 `parseVaultPath` 创建 |
-| mote 目录  | `.mote`            | 笔记库根目录下的隐藏目录。存放配置、工作区状态和附件文件夹                                        |
-| 附件文件夹 | attachments folder | `.mote/attachments/` 目录。集中存放笔记引用的图片与附件                                           |
-| 笔记库配置 | `VaultConfig`      | 笔记库里 `.mote/settings.json`（或兼读 `.obsidian`）中的 JSON 配置                                |
-| 日记       | daily note         | 按日期命名、每天一篇的笔记                                                                        |
+| mote 目录  | `.mote`            | 笔记库根目录下的隐藏目录。存放配置、工作区状态和附件文件夹                                                 |
+| 附件文件夹 | attachments folder | `.mote/attachments/` 目录。集中存放笔记引用的图片与附件                                                    |
+| 笔记库配置 | `VaultConfig`      | 笔记库里 `.mote/settings.json`（或兼读 `.obsidian`）中的 JSON 配置                                         |
+| 日记       | daily note         | 按日期命名、每天一篇的笔记                                                                                 |
 
 ## 链接
 
@@ -47,6 +47,7 @@
 | 属性       | properties      | 笔记开头 `---` 之间的 YAML，也叫 frontmatter                                                                  |
 | 规范化文本 | normalized text | 编辑器里的文本。去掉 BOM，所有换行统一成 `\n`。保存时还原原来的 BOM 和换行符                                  |
 | 基准哈希   | `baseHash`      | 打开或上次保存笔记时磁盘内容的哈希。保存前和磁盘哈希比较                                                      |
+| 打开会话   | `session`       | 一篇笔记的一次打开，带着它的编辑器和保存。改名、移动和重新读盘不换会话，打开另一篇笔记才换                    |
 | 冲突       | conflict        | 保存时磁盘哈希和基准哈希不同。mote 不覆盖，让你选保留哪一份                                                   |
 | 外部修改   | external change | Obsidian、git 或其他程序对笔记库文件的修改                                                                    |
 

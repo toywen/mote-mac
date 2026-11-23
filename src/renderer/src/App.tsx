@@ -610,7 +610,7 @@ function App(): React.JSX.Element {
             <PdfViewer key={doc.path} path={doc.path} revision={revision} />
           ) : (
             <NoteEditor
-              key={doc.path}
+              key={doc.session}
               path={doc.path}
               source={doc.source}
               locked={busy}
