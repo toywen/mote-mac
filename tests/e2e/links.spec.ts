@@ -39,10 +39,11 @@ test('clicking a link opens its target and Cmd+Option+Left goes back', async () 
   const { app, window, vault, editor } = await start({
     '起点.md':
       '---\nrelated: "[[项目/计划]]"\n---\n# 起点\n\n光标会停在这句话的末尾。\n\n' +
-      '去 [[项目/计划]]，去标题 [[长笔记#第三节|第三节]]，附件 [[图片.png]]，网址 [网站](https://example.com/页)。\n',
+      '去 [[项目/计划]]，去标题 [[长笔记#第三节|第三节]]，附件 [[图片.png]] 与 [[表格.xlsx]]，网址 [网站](https://example.com/页)。\n',
     '项目/计划.md': '# 计划\n\n回到 [[起点]] 再说。\n',
     '长笔记.md': `# 长笔记\n\n## 第一节\n\n${filler}\n\n## 第三节\n\n标题下面的字。\n\n${filler}\n`,
-    '附件/图片.png': 'png'
+    '附件/图片.png': 'png',
+    '附件/表格.xlsx': 'xlsx'
   })
   try {
     // Opening a file or an address goes to the system; the test records what it would open.
@@ -111,11 +112,21 @@ test('clicking a link opens its target and Cmd+Option+Left goes back', async () 
     await window.keyboard.press('Meta+Alt+ArrowLeft')
     await expect(editor).toHaveAttribute('data-note-path', '起点.md')
 
-    // A file opens in the default app and an address in the browser. The note stays open.
+    // An image opens in its own tab (ADR 0020).
     await links.getByText('图片.png', { exact: true }).click()
+    await expect(window.locator('.image-viewer-container')).toHaveAttribute(
+      'data-image-path',
+      '附件/图片.png'
+    )
+    await window.keyboard.press('Meta+Alt+ArrowLeft')
+    await expect(editor).toHaveAttribute('data-note-path', '起点.md')
+
+    // A file mote cannot show opens in the default app and an address in the browser. The
+    // note stays open.
+    await links.getByText('表格.xlsx', { exact: true }).click()
     await links.getByText('网站', { exact: true }).click()
     await expect.poll(recorded).toEqual({
-      opened: [join(await realpath(vault), '附件/图片.png')],
+      opened: [join(await realpath(vault), '附件/表格.xlsx')],
       external: ['https://example.com/页']
     })
     await expect(editor).toHaveAttribute('data-note-path', '起点.md')

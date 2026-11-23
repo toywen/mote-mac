@@ -40,8 +40,8 @@ test('html file viewing and sandbox rendering (验收-13)', async () => {
     await expect(frame.locator('#page-title')).toHaveText('HTML 测试页面')
     await expect(frame.locator('#desc-badge')).toHaveText('沙箱环境直接阅读')
 
-    // 5. Verify pane header shows "在默认浏览器中打开" button
-    const extButton = window.getByRole('button', { name: '在默认浏览器中打开' })
+    // 5. Verify pane header shows "在系统默认应用中打开" button
+    const extButton = window.getByRole('button', { name: '在系统默认应用中打开' })
     await expect(extButton).toBeVisible()
 
     // 6. Open '网页链接.md' and follow the link to '网页.html'
