@@ -441,8 +441,7 @@ app.whenReady().then(async () => {
     }
   })
   await createWindow(defaultDir)
-  // Only a packaged app can install an update. An unpackaged one, as in dev and the e2e tests,
-  // would ask GitHub at every launch, and its pending DNS lookup can hold quit for 30 s.
+  // Only a packaged app can install an update. Dev and e2e builds must not reach the network.
   if (app.isPackaged)
     setTimeout(() => {
       void Updater.getInstance().checkForUpdates()
