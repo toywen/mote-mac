@@ -441,9 +441,12 @@ app.whenReady().then(async () => {
     }
   })
   await createWindow(defaultDir)
-  setTimeout(() => {
-    void Updater.getInstance().checkForUpdates()
-  }, 3000)
+  // Only a packaged app can install an update. An unpackaged one, as in dev and the e2e tests,
+  // would ask GitHub at every launch, and its pending DNS lookup can hold quit for 30 s.
+  if (app.isPackaged)
+    setTimeout(() => {
+      void Updater.getInstance().checkForUpdates()
+    }, 3000)
   app.on('activate', () => {
     if (windows.size === 0) void createWindow()
   })
