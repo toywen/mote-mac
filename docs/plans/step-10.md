@@ -189,6 +189,7 @@ B 和 E、C 和 E 可以并行。
 ## 单元 C：同步模块
 
 - 放在 `src/main/sync.ts`。它依赖 `mote-sync-protocol`，不引用 Electron，所以 `tools/sync-sim.mjs` 能直接跑它。
+- 协议包发布到 npm 前，用 `vendor/` 里的 tarball，由 `tools/update-sync-protocol.mjs` 刷新。发布后换成 npm 上的版本。主进程构建时把它打进包里。
 - 它通过 `Vault` 读写笔记库，不自己碰磁盘。写入走 `Vault` 的写入队列。
 - 它用 `ws` 包连 WebSocket，用 Node 的 `https` 发请求。两处都做证书固定。
 - 它跳过以 `.` 开头的目录，`.mote/attachments/` 除外。
