@@ -35,17 +35,21 @@ test('cursor height scales with heading font size', async () => {
   const { app, window } = await start('行内')
   try {
     const editor = await openNote(window, '行内')
-    const cursorHeight = (): Promise<number> =>
-      window.evaluate(
-        () => document.querySelector('.cm-cursor')?.getBoundingClientRect().height ?? 0
-      )
     await editor.click()
-    await expect.poll(cursorHeight).toBeGreaterThan(0)
-    const inBody = await cursorHeight()
     await window.keyboard.press('Meta+A')
     await window.keyboard.type('## ')
-    await expect(editor.locator('.cm-line.mote-h2')).toHaveCount(1)
-    await expect.poll(cursorHeight).toBeGreaterThan(inBody * 1.2)
+    await expect(editor.locator('.cm-line')).toHaveCount(1)
+    // The note is now one h2 line, so the cursor is on it whatever the click hit.
+    const cursorPerFontSize = (): Promise<number> =>
+      window.evaluate(() => {
+        const cursor = document.querySelector('.cm-cursor')
+        const line = document.querySelector('.cm-line.mote-h2')
+        if (!cursor || !line) return 0
+        return (
+          cursor.getBoundingClientRect().height / Number.parseFloat(getComputedStyle(line).fontSize)
+        )
+      })
+    await expect.poll(cursorPerFontSize).toBeGreaterThan(1.2)
   } finally {
     await app.close()
   }
