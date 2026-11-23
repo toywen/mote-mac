@@ -38,16 +38,18 @@ test('cursor height scales with heading font size', async () => {
     await editor.click()
     await window.keyboard.press('Meta+A')
     await window.keyboard.type('## ')
-
-    const metrics = await window.evaluate(() => {
-      const cursor = document.querySelector('.cm-cursor')
-      const line = document.querySelector('.cm-line.mote-h2')
-      return {
-        cursorHeight: cursor?.getBoundingClientRect().height,
-        fontSize: line ? Number.parseFloat(getComputedStyle(line).fontSize) : 0
-      }
-    })
-    expect(metrics.cursorHeight).toBeGreaterThan(25)
+    await expect(editor.locator('.cm-line')).toHaveCount(1)
+    // The note is now one h2 line, so the cursor is on it whatever the click hit.
+    const cursorPerFontSize = (): Promise<number> =>
+      window.evaluate(() => {
+        const cursor = document.querySelector('.cm-cursor')
+        const line = document.querySelector('.cm-line.mote-h2')
+        if (!cursor || !line) return 0
+        return (
+          cursor.getBoundingClientRect().height / Number.parseFloat(getComputedStyle(line).fontSize)
+        )
+      })
+    await expect.poll(cursorPerFontSize).toBeGreaterThan(1.2)
   } finally {
     await app.close()
   }
@@ -155,13 +157,13 @@ test('Cmd+E switches to reading mode and back', async () => {
     await window.keyboard.press('Enter')
     await expect(styled).toHaveText(hidden)
 
-    // The mode belongs to the window, so another note opens in reading mode too.
+    // The mode belongs to the window, so another note opens in reading mode too. mote saves a
+    // changed note before it opens another, so the typing above would be on disk by now.
     const list = await openNote(window, '列表')
     await expect(list).toHaveAttribute('contenteditable', 'false')
+    expect(await readFile(inline, 'utf8')).toBe(original)
     await openNote(window, '行内')
     await expect(editor).toHaveAttribute('contenteditable', 'false')
-    await window.waitForTimeout(1000)
-    expect(await readFile(inline, 'utf8')).toBe(original)
 
     await window.keyboard.press('Meta+E')
     await expect(window.getByRole('button', { name: '切换到阅读模式' })).toBeVisible()

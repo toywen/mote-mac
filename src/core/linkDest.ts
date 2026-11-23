@@ -2,18 +2,14 @@ import { parseVaultPath, type VaultConfig, type VaultPath } from './ipc.ts'
 import type { LinkTarget } from './markdown.ts'
 import { resolveLink, type LinkIndex } from './resolve.ts'
 
-// Where a click on a link goes. Link color and following both read this.
 export type LinkDest =
   | { kind: 'note'; path: VaultPath; subpath: string | null }
-  // Opens in the macOS default app.
   | { kind: 'file'; path: VaultPath }
-  // The note a click creates.
   | { kind: 'missing'; path: VaultPath }
   | { kind: 'external'; url: string }
 
 const externalSchemes = new Set(['http:', 'https:', 'mailto:'])
 
-// The only addresses mote hands to the system. Main checks again before it opens one.
 export function isAllowedExternal(url: string): boolean {
   try {
     return externalSchemes.has(new URL(url).protocol)
@@ -24,8 +20,6 @@ export function isAllowedExternal(url: string): boolean {
 
 const isNote = (path: string): boolean => /\.md$/i.test(path)
 
-// Null when the link can go nowhere: an address mote does not open, or a missing note whose path
-// Obsidian or mote would refuse to create.
 export function linkDest(
   target: LinkTarget,
   source: VaultPath,

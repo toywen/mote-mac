@@ -32,8 +32,8 @@ app.setName('mote')
 
 const windows = new Set<BrowserWindow>()
 const vaults = new Map<string, Vault>()
-const windowVaultMap = new Map<number, string>() // webContents.id -> vault.dir
-const closingWindows = new Set<number>() // window.id
+const vaultDirByWebContentsId = new Map<number, string>()
+const closingWindowIds = new Set<number>()
 let choosingVault = false
 let quitting = false
 
@@ -60,7 +60,6 @@ function currentVault(dir: string): Vault {
 
 let currentFont: FontMode = 'kai'
 
-// The --background of src/renderer/src/assets/main.css, so a dark window never flashes white.
 const windowBackground = (): string => (nativeTheme.shouldUseDarkColors ? '#1c1b18' : '#fcfbf8')
 
 async function getOrOpenVault(dir: string): Promise<Vault> {
@@ -69,7 +68,7 @@ async function getOrOpenVault(dir: string): Promise<Vault> {
   const next = await Vault.open(
     dir,
     (change) => {
-      for (const [wcId, vDir] of windowVaultMap.entries()) {
+      for (const [wcId, vDir] of vaultDirByWebContentsId.entries()) {
         if (vDir === change.dir) {
           const contents = webContents.fromId(wcId)
           if (contents && !contents.isDestroyed()) {
@@ -85,7 +84,7 @@ async function getOrOpenVault(dir: string): Promise<Vault> {
 }
 
 ipcMain.handle(channels.getVault, (event) => {
-  const dir = windowVaultMap.get(event.sender.id)
+  const dir = vaultDirByWebContentsId.get(event.sender.id)
   if (dir) return vaults.get(dir)?.info() ?? null
   return null
 })
@@ -95,7 +94,7 @@ ipcMain.handle(channels.chooseVault, async (event) => {
   if (!owner || choosingVault) return null
   choosingVault = true
   try {
-    const currentDir = windowVaultMap.get(event.sender.id)
+    const currentDir = vaultDirByWebContentsId.get(event.sender.id)
     const choice = await dialog.showOpenDialog(owner, {
       title: '打开笔记库',
       defaultPath: currentDir,
@@ -104,8 +103,7 @@ ipcMain.handle(channels.chooseVault, async (event) => {
     const dir = choice.filePaths[0]
     if (choice.canceled || !dir) return null
 
-    // Check if another window already has this vault open:
-    for (const [wcId, vDir] of windowVaultMap.entries()) {
+    for (const [wcId, vDir] of vaultDirByWebContentsId.entries()) {
       if (vDir === dir && wcId !== event.sender.id) {
         const otherWin = BrowserWindow.getAllWindows().find((w) => w.webContents.id === wcId)
         if (otherWin && !otherWin.isDestroyed()) {
@@ -116,8 +114,8 @@ ipcMain.handle(channels.chooseVault, async (event) => {
     }
 
     const next = await getOrOpenVault(dir)
-    const oldDir = windowVaultMap.get(event.sender.id)
-    windowVaultMap.set(event.sender.id, next.dir)
+    const oldDir = vaultDirByWebContentsId.get(event.sender.id)
+    vaultDirByWebContentsId.set(event.sender.id, next.dir)
 
     try {
       await writeSettings({ lastVault: next.dir })
@@ -125,7 +123,11 @@ ipcMain.handle(channels.chooseVault, async (event) => {
       // ignore settings write failure
     }
 
-    if (oldDir && oldDir !== next.dir && !Array.from(windowVaultMap.values()).includes(oldDir)) {
+    if (
+      oldDir &&
+      oldDir !== next.dir &&
+      !Array.from(vaultDirByWebContentsId.values()).includes(oldDir)
+    ) {
       const oldV = vaults.get(oldDir)
       if (oldV) {
         oldV.close()
@@ -140,7 +142,7 @@ ipcMain.handle(channels.chooseVault, async (event) => {
 })
 
 ipcMain.handle(channels.newWindow, async (event, dir?: string) => {
-  const targetDir = dir ?? windowVaultMap.get(event.sender.id)
+  const targetDir = dir ?? vaultDirByWebContentsId.get(event.sender.id)
   await createWindow(targetDir)
 })
 
@@ -220,7 +222,6 @@ ipcMain.handle(
 ipcMain.handle(channels.countInboundLinks, (_event, dir: string, path: VaultPath) =>
   currentVault(dir).countInboundLinks(path)
 )
-// Main is the boundary, so it checks the address again before the system opens it.
 ipcMain.handle(channels.openExternal, async (_event, url: string) => {
   if (typeof url !== 'string' || !isAllowedExternal(url)) throw new Error('无法打开该地址')
   await shell.openExternal(url)
@@ -272,8 +273,8 @@ ipcMain.handle(channels.toggleFont, async (): Promise<FontMode> => {
 
 ipcMain.on(channels.respondToClose, (event, ready: boolean) => {
   const win = BrowserWindow.fromWebContents(event.sender)
-  if (!win || !closingWindows.has(win.id)) return
-  closingWindows.delete(win.id)
+  if (!win || !closingWindowIds.has(win.id)) return
+  closingWindowIds.delete(win.id)
   if (ready) {
     win.destroy()
   } else {
@@ -332,7 +333,7 @@ async function createWindow(targetVaultDir?: string): Promise<BrowserWindow> {
 
   windows.add(mainWindow)
   if (initialVaultDir) {
-    windowVaultMap.set(webContentsId, initialVaultDir)
+    vaultDirByWebContentsId.set(webContentsId, initialVaultDir)
   }
 
   mainWindow.on('close', (event) => {
@@ -342,18 +343,18 @@ async function createWindow(targetVaultDir?: string): Promise<BrowserWindow> {
       mainWindow.webContents.isLoadingMainFrame()
     )
       return
-    if (closingWindows.has(windowId)) return
+    if (closingWindowIds.has(windowId)) return
     event.preventDefault()
-    closingWindows.add(windowId)
+    closingWindowIds.add(windowId)
     mainWindow.webContents.send(channels.closeRequested)
   })
 
   mainWindow.on('closed', () => {
-    closingWindows.delete(windowId)
+    closingWindowIds.delete(windowId)
     windows.delete(mainWindow)
-    const dir = windowVaultMap.get(webContentsId)
-    windowVaultMap.delete(webContentsId)
-    if (dir && !Array.from(windowVaultMap.values()).includes(dir)) {
+    const dir = vaultDirByWebContentsId.get(webContentsId)
+    vaultDirByWebContentsId.delete(webContentsId)
+    if (dir && !Array.from(vaultDirByWebContentsId.values()).includes(dir)) {
       const v = vaults.get(dir)
       if (v) {
         v.close()
@@ -409,14 +410,16 @@ app.whenReady().then(async () => {
     buildApplicationMenu((targetWin) => {
       const win =
         (targetWin instanceof BrowserWindow ? targetWin : null) ?? BrowserWindow.getFocusedWindow()
-      const targetDir = win ? windowVaultMap.get(win.webContents.id) : undefined
+      const targetDir = win ? vaultDirByWebContentsId.get(win.webContents.id) : undefined
       void createWindow(targetDir)
     })
   )
   registerUpdaterIpc()
   protocol.handle(fileScheme, (request) => {
     const focused = BrowserWindow.getFocusedWindow()
-    const focusedVaultDir = focused ? windowVaultMap.get(focused.webContents.id) : undefined
+    const focusedVaultDir = focused
+      ? vaultDirByWebContentsId.get(focused.webContents.id)
+      : undefined
     const focusedVault = focusedVaultDir ? vaults.get(focusedVaultDir) : undefined
     const list: Vault[] = []
     if (focusedVault) list.push(focusedVault)
@@ -438,9 +441,11 @@ app.whenReady().then(async () => {
     }
   })
   await createWindow(defaultDir)
-  setTimeout(() => {
-    void Updater.getInstance().checkForUpdates()
-  }, 3000)
+  // Only a packaged app can install an update. Dev and e2e builds must not reach the network.
+  if (app.isPackaged)
+    setTimeout(() => {
+      void Updater.getInstance().checkForUpdates()
+    }, 3000)
   app.on('activate', () => {
     if (windows.size === 0) void createWindow()
   })

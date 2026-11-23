@@ -59,7 +59,7 @@ const done = Decoration.mark({ class: 'mote-task-done' })
 
 // `[ ]` or `[x]` and the space after it become a checkbox, which takes the bullet's place. Any
 // character but a space reads as checked, and a checked task's text is struck through. Like
-// the list mark before it, the marker shows its source with its line.
+// the list mark before it, the checkbox stays while the cursor is on its line.
 const taskMarker: Renderer = (node, cx) => {
   const { doc } = cx.state
   const task = node.node.parent

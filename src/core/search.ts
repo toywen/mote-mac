@@ -2,8 +2,6 @@ import type { Hit, SearchResult, VaultPath } from './ipc.ts'
 import { preview } from './hits.ts'
 import type { IndexedNote } from './noteIndex.ts'
 
-// Splits a query on whitespace. A double-quoted part is one term, matched as a phrase.
-// An unclosed quote runs to the end of the query.
 export function parseQuery(query: string): string[] {
   const terms: string[] = []
   const pattern = /"([^"]*)"?|(\S+)/g
@@ -20,9 +18,6 @@ const fileName = (path: string): string => path.slice(path.lastIndexOf('/') + 1)
 const collator = new Intl.Collator(undefined, { usage: 'sort', sensitivity: 'base', numeric: true })
 const baseName = (path: string): string => fileName(path).replace(/\.[^.]*$/, '')
 
-// Notes where every term appears in the file name (with extension) or the body, ignoring case.
-// Groups are sorted by file name A to Z, like Obsidian. Only the first `limit` groups carry hits; total and
-// notes count everything.
 export function search(
   notes: Iterable<[VaultPath, IndexedNote]>,
   query: string,
@@ -63,7 +58,6 @@ export function search(
   return { groups, total, notes: found.length }
 }
 
-// Every match of every term, in order. A match that overlaps an earlier one is dropped.
 function bodyHits(path: VaultPath, text: string, patterns: RegExp[]): Hit[] {
   const ranges: [number, number][] = []
   for (const pattern of patterns) {

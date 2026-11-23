@@ -18,7 +18,7 @@
          ▼
    笔记库文件夹  ◀── Obsidian、git、Claude 也会读写
          │
-   mote 同步模块：第 7 步再做，见 ADR 0005
+   mote 同步模块：还没做，见同步-1 和 ADR 0005
          ▼
    mote 同步服务  ◀── 以后的 iOS 版和 Claude 连接器也连这里
 ```
@@ -41,6 +41,7 @@
 | `src/core/updaterTypes.ts`                                                                         | 语义化版本解析、对比与更新状态机类型                                                                                                                                                                    |
 | `src/core/hits.ts`                                                                                 | 命中位置的预览行和按笔记分组                                                                                                                                                                            |
 | `src/core/noteIndex.ts`                                                                            | 笔记索引：每篇笔记的规范化文本和链接，反向链接查询。不缓存反向链接，每次查询重新解析                                                                                                                    |
+| `src/core/autosave.ts`                                                                             | 自动保存的两个时间常量。渲染进程和 verify-mote 的脚本都从这里读                                                                                                                                         |
 | `src/main/index.ts`                                                                                | 窗口、IPC 处理                                                                                                                                                                                          |
 | `src/main/updater.ts`                                                                              | GitHub Releases 检查、流式下载、平滑更新替换脚本生成与 IPC 处理                                                                                                                                         |
 | `src/main/vault.ts`                                                                                | 打开笔记库、读取笔记库配置、监听外部修改、按哈希读写笔记                                                                                                                                                |

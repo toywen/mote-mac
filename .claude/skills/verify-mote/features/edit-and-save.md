@@ -21,10 +21,10 @@ Preconditions:
 - `VAULT=$($V paths | node -pe 'JSON.parse(require("fs").readFileSync(0)).vault')`.
 
 - **Open untouched.** Open each fixture note in turn. Run `$V click --role treeitem --name <note> --exact` for `欢迎`, `计划`, `CRLF笔记`, `带BOM`, and `无结尾换行`. Then `$V vault-diff --out untouched --expect-unchanged` prints `unchanged`.
-- **Edit CRLF note.** Open `CRLF笔记` and type at the end. Run `$V click --role textbox --name 编辑器`, `$V press --key Meta+ArrowDown`, and `$V type --text 新增一行`. Wait 2 s for autosave.
+- **Edit CRLF note.** Open `CRLF笔记` and type at the end. Run `$V click --role textbox --name 编辑器`, `$V press --key Meta+ArrowDown`, and `$V type --text 新增一行`. Autosave runs `AUTOSAVE_DEBOUNCE_MS` (in `src/core/autosave.ts`) after the last key. Wait for the file to change on disk, as Gotchas says.
 - **Check the save.** Run `$V vault-diff --out crlf-edit`. It prints only `changed file CRLF笔记.md`. Then `xxd "$VAULT/CRLF笔记.md" | tail -2` shows `0d0a` endings, and no bare `0a`.
 - **Edit BOM note and no-final-newline note.** Repeat the edit for `带BOM` and `无结尾换行`. The file still starts with `efbbbf`, and the second still has no final newline unless you typed one.
-- **Switch saves.** Type in `欢迎`, then click `计划` before the 750 ms autosave delay. `vault-diff` shows `欢迎.md` changed. The Electron regression test drives both actions in one connection to avoid CLI startup time.
+- **Switch saves.** Type in `欢迎`, then click `计划` before `AUTOSAVE_DEBOUNCE_MS` passes. `vault-diff` shows `欢迎.md` changed. The Electron regression test drives both actions in one connection to avoid CLI startup time.
 - **Proof.** Keep each diff and `xxd` output in the evidence dir, then `$V stop`.
 
 ## Gotchas

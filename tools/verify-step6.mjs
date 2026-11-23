@@ -2,12 +2,7 @@
 import { existsSync, readFileSync, statSync } from 'node:fs'
 import { resolve } from 'node:path'
 import { parse as parseYaml } from 'yaml'
-import {
-  compareSemver,
-  isNewerVersion,
-  parseSemver,
-  pickBestAsset
-} from '../src/core/updaterTypes.ts'
+import { isNewerVersion, pickBestAsset } from '../src/core/updaterTypes.ts'
 import { channels } from '../src/core/ipc.ts'
 
 console.log('=== 第 6 步：打包与自动更新 自动化验收走查 ===\n')
@@ -81,9 +76,17 @@ assert(
   steps.some((s) => s.run?.includes('npm ci'))
 )
 assert(
-  '包含 npm test 测试验证步骤',
-  steps.some((s) => s.run?.includes('npm test'))
+  '构建前先通过 ci.yml 的检查',
+  workflowConfig.jobs?.checks?.uses === './.github/workflows/ci.yml' &&
+    [workflowConfig.jobs?.['build-and-release']?.needs].flat().includes('checks')
 )
+const ciSteps =
+  parseYaml(readFileSync(resolve('.github/workflows/ci.yml'), 'utf8')).jobs?.checks?.steps || []
+for (const command of ['npm run typecheck', 'npm run lint', 'npm test', 'npm run test:e2e'])
+  assert(
+    `ci.yml 运行 ${command}`,
+    ciSteps.some((s) => s.run === command)
+  )
 assert(
   '包含 npm run build 构建步骤',
   steps.some((s) => s.run?.includes('npm run build'))
@@ -112,10 +115,9 @@ if (existsSync(dmgPath)) {
 
 // 4. Updater 语义化版本与状态机纯逻辑验证
 console.log('\n--- 4. Updater 语义化版本对比与匹配逻辑验证 ---')
-assert('parseSemver 正常解析标准版本', JSON.stringify(parseSemver('1.2.3')) === '[1,2,3]')
-assert('parseSemver 正常剥离 v 前缀', JSON.stringify(parseSemver('v1.2.3')) === '[1,2,3]')
-assert('compareSemver 检测次版本升级 (1.1.0 > 1.0.9)', compareSemver('1.1.0', '1.0.9') > 0)
-assert('compareSemver 检测主版本升级 (2.0.0 > 1.9.9)', compareSemver('2.0.0', '1.9.9') > 0)
+assert('isNewerVersion 忽略 v 前缀 (v1.2.3 = 1.2.3)', isNewerVersion('v1.2.3', '1.2.3') === false)
+assert('isNewerVersion 检测次版本升级 (1.1.0 > 1.0.9)', isNewerVersion('1.1.0', '1.0.9') === true)
+assert('isNewerVersion 检测主版本升级 (2.0.0 > 1.9.9)', isNewerVersion('2.0.0', '1.9.9') === true)
 assert('isNewerVersion 正确识别新版本', isNewerVersion('v1.0.1', '1.0.0') === true)
 assert('isNewerVersion 正确识别同版本不更新', isNewerVersion('1.0.0', '1.0.0') === false)
 assert('isNewerVersion 正确识别旧版本不更新', isNewerVersion('0.9.8', '1.0.0') === false)

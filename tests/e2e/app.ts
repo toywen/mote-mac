@@ -18,3 +18,10 @@ export async function openVault(
   }, dir)
   await window.getByRole('button', { name: '打开笔记库' }).click()
 }
+
+// Waits ms and checks nothing. Use it only to copy a person's timing, such as a key pressed a
+// set time after the last one. To wait for mote, wait for a locator, a state or an event.
+export function typingPause(window: Page, ms: number): Promise<void> {
+  // eslint-disable-next-line no-restricted-syntax -- the one sleep tests/e2e may use
+  return window.waitForTimeout(ms)
+}

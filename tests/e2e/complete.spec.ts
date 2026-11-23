@@ -1,7 +1,7 @@
 import { test, expect, type ElectronApplication, type Page } from '@playwright/test'
 import { cp, readFile, writeFile } from 'node:fs/promises'
 import { join } from 'node:path'
-import { launch, openVault } from './app'
+import { launch, openVault, typingPause } from './app'
 
 const fixture = 'tests/fixtures/vaults/basic'
 const line = '这是 mote 的验证笔记库。'
@@ -82,12 +82,12 @@ test("typing [[ completes note names in the vault's link format", async () => {
     await window.keyboard.type('```')
     await window.keyboard.press('Enter')
     await window.keyboard.type('[[计')
-    await window.waitForTimeout(500)
-    await expect(list).toBeHidden()
-
     await expect
       .poll(() => readFile(join(vault, '欢迎.md'), 'utf8'))
       .toBe(original.replace(line, `${line} [[计划]]。 [[计划]]`) + '```\n[[计')
+    // The note saves 150 ms after the last key, and a completion opens within a frame of it, so
+    // once the text is on disk a list would be showing.
+    await expect(list).toBeHidden()
   } finally {
     await wiki.app.close()
   }
@@ -103,7 +103,7 @@ test("typing [[ completes note names in the vault's link format", async () => {
     // Typed at a fast typist's pace, with Enter right behind the last key: the note is picked,
     // and the line is not broken.
     await window.keyboard.type(' [[计', { delay: 30 })
-    await window.waitForTimeout(30)
+    await typingPause(window, 30)
     await window.keyboard.press('Enter')
     await window.keyboard.type('。')
     await expect

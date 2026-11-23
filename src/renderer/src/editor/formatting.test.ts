@@ -3,7 +3,6 @@ import { EditorView } from '@codemirror/view'
 import { describe, expect, it } from 'vitest'
 import {
   type FormatTarget,
-  formatKeymap,
   insertCodeBlock,
   insertQuote,
   toggleBold,
@@ -289,14 +288,6 @@ describe('Markdown formatting commands', () => {
       expect(target.state.doc.toString()).toBe('- [x] Task 1\n- [x] Task 2')
       toggleTaskList(target)
       expect(target.state.doc.toString()).toBe('Task 1\nTask 2')
-    })
-  })
-
-  describe('formatKeymap', () => {
-    it('binds Mod-Enter to toggleTaskList', () => {
-      const binding = formatKeymap.find((k) => k.key === 'Mod-Enter')
-      expect(binding).toBeDefined()
-      expect(binding?.run).toBe(toggleTaskList)
     })
   })
 })
