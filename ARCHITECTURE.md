@@ -18,9 +18,9 @@
          ▼
    笔记库文件夹  ◀── Obsidian、git、Claude 也会读写
          │
-   mote 同步模块：还没做，见同步-1 和 ADR 0005
+   mote 同步模块：还没做，见同步-1、ADR 0021 和 ADR 0022
          ▼
-   mote 同步服务  ◀── 以后的 iOS 版和 Claude 连接器也连这里
+   mote 同步服务  ◀── 以后的 iOS 版也连这里
 ```
 
 ## 模块地图
