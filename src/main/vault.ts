@@ -624,7 +624,8 @@ export class Vault {
         dir: this.dir,
         entries: [...this.entries.values()],
         changed: [...changedNotes, ...renames.values()],
-        removed: [...renames.keys()]
+        removed: [...renames.keys()],
+        renamed: [...renames].map(([from, to]) => ({ from, to }))
       })
     })
   }

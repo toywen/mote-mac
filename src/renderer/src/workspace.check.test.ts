@@ -262,7 +262,9 @@ export class World {
       if (this.typed?.text === text) this.typed.saved = true
       this.shown.add(`${written.id}${nextHash}`)
     }
-    this.log.push(`main runs ${what} -> ${result.ok ? 'ok' : `conflict, disk ${describeDisk(result.disk)}`}`)
+    this.log.push(
+      `main runs ${what} -> ${result.ok ? 'ok' : `conflict, disk ${describeDisk(result.disk)}`}`
+    )
     this.reply(reply, what, result)
   }
 
@@ -270,29 +272,57 @@ export class World {
   private runRename(op: Extract<Op, { kind: 'rename' }>): void {
     const { from, to, reply } = op
     const what = `renameOrMove(${from} -> ${to})`
-    if (from === to) return this.reply(reply, what)
-    const fromExists = this.entries.has(from)
-    const toExists = this.entries.has(to)
+    const answer = (error?: string): void => {
+      // Another window's rename answers that window, not this one.
+      if (reply.call.caller !== 'another window') this.send({ kind: 'reply', reply, error, what })
+    }
+    if (from === to) return answer()
+    const under = (folder: VaultPath, p: VaultPath): boolean =>
+      p === folder || p.startsWith(`${folder}/`)
+    const fromExists = [...this.entries].some((p) => under(from, p))
+    const toExists = [...this.entries].some((p) => under(to, p))
     if (fromExists === toExists) {
       this.log.push(`main refuses ${what}`)
-      this.send({ kind: 'reply', reply, error: 'refused', what })
-      return
+      return answer('refused')
     }
-    const file = this.disk.get(from)
-    if (fromExists && file) {
-      this.disk.delete(from)
-      this.disk.set(to, file)
+    const renames = new Map<VaultPath, VaultPath>()
+    for (const p of this.entries)
+      if (under(from, p)) renames.set(p, path(to + p.slice(from.length)))
+    if (!renames.has(from)) renames.set(from, to)
+    for (const [oldPath, newPath] of renames) {
+      const file = this.disk.get(oldPath)
+      if (file) {
+        this.disk.delete(oldPath)
+        this.disk.set(newPath, file)
+      }
+      if (this.entries.delete(oldPath)) this.entries.add(newPath)
+      const own = this.ownWrites.get(oldPath)
+      this.ownWrites.delete(oldPath)
+      if (own) this.ownWrites.set(newPath, own)
+      // The watcher sees both paths; for a folder, vault.ts rescans the notes under it.
+      if (file) this.watched.add(oldPath).add(newPath)
     }
-    this.entries.delete(from)
-    this.entries.add(to)
-    const own = this.ownWrites.get(from)
-    this.ownWrites.delete(from)
-    if (own) this.ownWrites.set(to, own)
-    this.watched.add(from)
-    this.watched.add(to)
     this.log.push(`main runs ${what} and sends vault-changed`)
-    this.send({ kind: 'change', change: { ...this.change(), changed: [to], removed: [from] } })
-    this.reply(reply, what)
+    this.send({
+      kind: 'change',
+      change: {
+        ...this.change(),
+        changed: [...renames.values()],
+        removed: [...renames.keys()],
+        renamed: [...renames].map(([oldPath, newPath]) => ({ from: oldPath, to: newPath }))
+      }
+    })
+    answer()
+  }
+
+  // Another window renames a note; only its vault change reaches this window.
+  renameElsewhere(from: string, to: string): void {
+    const reply: Reply = {
+      resolve: () => {},
+      reject: () => {},
+      call: { caller: 'another window', refreshId: 0, doc: null }
+    }
+    this.queue.push({ kind: 'rename', from: path(from), to: path(to), reply })
   }
 
   // vault.ts refresh: what the watcher reported, minus mote's own writes (ownWrites).
@@ -401,14 +431,14 @@ export class World {
   // ---- the search ----
 
   // Runs the microtasks the last event started: Workspace's continuations after an IPC reply
-  // or a timer. It stops once 30 microtasks in a row changed nothing the check can see.
+  // or a timer. It stops once 12 microtasks in a row changed nothing the check can see.
   // SETTLE=macrotask waits for a real macrotask instead, which is slower and certain.
   private async settle(): Promise<void> {
     if (env.SETTLE === 'macrotask') {
       await new Promise<void>((resolve) => nextMacrotask(resolve))
       return
     }
-    for (let idle = 0; idle < 30; ) {
+    for (let idle = 0; idle < 12;) {
       const before = this.progress
       await Promise.resolve()
       if (this.progress !== before) {
@@ -464,7 +494,9 @@ export class World {
     } else if (event.startsWith('read ')) {
       const [read] = this.reads.splice(Number(event.slice(5)), 1)
       const file = this.disk.get(read.path)
-      this.log.push(`main runs readNote(${read.path}) -> ${file ? JSON.stringify(file.text) : 'null'}`)
+      this.log.push(
+        `main runs readNote(${read.path}) -> ${file ? JSON.stringify(file.text) : 'null'}`
+      )
       this.reply(read.reply, `readNote(${read.path})`, file ? version(file.text) : null)
     } else if (event === 'watch') {
       this.queue.push({ kind: 'refresh', paths: new Set(this.watched) })
@@ -503,10 +535,12 @@ export class World {
     this.log[this.log.length - 1] += `   [${describeDoc(doc)}${error ? `, error "${error}"` : ''}]`
     if (!isDraft(doc) || doc.kind === 'missing' || this.closed) this.view = null
     else {
-      // App.tsx renders <NoteEditor key={doc.path}>, and a new EditorView starts empty.
-      const key = doc.path
+      // App.tsx renders <NoteEditor key={doc.session}>, and a new EditorView starts empty.
+      const key = String(doc.session)
       if (this.view?.key !== key) this.view = { key, path: doc.path, text: '', source: null }
-      // NoteEditor's effect on [path, source] puts source.text in the view when it differs.
+      // The view's listeners read the path from NoteEditor's shownPath ref.
+      this.view.path = doc.path
+      // NoteEditor's effect on [source] puts source.text in the view when it differs.
       if (this.view.source !== doc.source) {
         if (this.view.text !== doc.source.text) this.view.text = doc.source.text
         this.view.source = doc.source
@@ -688,6 +722,10 @@ const rename = (from: string, to: string): Action => ({
   label: `you rename ${from} to ${to} in the file tree`,
   run: (w) => w.ws.rename(path(from), path(to), true)
 })
+const renameElsewhere = (from: string, to: string): Action => ({
+  label: `another window renames ${from} to ${to}`,
+  run: (w) => w.renameElsewhere(from, to)
+})
 const external = (name: string, text: string): Action => ({
   label: `another program writes ${JSON.stringify(text)} to ${name}`,
   run: (w) => w.externalWrite(name, text)
@@ -717,6 +755,18 @@ export const scenarios: Scenario[] = [
     notes: { 'A.md': 'a' },
     open: 'A.md',
     actions: [type('1'), rename('A.md', 'B.md'), type('2')]
+  },
+  {
+    name: 'rename the folder of the open note while you type',
+    notes: { 'F/A.md': 'a' },
+    open: 'F/A.md',
+    actions: [type('1'), rename('F', 'G'), type('2')]
+  },
+  {
+    name: 'another window renames the open note while you type',
+    notes: { 'A.md': 'a' },
+    open: 'A.md',
+    actions: [type('1'), renameElsewhere('A.md', 'B.md'), type('2')]
   },
   {
     name: 'another program writes the note while you type',

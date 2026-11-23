@@ -2,6 +2,7 @@ import type {
   ContentHash,
   Hit,
   NoteVersion,
+  Renamed,
   SearchResult,
   VaultChange,
   VaultInfo,
@@ -13,7 +14,10 @@ import { resolveSubpath } from '../../core/subpath'
 import { sourceText } from '../../core/text'
 import type { EditorMode } from './editor/preview'
 
-type Draft = { path: VaultPath; text: string; source: { text: string } }
+// session names one opening of a note: its editor and its saves. A rename or a reload from disk
+// keeps it; opening another note starts a new one. source changes whenever the editor must take
+// its text from the doc, which is on open and on reload.
+type Draft = { session: number; path: VaultPath; text: string; source: { text: string } }
 type DirtyDoc = Draft & { kind: 'dirty'; baseHash: ContentHash }
 type ConflictDoc = Draft & { kind: 'conflict'; disk: NoteVersion | null }
 export type HtmlDoc = { kind: 'html'; path: VaultPath }
@@ -27,6 +31,10 @@ export type Doc =
   | HtmlDoc
   | ImageDoc
   | PdfDoc
+type NoteDoc = Exclude<Doc, HtmlDoc | ImageDoc | PdfDoc>
+
+const isNote = (doc: Doc | null): doc is NoteDoc =>
+  doc !== null && doc.kind !== 'html' && doc.kind !== 'image' && doc.kind !== 'pdf'
 
 type Range = { from: number; to: number }
 
@@ -79,6 +87,7 @@ export class Workspace {
   private refreshId = 0
   private backlinksId = 0
   private selectionId = 0
+  private sessions = 0
   // The window's navigation history and the visit the open note belongs to.
   private visits: Visit[] = []
   private visit = -1
@@ -241,7 +250,7 @@ export class Workspace {
         if (!exists) {
           this.set({
             tabs,
-            doc: { kind: 'missing', path, text: '', source: { text: '' } },
+            doc: this.missing(path),
             selection: null,
             backlinks: null
           })
@@ -303,7 +312,7 @@ export class Workspace {
         if (!exists) {
           this.set({
             tabs: nextTabs,
-            doc: { kind: 'missing', path: nextPath, text: '', source: { text: '' } },
+            doc: this.missing(nextPath),
             selection: null,
             backlinks: null
           })
@@ -352,30 +361,16 @@ export class Workspace {
     void this.open(tabs[nextIndex])
   }
 
-  // Renames or moves a note or folder from the file tree.
+  // Renames or moves a note or folder from the file tree. The open note and the tabs follow
+  // main's vault change, in this window and in any other.
   async rename(from: VaultPath, to: VaultPath, updateLinks: boolean): Promise<void> {
-    const { vault, doc } = this.state
-    if (!vault) return
-    const selected = doc?.path
-    await window.mote.renameOrMove(vault.dir, from, to, updateLinks)
-    this.renameTab(from, to)
-    if (selected === from) void this.open(to)
+    const { vault } = this.state
+    if (vault) await window.mote.renameOrMove(vault.dir, from, to, updateLinks)
   }
 
-  renameTab(from: VaultPath, to: VaultPath): void {
-    const { tabs, doc } = this.state
-    if (!tabs.includes(from)) return
-    const nextTabs = tabs.map((t) => (t === from ? to : t))
-    const cursor = this.cursors.get(from)
-    if (cursor) {
-      this.cursors.delete(from)
-      this.cursors.set(to, cursor)
-    }
-    if (doc?.path === from) {
-      this.set({ tabs: nextTabs, doc: { ...doc, path: to } })
-    } else {
-      this.set({ tabs: nextTabs })
-    }
+  // An HTML file, image or PDF that is not in the vault.
+  private missing(path: VaultPath): NoteDoc {
+    return { kind: 'missing', session: ++this.sessions, path, text: '', source: { text: '' } }
   }
 
   // A subpath that names no heading or block leaves the cursor where it is.
@@ -460,15 +455,18 @@ export class Workspace {
   private load(path: VaultPath, disk: NoteVersion | null, tabs?: VaultPath[]): void {
     this.refreshId++
     const text = disk?.text ?? ''
+    const current = this.state.doc
+    // Reloading the open note keeps its session, so the editor stays.
+    const session = isNote(current) && current.path === path ? current.session : ++this.sessions
     // A selection made for an earlier visit to this note must not apply when it opens again.
-    const selection = path === this.state.doc?.path ? this.state.selection : null
+    const selection = path === current?.path ? this.state.selection : null
     const currentTabs = tabs ?? this.state.tabs
     const nextTabs = currentTabs.includes(path) ? currentTabs : [...currentTabs, path]
     this.set({
       tabs: nextTabs,
       doc: disk
-        ? { kind: 'clean', path, text, source: { text }, baseHash: disk.hash }
-        : { kind: 'missing', path, text, source: { text } },
+        ? { kind: 'clean', session, path, text, source: { text }, baseHash: disk.hash }
+        : { kind: 'missing', session, path, text, source: { text } },
       selection,
       error: ''
     })
@@ -530,7 +528,9 @@ export class Workspace {
 
   save(keepMine = false): Promise<boolean> {
     this.clearSaveTimers()
-    if (this.saving) return this.saving
+    // A save asked for while another runs, such as an autosave timer, waits for it and then
+    // saves what is left. Returning the running save would drop the request.
+    if (this.saving) return this.saving.then(() => this.save(keepMine))
     const { doc, vault } = this.state
     if (
       !doc ||
@@ -550,22 +550,20 @@ export class Workspace {
     return this.saving
   }
 
+  // The reply belongs to the session the write started for, wherever its note is now.
   private async write(dir: string, doc: DirtyDoc | ConflictDoc): Promise<boolean> {
     const baseHash = doc.kind === 'conflict' ? (doc.disk?.hash ?? null) : doc.baseHash
     if (baseHash) this.set({ doc: { ...doc, kind: 'saving', baseHash }, error: '' })
     try {
       const result = await window.mote.writeNote(dir, doc.path, doc.text, baseHash)
       const current = this.state.doc
-      if (
-        !current ||
-        current.path !== doc.path ||
-        current.kind === 'html' ||
-        current.kind === 'image' ||
-        current.kind === 'pdf' ||
-        current.kind === 'missing'
-      )
+      if (!isNote(current) || current.session !== doc.session || current.kind === 'missing')
         return false
       if (!result.ok) {
+        // Main moved the note after this write left, so the write found nothing at the old
+        // path. The vault change has moved the note already; write to where it is now.
+        if (!result.disk && current.path !== doc.path)
+          return this.write(dir, { ...doc, path: current.path, text: current.text })
         this.receiveConflict(current, result.disk)
         return this.state.doc?.kind === 'clean'
       }
@@ -582,13 +580,8 @@ export class Workspace {
       return this.refresh()
     } catch (error) {
       const current = this.state.doc
-      if (
-        current?.path === doc.path &&
-        current.kind !== 'html' &&
-        current.kind !== 'image' &&
-        current.kind !== 'pdf'
-      )
-        this.set({ doc: { ...doc, text: current.text } })
+      if (isNote(current) && current.session === doc.session)
+        this.set({ doc: { ...doc, path: current.path, text: current.text } })
       this.fail(error)
       return false
     }
@@ -607,25 +600,39 @@ export class Workspace {
     }
   }
 
-  private receiveConflict(
-    doc: Exclude<Doc, HtmlDoc | ImageDoc | PdfDoc>,
-    disk: NoteVersion | null
-  ): void {
+  private receiveConflict(doc: NoteDoc, disk: NoteVersion | null): void {
     this.clearSaveTimers()
     if (disk?.text === doc.text) this.load(doc.path, disk)
     else this.set({ doc: { ...doc, kind: 'conflict', disk }, error: '' })
   }
 
+  // Main renamed or moved notes, for this window or another. The open note keeps its session,
+  // text and save state, and only its path changes. write() resends a write that left for the
+  // old path.
+  private move(renamed: Renamed[]): void {
+    const to = new Map(renamed.map((r) => [r.from, r.to]))
+    const moved = (path: VaultPath): VaultPath => to.get(path) ?? path
+    const { tabs, doc } = this.state
+    this.cursors = new Map([...this.cursors].map(([path, at]) => [moved(path), at]))
+    this.visits = this.visits.map((visit) => ({ ...visit, path: moved(visit.path) }))
+    this.set({
+      tabs: tabs.map(moved),
+      doc: doc && to.has(doc.path) ? { ...doc, path: moved(doc.path) } : doc
+    })
+  }
+
   private onChange(change: VaultChange): void {
+    if (this.state.vault?.dir !== change.dir) return
+    if (change.renamed?.length) this.move(change.renamed)
     const { vault, doc } = this.state
-    if (vault?.dir !== change.dir) return
+    if (!vault) return
     if (change.entries) this.set({ vault: { ...vault, entries: change.entries } })
     this.set({ revision: this.state.revision + 1 })
     void this.loadBacklinks()
     if (doc && (change.changed.includes(doc.path) || change.removed.includes(doc.path))) {
       if (doc.kind === 'html' || doc.kind === 'image' || doc.kind === 'pdf') {
         if (change.removed.includes(doc.path)) {
-          this.set({ doc: { kind: 'missing', path: doc.path, text: '', source: { text: '' } } })
+          this.set({ doc: this.missing(doc.path) })
         }
       } else {
         void this.refresh()

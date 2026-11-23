@@ -65,11 +65,16 @@ export type SearchResult = {
   notes: number
 }
 
+// One path that a rename or move changed. A folder's rename lists every entry under it.
+export type Renamed = { from: VaultPath; to: VaultPath }
+
 export type VaultChange = {
   dir: string
   entries?: VaultEntry[]
   changed: VaultPath[]
   removed: VaultPath[]
+  // Set when the change is a rename or move. removed and changed also list the paths.
+  renamed?: Renamed[]
 }
 
 export type ThemeSource = 'system' | 'light' | 'dark'

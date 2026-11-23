@@ -92,6 +92,13 @@ export function NoteEditor({
     [entries]
   )
   const format = vault?.config
+  // App keys this component by the note's session, so a rename changes path without a new
+  // view. The view's listeners read the path from here.
+  const shownPath = useRef(path)
+
+  useLayoutEffect(() => {
+    shownPath.current = path
+  }, [path])
 
   useLayoutEffect(() => {
     if (!host.current) return
@@ -122,13 +129,12 @@ export function NoteEditor({
         ]),
         EditorView.contentAttributes.of({
           'aria-label': '编辑器',
-          'data-note-path': path,
           spellcheck: 'false'
         }),
         EditorView.updateListener.of((update) => {
           if (update.selectionSet) {
             const { anchor, head } = update.state.selection.main
-            workspace.cursor(path, { from: anchor, to: head })
+            workspace.cursor(shownPath.current, { from: anchor, to: head })
           }
           if (
             update.docChanged &&
@@ -136,7 +142,10 @@ export function NoteEditor({
               transaction.effects.some((effect) => effect.is(replaceFormat))
             )
           ) {
-            workspace.edit(path, serialize(update.state.doc, update.state.field(lineFormat)))
+            workspace.edit(
+              shownPath.current,
+              serialize(update.state.doc, update.state.field(lineFormat))
+            )
           }
         })
       ]
@@ -146,7 +155,7 @@ export function NoteEditor({
       view.destroy()
       editor.current = null
     }
-  }, [path])
+  }, [])
 
   // Runs before the text arrives, so the first preview already has the mode and the links.
   useLayoutEffect(() => {
@@ -158,6 +167,7 @@ export function NoteEditor({
         EditorView.editable.of(mode === 'live'),
         EditorState.readOnly.of(locked || mode === 'reading'),
         editorLocked.of(locked),
+        EditorView.contentAttributes.of({ 'data-note-path': path }),
         // Reading mode cannot be typed in, but it takes focus, so a jump from search or the
         // backlinks pane shows its selection and the text can be selected and copied by key.
         mode === 'reading' ? EditorView.contentAttributes.of({ tabindex: '0' }) : []
@@ -194,6 +204,8 @@ export function NoteEditor({
     })
   }, [vault, path, mode, locked])
 
+  // A new source means the doc's text came from disk: on open and on reload. A rename keeps the
+  // source, so the view keeps the text you typed.
   useLayoutEffect(() => {
     const view = editor.current
     if (!view || serialize(view.state.doc, view.state.field(lineFormat)) === source.text) return
@@ -212,7 +224,7 @@ export function NoteEditor({
       effects: replaceFormat.of(format),
       annotations: Transaction.addToHistory.of(false)
     })
-  }, [path, source])
+  }, [source])
 
   useLayoutEffect(() => {
     const view = editor.current
