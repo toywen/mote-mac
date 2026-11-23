@@ -536,8 +536,10 @@ export class Sync {
     if (remote.hash !== null && isNote(path)) {
       const merged = await this.mergeNote(base!, bytes, remote.hash)
       if (merged === null) return this.conflictCopy(path, bytes, remote.hash, remote.seq)
-      const written = await this.vault.writeFile(disk(path), merged, diskHash(local!))
-      if (!written.ok) return
+      if (!merged.equals(bytes)) {
+        const written = await this.vault.writeFile(disk(path), merged, diskHash(local!))
+        if (!written.ok) return
+      }
     }
     // The remote state becomes the base, so the push commits what is on disk on top of it.
     this.record(path, remote.hash, remote.seq)
