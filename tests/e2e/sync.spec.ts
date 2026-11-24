@@ -63,7 +63,7 @@ function stopServer(child: import('node:child_process').ChildProcess): Promise<v
 
 test.describe.configure({ timeout: 120_000 })
 
-test('sync settings connect, go offline and come back', async () => {
+test('sign up, sign in, go offline and come back', async () => {
   test.skip(
     !existsSync(serverJs),
     `build the sync service first: (cd ../mote-sync && npm install && npm run build)`
@@ -75,9 +75,6 @@ test('sync settings connect, go offline and come back', async () => {
   await mkdir(vault, { recursive: true })
 
   cli(data, 'init')
-  const account = cli(data, 'account', 'create', '--name', 'me')
-  cli(data, 'vault', 'create', '--account', String(account.id), '--name', 'life-os')
-  const device = cli(data, 'device', 'create', '--account', String(account.id), '--name', 'mac')
 
   const port = await freePort()
   let server = await startServer(data, port)
@@ -86,17 +83,33 @@ test('sync settings connect, go offline and come back', async () => {
   const window = await app.firstWindow()
   await openVault(app, window, vault)
 
+  // First run: there is no address yet, so 高级 is already open.
   await window.getByRole('button', { name: /打开同步设置/ }).click()
-  await window.getByLabel('服务器地址').fill(`http://127.0.0.1:${port}`)
-  await window.getByLabel('设备令牌').fill(String(device.token))
-  await window.getByRole('button', { name: '保存并连接' }).click()
   const panel = window.getByRole('dialog', { name: '同步设置' })
-  await expect(panel.locator('.sync-error')).toHaveCount(0)
-  await expect(panel.getByRole('status')).toContainText('已同步', { timeout: 30_000 })
-  await window.getByRole('button', { name: '关闭' }).click()
+  const address = `http://127.0.0.1:${port}`
+  await panel.getByLabel('服务器地址').fill(address)
+  await panel.getByLabel('用户名').fill('e2e-user')
+  await panel.getByLabel('密码').fill('correct horse')
+  await panel.getByRole('button', { name: '注册' }).click()
+  await panel.getByRole('button', { name: '创建账户' }).click()
 
+  // The recovery code is shown once, and the panel closes on the acknowledgement.
+  await expect(panel.locator('.sync-code')).toHaveText(/[A-Za-z0-9_-]{20,}/)
+  await panel.getByRole('button', { name: '我记下了' }).click()
   const status = window.getByRole('button', { name: /打开同步设置/ })
   await expect(status).toContainText('已同步', { timeout: 30_000 })
+
+  // Signing out and back in has to work with the same credentials.
+  await status.click()
+  await panel.getByRole('button', { name: '退出登录' }).click()
+  await panel.getByLabel('用户名').fill('e2e-user')
+  await panel.getByLabel('密码').fill('wrong horse')
+  await panel.getByRole('button', { name: '登录' }).click()
+  await expect(panel.locator('.sync-error')).toHaveText('用户名或密码不对')
+  await panel.getByLabel('密码').fill('correct horse')
+  await panel.getByRole('button', { name: '登录' }).click()
+  await expect(panel.getByRole('status')).toContainText('已同步', { timeout: 30_000 })
+  await window.getByRole('button', { name: '关闭' }).click()
 
   await stopServer(server)
   await expect(status).toContainText('离线', { timeout: 30_000 })

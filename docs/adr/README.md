@@ -35,7 +35,8 @@ ADR（Architecture Decision Record）是架构决策记录。每个文件记一�
 | [0022](0022-sync-service-deployment-and-latency.md)                       | 同步服务部署在自己的阿里云服务器，按文件同步，延迟约 2 秒 | 被 0027 替代（备份部分）     |
 | [0023](0023-sync-repo-split.md)                                           | 同步服务和协议独立成 mote-sync 仓库                       | 被 0028 替代（包名部分）     |
 | [0024](0024-no-account-system-in-v1.md)                                   | 同步第一版不做账户体系，只用设备令牌                      | 被 0025 替代                 |
-| [0025](0025-accounts-in-data-model-from-v1.md)                            | 同步从第一版就按账户建模，登录界面留到以后                | 已接受，替代 0024            |
+| [0025](0025-accounts-in-data-model-from-v1.md)                            | 同步从第一版就按账户建模，登录界面留到以后                | 被 0029 替代（登录部分）     |
 | [0026](0026-sync-storage-layout.md)                                       | 同步服务用 SQLite 存元数据，内容按哈希存磁盘              | 已接受                       |
 | [0027](0027-no-backup-in-v1.md)                                           | 同步第一版不做自动备份                                    | 已接受，替代 0022 的备份部分 |
 | [0028](0028-protocol-package-name.md)                                     | 协议包的 npm 名改用 mote-sync-protocol                    | 已接受，替代 0023 的包名部分 |
+| [0029](0029-public-registration-and-login.md)                             | 同步服务公开注册，用户用用户名和密码登录                  | 已接受，替代 0025 的登录部分 |
