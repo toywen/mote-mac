@@ -7,7 +7,8 @@ import {
   nativeTheme,
   protocol,
   Menu,
-  webContents
+  webContents,
+  type IpcMainInvokeEvent
 } from 'electron'
 import { basename, join, resolve } from 'path'
 import { hostname } from 'node:os'
@@ -18,8 +19,8 @@ import {
   channels,
   type ContentHash,
   type FontMode,
-  type SyncSaveInput,
-  type SyncSaveResult,
+  type SyncAuthInput,
+  type SyncAuthResult,
   type SyncSettingsView,
   type SyncStatusView,
   type ThemeSource,
@@ -33,6 +34,7 @@ import { getJournalHandler, openToken, readSettings, sealToken, writeSettings } 
 import type { SyncSettings } from './appData'
 import { SyncController } from './syncController'
 import { checkServerUrl, colonFingerprint, fingerprintOf, parseCert } from './syncCert'
+import { authenticate, type AuthSession } from './syncAuth'
 import { registerUpdaterIpc, Updater } from './updater'
 import { buildApplicationMenu } from './menu'
 
@@ -104,8 +106,11 @@ function syncControllerFor(dir: string): SyncController | null {
   if (!vault) return null
   let controller = syncControllers.get(dir)
   if (!controller) {
-    controller = new SyncController(vault, join(app.getPath('userData'), 'sync'), hostname(), (full) =>
-      shell.trashItem(full)
+    controller = new SyncController(
+      vault,
+      join(app.getPath('userData'), 'sync'),
+      hostname(),
+      (full) => shell.trashItem(full)
     )
     controller.onStatus((status) => {
       for (const [wcId, vDir] of vaultDirByWebContentsId.entries()) {
@@ -159,6 +164,7 @@ function syncView(sync?: SyncSettings): SyncSettingsView {
     serverUrl: sync.serverUrl,
     certPem: sync.certPem,
     fingerprint,
+    account: sync.account,
     vaultId: sync.vaultId,
     hasToken: true
   }
@@ -237,52 +243,111 @@ ipcMain.handle(channels.getSyncSettings, async (): Promise<SyncSettingsView> => 
   return syncView((await readSettings()).sync)
 })
 
-ipcMain.handle(
-  channels.saveSyncSettings,
-  async (event, input: SyncSaveInput): Promise<SyncSaveResult> => {
-    const dir = vaultDirByWebContentsId.get(event.sender.id)
-    if (!dir) return { ok: false, error: '先打开一个笔记库' }
-    const controller = syncControllerFor(dir)
-    if (!controller) return { ok: false, error: '笔记库未打开' }
-
-    const url = checkServerUrl(input.serverUrl)
-    if (!url.ok) return { ok: false, error: url.error }
-    const certPem = input.certPem?.trim() || undefined
-    if (url.url.startsWith('https:') && !certPem) {
-      return { ok: false, error: 'https 地址要填证书' }
-    }
-    if (certPem) {
-      const parsed = parseCert(certPem)
-      if (!parsed.ok) return { ok: false, error: parsed.error }
-    }
-
-    const current = (await readSettings()).sync
-    const token = input.token?.trim() || (current ? openToken(current.tokenCipher) : null)
-    if (!token) return { ok: false, error: '请填写设备令牌' }
-
-    let tokenCipher: string
-    try {
-      tokenCipher = sealToken(token)
-    } catch (error) {
-      return { ok: false, error: error instanceof Error ? error.message : String(error) }
-    }
-
-    const sameServer = current !== undefined && current.serverUrl === url.url
-    await controller.apply({ serverUrl: url.url, certPem, token, vaultId: sameServer ? current.vaultId : undefined })
-    const next: SyncSettings = {
-      serverUrl: url.url,
-      certPem,
-      tokenCipher,
-      vaultId: controller.resolvedVaultId()
-    }
-    await writeSettings({ sync: next })
-
-    const status = controller.status()
-    if (status.state === 'error') {
-      return { ok: false, error: status.lastError ?? '连不上同步服务' }
-    }
-    return { ok: true, settings: syncView(next) }
+/** Checks the server address and certificate a sign-in carries, the same way a save did. */
+function checkAuthTarget(
+  input: SyncAuthInput
+): { ok: true; url: string; certPem?: string } | { ok: false; error: string } {
+  const url = checkServerUrl(input.serverUrl)
+  if (!url.ok) return url
+  const certPem = input.certPem?.trim() || undefined
+  if (url.url.startsWith('https:') && !certPem) {
+    return { ok: false, error: 'https 地址要填证书' }
   }
+  if (certPem) {
+    const parsed = parseCert(certPem)
+    if (!parsed.ok) return parsed
+  }
+  return { ok: true, url: url.url, certPem }
+}
+
+/** Saves the session the service issued, starts sync, and says what the window should show. */
+async function signIn(
+  dir: string,
+  target: { url: string; certPem?: string },
+  session: AuthSession
+): Promise<SyncAuthResult> {
+  const controller = syncControllerFor(dir)
+  if (!controller) return { ok: false, error: '笔记库未打开' }
+  let tokenCipher: string
+  try {
+    tokenCipher = sealToken(session.token)
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) }
+  }
+  await controller.apply({
+    serverUrl: target.url,
+    certPem: target.certPem,
+    token: session.token,
+    vaultId: session.vaultId
+  })
+  const next: SyncSettings = {
+    serverUrl: target.url,
+    certPem: target.certPem,
+    tokenCipher,
+    account: session.username,
+    vaultId: controller.resolvedVaultId()
+  }
+  await writeSettings({ sync: next })
+  const status = controller.status()
+  if (status.state === 'error') {
+    return { ok: false, error: status.lastError ?? '连不上同步服务' }
+  }
+  return { ok: true, settings: syncView(next), recoveryCode: session.recoveryCode }
+}
+
+/** The part every sign-in shares: check the target, call the service, then connect. */
+function handleAuth(
+  event: IpcMainInvokeEvent,
+  input: SyncAuthInput,
+  call: (
+    target: { serverUrl: string; certPem?: string },
+    value: SyncAuthInput
+  ) => Promise<AuthSession>
+): Promise<SyncAuthResult> {
+  const dir = vaultDirByWebContentsId.get(event.sender.id)
+  if (!dir) return Promise.resolve({ ok: false, error: '先打开一个笔记库' })
+  const checked = checkAuthTarget(input)
+  if (!checked.ok) return Promise.resolve(checked)
+  if (!input.username.trim()) return Promise.resolve({ ok: false, error: '请填写用户名' })
+  if (!input.password) return Promise.resolve({ ok: false, error: '请填写密码' })
+  return call({ serverUrl: checked.url, certPem: checked.certPem }, input)
+    .then((session) => signIn(dir, { url: checked.url, certPem: checked.certPem }, session))
+    .catch((error: unknown) => ({
+      ok: false as const,
+      error: error instanceof Error ? error.message : String(error)
+    }))
+}
+
+ipcMain.handle(channels.syncLogin, (event, input: SyncAuthInput) =>
+  handleAuth(event, input, (target, value) =>
+    authenticate(target, {
+      kind: 'login',
+      username: value.username.trim(),
+      password: value.password,
+      deviceName: hostname()
+    })
+  )
+)
+
+ipcMain.handle(channels.syncRegister, (event, input: SyncAuthInput) =>
+  handleAuth(event, input, (target, value) =>
+    authenticate(target, {
+      kind: 'register',
+      username: value.username.trim(),
+      password: value.password
+    })
+  )
+)
+
+ipcMain.handle(channels.syncRecover, (event, input: SyncAuthInput) =>
+  handleAuth(event, input, (target, value) =>
+    authenticate(target, {
+      kind: 'recover',
+      username: value.username.trim(),
+      recoveryCode: value.recoveryCode?.trim() ?? '',
+      password: value.password
+    })
+  )
 )
 
 ipcMain.handle(channels.clearSyncSettings, async (): Promise<SyncSettingsView> => {

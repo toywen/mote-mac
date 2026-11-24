@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react'
 import { X } from 'lucide-react'
-import type { SyncSettingsView, SyncStatusView } from '../../core/ipc'
+import type { SyncAuthInput, SyncSettingsView, SyncStatusView } from '../../core/ipc'
 import { syncStatusDetail, syncStatusText } from './syncText'
 
 type Props = {
@@ -8,15 +8,23 @@ type Props = {
   onClose: () => void
 }
 
+type Mode = 'login' | 'register' | 'recover'
+
 /**
- * The sync settings. The device token never comes back from main, so an empty field keeps the
- * saved one. The fingerprint is shown after a save, to compare with the server's own print.
+ * The sync panel. A user types a username and a password, and that is the whole job: the device
+ * token, the vault id and the certificate never come back to the window. The server address and
+ * the certificate live under 高级, for the self-signed service that runs before the public one.
  */
 export function SyncSettings({ dir, onClose }: Props): React.JSX.Element {
   const [view, setView] = useState<SyncSettingsView | null>(null)
   const [serverUrl, setServerUrl] = useState('')
   const [certPem, setCertPem] = useState('')
-  const [token, setToken] = useState('')
+  const [username, setUsername] = useState('')
+  const [password, setPassword] = useState('')
+  const [recoveryCode, setRecoveryCode] = useState('')
+  const [mode, setMode] = useState<Mode>('login')
+  const [advanced, setAdvanced] = useState(false)
+  const [issued, setIssued] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
   const [status, setStatus] = useState<SyncStatusView>({ state: 'unset', pending: 0 })
@@ -28,6 +36,9 @@ export function SyncSettings({ dir, onClose }: Props): React.JSX.Element {
       setView(settings)
       setServerUrl(settings.serverUrl)
       setCertPem(settings.certPem ?? '')
+      setUsername(settings.account ?? '')
+      // Without an address there is nowhere to sign in, so show where it goes straight away.
+      setAdvanced(!settings.serverUrl)
     })
     void window.mote?.getSyncStatus(dir).then((next) => {
       if (live) setStatus(next)
@@ -41,48 +52,98 @@ export function SyncSettings({ dir, onClose }: Props): React.JSX.Element {
     }
   }, [dir])
 
-  async function save(): Promise<void> {
+  async function submit(): Promise<void> {
     setBusy(true)
     setError(null)
     try {
-      const result = await window.mote.saveSyncSettings({
+      const input: SyncAuthInput = {
         serverUrl,
         certPem: certPem.trim() || undefined,
-        token: token.trim() || undefined
-      })
+        username,
+        password,
+        recoveryCode: mode === 'recover' ? recoveryCode : undefined
+      }
+      const call =
+        mode === 'register'
+          ? window.mote!.syncRegister(input)
+          : mode === 'recover'
+            ? window.mote!.syncRecover(input)
+            : window.mote!.syncLogin(input)
+      const result = await call
       if (!result.ok) {
         setError(result.error)
         return
       }
       setView(result.settings)
-      setToken('')
-      setStatus(await window.mote.getSyncStatus(dir))
+      setPassword('')
+      setRecoveryCode('')
+      setStatus(await window.mote!.getSyncStatus(dir))
+      if (result.recoveryCode) setIssued(result.recoveryCode)
     } finally {
       setBusy(false)
     }
   }
 
-  async function clear(): Promise<void> {
+  async function signOut(): Promise<void> {
     setBusy(true)
     setError(null)
     try {
-      const next = await window.mote.clearSyncSettings()
+      const next = await window.mote!.clearSyncSettings()
       setView(next)
-      setServerUrl('')
-      setCertPem('')
-      setToken('')
-      setStatus(await window.mote.getSyncStatus(dir))
+      setPassword('')
+      setMode('login')
+      setStatus(await window.mote!.getSyncStatus(dir))
     } finally {
       setBusy(false)
     }
   }
 
   async function pickCert(): Promise<void> {
-    const pem = await window.mote.chooseSyncCert()
+    const pem = await window.mote!.chooseSyncCert()
     if (pem) setCertPem(pem)
   }
 
   const detail = syncStatusDetail(status)
+  const signedIn = view?.hasToken === true
+
+  const advancedFields = (
+    <details
+      className="sync-advanced"
+      open={advanced}
+      onToggle={(event) => setAdvanced(event.currentTarget.open)}
+    >
+      <summary>高级</summary>
+      <label className="sync-field">
+        <span>服务器地址</span>
+        <input
+          value={serverUrl}
+          placeholder="https://1.2.3.4:8443"
+          onChange={(event) => setServerUrl(event.target.value)}
+        />
+      </label>
+      <label className="sync-field">
+        <span>证书（PEM）</span>
+        <textarea
+          value={certPem}
+          rows={4}
+          spellCheck={false}
+          placeholder="公共证书不用填，自签证书填在这里"
+          onChange={(event) => setCertPem(event.target.value)}
+        />
+      </label>
+      <div className="sync-row">
+        <button type="button" className="sync-button" onClick={() => void pickCert()}>
+          从文件选择证书
+        </button>
+        {view?.fingerprint && (
+          <code className="sync-fingerprint" title="证书的 SHA-256 指纹">
+            {view.fingerprint}
+          </code>
+        )}
+      </div>
+    </details>
+  )
+
   return (
     <div
       className="sync-backdrop"
@@ -98,74 +159,133 @@ export function SyncSettings({ dir, onClose }: Props): React.JSX.Element {
             <X size={14} strokeWidth={1.5} />
           </button>
         </header>
-        <div className="sync-body">
-          <label className="sync-field">
-            <span>服务器地址</span>
-            <input
-              value={serverUrl}
-              placeholder="https://1.2.3.4:8443"
-              autoFocus
-              onChange={(event) => setServerUrl(event.target.value)}
-            />
-          </label>
-          <label className="sync-field">
-            <span>证书（PEM）</span>
-            <textarea
-              value={certPem}
-              rows={4}
-              spellCheck={false}
-              placeholder="-----BEGIN CERTIFICATE-----"
-              onChange={(event) => setCertPem(event.target.value)}
-            />
-          </label>
-          <div className="sync-row">
-            <button type="button" className="sync-button" onClick={() => void pickCert()}>
-              从文件选择证书
-            </button>
-            {view?.fingerprint && (
-              <code className="sync-fingerprint" title="证书的 SHA-256 指纹">
-                {view.fingerprint}
-              </code>
-            )}
+
+        {issued ? (
+          <div className="sync-body">
+            <p className="sync-note">把找回码抄下来。它只显示这一次，忘了密码时靠它找回账户。</p>
+            <code className="sync-code">{issued}</code>
+            <p className="sync-note">已经登录，笔记开始同步。找回码丢了就再也找不回来。</p>
           </div>
-          <label className="sync-field">
-            <span>设备令牌</span>
-            <input
-              type="password"
-              value={token}
-              placeholder={
-                view?.hasToken ? '已保存，留空则不修改' : '服务器上 device create 打印的令牌'
-              }
-              onChange={(event) => setToken(event.target.value)}
-            />
-          </label>
-          {error && (
-            <p className="sync-error" role="alert">
-              {error}
+        ) : signedIn ? (
+          <div className="sync-body">
+            <p className="sync-account">
+              已登录：<strong>{view?.account ?? '本账户'}</strong>
             </p>
-          )}
-          <p className="sync-state" role="status">
-            {syncStatusText(status)}
-            {detail ? `，${detail}` : ''}
-          </p>
-        </div>
+            {advancedFields}
+            <p className="sync-state" role="status">
+              {syncStatusText(status)}
+              {detail ? `，${detail}` : ''}
+            </p>
+          </div>
+        ) : (
+          <div className="sync-body">
+            <label className="sync-field">
+              <span>用户名</span>
+              <input
+                value={username}
+                autoFocus
+                autoCapitalize="off"
+                autoCorrect="off"
+                spellCheck={false}
+                placeholder="3 到 32 个字母、数字、下划线或短横线"
+                onChange={(event) => setUsername(event.target.value)}
+              />
+            </label>
+            {mode === 'recover' && (
+              <label className="sync-field">
+                <span>找回码</span>
+                <input
+                  value={recoveryCode}
+                  spellCheck={false}
+                  placeholder="注册时抄下的那一串"
+                  onChange={(event) => setRecoveryCode(event.target.value)}
+                />
+              </label>
+            )}
+            <label className="sync-field">
+              <span>{mode === 'recover' ? '新密码' : '密码'}</span>
+              <input
+                type="password"
+                value={password}
+                placeholder="至少 8 位"
+                onChange={(event) => setPassword(event.target.value)}
+                onKeyDown={(event) => {
+                  if (event.key === 'Enter') void submit()
+                }}
+              />
+            </label>
+            {advancedFields}
+            {error && (
+              <p className="sync-error" role="alert">
+                {error}
+              </p>
+            )}
+            <p className="sync-state" role="status">
+              {syncStatusText(status)}
+              {detail ? `，${detail}` : ''}
+            </p>
+            <p className="sync-links">
+              {mode === 'login' ? (
+                <>
+                  <button type="button" className="sync-link" onClick={() => setMode('recover')}>
+                    忘记密码
+                  </button>
+                </>
+              ) : (
+                <button type="button" className="sync-link" onClick={() => setMode('login')}>
+                  返回登录
+                </button>
+              )}
+            </p>
+          </div>
+        )}
+
         <footer className="sync-actions">
-          <button
-            type="button"
-            className="sync-button"
-            onClick={() => void clear()}
-            disabled={busy || !view?.hasToken}
-          >
-            断开同步
-          </button>
-          <button
-            type="button"
-            className="sync-button is-primary"
-            onClick={() => void save()}
-            disabled={busy}
-          >
-            保存并连接
-          </button>
+          {issued ? (
+            <button
+              type="button"
+              className="sync-button is-primary"
+              onClick={() => {
+                setIssued(null)
+                onClose()
+              }}
+            >
+              我记下了
+            </button>
+          ) : signedIn ? (
+            <button
+              type="button"
+              className="sync-button is-danger"
+              onClick={() => void signOut()}
+              disabled={busy}
+            >
+              退出登录
+            </button>
+          ) : (
+            <>
+              {mode === 'login' && (
+                <button
+                  type="button"
+                  className="sync-button"
+                  onClick={() => {
+                    setMode('register')
+                    setError(null)
+                  }}
+                  disabled={busy}
+                >
+                  注册
+                </button>
+              )}
+              <button
+                type="button"
+                className="sync-button is-primary"
+                onClick={() => void submit()}
+                disabled={busy}
+              >
+                {mode === 'register' ? '创建账户' : mode === 'recover' ? '重置密码' : '登录'}
+              </button>
+            </>
+          )}
         </footer>
       </div>
     </div>

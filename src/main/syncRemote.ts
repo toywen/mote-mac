@@ -187,7 +187,7 @@ export function createRemote(config: RemoteConfig, heartbeatMs = HEARTBEAT_MS): 
 }
 
 /** Trusts only this certificate, and checks its fingerprint instead of the host name, which is an IP. */
-function pinned(certPem: string): Pick<https.AgentOptions, 'ca' | 'checkServerIdentity'> {
+export function pinned(certPem: string): Pick<https.AgentOptions, 'ca' | 'checkServerIdentity'> {
   const fingerprint = new X509Certificate(certPem).fingerprint256
   return {
     ca: [certPem],

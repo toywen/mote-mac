@@ -54,6 +54,7 @@
 | `src/main/syncState.ts`      | 同步状态表的读写。先写临时文件再改名，读不出或属于别的服务器时当作空表                                                                                                            |
 | `src/main/syncController.ts` | 管一个笔记库的 `Sync`：读设置启动、设置变了先停再起、把状态推给显示这个笔记库的窗口。写不进去时把问题写进状态行                                                                   |
 | `src/main/syncCert.ts`       | 服务器地址的校验、PEM 证书的指纹（SHA-256，和 openssl 一致）                                                                                                                      |
+| `src/main/syncAuth.ts`       | 注册、登录、用找回码改密码。和同步请求一样做证书固定，拿到的设备令牌交给主进程保存，不进窗口                                                                                       |                                                                                                                      |
 
 | `src/preload/` | 用 `contextBridge` 暴露 `window.mote` |
 | `src/renderer/src/workspace.ts` | 渲染进程的状态：当前笔记库、多标签页列表、打开的笔记和它的状态机 |

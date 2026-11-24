@@ -11,6 +11,8 @@ export type SyncSettings = {
   certPem?: string
   /** The device token, encrypted by the system keychain. Never stored in clear. */
   tokenCipher: string
+  /** The signed-in account, for the panel to show who is connected. */
+  account?: string
   vaultId?: string
 }
 

@@ -90,6 +90,8 @@ export type SyncSettingsView = {
   serverUrl: string
   certPem?: string
   fingerprint: string | null
+  /** The signed-in account's username. Absent before the first sign-in. */
+  account?: string
   vaultId?: string
   hasToken: boolean
 }
@@ -104,9 +106,23 @@ export type SyncStatusView = {
 // Which vault a status is about. A window only shows the status of its own vault.
 export type SyncStatusEvent = SyncStatusView & { dir: string }
 
-export type SyncSaveInput = { serverUrl: string; certPem?: string; token?: string }
-export type SyncSaveResult =
-  | { ok: true; settings: SyncSettingsView }
+// A sign-in, a sign-up or a password reset. The window never sees the device token.
+export type SyncAuthInput = {
+  serverUrl: string
+  certPem?: string
+  username: string
+  password: string
+  /** Only for a reset. */
+  recoveryCode?: string
+}
+
+export type SyncAuthResult =
+  | {
+      ok: true
+      settings: SyncSettingsView
+      /** Returned once by a registration or a reset; the user has to write it down. */
+      recoveryCode?: string
+    }
   | { ok: false; error: string }
 
 export type SavedAttachment = {
@@ -193,7 +209,9 @@ export interface MoteApi {
   onMenuAction(callback: (action: MenuAction) => void): () => void
   newWindow(dir?: string): Promise<void>
   getSyncSettings(): Promise<SyncSettingsView>
-  saveSyncSettings(input: SyncSaveInput): Promise<SyncSaveResult>
+  syncLogin(input: SyncAuthInput): Promise<SyncAuthResult>
+  syncRegister(input: SyncAuthInput): Promise<SyncAuthResult>
+  syncRecover(input: SyncAuthInput): Promise<SyncAuthResult>
   clearSyncSettings(): Promise<SyncSettingsView>
   chooseSyncCert(): Promise<string | null>
   getSyncStatus(dir: string): Promise<SyncStatusView>
@@ -238,7 +256,9 @@ export const channels = {
   updateStatus: 'mote:update-status',
   menuAction: 'mote:menu-action',
   getSyncSettings: 'mote:get-sync-settings',
-  saveSyncSettings: 'mote:save-sync-settings',
+  syncLogin: 'mote:sync-login',
+  syncRegister: 'mote:sync-register',
+  syncRecover: 'mote:sync-recover',
   clearSyncSettings: 'mote:clear-sync-settings',
   chooseSyncCert: 'mote:choose-sync-cert',
   getSyncStatus: 'mote:get-sync-status',
