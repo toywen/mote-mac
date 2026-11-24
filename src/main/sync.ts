@@ -51,6 +51,10 @@ export interface SyncOptions {
   debounceMs?: number
 }
 
+/** Files in flight per lane. Notes are small and many; attachments are big and few. */
+export const NOTE_CONCURRENCY = Number(process.env.MOTE_SYNC_NOTE_CONCURRENCY ?? 8)
+export const ATTACHMENT_CONCURRENCY = 2
+
 export const DEBOUNCE_MS = 1500
 export const SAVE_EVERY_MS = 2000
 export const RETRY_FIRST_MS = 1000
@@ -85,18 +89,58 @@ type Link = 'stopped' | 'connecting' | 'online' | 'offline' | 'error' | 'blocked
 
 /** One file at a time, in order. Notes and attachments each get one, so a large upload does not hold up notes. */
 class Lane {
-  private tail: Promise<unknown> = Promise.resolve()
+  private readonly limit: number
+  private active = 0
+  private readonly waiting: (() => void)[] = []
+  private readonly tails = new Map<string, Promise<unknown>>()
+  private outstanding = 0
+  private idleWaiters: (() => void)[] = []
   size = 0
 
-  run(op: () => Promise<boolean>): Promise<boolean> {
+  constructor(limit: number) {
+    this.limit = limit
+  }
+
+  /**
+   * Runs `op` for one file. Two files never wait on each other, and up to `limit` run at once;
+   * the same file still goes one at a time, which is what the commits and the state table assume.
+   * A first sync of a large vault is why: each file costs three round trips.
+   */
+  run(key: string, op: () => Promise<boolean>): Promise<boolean> {
     this.size++
-    const result = this.tail.then(op).finally(() => this.size--)
-    this.tail = result
+    this.outstanding++
+    const previous = this.tails.get(key) ?? Promise.resolve()
+    const result = previous.catch(() => undefined).then(() => this.slot(op))
+    this.tails.set(key, result)
+    const settle = (): void => {
+      this.size--
+      this.outstanding--
+      if (this.tails.get(key) === result) this.tails.delete(key)
+      if (this.outstanding === 0) for (const done of this.idleWaiters.splice(0)) done()
+    }
+    void result.then(settle, settle)
     return result
   }
 
   idle(): Promise<unknown> {
-    return this.tail
+    if (this.outstanding === 0) return Promise.resolve()
+    return new Promise((done) => this.idleWaiters.push(() => done(undefined)))
+  }
+
+  private slot(op: () => Promise<boolean>): Promise<boolean> {
+    return new Promise((resolve, reject) => {
+      const start = (): void => {
+        this.active++
+        void op()
+          .then(resolve, reject)
+          .finally(() => {
+            this.active--
+            this.waiting.shift()?.()
+          })
+      }
+      if (this.active < this.limit) start()
+      else this.waiting.push(start)
+    })
   }
 }
 
@@ -153,7 +197,10 @@ export class Sync {
   private readyRescan = false
   private flushTimer: NodeJS.Immediate | undefined
   private flushing: Promise<void> = Promise.resolve()
-  private readonly lanes = { note: new Lane(), attachment: new Lane() }
+  private readonly lanes = {
+    note: new Lane(NOTE_CONCURRENCY),
+    attachment: new Lane(ATTACHMENT_CONCURRENCY)
+  }
   private allowDeletions = false
 
   /** The highest seq fetched. `state.seq` trails it until those changes are on disk. */
@@ -366,7 +413,7 @@ export class Sync {
    */
   private enqueue(gen: number, path: VaultPath, op: () => Promise<void>): Promise<boolean> {
     const lane = this.lanes[isNote(path) ? 'note' : 'attachment']
-    const result = lane.run(async () => {
+    const result = lane.run(path, async () => {
       if (gen !== this.gen || this.link !== 'online') return false
       try {
         await op()
