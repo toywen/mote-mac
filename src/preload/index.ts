@@ -4,6 +4,7 @@ import {
   type FontMode,
   type MenuAction,
   type MoteApi,
+  type SyncStatusEvent,
   type ThemeSource,
   type ThemeState,
   type VaultChange
@@ -74,7 +75,18 @@ const mote: MoteApi = {
     ipcRenderer.on(channels.menuAction, listener)
     return () => ipcRenderer.off(channels.menuAction, listener)
   },
-  newWindow: (dir?: string) => ipcRenderer.invoke(channels.newWindow, dir)
+  newWindow: (dir?: string) => ipcRenderer.invoke(channels.newWindow, dir),
+  getSyncSettings: () => ipcRenderer.invoke(channels.getSyncSettings),
+  saveSyncSettings: (input) => ipcRenderer.invoke(channels.saveSyncSettings, input),
+  clearSyncSettings: () => ipcRenderer.invoke(channels.clearSyncSettings),
+  chooseSyncCert: () => ipcRenderer.invoke(channels.chooseSyncCert),
+  getSyncStatus: (dir) => ipcRenderer.invoke(channels.getSyncStatus, dir),
+  confirmSyncDeletions: (dir) => ipcRenderer.invoke(channels.confirmSyncDeletions, dir),
+  onSyncStatus: (callback) => {
+    const listener = (_event: IpcRendererEvent, status: SyncStatusEvent): void => callback(status)
+    ipcRenderer.on(channels.syncStatus, listener)
+    return () => ipcRenderer.off(channels.syncStatus, listener)
+  }
 }
 
 contextBridge.exposeInMainWorld('mote', mote)

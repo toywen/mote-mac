@@ -18,66 +18,69 @@
          ▼
    笔记库文件夹  ◀── Obsidian、git、Claude 也会读写
          │
-   mote 同步模块：src/main/sync.ts，还没接进窗口，见同步-1、step-10.md
+   mote 同步模块：src/main/sync.ts，由 syncController 按设置启停，见同步-1、step-10.md
          ▼
    mote 同步服务（独立仓库 mote-sync）  ◀── 以后的 iOS 版也连这里
 ```
 
 ## 模块地图
 
-| 目录或文件                                                                                         | 负责什么                                                                                                                                                                                                |
-| -------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `src/core/`                                                                                        | 纯 TypeScript，主进程和渲染进程共用。不能引用 Electron                                                                                                                                                  |
-| `src/core/ipc.ts`                                                                                  | 库内路径、笔记库配置、`MoteApi` 接口和 IPC 通道名。IPC 的唯一定义                                                                                                                                       |
-| `src/core/text.ts`                                                                                 | 规范化文本：去掉 BOM，换行统一成 `\n`。链接位置都指向规范化文本                                                                                                                                         |
-| `src/core/markdown.ts`                                                                             | 唯一的解析器配置（`@lezer/markdown` 加双链、嵌入、属性块），从笔记里提取链接。`calloutHeader` 判断一个引用是不是 callout，读出类型和标题                                                                |
-| `src/core/resolve.ts`                                                                              | 链接解析，照搬 Obsidian 的 `getLinkpathDest`                                                                                                                                                            |
-| `src/core/linkText.ts`                                                                             | 新链接的文字，照搬 Obsidian 的 `fileToLinktext` 和它 `[[` 列表插入的文字。按笔记库配置选双链或 Markdown 链接，以及最短、相对、绝对路径                                                                  |
-| `src/core/linkDest.ts`                                                                             | 链接去向：一个链接点击后去哪里。上色和点击都读它。不存在的笔记的新建路径照搬 Obsidian 的 `openLinkText`。外部网址的白名单也在这里                                                                       |
-| `src/core/subpath.ts`                                                                              | `#标题`、`#上级#下级` 和 `#^块` 落在目标笔记的哪一处，照搬 Obsidian 的 `resolveSubpath`                                                                                                                 |
-| `src/core/model.ts`                                                                                | 链接和解析结果的类型                                                                                                                                                                                    |
-| `src/core/fileUrl.ts`                                                                              | `mote-file://` 地址的唯一定义：库内路径和地址互转，哪些扩展名算图片                                                                                                                                     |
-| `src/core/search.ts`                                                                               | 全文搜索：分词、引号短语、不分大小写的子串匹配、按文件名排序                                                                                                                                            |
-| `src/core/updaterTypes.ts`                                                                         | 语义化版本解析、对比与更新状态机类型                                                                                                                                                                    |
-| `src/core/hits.ts`                                                                                 | 命中位置的预览行和按笔记分组                                                                                                                                                                            |
-| `src/core/noteIndex.ts`                                                                            | 笔记索引：每篇笔记的规范化文本和链接，反向链接查询。不缓存反向链接，每次查询重新解析                                                                                                                    |
-| `src/core/autosave.ts`                                                                             | 自动保存的两个时间常量。渲染进程和 verify-mote 的脚本都从这里读                                                                                                                                         |
-| `src/main/index.ts`                                                                                | 窗口、IPC 处理                                                                                                                                                                                          |
-| `src/main/updater.ts`                                                                              | GitHub Releases 检查、流式下载、平滑更新替换脚本生成与 IPC 处理                                                                                                                                         |
-| `src/main/vault.ts`                                                                                | 打开笔记库、读取笔记库配置、监听外部修改、按哈希读写笔记。给同步模块列出文件、按字节读写、转发文件监听                                                                                                  |
-| `src/main/vaultFs.ts`                                                                              | 改动笔记库文件的唯一模块。`locate` 和 `ensureFolder` 给出 `InVault` 路径，路上的文件夹是符号链接就拒绝。新建、覆盖、移动都只收 `InVault`。lint 禁止别的文件引入会写盘的 `fs` 函数                       |
-| `src/main/appData.ts`                                                                              | mote 自己的文件：机器级设置和改名 journal，都在 `~/Library/Application Support/mote`                                                                                                                    |
-| `src/main/fileProtocol.ts`                                                                         | `mote-file://` 的处理函数。只返回当前笔记库里的图片文件                                                                                                                                                 |
-| `src/main/notes.ts`                                                                                | 扫描文件和读取笔记。不引用 Electron，`tools/` 里的脚本也直接用它                                                                                                                                        |
-| `src/main/sync.ts`                                                                                 | 同步模块：上传、下载、合并、冲突文件、删除保护、断线重连。只经 `Vault` 读写笔记库。不引用 Electron，`tools/sync-sim.mjs` 直接跑它                                                                       |
-| `src/main/syncRemote.ts`                                                                           | 同步服务的客户端：HTTPS 请求和 WebSocket，两处都做证书固定。`Remote` 接口让测试换成假的同步服务                                                                                                         |
-| `src/main/syncState.ts`                                                                            | 同步状态表的读写。先写临时文件再改名，读不出或属于别的服务器时当作空表                                                                                                                                  |
-| `src/preload/`                                                                                     | 用 `contextBridge` 暴露 `window.mote`                                                                                                                                                                   |
-| `src/renderer/src/workspace.ts`                                                                    | 渲染进程的状态：当前笔记库、多标签页列表、打开的笔记和它的状态机                                                                                                                                        |
-| `src/renderer/src/NoteEditor.tsx`                                                                  | CodeMirror 编辑器，把规范化文本还原成原始字节                                                                                                                                                           |
-| `src/renderer/src/editor/markdown.ts`                                                              | 编辑器用的语言。用共享的解析器，只加两个编辑器才读的节点属性。回车接着写列表和引用                                                                                                                      |
-| `src/renderer/src/editor/livePreview.ts`                                                           | 实时预览的唯一字段：每次改动遍历一次语法树，再按显示源码的规则画装饰。编辑器模式和链接解析的输入也在这里                                                                                                |
-| `src/renderer/src/editor/preview.ts`                                                               | 实时预览的数据结构：一个元素的显示源码范围、一直生效的装饰、隐藏源码时才生效的装饰                                                                                                                      |
-| `src/renderer/src/editor/renderers.ts`                                                             | 语法节点名到渲染函数的注册表。加一种元素，就加一个文件，在这里注册一行                                                                                                                                  |
-| `src/renderer/src/editor/inline.ts`、`headings.ts`、`links.ts`、`lists.ts`、`quotes.ts`、`code.ts` | 各种元素的渲染函数。`inline.ts` 的 `inlineStyles` 是行内样式表，表格单元格也读它                                                                                                                        |
-| `src/renderer/src/editor/images.ts`                                                                | 图片和嵌入的渲染函数。图片放在源码下面，既不是图片也不是笔记的嵌入显示为链接。样式在旁边的 `images.css`                                                                                                 |
-| `src/renderer/src/editor/preview.css`                                                              | 实时预览的样式。颜色只用 `main.css` 里的变量                                                                                                                                                            |
-| `src/renderer/src/editor/complete.ts`、`complete.css`                                              | 双链补全：输入 `[[` 后列出笔记，候选用快速打开的 `quickOpenMatch.ts` 排序，插入 `linkText.ts` 生成的链接。笔记列表、最近打开和笔记库配置从 `completeContext` 读                                         |
-| `src/renderer/src/editor/follow.ts`、`follow.css`                                                  | 点击链接：在编辑器的元素上先于 CodeMirror 接住鼠标，按链接去向交给 `workspace.follow`。部件里画的链接也接得到                                                                                           |
-| `src/renderer/src/editor/callouts.ts`、`callouts.css`                                              | callout 的渲染函数。占 `Blockquote` 的位置，不是 callout 的引用交给 `quotes.ts`。callout 的种类、别名、颜色和图标是一张表，照搬 Obsidian 1.15.1 的 `app.css`。颜色变量的浅色值和深色值在 `callouts.css` |
-| `src/renderer/src/editor/tables.ts`、`tables.css`                                                  | 表格画成一个块级组件。单元格按语法节点画，行内样式读 `inlineStyles`，链接读 `linkTarget`                                                                                                                |
-| `src/renderer/src/editor/tasks.ts`、`tasks.css`                                                    | 任务的复选框。点击只改方括号里的 1 个字符。`editorLocked` 是 mote 忙时锁住编辑器的输入                                                                                                                  |
-| `src/renderer/src/editor/noteView.ts`                                                              | `noteView()`：一篇笔记的每个视图都用的扩展，即语言、实时预览、点击链接和折行。主编辑器和嵌入都调用它。主编辑器再加编辑、保存和补全                                                                      |
-| `src/renderer/src/editor/mermaid.ts`、`mermaid.css`                                                | Mermaid 图的渲染函数。占 `FencedCode` 的位置，不是 `mermaid` 的代码块交给 `code.ts`。Mermaid 库第一次画图时才加载。画好的图按代码和配色缓存                                                             |
-| `src/renderer/src/editor/embeds.ts`、`embeds.css`                                                  | 笔记嵌入的渲染函数。占 `WikiEmbed` 的位置，图片、附件和找不到的目标交给 `images.ts`。被嵌入的笔记画在一个只读的嵌套视图里，最多套 3 层                                                                  |
-| `src/renderer/src/FileTree.tsx`                                                                    | 文件树                                                                                                                                                                                                  |
-| `src/renderer/src/QuickOpen.tsx`、`quickOpenMatch.ts`                                              | 快速打开窗口和照搬 Obsidian 的匹配打分                                                                                                                                                                  |
-| `src/renderer/src/HitList.tsx`                                                                     | 按笔记分组列出命中位置，点一处打开笔记并选中。反向链接面板和搜索共用                                                                                                                                    |
-| `src/renderer/src/SearchPanel.tsx`                                                                 | 左侧栏的搜索视图                                                                                                                                                                                        |
-| `src/renderer/src/UpdateNotification.tsx`                                                          | 应用更新提示横幅与下载/重启更新交互组件                                                                                                                                                                 |
-| `tools/`                                                                                           | 审计笔记库、哈希对比、性能测量等命令行工具                                                                                                                                                              |
-| `tests/e2e/`                                                                                       | Playwright 的 Electron 测试                                                                                                                                                                             |
-| `tests/fixtures/vaults/`                                                                           | 测试笔记库                                                                                                                                                                                              |
+| 目录或文件                   | 负责什么                                                                                                                                                                          |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `src/core/`                  | 纯 TypeScript，主进程和渲染进程共用。不能引用 Electron                                                                                                                            |
+| `src/core/ipc.ts`            | 库内路径、笔记库配置、`MoteApi` 接口和 IPC 通道名。IPC 的唯一定义                                                                                                                 |
+| `src/core/text.ts`           | 规范化文本：去掉 BOM，换行统一成 `\n`。链接位置都指向规范化文本                                                                                                                   |
+| `src/core/markdown.ts`       | 唯一的解析器配置（`@lezer/markdown` 加双链、嵌入、属性块），从笔记里提取链接。`calloutHeader` 判断一个引用是不是 callout，读出类型和标题                                          |
+| `src/core/resolve.ts`        | 链接解析，照搬 Obsidian 的 `getLinkpathDest`                                                                                                                                      |
+| `src/core/linkText.ts`       | 新链接的文字，照搬 Obsidian 的 `fileToLinktext` 和它 `[[` 列表插入的文字。按笔记库配置选双链或 Markdown 链接，以及最短、相对、绝对路径                                            |
+| `src/core/linkDest.ts`       | 链接去向：一个链接点击后去哪里。上色和点击都读它。不存在的笔记的新建路径照搬 Obsidian 的 `openLinkText`。外部网址的白名单也在这里                                                 |
+| `src/core/subpath.ts`        | `#标题`、`#上级#下级` 和 `#^块` 落在目标笔记的哪一处，照搬 Obsidian 的 `resolveSubpath`                                                                                           |
+| `src/core/model.ts`          | 链接和解析结果的类型                                                                                                                                                              |
+| `src/core/fileUrl.ts`        | `mote-file://` 地址的唯一定义：库内路径和地址互转，哪些扩展名算图片                                                                                                               |
+| `src/core/search.ts`         | 全文搜索：分词、引号短语、不分大小写的子串匹配、按文件名排序                                                                                                                      |
+| `src/core/updaterTypes.ts`   | 语义化版本解析、对比与更新状态机类型                                                                                                                                              |
+| `src/core/hits.ts`           | 命中位置的预览行和按笔记分组                                                                                                                                                      |
+| `src/core/noteIndex.ts`      | 笔记索引：每篇笔记的规范化文本和链接，反向链接查询。不缓存反向链接，每次查询重新解析                                                                                              |
+| `src/core/autosave.ts`       | 自动保存的两个时间常量。渲染进程和 verify-mote 的脚本都从这里读                                                                                                                   |
+| `src/main/index.ts`          | 窗口、IPC 处理                                                                                                                                                                    |
+| `src/main/updater.ts`        | GitHub Releases 检查、流式下载、平滑更新替换脚本生成与 IPC 处理                                                                                                                   |
+| `src/main/vault.ts`          | 打开笔记库、读取笔记库配置、监听外部修改、按哈希读写笔记。给同步模块列出文件、按字节读写、转发文件监听                                                                            |
+| `src/main/vaultFs.ts`        | 改动笔记库文件的唯一模块。`locate` 和 `ensureFolder` 给出 `InVault` 路径，路上的文件夹是符号链接就拒绝。新建、覆盖、移动都只收 `InVault`。lint 禁止别的文件引入会写盘的 `fs` 函数 |
+| `src/main/appData.ts`        | mote 自己的文件：机器级设置和改名 journal，都在 `~/Library/Application Support/mote`                                                                                              |
+| `src/main/fileProtocol.ts`   | `mote-file://` 的处理函数。只返回当前笔记库里的图片文件                                                                                                                           |
+| `src/main/notes.ts`          | 扫描文件和读取笔记。不引用 Electron，`tools/` 里的脚本也直接用它                                                                                                                  |
+| `src/main/sync.ts`           | 同步模块：上传、下载、合并、冲突文件、删除保护、断线重连。只经 `Vault` 读写笔记库。不引用 Electron，`tools/sync-sim.mjs` 直接跑它                                                 |
+| `src/main/syncRemote.ts`     | 同步服务的客户端：HTTPS 请求和 WebSocket，两处都做证书固定。`Remote` 接口让测试换成假的同步服务                                                                                   |
+| `src/main/syncState.ts`      | 同步状态表的读写。先写临时文件再改名，读不出或属于别的服务器时当作空表                                                                                                            |
+| `src/main/syncController.ts` | 管一个笔记库的 `Sync`：读设置启动、设置变了先停再起、把状态推给显示这个笔记库的窗口。写不进去时把问题写进状态行                                                                   |
+| `src/main/syncCert.ts`       | 服务器地址的校验、PEM 证书的指纹（SHA-256，和 openssl 一致）                                                                                                                      |
+
+| `src/preload/` | 用 `contextBridge` 暴露 `window.mote` |
+| `src/renderer/src/workspace.ts` | 渲染进程的状态：当前笔记库、多标签页列表、打开的笔记和它的状态机 |
+| `src/renderer/src/NoteEditor.tsx` | CodeMirror 编辑器，把规范化文本还原成原始字节 |
+| `src/renderer/src/editor/markdown.ts` | 编辑器用的语言。用共享的解析器，只加两个编辑器才读的节点属性。回车接着写列表和引用 |
+| `src/renderer/src/editor/livePreview.ts` | 实时预览的唯一字段：每次改动遍历一次语法树，再按显示源码的规则画装饰。编辑器模式和链接解析的输入也在这里 |
+| `src/renderer/src/editor/preview.ts` | 实时预览的数据结构：一个元素的显示源码范围、一直生效的装饰、隐藏源码时才生效的装饰 |
+| `src/renderer/src/editor/renderers.ts` | 语法节点名到渲染函数的注册表。加一种元素，就加一个文件，在这里注册一行 |
+| `src/renderer/src/editor/inline.ts`、`headings.ts`、`links.ts`、`lists.ts`、`quotes.ts`、`code.ts` | 各种元素的渲染函数。`inline.ts` 的 `inlineStyles` 是行内样式表，表格单元格也读它 |
+| `src/renderer/src/editor/images.ts` | 图片和嵌入的渲染函数。图片放在源码下面，既不是图片也不是笔记的嵌入显示为链接。样式在旁边的 `images.css` |
+| `src/renderer/src/editor/preview.css` | 实时预览的样式。颜色只用 `main.css` 里的变量 |
+| `src/renderer/src/editor/complete.ts`、`complete.css` | 双链补全：输入 `[[` 后列出笔记，候选用快速打开的 `quickOpenMatch.ts` 排序，插入 `linkText.ts` 生成的链接。笔记列表、最近打开和笔记库配置从 `completeContext` 读 |
+| `src/renderer/src/editor/follow.ts`、`follow.css` | 点击链接：在编辑器的元素上先于 CodeMirror 接住鼠标，按链接去向交给 `workspace.follow`。部件里画的链接也接得到 |
+| `src/renderer/src/editor/callouts.ts`、`callouts.css` | callout 的渲染函数。占 `Blockquote` 的位置，不是 callout 的引用交给 `quotes.ts`。callout 的种类、别名、颜色和图标是一张表，照搬 Obsidian 1.15.1 的 `app.css`。颜色变量的浅色值和深色值在 `callouts.css` |
+| `src/renderer/src/editor/tables.ts`、`tables.css` | 表格画成一个块级组件。单元格按语法节点画，行内样式读 `inlineStyles`，链接读 `linkTarget` |
+| `src/renderer/src/editor/tasks.ts`、`tasks.css` | 任务的复选框。点击只改方括号里的 1 个字符。`editorLocked` 是 mote 忙时锁住编辑器的输入 |
+| `src/renderer/src/editor/noteView.ts` | `noteView()`：一篇笔记的每个视图都用的扩展，即语言、实时预览、点击链接和折行。主编辑器和嵌入都调用它。主编辑器再加编辑、保存和补全 |
+| `src/renderer/src/editor/mermaid.ts`、`mermaid.css` | Mermaid 图的渲染函数。占 `FencedCode` 的位置，不是 `mermaid` 的代码块交给 `code.ts`。Mermaid 库第一次画图时才加载。画好的图按代码和配色缓存 |
+| `src/renderer/src/editor/embeds.ts`、`embeds.css` | 笔记嵌入的渲染函数。占 `WikiEmbed` 的位置，图片、附件和找不到的目标交给 `images.ts`。被嵌入的笔记画在一个只读的嵌套视图里，最多套 3 层 |
+| `src/renderer/src/FileTree.tsx` | 文件树 |
+| `src/renderer/src/QuickOpen.tsx`、`quickOpenMatch.ts` | 快速打开窗口和照搬 Obsidian 的匹配打分 |
+| `src/renderer/src/HitList.tsx` | 按笔记分组列出命中位置，点一处打开笔记并选中。反向链接面板和搜索共用 |
+| `src/renderer/src/SearchPanel.tsx` | 左侧栏的搜索视图 |
+| `src/renderer/src/UpdateNotification.tsx` | 应用更新提示横幅与下载/重启更新交互组件 |
+| `tools/` | 审计笔记库、哈希对比、性能测量等命令行工具 |
+| `tests/e2e/` | Playwright 的 Electron 测试 |
+| `tests/fixtures/vaults/` | 测试笔记库 |
 
 以后会加的模块写在对应步骤的计划里，例如 [step-2.md](docs/plans/step-2.md)。
 

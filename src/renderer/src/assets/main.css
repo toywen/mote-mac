@@ -1644,3 +1644,198 @@ svg.lucide {
   display: block;
   background: var(--background);
 }
+
+/* 同步状态 */
+.sync-status {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 10px 10px;
+  padding: 4px 6px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--t3);
+  font-size: 12px;
+  text-align: left;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.sync-status:hover {
+  background: var(--hover);
+  color: var(--muted);
+}
+
+.sync-status span {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.sync-status.is-error,
+.sync-status.is-offline,
+.sync-status.is-blocked {
+  color: var(--danger);
+}
+
+.sync-status.is-syncing {
+  color: var(--accent);
+}
+
+.sync-status .is-spinning {
+  animation: syncSpin 900ms linear infinite;
+}
+
+@keyframes syncSpin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+/* 同步设置与确认删除 */
+.sync-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 40;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding-top: 12vh;
+  background: rgba(20, 18, 14, 0.28);
+}
+
+.sync-panel {
+  width: min(560px, calc(100vw - 48px));
+  max-height: 76vh;
+  overflow: auto;
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  background: var(--background);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.22);
+  animation: popoverFadeIn 150ms cubic-bezier(0.2, 0.9, 0.3, 1);
+}
+
+.sync-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 14px 4px;
+}
+
+.sync-panel-header h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.sync-body {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 8px 14px 14px;
+}
+
+.sync-field {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.sync-field input,
+.sync-field textarea {
+  width: 100%;
+  padding: 7px 9px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: var(--sidebar);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  resize: vertical;
+}
+
+.sync-field input:focus,
+.sync-field textarea:focus {
+  outline: none;
+  border-color: var(--accent);
+}
+
+.sync-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.sync-fingerprint {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--t3);
+  overflow-wrap: anywhere;
+}
+
+.sync-error {
+  margin: 0;
+  color: var(--danger);
+  font-size: 12px;
+}
+
+.sync-state {
+  margin: 0;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.sync-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 10px 14px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.sync-button {
+  padding: 6px 12px;
+  border: 1px solid var(--border);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.sync-button:hover:not(:disabled) {
+  background: var(--hover);
+}
+
+.sync-button:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.sync-button.is-primary {
+  border-color: var(--accent);
+  background: var(--accent);
+  color: var(--background);
+}
+
+.sync-button.is-danger {
+  border-color: var(--danger);
+  color: var(--danger);
+}
+
+.sync-confirm {
+  width: min(440px, calc(100vw - 48px));
+}
+
+.sync-confirm p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.6;
+}

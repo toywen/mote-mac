@@ -9,14 +9,19 @@ import {
   Menu,
   webContents
 } from 'electron'
-import { basename, join } from 'path'
-import { lstat, readFile } from 'node:fs/promises'
+import { basename, join, resolve } from 'path'
+import { hostname } from 'node:os'
+import { lstat, readFile, realpath } from 'node:fs/promises'
 import { optimizer, is } from '@electron-toolkit/utils'
 import { fileScheme } from '../core/fileUrl'
 import {
   channels,
   type ContentHash,
   type FontMode,
+  type SyncSaveInput,
+  type SyncSaveResult,
+  type SyncSettingsView,
+  type SyncStatusView,
   type ThemeSource,
   type ThemeState,
   type VaultPath
@@ -24,7 +29,10 @@ import {
 import { serveFile } from './fileProtocol'
 import { isAllowedExternal } from '../core/linkDest'
 import { Vault } from './vault'
-import { getJournalHandler, readSettings, writeSettings } from './appData'
+import { getJournalHandler, openToken, readSettings, sealToken, writeSettings } from './appData'
+import type { SyncSettings } from './appData'
+import { SyncController } from './syncController'
+import { checkServerUrl, colonFingerprint, fingerprintOf, parseCert } from './syncCert'
 import { registerUpdaterIpc, Updater } from './updater'
 import { buildApplicationMenu } from './menu'
 
@@ -32,6 +40,7 @@ app.setName('mote')
 
 const windows = new Set<BrowserWindow>()
 const vaults = new Map<string, Vault>()
+const syncControllers = new Map<string, SyncController>()
 const vaultDirByWebContentsId = new Map<number, string>()
 const closingWindowIds = new Set<number>()
 let choosingVault = false
@@ -63,10 +72,12 @@ let currentFont: FontMode = 'kai'
 const windowBackground = (): string => (nativeTheme.shouldUseDarkColors ? '#1c1b18' : '#fcfbf8')
 
 async function getOrOpenVault(dir: string): Promise<Vault> {
-  const existing = vaults.get(dir)
+  // The vault is keyed by its real path, as Vault.open resolves it, so every lookup agrees.
+  const root = await realpath(resolve(dir)).catch(() => resolve(dir))
+  const existing = vaults.get(root)
   if (existing) return existing
   const next = await Vault.open(
-    dir,
+    root,
     (change) => {
       for (const [wcId, vDir] of vaultDirByWebContentsId.entries()) {
         if (vDir === change.dir) {
@@ -79,8 +90,78 @@ async function getOrOpenVault(dir: string): Promise<Vault> {
     },
     getJournalHandler(dir)
   )
-  vaults.set(dir, next)
+  vaults.set(next.dir, next)
+  void applySyncSettings(next.dir)
   return next
+}
+
+/**
+ * One controller per open vault. Its status goes to the windows showing that vault, so a window
+ * with another vault never shows this one's state.
+ */
+function syncControllerFor(dir: string): SyncController | null {
+  const vault = vaults.get(dir)
+  if (!vault) return null
+  let controller = syncControllers.get(dir)
+  if (!controller) {
+    controller = new SyncController(vault, join(app.getPath('userData'), 'sync'), hostname(), (full) =>
+      shell.trashItem(full)
+    )
+    controller.onStatus((status) => {
+      for (const [wcId, vDir] of vaultDirByWebContentsId.entries()) {
+        if (vDir !== dir) continue
+        const contents = webContents.fromId(wcId)
+        if (contents && !contents.isDestroyed()) {
+          contents.send(channels.syncStatus, { ...status, dir })
+        }
+      }
+    })
+    syncControllers.set(dir, controller)
+  }
+  return controller
+}
+
+/** Starts, restarts or stops sync for one vault from what settings.json says. */
+async function applySyncSettings(dir: string): Promise<SyncStatusView> {
+  const controller = syncControllerFor(dir)
+  if (!controller) return { state: 'unset', pending: 0 }
+  const sync = (await readSettings()).sync
+  if (!sync) {
+    await controller.apply(null)
+    return controller.status()
+  }
+  const token = openToken(sync.tokenCipher)
+  if (!token) {
+    await controller.apply(null)
+    controller.fail('设备令牌无法读取，请在偏好设置里重新填写')
+    return controller.status()
+  }
+  await controller.apply({
+    serverUrl: sync.serverUrl,
+    certPem: sync.certPem,
+    token,
+    vaultId: sync.vaultId
+  })
+  return controller.status()
+}
+
+function syncView(sync?: SyncSettings): SyncSettingsView {
+  if (!sync) return { serverUrl: '', fingerprint: null, hasToken: false }
+  let fingerprint: string | null = null
+  if (sync.certPem) {
+    try {
+      fingerprint = colonFingerprint(fingerprintOf(sync.certPem))
+    } catch {
+      fingerprint = null
+    }
+  }
+  return {
+    serverUrl: sync.serverUrl,
+    certPem: sync.certPem,
+    fingerprint,
+    vaultId: sync.vaultId,
+    hasToken: true
+  }
 }
 
 ipcMain.handle(channels.getVault, (event) => {
@@ -100,8 +181,9 @@ ipcMain.handle(channels.chooseVault, async (event) => {
       defaultPath: currentDir,
       properties: ['openDirectory']
     })
-    const dir = choice.filePaths[0]
-    if (choice.canceled || !dir) return null
+    const picked = choice.filePaths[0]
+    if (choice.canceled || !picked) return null
+    const dir = await realpath(picked).catch(() => picked)
 
     for (const [wcId, vDir] of vaultDirByWebContentsId.entries()) {
       if (vDir === dir && wcId !== event.sender.id) {
@@ -132,6 +214,11 @@ ipcMain.handle(channels.chooseVault, async (event) => {
       if (oldV) {
         oldV.close()
         vaults.delete(oldDir)
+        const oldSync = syncControllers.get(oldDir)
+        if (oldSync) {
+          syncControllers.delete(oldDir)
+          void oldSync.stop()
+        }
       }
     }
 
@@ -144,6 +231,87 @@ ipcMain.handle(channels.chooseVault, async (event) => {
 ipcMain.handle(channels.newWindow, async (event, dir?: string) => {
   const targetDir = dir ?? vaultDirByWebContentsId.get(event.sender.id)
   await createWindow(targetDir)
+})
+
+ipcMain.handle(channels.getSyncSettings, async (): Promise<SyncSettingsView> => {
+  return syncView((await readSettings()).sync)
+})
+
+ipcMain.handle(
+  channels.saveSyncSettings,
+  async (event, input: SyncSaveInput): Promise<SyncSaveResult> => {
+    const dir = vaultDirByWebContentsId.get(event.sender.id)
+    if (!dir) return { ok: false, error: '先打开一个笔记库' }
+    const controller = syncControllerFor(dir)
+    if (!controller) return { ok: false, error: '笔记库未打开' }
+
+    const url = checkServerUrl(input.serverUrl)
+    if (!url.ok) return { ok: false, error: url.error }
+    const certPem = input.certPem?.trim() || undefined
+    if (url.url.startsWith('https:') && !certPem) {
+      return { ok: false, error: 'https 地址要填证书' }
+    }
+    if (certPem) {
+      const parsed = parseCert(certPem)
+      if (!parsed.ok) return { ok: false, error: parsed.error }
+    }
+
+    const current = (await readSettings()).sync
+    const token = input.token?.trim() || (current ? openToken(current.tokenCipher) : null)
+    if (!token) return { ok: false, error: '请填写设备令牌' }
+
+    let tokenCipher: string
+    try {
+      tokenCipher = sealToken(token)
+    } catch (error) {
+      return { ok: false, error: error instanceof Error ? error.message : String(error) }
+    }
+
+    const sameServer = current !== undefined && current.serverUrl === url.url
+    await controller.apply({ serverUrl: url.url, certPem, token, vaultId: sameServer ? current.vaultId : undefined })
+    const next: SyncSettings = {
+      serverUrl: url.url,
+      certPem,
+      tokenCipher,
+      vaultId: controller.resolvedVaultId()
+    }
+    await writeSettings({ sync: next })
+
+    const status = controller.status()
+    if (status.state === 'error') {
+      return { ok: false, error: status.lastError ?? '连不上同步服务' }
+    }
+    return { ok: true, settings: syncView(next) }
+  }
+)
+
+ipcMain.handle(channels.clearSyncSettings, async (): Promise<SyncSettingsView> => {
+  await writeSettings({ sync: undefined })
+  await Promise.all([...syncControllers.values()].map((controller) => controller.apply(null)))
+  return syncView(undefined)
+})
+
+ipcMain.handle(channels.chooseSyncCert, async (event): Promise<string | null> => {
+  const win = BrowserWindow.fromWebContents(event.sender) ?? BrowserWindow.getFocusedWindow()
+  if (!win) return null
+  const choice = await dialog.showOpenDialog(win, {
+    title: '选择同步服务的证书',
+    properties: ['openFile'],
+    filters: [{ name: '证书', extensions: ['pem', 'crt', 'cer'] }]
+  })
+  const file = choice.filePaths[0]
+  if (choice.canceled || !file) return null
+  return await readFile(file, 'utf8')
+})
+
+ipcMain.handle(
+  channels.getSyncStatus,
+  (_event, dir: string): SyncStatusView =>
+    syncControllers.get(dir)?.status() ?? { state: 'unset', pending: 0 }
+)
+
+ipcMain.handle(channels.confirmSyncDeletions, (_event, dir: string) => {
+  syncControllers.get(dir)?.confirmDeletions()
 })
 
 ipcMain.handle(channels.readNote, (_event, dir: string, path: VaultPath) =>
@@ -284,6 +452,7 @@ ipcMain.on(channels.respondToClose, (event, ready: boolean) => {
 
 app.on('before-quit', (event) => {
   quitting = true
+  for (const controller of syncControllers.values()) void controller.stop()
   if (windows.size === 0) return
   event.preventDefault()
   for (const win of windows) {

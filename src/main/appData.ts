@@ -1,4 +1,4 @@
-import { app } from 'electron'
+import { app, safeStorage } from 'electron'
 import { join } from 'node:path'
 import { mkdir, readFile, rename, rm, writeFile } from 'node:fs/promises'
 import type { FontMode, ThemeSource } from '../core/ipc'
@@ -6,10 +6,35 @@ import type { JournalHandler, RenameJournal } from './vault'
 
 const settingsFile = (): string => join(app.getPath('userData'), 'settings.json')
 
+export type SyncSettings = {
+  serverUrl: string
+  certPem?: string
+  /** The device token, encrypted by the system keychain. Never stored in clear. */
+  tokenCipher: string
+  vaultId?: string
+}
+
 export type AppSettings = {
   lastVault?: string
   theme?: ThemeSource
   font?: FontMode
+  sync?: SyncSettings
+}
+
+/** The token is readable by no one but this user's login. */
+export function sealToken(token: string): string {
+  if (!safeStorage.isEncryptionAvailable()) {
+    throw new Error('系统钥匙串不可用，无法安全保存设备令牌')
+  }
+  return safeStorage.encryptString(token).toString('base64')
+}
+
+export function openToken(cipher: string): string | null {
+  try {
+    return safeStorage.decryptString(Buffer.from(cipher, 'base64'))
+  } catch {
+    return null
+  }
 }
 
 export async function readSettings(): Promise<AppSettings> {
