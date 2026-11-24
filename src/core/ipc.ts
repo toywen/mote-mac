@@ -78,13 +78,36 @@ export type VaultChange = {
 }
 
 export type ThemeSource = 'system' | 'light' | 'dark'
-
 export type ThemeState = {
   source: ThemeSource
   shouldUseDarkColors: boolean
 }
 
 export type FontMode = 'kai' | 'hei'
+
+// Sync settings as the window sees them. The device token stays in main, encrypted at rest.
+export type SyncSettingsView = {
+  serverUrl: string
+  certPem?: string
+  fingerprint: string | null
+  vaultId?: string
+  hasToken: boolean
+}
+
+export type SyncStatusView = {
+  state: 'unset' | 'idle' | 'syncing' | 'offline' | 'error' | 'blocked'
+  pending: number
+  lastSyncAt?: number
+  lastError?: string
+}
+
+// Which vault a status is about. A window only shows the status of its own vault.
+export type SyncStatusEvent = SyncStatusView & { dir: string }
+
+export type SyncSaveInput = { serverUrl: string; certPem?: string; token?: string }
+export type SyncSaveResult =
+  | { ok: true; settings: SyncSettingsView }
+  | { ok: false; error: string }
 
 export type SavedAttachment = {
   path: VaultPath
@@ -108,6 +131,7 @@ export type MenuAction =
   | 'toggle-sidebar'
   | 'toggle-theme'
   | 'toggle-font'
+  | 'open-settings'
   | 'format-bold'
   | 'format-italic'
   | 'format-strike'
@@ -168,6 +192,13 @@ export interface MoteApi {
   onUpdateStatus(callback: (status: UpdateStatus) => void): () => void
   onMenuAction(callback: (action: MenuAction) => void): () => void
   newWindow(dir?: string): Promise<void>
+  getSyncSettings(): Promise<SyncSettingsView>
+  saveSyncSettings(input: SyncSaveInput): Promise<SyncSaveResult>
+  clearSyncSettings(): Promise<SyncSettingsView>
+  chooseSyncCert(): Promise<string | null>
+  getSyncStatus(dir: string): Promise<SyncStatusView>
+  confirmSyncDeletions(dir: string): Promise<void>
+  onSyncStatus(callback: (status: SyncStatusEvent) => void): () => void
 }
 
 export const channels = {
@@ -205,5 +236,12 @@ export const channels = {
   installUpdate: 'mote:install-update',
   getAppVersion: 'mote:get-app-version',
   updateStatus: 'mote:update-status',
-  menuAction: 'mote:menu-action'
+  menuAction: 'mote:menu-action',
+  getSyncSettings: 'mote:get-sync-settings',
+  saveSyncSettings: 'mote:save-sync-settings',
+  clearSyncSettings: 'mote:clear-sync-settings',
+  chooseSyncCert: 'mote:choose-sync-cert',
+  getSyncStatus: 'mote:get-sync-status',
+  confirmSyncDeletions: 'mote:confirm-sync-deletions',
+  syncStatus: 'mote:sync-status'
 } as const

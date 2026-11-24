@@ -117,6 +117,12 @@ test('callouts, tables and task checkboxes render, and a checkbox click changes 
     await expect(delimiter).toHaveCount(0)
     await expect(tables.getByRole('table')).toHaveCount(3)
 
+    // A caret at the top of the note used to turn every table back into its source.
+    await tables.locator('.cm-line').first().click()
+    await window.keyboard.press('Home')
+    await expect(delimiter).toHaveCount(0)
+    await expect(tables.getByRole('table')).toHaveCount(3)
+
     // Tasks: a checkbox in the bullet's place, and a click changes one byte.
     const path = join(vault, '任务.md')
     const original = await readFile(path)

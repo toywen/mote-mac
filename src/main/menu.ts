@@ -84,7 +84,7 @@ export function buildApplicationMenu(onCreateWindow?: (win?: BaseWindow | null) 
                 label: '偏好设置...',
                 accelerator: 'CmdOrCtrl+,',
                 click: () => {
-                  sendAction('toggle-theme')
+                  sendAction('open-settings')
                 }
               },
               { type: 'separator' as const },

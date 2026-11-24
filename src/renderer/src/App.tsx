@@ -13,6 +13,7 @@ import {
   Moon,
   PanelLeft,
   PencilLine,
+  RefreshCw,
   Search,
   Sun,
   X
@@ -22,6 +23,7 @@ import { EditorView } from '@codemirror/view'
 import { FileTree, type FileTreeHandle } from './FileTree'
 import { type SortOrder } from './tree'
 import { type FontMode } from '../../core/ipc'
+import type { SyncStatusView } from '../../core/ipc'
 import { groupHits } from '../../core/hits'
 import { buildLinkIndex } from '../../core/resolve'
 import { isHtmlPath } from '../../core/fileUrl'
@@ -32,6 +34,8 @@ import { NoteEditor } from './NoteEditor'
 import { PdfViewer } from './PdfViewer'
 import { QuickOpen } from './QuickOpen'
 import { SearchPanel } from './SearchPanel'
+import { SyncSettings } from './SyncSettings'
+import { syncStatusDetail, syncStatusText } from './syncText'
 import { TabBar } from './TabBar'
 import { UpdateNotification } from './UpdateNotification'
 import { executeFormatting, type FormatAction } from './editor/formatting'
@@ -58,6 +62,27 @@ function App(): React.JSX.Element {
   const [searchQuery, setSearchQuery] = useState('')
   const [searchFocus, setSearchFocus] = useState(0)
   const [backlinksOpen, setBacklinksOpen] = useState(false)
+  const [settingsOpen, setSettingsOpen] = useState(false)
+  const [syncStatus, setSyncStatus] = useState<SyncStatusView | null>(null)
+  const [deletionDismissed, setDeletionDismissed] = useState(false)
+  // The status belongs to the open vault, so a window never shows another vault's state.
+  useEffect(() => {
+    const dir = vault?.dir
+    if (!dir) return
+    let live = true
+    void window.mote?.getSyncStatus?.(dir).then((next) => {
+      if (live) setSyncStatus(next)
+    })
+    const off = window.mote?.onSyncStatus?.((next) => {
+      if (next.dir !== dir) return
+      setSyncStatus(next)
+      if (next.state !== 'blocked') setDeletionDismissed(false)
+    })
+    return () => {
+      live = false
+      off?.()
+    }
+  }, [vault?.dir])
   const [isDark, setIsDark] = useState<boolean>(() => {
     if (typeof window !== 'undefined' && window.matchMedia) {
       return window.matchMedia('(prefers-color-scheme: dark)').matches
@@ -275,6 +300,9 @@ function App(): React.JSX.Element {
         case 'toggle-theme':
           void window.mote?.toggleTheme?.()
           break
+        case 'open-settings':
+          setSettingsOpen(true)
+          break
         case 'format-bold':
         case 'format-italic':
         case 'format-strike':
@@ -473,6 +501,22 @@ function App(): React.JSX.Element {
             </nav>
           </>
         )}
+        {vault && (
+          <button
+            type="button"
+            className={`sync-status is-${syncStatus?.state ?? 'unset'}`}
+            title={syncStatusDetail(syncStatus) || '同步设置'}
+            aria-label={`${syncStatusText(syncStatus)}，打开同步设置`}
+            onClick={() => setSettingsOpen(true)}
+          >
+            <RefreshCw
+              size={12}
+              strokeWidth={1.6}
+              className={syncStatus?.state === 'syncing' ? 'is-spinning' : undefined}
+            />
+            <span>{syncStatusText(syncStatus)}</span>
+          </button>
+        )}
       </aside>
       <main className="pane editor" aria-label="编辑器">
         <header className="pane-header">
@@ -655,6 +699,43 @@ function App(): React.JSX.Element {
       )}
       {quickOpen && vault && (
         <QuickOpen entries={vault.entries} onClose={() => setQuickOpen(false)} />
+      )}
+      {settingsOpen && vault && (
+        <SyncSettings dir={vault.dir} onClose={() => setSettingsOpen(false)} />
+      )}
+      {syncStatus?.state === 'blocked' && vault && !deletionDismissed && (
+        <div className="sync-backdrop" role="presentation">
+          <div className="sync-panel sync-confirm" role="alertdialog" aria-label="确认删除">
+            <header className="sync-panel-header">
+              <h2>确认删除</h2>
+            </header>
+            <div className="sync-body">
+              <p>
+                {syncStatusDetail(syncStatus) ||
+                  '另一台设备删除了文件。确认后，这些删除才会同步到这台电脑。'}
+              </p>
+            </div>
+            <footer className="sync-actions">
+              <button
+                type="button"
+                className="sync-button"
+                onClick={() => setDeletionDismissed(true)}
+              >
+                停止同步
+              </button>
+              <button
+                type="button"
+                className="sync-button is-danger"
+                onClick={() => {
+                  void window.mote.confirmSyncDeletions(vault.dir)
+                  setDeletionDismissed(true)
+                }}
+              >
+                确认删除
+              </button>
+            </footer>
+          </div>
+        </div>
       )}
     </div>
   )
