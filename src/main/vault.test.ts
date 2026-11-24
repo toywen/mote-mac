@@ -1,8 +1,9 @@
+import { createHash } from 'node:crypto'
 import { mkdir, mkdtemp, readdir, realpath, rm, symlink, writeFile } from 'node:fs/promises'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import type { VaultPath } from '../core/ipc.ts'
+import type { ContentHash, VaultPath } from '../core/ipc.ts'
 import { Vault } from './vault.ts'
 
 const p = (path: string): VaultPath => path as VaultPath
@@ -47,7 +48,11 @@ const throughSymlink: Record<keyof Vault, DiskCall | 'takes no path to the disk'
   search: 'takes no path to the disk',
   backlinks: 'takes no path to the disk',
   countInboundLinks: 'takes no path to the disk',
+  subscribe: 'takes no path to the disk',
+  listFiles: 'takes no path to the disk',
   filePath: (v) => v.filePath(p('link/secret.md')),
+  readFile: (v) => v.readFile(p('link/secret.md')),
+  writeFile: (v) => v.writeFile(p('link/new.png'), Buffer.from('x'), null),
   readNote: (v) => v.readNote(p('link/secret.md')),
   writeNote: (v) => v.writeNote(p('link/new.md'), 'x', null),
   createNote: (v) => v.createNote(p('link/new.md')),
@@ -126,5 +131,69 @@ describe('a change made outside mote', () => {
       })
     })
     expect(await seen).toEqual(['b.md'])
+  })
+})
+
+describe('what the sync module uses', () => {
+  const sha = (text: string): ContentHash =>
+    createHash('sha256').update(text).digest('hex') as ContentHash
+
+  it('lists every file with its hash and size, attachments included', async () => {
+    await mkdir(join(root, '.mote', 'attachments'), { recursive: true })
+    await writeFile(join(root, '.mote', 'attachments', 'x.png'), 'png')
+    expect(await vault.listFiles()).toEqual([
+      { path: '.mote/attachments/x.png', hash: sha('png'), size: 3 },
+      { path: 'a.md', hash: sha('see [[b]]'), size: 9 },
+      { path: 'b.md', hash: sha('b'), size: 1 }
+    ])
+  })
+
+  it('writes bytes only over the base it was given', async () => {
+    expect(await vault.writeFile(p('b.md'), Buffer.from('new'), sha('other'))).toEqual({
+      ok: false,
+      disk: sha('b')
+    })
+    expect(await vault.writeFile(p('b.md'), Buffer.from('new'), sha('b'))).toEqual({ ok: true })
+    expect((await vault.readNote(p('b.md')))?.text).toBe('new')
+    expect(await vault.writeFile(p('b.md'), Buffer.from('again'), null)).toEqual({
+      ok: false,
+      disk: sha('new')
+    })
+    expect(await vault.writeFile(p('n/new.md'), Buffer.from('n'), null)).toEqual({ ok: true })
+    expect(vault.info().entries.map((entry) => entry.path)).toEqual(
+      expect.arrayContaining(['n', 'n/new.md'])
+    )
+  })
+
+  it('trashes a file only while it still has the base hash', async () => {
+    const trashed: string[] = []
+    const toTrash = async (full: string): Promise<void> => {
+      trashed.push(full)
+      await rm(full)
+    }
+    expect(await vault.trash(p('b.md'), toTrash, sha('other'))).toBe(false)
+    expect(trashed).toEqual([])
+    expect(await vault.trash(p('b.md'), toTrash, sha('b'))).toBe(true)
+    expect(trashed).toEqual([join(root, 'b.md')])
+  })
+
+  it('tells a subscriber about mote saving a note, which notify leaves out', async () => {
+    const notified: VaultPath[] = []
+    vault.close()
+    vault = await Vault.open(root, (change) => notified.push(...change.changed))
+    const heard = new Promise<VaultPath[]>((done) => {
+      const stop = vault.subscribe((change) => {
+        if (change.paths.includes(p('b.md'))) {
+          stop()
+          done(change.paths)
+        }
+      })
+    })
+    expect(await vault.writeNote(p('b.md'), 'saved', sha('b'))).toEqual({
+      ok: true,
+      hash: sha('saved')
+    })
+    expect(await heard).toContain('b.md')
+    expect(notified).not.toContain('b.md')
   })
 })

@@ -9,13 +9,17 @@ const fsWriters = [
   'src/main/vaultFs.ts',
   'src/main/appData.ts',
   'src/main/updater.ts',
-  'src/main/notes.ts'
+  'src/main/notes.ts',
+  'src/main/syncState.ts'
 ]
 const electronFree = [
   'src/core/**/*.ts',
   'src/main/notes.ts',
   'src/main/vaultFs.ts',
-  'src/main/vault.ts'
+  'src/main/vault.ts',
+  'src/main/sync.ts',
+  'src/main/syncRemote.ts',
+  'src/main/syncState.ts'
 ]
 const fsPaths = ['node:fs', 'node:fs/promises', 'fs', 'fs/promises'].map((name) => ({
   name,

@@ -51,6 +51,17 @@ export type RenameJournal = {
   updateLinks: boolean
 }
 
+/** A file in the vault, with the SHA-256 and length of its bytes. */
+export type VaultFile = { path: VaultPath; hash: ContentHash; size: number }
+
+/**
+ * What the file watcher saw, mote's own writes included. A path may be a file or a folder, and
+ * may be gone. `rescan` means the watcher lost track, so anything may have changed.
+ */
+export type DiskChange = { paths: VaultPath[]; rescan: boolean }
+
+export type FileWriteResult = { ok: true } | { ok: false; disk: ContentHash | null }
+
 export interface JournalHandler {
   read(): Promise<RenameJournal | null>
   write(journal: RenameJournal): Promise<void>
@@ -128,6 +139,7 @@ export class Vault {
   private readonly index = new NoteIndex()
   private readonly ownWrites = new Map<VaultPath, ContentHash>()
   private readonly pending = new Set<VaultPath>()
+  private readonly listeners = new Set<(change: DiskChange) => void>()
   private queue: Promise<unknown> = Promise.resolve()
   private timer?: NodeJS.Timeout
   private watcher?: FSWatcher
@@ -305,6 +317,16 @@ export class Vault {
     if (!this.closed && (entries || changed.length || removed.length)) {
       this.notify({ dir: this.dir, entries, changed, removed })
     }
+    if (!this.closed) {
+      const change: DiskChange = { paths: [...new Set([...paths, ...removed])], rescan }
+      for (const listener of this.listeners) listener(change)
+    }
+  }
+
+  /** Hears every refresh of the file watcher, mote's own writes included. `notify` leaves those out. */
+  subscribe(listener: (change: DiskChange) => void): () => void {
+    this.listeners.add(listener)
+    return () => this.listeners.delete(listener)
   }
 
   filePath(path: VaultPath): Promise<InVault> {
@@ -428,12 +450,21 @@ export class Vault {
     })
   }
 
-  trash(path: VaultPath, moveToTrash: (full: InVault) => Promise<void>): Promise<void> {
+  /** With `baseHash`, trashes the file only while its bytes still hash to it, and says whether it did. */
+  trash(
+    path: VaultPath,
+    moveToTrash: (full: InVault) => Promise<void>,
+    baseHash?: ContentHash
+  ): Promise<boolean> {
     return this.run(async () => {
       const clean = parseVaultPath(path)
+      if (baseHash !== undefined) {
+        const bytes = await this.readFile(clean)
+        if (!bytes || hash(bytes) !== baseHash) return false
+      }
       await moveToTrash(await locate(this.dir, clean))
       const entry = this.entries.get(clean)
-      if (!entry) return
+      if (!entry) return true
       const removed: VaultPath[] = []
       if (entry.kind === 'folder') {
         const prefix = clean + '/'
@@ -460,6 +491,7 @@ export class Vault {
         changed: [],
         removed
       })
+      return true
     })
   }
 
@@ -615,6 +647,112 @@ export class Vault {
         removed: [...renames.keys()],
         renamed: [...renames].map(([from, to]) => ({ from, to }))
       })
+    })
+  }
+
+  /** Every file of the vault, hashed now. Reads every byte, so a large attachment makes it slow. */
+  async listFiles(): Promise<VaultFile[]> {
+    const paths = [...(await this.scan()).values()]
+      .filter((entry) => entry.kind !== 'folder')
+      .map((entry) => entry.path)
+    const files: VaultFile[] = []
+    let next = 0
+    const worker = async (): Promise<void> => {
+      while (next < paths.length) {
+        const path = paths[next++]
+        const bytes = await this.readFile(path)
+        if (bytes) files.push({ path, hash: hash(bytes), size: bytes.length })
+      }
+    }
+    await Promise.all(Array.from({ length: Math.min(8, paths.length) }, worker))
+    return files.sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : 0))
+  }
+
+  /** The file's bytes, or null when no file is there. */
+  async readFile(path: VaultPath): Promise<Buffer | null> {
+    try {
+      const file = await openExisting(await locate(this.dir, path), 'read')
+      try {
+        return (await file.stat()).isFile() ? await file.readFile() : null
+      } finally {
+        await file.close()
+      }
+    } catch (error) {
+      if (missing(error) || (error as NodeJS.ErrnoException).code === 'EISDIR') return null
+      throw error
+    }
+  }
+
+  /**
+   * Writes any file, note or attachment, from its bytes. A null `baseHash` creates the file and its
+   * folders and fails if anything is there. Otherwise the file must still hash to `baseHash`. The
+   * renderer hears of it as a change on disk, so an open note reloads or goes to conflict.
+   */
+  writeFile(
+    path: VaultPath,
+    bytes: Buffer,
+    baseHash: ContentHash | null
+  ): Promise<FileWriteResult> {
+    return this.run(async (): Promise<FileWriteResult> => {
+      const clean = parseVaultPath(path)
+      if (this.closed) throw new Error('笔记库已切换')
+      try {
+        if (baseHash === null) {
+          await this.folder(clean.slice(0, Math.max(clean.lastIndexOf('/'), 0)))
+          await createFile(await locate(this.dir, clean), bytes)
+        } else {
+          const full = await locate(this.dir, clean)
+          const file = await openExisting(full, 'readWrite')
+          try {
+            const before = await file.stat()
+            if (!before.isFile()) return { ok: false, disk: null }
+            const disk = hash(await file.readFile())
+            const latest = await stat(full)
+            if (
+              before.ino !== latest.ino ||
+              before.mtimeMs !== latest.mtimeMs ||
+              before.size !== latest.size
+            ) {
+              const now = await this.readFile(clean)
+              return { ok: false, disk: now && hash(now) }
+            }
+            if (disk !== baseHash) return { ok: false, disk }
+            await overwrite(file, bytes)
+          } finally {
+            await file.close()
+          }
+        }
+      } catch (error) {
+        if (missing(error)) return { ok: false, disk: null }
+        if ((error as NodeJS.ErrnoException).code === 'EEXIST') {
+          const now = await this.readFile(clean)
+          return { ok: false, disk: now && hash(now) }
+        }
+        throw error
+      }
+      const added = !this.entries.has(clean)
+      if (added) {
+        this.entries.set(clean, { path: clean, kind: kind(clean) })
+        this.indexFiles()
+      }
+      const note = kind(clean) === 'note'
+      if (note) {
+        // refresh reads an own write back as text, so a note that is not UTF-8 is left to it.
+        try {
+          this.index.set(clean, noteVersion(bytes).text)
+          this.ownWrites.set(clean, hash(bytes))
+        } catch {
+          this.index.delete(clean)
+          this.ownWrites.delete(clean)
+        }
+      }
+      this.notify({
+        dir: this.dir,
+        entries: added ? [...this.entries.values()] : undefined,
+        changed: note ? [clean] : [],
+        removed: []
+      })
+      return { ok: true }
     })
   }
 

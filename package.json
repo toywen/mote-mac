@@ -38,6 +38,8 @@
     "lucide": "^1.77.0",
     "lucide-react": "^1.76.0",
     "mermaid": "^12.3.0",
+    "mote-sync-protocol": "file:vendor/mote-sync-protocol-0.1.0.tgz",
+    "ws": "^8.23.0",
     "yaml": "^2.9.1"
   },
   "devDependencies": {
@@ -49,6 +51,7 @@
     "@types/node": "^24.19.2",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
+    "@types/ws": "^8.18.2",
     "@vitejs/plugin-react": "^6.1.2",
     "electron": "^44.7.2",
     "electron-builder": "^26.15.3",
