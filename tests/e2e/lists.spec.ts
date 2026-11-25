@@ -56,6 +56,28 @@ test('list bullets, numbers and task checkboxes stay rendered while the cursor i
   }
 })
 
+test('a list inside a quote or callout keeps its markers inside the border and indents like any list', async () => {
+  const { app, editor } = await start()
+  try {
+    const line = (text: string): Locator => editor.locator('.cm-line').filter({ hasText: text })
+    const marker = async (text: string): Promise<{ x: number; right: number }> => {
+      const box = (await line(text).locator('.mote-list-marker').boundingBox())!
+      return { x: box.x, right: box.x + box.width }
+    }
+    for (const text of ['引用一', '引用二', '引用外', '引用内', '标注一']) {
+      const box = (await line(text).boundingBox())!
+      const border = await line(text).evaluate((el) =>
+        parseFloat(getComputedStyle(el).borderLeftWidth)
+      )
+      expect((await marker(text)).x, text).toBeGreaterThanOrEqual(box.x + border)
+    }
+    const step = (await marker('普通内')).right - (await marker('普通外')).right
+    expect((await marker('引用内')).right - (await marker('引用外')).right).toBeCloseTo(step, 0)
+  } finally {
+    await app.close()
+  }
+})
+
 test('Cmd+Enter turns a line into a task, checks it, then turns it back into text', async () => {
   const { app, window, editor, note } = await start()
   try {
