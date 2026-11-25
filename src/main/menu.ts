@@ -250,7 +250,7 @@ export function buildApplicationMenu(onCreateWindow?: (win?: BaseWindow | null) 
         },
         { type: 'separator' as const },
         {
-          label: '切换文雅楷体/现代黑体',
+          label: '切换正文字体（楷体/宋体/黑体）',
           accelerator: 'CmdOrCtrl+Shift+K',
           click: (_item, win) => sendAction('toggle-font', win)
         },

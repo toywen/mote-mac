@@ -27,6 +27,8 @@ function inlineStyle(style: { class: string; mark: string }): Renderer {
 }
 
 const tag = Decoration.mark({ class: 'mote-tag' })
+// The # alone takes the accent color.
+const tagHash = Decoration.mark({ class: 'mote-tag-hash' })
 
 export const inlineRenderers: Record<string, Renderer> = {
   ...Object.fromEntries(
@@ -35,7 +37,7 @@ export const inlineRenderers: Record<string, Renderer> = {
   Tag: (node) => [
     {
       reveal: { from: node.from, to: node.to },
-      always: [tag.range(node.from, node.to)],
+      always: [tag.range(node.from, node.to), tagHash.range(node.from, node.from + 1)],
       concealed: []
     }
   ]

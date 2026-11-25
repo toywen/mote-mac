@@ -78,10 +78,14 @@ test('live preview hides syntax away from the selection and shows it at the sele
     expect(Number.parseFloat(await style(lineOf(editor, '行内元素'), 'font-size'))).toBeGreaterThan(
       bodySize
     )
+    // A found link is body ink over an accent underline. A missing link has its own color.
     const body = await style(styled, 'color')
-    const found = await style(links.getByText('别名', { exact: true }), 'color')
+    const found = links.getByText('别名', { exact: true })
     const missing = await style(links.getByText('不存在的笔记', { exact: true }), 'color')
-    expect(new Set([body, found, missing]).size).toBe(3)
+    expect(await style(found, 'color')).toBe(body)
+    expect(await style(found, 'text-decoration-line')).toContain('underline')
+    expect(await style(found, 'text-decoration-color')).not.toBe(body)
+    expect(missing).not.toBe(body)
 
     // Only the element the selection touches shows its source.
     await bold.click()
@@ -245,41 +249,33 @@ test('the window follows the system color scheme', async () => {
   }
 })
 
-test('clicking theme toggle switches between dark and light scheme', async () => {
+test('Cmd+Shift+D switches between dark and light scheme', async () => {
   const { app, window } = await start('行内')
   try {
     await openNote(window, '行内')
     await window.emulateMedia({ colorScheme: null })
-    const themeBtn = window.locator('.theme-toggle')
-    await expect(themeBtn).toBeVisible()
+    // The toolbar has no theme button. The shortcut and the View menu switch it.
+    await expect(window.locator('.theme-toggle')).toHaveCount(0)
 
     const initialIsDark = await window.evaluate(
       () => matchMedia('(prefers-color-scheme: dark)').matches
     )
 
-    // Click toggle button
-    await themeBtn.click()
-    await expect
-      .poll(() => window.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches))
-      .toBe(!initialIsDark)
-
-    // Click toggle button again
-    await themeBtn.click()
-    await expect
-      .poll(() => window.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches))
-      .toBe(initialIsDark)
-
-    // Toggle via Cmd+Shift+D shortcut
     await window.keyboard.press('Meta+Shift+KeyD')
     await expect
       .poll(() => window.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches))
       .toBe(!initialIsDark)
+
+    await window.keyboard.press('Meta+Shift+KeyD')
+    await expect
+      .poll(() => window.evaluate(() => matchMedia('(prefers-color-scheme: dark)').matches))
+      .toBe(initialIsDark)
   } finally {
     await app.close()
   }
 })
 
-test('Cmd+Shift+K shortcut switches between kai and hei typography', async () => {
+test('Cmd+Shift+K cycles the body font through kai, song and hei', async () => {
   const { app, window } = await start('行内')
   try {
     await openNote(window, '行内')
@@ -288,17 +284,12 @@ test('Cmd+Shift+K shortcut switches between kai and hei typography', async () =>
       .poll(() => window.evaluate(() => document.documentElement.dataset.font))
       .toBe('kai')
 
-    // Toggle via Cmd+Shift+K shortcut
-    await window.keyboard.press('Meta+Shift+KeyK')
-    await expect
-      .poll(() => window.evaluate(() => document.documentElement.dataset.font))
-      .toBe('hei')
-
-    // Toggle back via Cmd+Shift+K shortcut
-    await window.keyboard.press('Meta+Shift+KeyK')
-    await expect
-      .poll(() => window.evaluate(() => document.documentElement.dataset.font))
-      .toBe('kai')
+    for (const font of ['song', 'hei', 'kai']) {
+      await window.keyboard.press('Meta+Shift+KeyK')
+      await expect
+        .poll(() => window.evaluate(() => document.documentElement.dataset.font))
+        .toBe(font)
+    }
   } finally {
     await app.close()
   }

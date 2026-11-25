@@ -68,7 +68,7 @@
 | `src/renderer/src/editor/preview.css` | 实时预览的样式。颜色只用 `main.css` 里的变量 |
 | `src/renderer/src/editor/complete.ts`、`complete.css` | 双链补全：输入 `[[` 后列出笔记，候选用快速打开的 `quickOpenMatch.ts` 排序，插入 `linkText.ts` 生成的链接。笔记列表、最近打开和笔记库配置从 `completeContext` 读 |
 | `src/renderer/src/editor/follow.ts`、`follow.css` | 点击链接：在编辑器的元素上先于 CodeMirror 接住鼠标，按链接去向交给 `workspace.follow`。部件里画的链接也接得到 |
-| `src/renderer/src/editor/callouts.ts`、`callouts.css` | callout 的渲染函数。占 `Blockquote` 的位置，不是 callout 的引用交给 `quotes.ts`。callout 的种类、别名、颜色和图标是一张表，照搬 Obsidian 1.15.1 的 `app.css`。颜色变量的浅色值和深色值在 `callouts.css` |
+| `src/renderer/src/editor/callouts.ts`、`callouts.css` | callout 的渲染函数。占 `Blockquote` 的位置，不是 callout 的引用交给 `quotes.ts`。callout 的种类、别名和图标是一张表，照搬 Obsidian 1.15.1 的 `app.css`。所有种类都用强调色，样式在 `callouts.css` |
 | `src/renderer/src/editor/tables.ts`、`tables.css` | 表格画成一个块级组件。单元格按语法节点画，行内样式读 `inlineStyles`，链接读 `linkTarget` |
 | `src/renderer/src/editor/tasks.ts`、`tasks.css` | 任务的复选框。点击只改方括号里的 1 个字符。`editorLocked` 是 mote 忙时锁住编辑器的输入 |
 | `src/renderer/src/editor/noteView.ts` | `noteView()`：一篇笔记的每个视图都用的扩展，即语言、实时预览、点击链接和折行。主编辑器和嵌入都调用它。主编辑器再加编辑、保存和补全 |
