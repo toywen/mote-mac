@@ -34,14 +34,17 @@ function depthLine(depth: number): Decoration {
 }
 
 // A list item's marker with the indentation before it and the space after it. Hidden, the
-// marker becomes a bullet or the item's number, indented by depth instead of by spaces.
+// marker becomes a bullet or the item's number, indented by depth instead of by spaces. In a
+// quote, the indentation starts after the `>` marks, which the quote hides itself.
 const listMark: Renderer = (node, cx) => {
   const { doc } = cx.state
   const line = lineAt(cx, node.from)
   let depth = 0
   for (let parent = node.node.parent; parent; parent = parent.parent)
     if (parent.name === 'BulletList' || parent.name === 'OrderedList') depth++
-  const from = /^[ \t]*$/.test(doc.sliceString(line.from, node.from)) ? line.from : node.from
+  const before = doc.sliceString(line.from, node.from)
+  const quoted = /^(?:[ \t]*>[ \t]?)*/.exec(before)![0].length
+  const from = /^[ \t]*$/.test(before.slice(quoted)) ? line.from + quoted : node.from
   const to = /[ \t]/.test(doc.sliceString(node.to, node.to + 1)) ? node.to + 1 : node.to
   const ordered = node.node.parent?.parent?.name === 'OrderedList'
   const marker = ordered
