@@ -453,7 +453,7 @@
       overflow: hidden;
       display: flex;
       flex-direction: column;
-      height: 620px;
+      height: 660px;
       text-align: left;
       position: relative;
       transition: all 0.3s ease;
@@ -707,7 +707,7 @@
     .editor-canvas-wrap {
       flex: 1;
       overflow-y: auto;
-      padding: 32px 48px;
+      padding: 24px 48px;
       max-width: 860px;
       margin: 0 auto;
       width: 100%;
@@ -719,8 +719,8 @@
       align-items: baseline;
       justify-content: space-between;
       gap: 16px;
-      margin-bottom: 24px;
-      padding-bottom: 14px;
+      margin-bottom: 18px;
+      padding-bottom: 12px;
       border-bottom: 1px solid var(--border-subtle);
     }
 
@@ -1540,8 +1540,296 @@
       color: var(--text-subtle);
     }
 
+    /* ========================================================= */
+    /* Feature stacks: full feature coverage                    */
+    /* ========================================================= */
+    .feature-stacks {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20px;
+    }
+
+    .feature-stack {
+      background: var(--bg-card);
+      border: 1px solid var(--border);
+      border-radius: var(--radius-lg);
+      padding: 26px 24px;
+      box-shadow: var(--shadow-sm);
+      transition: border-color 0.25s ease, transform 0.25s ease;
+    }
+
+    .feature-stack:hover {
+      border-color: var(--accent);
+      transform: translateY(-3px);
+    }
+
+    .feature-stack-title {
+      font-size: 0.78rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      color: var(--accent);
+      margin-bottom: 8px;
+    }
+
+    .stack-item {
+      display: flex;
+      gap: 12px;
+      padding: 13px 0;
+      border-top: 1px solid var(--border-subtle);
+    }
+
+    .stack-item:first-of-type {
+      border-top: none;
+    }
+
+    .stack-icon {
+      width: 30px;
+      height: 30px;
+      border-radius: 8px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-shrink: 0;
+    }
+
+    .stack-item h4 {
+      font-size: 0.97rem;
+      font-weight: 700;
+      color: var(--text);
+      margin-bottom: 2px;
+    }
+
+    .stack-item p {
+      font-size: 0.87rem;
+      color: var(--text-muted);
+      line-height: 1.6;
+    }
+
+    .stack-item kbd {
+      font-family: var(--font-mono);
+      font-size: 0.8em;
+      padding: 0 4px;
+      border-radius: 3px;
+      background: var(--code-bg);
+      border: 1px solid var(--border);
+    }
+
+    /* Note mock: table, math, flow diagram */
+    .mock-table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 0.88rem;
+      margin: 10px 0 12px;
+    }
+
+    .mock-table th,
+    .mock-table td {
+      border-bottom: 1px solid var(--border-subtle);
+      padding: 6px 8px;
+      text-align: left;
+    }
+
+    .mock-table th {
+      color: var(--text-subtle);
+      font-weight: 600;
+      font-size: 0.78rem;
+      letter-spacing: 0.04em;
+    }
+
+    .mock-table td .num {
+      font-family: var(--font-mono);
+      font-variant-numeric: tabular-nums;
+    }
+
+    .math-block {
+      margin: 10px 0;
+      padding: 10px 16px;
+      border-radius: var(--radius-sm);
+      background: var(--code-bg);
+      text-align: center;
+      font-size: 1.02rem;
+      color: var(--text);
+    }
+
+    .math-frac {
+      display: inline-flex;
+      flex-direction: column;
+      vertical-align: middle;
+      text-align: center;
+      margin: 0 3px;
+      font-size: 0.92em;
+    }
+
+    .math-frac .top {
+      border-bottom: 1px solid currentColor;
+      padding: 0 8px;
+    }
+
+    .mermaid-demo {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 16px 0;
+    }
+
+    .mermaid-node {
+      border: 1px solid var(--accent);
+      background: var(--accent-bg);
+      color: var(--text);
+      border-radius: 8px;
+      padding: 5px 18px;
+      font-size: 0.85rem;
+      font-weight: 600;
+    }
+
+    .mermaid-arrow {
+      width: 1px;
+      height: 15px;
+      background: var(--text-subtle);
+      position: relative;
+    }
+
+    .mermaid-arrow::after {
+      content: '';
+      position: absolute;
+      bottom: -1px;
+      left: -3px;
+      border-left: 3.5px solid transparent;
+      border-right: 3.5px solid transparent;
+      border-top: 5px solid var(--text-subtle);
+    }
+
+    .note-h3 {
+      font-size: 1.1rem;
+      font-weight: 700;
+      margin: 16px 0 8px;
+      color: var(--text);
+    }
+
+    .note-quote {
+      border-left: 3px solid var(--accent-gold);
+      padding-left: 12px;
+      color: var(--text-muted);
+      font-style: italic;
+      margin: 12px 0 16px;
+      font-size: 1rem;
+      line-height: 1.8;
+    }
+
+    /* Sync status pill inside the mock title bar */
+    .sync-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      font-size: 0.74rem;
+      font-weight: 600;
+      color: var(--callout-tip);
+      background: var(--callout-tip-bg);
+      padding: 2px 8px;
+      border-radius: 10px;
+    }
+
+    .sidebar-actions {
+      display: flex;
+      align-items: center;
+      gap: 1px;
+    }
+
+    .sidebar-action {
+      width: 22px;
+      height: 22px;
+      border-radius: 4px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: var(--text-subtle);
+    }
+
+    .sidebar-action:hover {
+      background: var(--hover);
+      color: var(--text);
+    }
+
+    /* Two Macs sync visual */
+    .sync-visual {
+      display: flex;
+      flex-direction: column;
+      gap: 14px;
+    }
+
+    .device-row {
+      display: grid;
+      grid-template-columns: 1fr auto 1fr;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .device-card {
+      border: 1px solid var(--border);
+      border-radius: var(--radius-md);
+      background: var(--bg);
+      padding: 14px;
+    }
+
+    .device-name {
+      font-size: 0.9rem;
+      font-weight: 700;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+    }
+
+    .device-meta {
+      font-size: 0.76rem;
+      color: var(--text-subtle);
+      margin-top: 4px;
+    }
+
+    .device-state {
+      font-size: 0.72rem;
+      color: var(--callout-tip);
+      font-weight: 600;
+      display: flex;
+      gap: 4px;
+      align-items: center;
+      margin-top: 8px;
+    }
+
+    .sync-arrows {
+      color: var(--accent);
+      font-size: 1.2rem;
+      letter-spacing: -3px;
+      font-weight: 700;
+    }
+
+    .merge-card {
+      border: 1px dashed var(--border);
+      border-radius: var(--radius-md);
+      padding: 14px;
+      background: var(--code-bg);
+      font-size: 0.86rem;
+      line-height: 1.7;
+    }
+
+    .merge-tag {
+      display: inline-block;
+      font-size: 0.7rem;
+      font-weight: 700;
+      padding: 1px 7px;
+      border-radius: 8px;
+      background: var(--accent-bg);
+      color: var(--accent);
+      margin-bottom: 6px;
+    }
+
     /* Responsive */
     @media (max-width: 900px) {
+      .feature-stacks { grid-template-columns: 1fr; }
+      .device-row { grid-template-columns: 1fr; }
+      .sync-arrows { display: none; }
       .hero-title { font-size: 2.6rem; }
       .app-body { grid-template-columns: 0px 1fr; }
       .principles-grid, .download-grid { grid-template-columns: 1fr; }
@@ -1571,12 +1859,12 @@
           </g>
         </svg>
         <span class="brand-text">mote</span>
-        <span class="brand-badge">v1.0.6</span>
+        <span class="brand-badge">v1.0.10</span>
       </a>
 
       <nav>
         <ul class="nav-links">
-          <li><a href="#features">功能特性</a></li>
+          <li><a href="#all-features">功能特性</a></li>
           <li><a href="#philosophy">设计哲学</a></li>
           <li><a href="#playground">在线体验</a></li>
           <li><a href="#comparison">深度对比</a></li>
@@ -1659,9 +1947,13 @@
               </div>
               <div class="window-title">
                 <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M3 7v10a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V9a2 2 0 0 0-2-2h-6l-2-2H5a2 2 0 0 0-2 2z"/></svg>
-                <span>life-os (知识库)</span>
+                <span>青山手记 (笔记库)</span>
               </div>
               <div class="titlebar-tools">
+                <span class="sync-pill">
+                  <svg width="11" height="11" fill="none" stroke="currentColor" stroke-width="2.5" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
+                  已同步
+                </span>
                 <button class="titlebar-tool-btn" id="mockup-toggle-sidebar" title="收起/展开文件树 (⌘\)">
                   <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><line x1="9" y1="3" x2="9" y2="21"/></svg>
                   <span>侧栏</span>
@@ -1675,48 +1967,39 @@
               <aside class="app-sidebar">
                 <div class="sidebar-header">
                   <span>文件列表</span>
-                  <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>
+                  <div class="sidebar-actions">
+                    <span class="sidebar-action" title="搜索笔记">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg>
+                    </span>
+                    <span class="sidebar-action" title="排序">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M11 5h10M11 12h7M11 19h4M3 5v14M3 19l3-3M3 19l-3-3" transform="translate(3 0)"/></svg>
+                    </span>
+                    <span class="sidebar-action" title="定位当前笔记 (⌘⇧J)">
+                      <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg>
+                    </span>
+                  </div>
                 </div>
                 <ul class="file-tree-list">
-                  <!-- Daily Group -->
+                  <!-- 日记 -->
                   <li class="tree-folder-group">
                     <div class="tree-folder-header" onclick="toggleFolder(this)">
                       <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                       <svg class="folder-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                      <span>Daily</span>
+                      <span>日记</span>
                     </div>
                     <ul class="folder-children">
-                      <li class="tree-item" data-tab="daily" onclick="switchMockupTab('daily')">
+                      <li class="tree-item" data-tab="journal" onclick="switchMockupTab('journal')">
                         <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span>2026-11-22.md</span>
+                        <span>2026-11-25.md</span>
                       </li>
-                      <li class="tree-item" data-tab="daily-prev" onclick="switchMockupTab('daily-prev')">
+                      <li class="tree-item">
                         <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span>2026-11-21.md</span>
+                        <span>2026-11-24.md</span>
                       </li>
                     </ul>
                   </li>
 
-                  <!-- 工作 Group -->
-                  <li class="tree-folder-group">
-                    <div class="tree-folder-header" onclick="toggleFolder(this)">
-                      <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
-                      <svg class="folder-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                      <span>工作</span>
-                    </div>
-                    <ul class="folder-children">
-                      <li class="tree-item" data-tab="weekly" onclick="switchMockupTab('weekly')">
-                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span>周报与复盘.md</span>
-                      </li>
-                      <li class="tree-item" data-tab="quarterly" onclick="switchMockupTab('quarterly')">
-                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span>Q4规划与思考.md</span>
-                      </li>
-                    </ul>
-                  </li>
-
-                  <!-- 项目 Group -->
+                  <!-- 项目 -->
                   <li class="tree-folder-group">
                     <div class="tree-folder-header" onclick="toggleFolder(this)">
                       <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
@@ -1724,32 +2007,55 @@
                       <span>项目</span>
                     </div>
                     <ul class="folder-children">
-                      <li class="tree-item active" data-tab="philosophy" onclick="switchMockupTab('philosophy')">
+                      <li class="tree-item active" data-tab="plants" onclick="switchMockupTab('plants')">
                         <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span>设计理念.md</span>
+                        <span>青山院·植物配置表.md</span>
                       </li>
-                      <li class="tree-item" data-tab="architecture" onclick="switchMockupTab('architecture')">
+                      <li class="tree-item">
                         <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span>架构与性能.md</span>
+                        <span>石阶与小径.md</span>
                       </li>
-                      <li class="tree-item" data-tab="shortcuts" onclick="switchMockupTab('shortcuts')">
+                      <li class="tree-item" data-tab="nodes" onclick="switchMockupTab('nodes')">
                         <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span>快捷键与效率.md</span>
+                        <span>施工节点.md</span>
                       </li>
                     </ul>
                   </li>
 
-                  <!-- 思考 Group -->
+                  <!-- 读书 -->
                   <li class="tree-folder-group">
                     <div class="tree-folder-header" onclick="toggleFolder(this)">
                       <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
                       <svg class="folder-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
-                      <span>思考</span>
+                      <span>读书</span>
                     </div>
                     <ul class="folder-children">
-                      <li class="tree-item" data-tab="flow" onclick="switchMockupTab('flow')">
+                      <li class="tree-item" data-tab="yuanzhi" onclick="switchMockupTab('yuanzhi')">
                         <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
-                        <span>心流与专注.md</span>
+                        <span>《园冶》摘记.md</span>
+                      </li>
+                      <li class="tree-item">
+                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+                        <span>中国古典园林分析.md</span>
+                      </li>
+                    </ul>
+                  </li>
+
+                  <!-- 素材 -->
+                  <li class="tree-folder-group">
+                    <div class="tree-folder-header" onclick="toggleFolder(this)">
+                      <svg class="chevron-icon" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polyline points="6 9 12 15 18 9"/></svg>
+                      <svg class="folder-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg>
+                      <span>素材</span>
+                    </div>
+                    <ul class="folder-children">
+                      <li class="tree-item">
+                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                        <span>枯山水参考.png</span>
+                      </li>
+                      <li class="tree-item">
+                        <svg class="tree-item-icon" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="8" y1="13" x2="16" y2="13"/><line x1="8" y1="17" x2="13" y2="17"/></svg>
+                        <span>苗木报价.pdf</span>
                       </li>
                     </ul>
                   </li>
@@ -1760,27 +2066,26 @@
               <div class="app-editor-pane">
                 <!-- TabBar -->
                 <div class="app-tabbar">
-                  <div class="tab-item active" id="tab-btn-philosophy" onclick="switchMockupTab('philosophy')">
-                    <span class="tab-dirty-dot"></span>
-                    <span>设计理念.md</span>
+                  <div class="tab-item active" id="tab-btn-plants" onclick="switchMockupTab('plants')">
+                    <span>青山院·植物配置表.md</span>
                   </div>
-                  <div class="tab-item" id="tab-btn-architecture" onclick="switchMockupTab('architecture')">
-                    <span>架构与性能.md</span>
+                  <div class="tab-item" id="tab-btn-yuanzhi" onclick="switchMockupTab('yuanzhi')">
+                    <span>《园冶》摘记.md</span>
                   </div>
-                  <div class="tab-item" id="tab-btn-weekly" onclick="switchMockupTab('weekly')">
-                    <span>周报与复盘.md</span>
+                  <div class="tab-item" id="tab-btn-nodes" onclick="switchMockupTab('nodes')">
+                    <span>施工节点.md</span>
                   </div>
-                  <div class="tab-item" id="tab-btn-daily" onclick="switchMockupTab('daily')">
-                    <span>2026-11-22.md</span>
+                  <div class="tab-item" id="tab-btn-journal" onclick="switchMockupTab('journal')">
+                    <span>2026-11-25.md</span>
                   </div>
                 </div>
 
                 <!-- Editor Canvas -->
                 <div class="editor-canvas-wrap">
-                  <!-- Note Content 1 (Philosophy) -->
-                  <div id="content-philosophy" class="tab-content-panel">
+                  <!-- Note Content 1 (Planting plan) -->
+                  <div id="content-plants" class="tab-content-panel">
                     <div class="title-ribbon">
-                      <h2 class="doc-headline">为专注与文学审美而生</h2>
+                      <h2 class="doc-headline">青山院 · 植物配置</h2>
                       <button class="backlink-badge-btn" id="btn-toggle-backlinks">
                         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg>
                         <span>反向链接 (3)</span>
@@ -1792,113 +2097,118 @@
                       <div class="property-row">
                         <span class="property-key">tags</span>
                         <div class="property-val">
-                          <span class="tag-pill">#macOS原生</span>
-                          <span class="tag-pill">#知识管理</span>
-                          <span class="tag-pill">#零破坏</span>
+                          <span class="tag-pill">#造园</span>
+                          <span class="tag-pill">#青山院</span>
+                          <span class="tag-pill">#苗木</span>
                         </div>
-                      </div>
-                      <div class="property-row">
-                        <span class="property-key">created</span>
-                        <span class="property-val" style="font-family:var(--font-mono); font-size:0.78rem;">2026-11-22 22:00</span>
                       </div>
                     </div>
 
                     <p class="note-p">
-                      文字是思考的容器。在 Mac 上，我们渴望一款轻盈、温润且纯粹的本地笔记工具，没有繁琐的云端登录、没有笨重的框架迟滞，更没有打乱思绪的多余修饰。
+                      主景落在院子西侧，正对围墙的缺口。鸡爪槭定在池北，细叶麦冬沿石阶铺开。
                     </p>
 
-                    <p class="note-p">
-                      <strong style="color:var(--text);">mote 的诞生只为一个使命：</strong>在 Mac 上重归书写的纯粹。打开任意本地 Markdown 文件夹，即可体验 <span class="highlight-text">860px 黄金阅读版心</span> 与指尖触碰纸页般的温润字韵。
-                    </p>
+                    <table class="mock-table">
+                      <thead>
+                        <tr><th>植物</th><th>花期</th><th>冠幅</th><th>数量</th></tr>
+                      </thead>
+                      <tbody>
+                        <tr><td>鸡爪槭</td><td>4–5 月</td><td class="num">3.5 m</td><td class="num">2 株</td></tr>
+                        <tr><td>细叶麦冬</td><td>6–8 月</td><td class="num">0.4 m</td><td class="num">46 ㎡</td></tr>
+                        <tr><td>苔藓</td><td>—</td><td class="num">—</td><td class="num">12 ㎡</td></tr>
+                      </tbody>
+                    </table>
 
-                    <div class="callout-box">
-                      <div class="callout-title">
-                        <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>
-                        <span>零破坏承诺 (Zero-Damage Invariant)</span>
-                      </div>
-                      mote 绝不会向你的笔记库私写任何隐藏文件，也不擅自修改你的链接语法。所有设置与索引存放于 macOS 系统标准支持目录，你的知识资产 100% 自由纯净。
+                    <div class="math-block">
+                      土方量 <em>Q</em> = <span class="math-frac"><span class="top">L × W × H</span><span>3</span></span> ≈ 18.6 m³
                     </div>
 
                     <!-- Interactive Task Checkboxes -->
-                    <div style="margin: 20px 0;">
+                    <div style="margin: 14px 0;">
                       <div class="task-item" onclick="toggleTask(this)">
                         <span class="task-checkbox checked"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-                        <span class="task-text checked">打开本地文件夹作为笔记库，秒级呈现文件树</span>
+                        <span class="task-text checked">复测现状标高</span>
                       </div>
                       <div class="task-item" onclick="toggleTask(this)">
                         <span class="task-checkbox checked"><svg width="10" height="10" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-                        <span class="task-text checked">输入 <a class="wiki-link">[[双向链接]]</a> 即时完成补全与链接解析</span>
+                        <span class="task-text checked">定植鸡爪槭两株</span>
                       </div>
                       <div class="task-item" onclick="toggleTask(this)">
                         <span class="task-checkbox"><svg width="10" height="10" style="display:none;" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
-                        <span class="task-text">点击此项体验 mote 原生复选框状态切换</span>
+                        <span class="task-text">铺装收边，与木作师傅核对格栅尺寸</span>
                       </div>
                     </div>
                   </div>
 
-                  <!-- Note Content 2 (Architecture) -->
-                  <div id="content-architecture" class="tab-content-panel" style="display:none;">
+                  <!-- Note Content 2 (Reading note) -->
+                  <div id="content-yuanzhi" class="tab-content-panel" style="display:none;">
                     <div class="title-ribbon">
-                      <h2 class="doc-headline">极致轻盈的本地优先架构</h2>
+                      <h2 class="doc-headline">《园冶》摘记</h2>
                       <button class="backlink-badge-btn">
                         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/></svg>
                         <span>反向链接 (5)</span>
                       </button>
                     </div>
+                    <div class="note-quote">
+                      “虽由人作，宛自天开。”
+                    </div>
                     <p class="note-p">
-                      mote 基于纯粹的本地优先原则构建，完全遵循标准 Markdown 语法。双链解析毫秒级完成，经 5 个不同规模的测试笔记库、数万条双链全量测试，稳定顺滑。
+                      计成讲借景，讲的其实是取舍：院墙之内能造的有限，墙外能借的无穷。青山院西墙的缺口不是补不好，是故意留着的。
                     </p>
                     <div class="callout-box tip">
                       <div class="callout-title">
                         <svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"/><polyline points="22 4 12 14.01 9 11.01"/></svg>
-                        <span>即开即写，极度轻巧</span>
+                        <span>可用的三条</span>
                       </div>
-                      打开包含数万篇笔记的大型库，mote 无需预热复杂沙盒，内存常驻仅 60MB 上下，冷启动低于 0.3 秒。
+                      远借山、邻借树、仰借天光。宅院进深不够时，邻借最省力，也最不容易失败。
                     </div>
+                    <ul style="line-height:2; margin-left:20px;">
+                      <li>先定视线，再定路径，见 <a class="wiki-link">[[青山院·植物配置表]]</a></li>
+                      <li>每一处转弯留一个想看的理由</li>
+                      <li>铺装跟着 <a class="wiki-link">[[石阶与小径]]</a> 的标高走，不另起一层</li>
+                    </ul>
                   </div>
 
-                  <!-- Note Content 3 (Weekly) -->
-                  <div id="content-weekly" class="tab-content-panel" style="display:none;">
+                  <!-- Note Content 3 (Construction flow) -->
+                  <div id="content-nodes" class="tab-content-panel" style="display:none;">
                     <div class="title-ribbon">
-                      <h2 class="doc-headline">周报与复盘思考</h2>
+                      <h2 class="doc-headline">施工节点</h2>
                       <button class="backlink-badge-btn">
                         <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/></svg>
                         <span>反向链接 (2)</span>
                       </button>
                     </div>
                     <p class="note-p">
-                      多层文件夹树与双栏平滑折叠已经调优完毕，860px 黄金版心在浅色与深色下均保持极佳可读性。
+                      工序写在笔记里，工地上随时打开看。节点之间的箭头由 Mermaid 渲染，改一行字，图就跟着变。
                     </p>
-                    <ul style="line-height:2.2; margin-left:20px;">
-                      <li>完成核心解析器与反向索引模块</li>
-                      <li>引入 <a class="wiki-link">[[心流与专注]]</a> 中的沉浸式排版原则</li>
-                      <li>优化外部文件变更检测（实测 10.2ms 刷新）</li>
-                    </ul>
+                    <div class="mermaid-demo">
+                      <div class="mermaid-node">现状测绘</div>
+                      <div class="mermaid-arrow"></div>
+                      <div class="mermaid-node">地形整理</div>
+                      <div class="mermaid-arrow"></div>
+                      <div class="mermaid-node">乔灌定植</div>
+                      <div class="mermaid-arrow"></div>
+                      <div class="mermaid-node">铺装收边</div>
+                      <div class="mermaid-arrow"></div>
+                      <div class="mermaid-node">苔藓补植</div>
+                    </div>
                   </div>
 
-                  <!-- Note Content 4 (Daily) -->
-                  <div id="content-daily" class="tab-content-panel" style="display:none;">
+                  <!-- Note Content 4 (Journal) -->
+                  <div id="content-journal" class="tab-content-panel" style="display:none;">
                     <div class="title-ribbon">
-                      <h2 class="doc-headline">2026-11-22 · 随想</h2>
+                      <h2 class="doc-headline">2026-11-25 · 霜降后</h2>
                     </div>
                     <p class="note-p">
-                      晨起窗前落满初冬的银杏。打开 mote，指尖抚过温润的字间，一切繁芜杂念尽皆隐退，只留思考静静流淌。
+                      早上七点去工地，雾还没散。池边的苔藓比上周厚了一层，踩上去是软的。石阶上的水痕弯成一道弧，倒像是谁故意画上去的。
                     </p>
-                  </div>
-
-                  <!-- Note Content 5 (Shortcuts) -->
-                  <div id="content-shortcuts" class="tab-content-panel" style="display:none;">
-                    <div class="title-ribbon">
-                      <h2 class="doc-headline">macOS 原生快捷键指南</h2>
+                    <p class="note-p">
+                      回来把 <a class="wiki-link">[[青山院·植物配置表]]</a> 里苔藓的面积改了，从阳面挪到背阴，多给三平米。
+                    </p>
+                    <div class="task-item" onclick="toggleTask(this)">
+                      <span class="task-checkbox"><svg width="10" height="10" style="display:none;" fill="none" stroke="currentColor" stroke-width="3" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg></span>
+                      <span class="task-text">周末去苗圃看苔藓的成色</span>
                     </div>
-                    <p class="note-p">深度融入 macOS 原生操作直觉，指尖敲击即刻响应：</p>
-                    <ul style="list-style:none; padding-left:0; line-height:2.2;">
-                      <li><span class="key-badge">⌘ O</span> 快速打开任何笔记（毫秒级实时联想）</li>
-                      <li><span class="key-badge">⌘ ⇧ F</span> 内存级中文全文检索，毫秒级定位目标段落</li>
-                      <li><span class="key-badge">⌘ E</span> 实时预览 (Live Preview) 与只读阅读模式平滑切换</li>
-                      <li><span class="key-badge">⌘ ⇧ D</span> 切换深浅色外观，沉浸书写</li>
-                      <li><span class="key-badge">⌘ \</span> 侧边栏平滑折叠与展开</li>
-                    </ul>
                   </div>
                 </div>
 
@@ -1909,16 +2219,16 @@
                     <span style="font-size:0.75rem; color:var(--text-subtle);">按路径排序</span>
                   </div>
                   <div class="backlink-hit-item">
-                    <div class="backlink-hit-path">工作/Q4规划与思考.md</div>
-                    <div class="backlink-hit-snippet">“...在探讨文学式笔记时，我们参考了 <span class="highlight-text">[[设计理念]]</span> 中对 860px 版心的构想...”</div>
+                    <div class="backlink-hit-path">项目/石阶与小径.md</div>
+                    <div class="backlink-hit-snippet">“...两株鸡爪槭的落位与标高，见 <span class="highlight-text">[[青山院·植物配置表]]</span>...”</div>
                   </div>
                   <div class="backlink-hit-item">
-                    <div class="backlink-hit-path">项目/架构与性能.md</div>
-                    <div class="backlink-hit-snippet">“...将全部日常读写迁移至原生 Mac 工具，符合 <span class="highlight-text">[[设计理念]]</span> 的初衷...”</div>
+                    <div class="backlink-hit-path">读书/《园冶》摘记.md</div>
+                    <div class="backlink-hit-snippet">“...所谓『因借体宜』，正是 <span class="highlight-text">[[青山院·植物配置表]]</span> 里对西山缺口的处理...”</div>
                   </div>
                   <div class="backlink-hit-item">
-                    <div class="backlink-hit-path">思考/心流与专注.md</div>
-                    <div class="backlink-hit-snippet">“...双链网络不需要沉重的侧边栏，详见 <span class="highlight-text">[[设计理念]]</span> 的纽带设计...”</div>
+                    <div class="backlink-hit-path">日记/2026-11-24.md</div>
+                    <div class="backlink-hit-snippet">“...改了三次 <span class="highlight-text">[[青山院·植物配置表]]</span>，把苔藓从阳面挪到背阴...”</div>
                   </div>
                 </div>
               </div>
@@ -1958,9 +2268,9 @@
 
           <div class="principle-card">
             <span class="principle-num">02 / 绝不污染</span>
-            <h3 class="principle-title">不在库内留下私有文件</h3>
+            <h3 class="principle-title">不在库内留下私有配置</h3>
             <p class="principle-body">
-              mote 自己的配置、缓存与日志全部存放于系统标准支持目录，不向笔记库写入任何私有文件，随时换用任何编辑器打开依然完好如初。
+              mote 的配置、缓存与日志都在 macOS 的标准支持目录里。唯一写进笔记库的，是你主动粘贴的图片，存成 <code>.mote/attachments</code> 下的普通文件，随时看得见、拿得走。
             </p>
           </div>
 
@@ -1970,6 +2280,136 @@
             <p class="principle-body">
               与 Git、iCloud 或外部同步工具协同使用时，10.2ms 即可感知磁盘变化。遇到冲突绝不静默覆盖，优雅弹窗由你决定保留哪一份。
             </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Full feature coverage: three stacks -->
+    <section class="section-spacing" id="all-features">
+      <div class="container">
+        <div class="section-header">
+          <div class="section-eyebrow">Everything In One Window</div>
+          <h2 class="section-title">写、搜、管、看，都不必离开这一扇窗</h2>
+          <p class="section-desc">从已上线的功能里挑出十五件，每一件都在真实的笔记库里跑过。</p>
+        </div>
+
+        <div class="feature-stacks">
+          <div class="feature-stack">
+            <div class="feature-stack-title">书写与排版</div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2 2 7l10 5 10-5-10-5z"/><polyline points="2 12 12 17 22 12"/><polyline points="2 17 12 22 22 17"/></svg></span>
+              <div>
+                <h4>多标签页</h4>
+                <p>几篇笔记并排开着，<kbd>⌘W</kbd> 关掉当前，<kbd>Ctrl</kbd>+<kbd>Tab</kbd> 换下一个。</p>
+              </div>
+            </div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="9" y1="9" x2="9" y2="21"/></svg></span>
+              <div>
+                <h4>表格直接编辑</h4>
+                <p>渲染后的表格里点一下就能改，<kbd>Tab</kbd> 换格，<kbd>Enter</kbd> 换行。</p>
+              </div>
+            </div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M18 4H6l6 8-6 8h12"/></svg></span>
+              <div>
+                <h4>数学公式</h4>
+                <p>行内 <kbd>$…$</kbd>、块级 <kbd>$$…$$</kbd>，KaTeX 排版，光标碰到才展开源码。</p>
+              </div>
+            </div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="7" height="5" rx="1"/><rect x="14" y="16" width="7" height="5" rx="1"/><path d="M6.5 8v5a2 2 0 0 0 2 2H14"/></svg></span>
+              <div>
+                <h4>Mermaid 图表</h4>
+                <p>流程图写进笔记，打开就画出来；改一行字，图跟着变。</p>
+              </div>
+            </div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="6" width="20" height="12" rx="2"/><line x1="6" y1="10" x2="6.01" y2="10"/><line x1="10" y1="10" x2="10.01" y2="10"/><line x1="14" y1="10" x2="14.01" y2="10"/><line x1="18" y1="10" x2="18.01" y2="10"/><line x1="7" y1="14" x2="17" y2="14"/></svg></span>
+              <div>
+                <h4>格式快捷键</h4>
+                <p><kbd>⌘B</kbd> 粗体、<kbd>⌘⇧H</kbd> 高亮、<kbd>⌘K</kbd> 链接、<kbd>⌘⇧X</kbd> 删除线。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-stack">
+            <div class="feature-stack-title">链接与检索</div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/></svg></span>
+              <div>
+                <h4>双链补全</h4>
+                <p>输入 <kbd>[[</kbd> 列出笔记名，单击插入，格式跟随笔记库配置。</p>
+              </div>
+            </div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="12" y1="12" x2="12" y2="18"/><line x1="9" y1="15" x2="15" y2="15"/></svg></span>
+              <div>
+                <h4>空链接即新建</h4>
+                <p>点一个不存在的链接，按库里的新笔记位置建好，直接开始写。</p>
+              </div>
+            </div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3"/><path d="M8 12h8"/><path d="M8 8l-2.5 4L8 16"/><path d="M16 8l2.5 4L16 16"/></svg></span>
+              <div>
+                <h4>精确嵌入</h4>
+                <p><kbd>![[笔记#标题]]</kbd> 只嵌这一节，<kbd>![[笔记#^块]]</kbd> 只嵌这一段。</p>
+              </div>
+            </div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><line x1="16.5" y1="16.5" x2="21" y2="21"/></svg></span>
+              <div>
+                <h4>快速打开</h4>
+                <p><kbd>⌘O</kbd> 按文件名找笔记，一万篇的库里 8.6 毫秒出结果。</p>
+              </div>
+            </div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="4 7 4 4 20 4 20 7"/><line x1="9" y1="20" x2="15" y2="20"/><line x1="12" y1="4" x2="12" y2="20"/></svg></span>
+              <div>
+                <h4>中文全文搜索</h4>
+                <p><kbd>⌘⇧F</kbd> 子串匹配，不切词，专有名词也搜得到。</p>
+              </div>
+            </div>
+          </div>
+
+          <div class="feature-stack">
+            <div class="feature-stack-title">文件与媒体</div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg></span>
+              <div>
+                <h4>改名自动改链</h4>
+                <p>移动或改名后，指向它的双链和相对链接一起更新。</p>
+              </div>
+            </div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/></svg></span>
+              <div>
+                <h4>多窗口多库</h4>
+                <p>两个笔记库开在两扇窗里，标签与历史各管各的。</p>
+              </div>
+            </div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg></span>
+              <div>
+                <h4>图片、PDF、HTML</h4>
+                <p>都在应用内以标签页打开；HTML 走沙箱，外部链接不越界。</p>
+              </div>
+            </div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polygon points="23 7 16 12 23 17 23 7"/><rect x="1" y="5" width="15" height="14" rx="2"/></svg></span>
+              <div>
+                <h4>视频内嵌</h4>
+                <p>本地视频和 YouTube 都放在正文里播，不用跳出去。</p>
+              </div>
+            </div>
+            <div class="stack-item">
+              <span class="stack-icon"><svg width="15" height="15" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8"/><circle cx="12" cy="12" r="3"/></svg></span>
+              <div>
+                <h4>侧栏定位</h4>
+                <p><kbd>⌘⇧J</kbd> 展开目录并滚到当前笔记；中文按拼音排序。</p>
+              </div>
+            </div>
           </div>
         </div>
       </div>
@@ -2048,24 +2488,24 @@
           <div class="feature-visual-panel">
             <div class="benchmark-grid">
               <div class="metric-card">
-                <div class="metric-number">0.28s</div>
-                <div class="metric-label">冷启动时间</div>
-                <div class="metric-sub">传统笔记工具通常需 1.8s+</div>
+                <div class="metric-number">839ms</div>
+                <div class="metric-label">打开一万篇的笔记库</div>
+                <div class="metric-sub">从点开到可以书写，目标 2 秒</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-number">53ms</div>
+                <div class="metric-label">一万篇里的全文搜索</div>
+                <div class="metric-sub">5 个高频词查询的中位数，目标 200ms</div>
+              </div>
+              <div class="metric-card">
+                <div class="metric-number">8.6ms</div>
+                <div class="metric-label">快速打开每次按键</div>
+                <div class="metric-sub">落在 16ms 的一帧之内，目标 16ms</div>
               </div>
               <div class="metric-card">
                 <div class="metric-number">10.2ms</div>
-                <div class="metric-label">外部修改同步刷新</div>
-                <div class="metric-sub">远超 100ms 黄金响应基准</div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-number">0 误差</div>
-                <div class="metric-label">双链解析稳定性</div>
-                <div class="metric-sub">跨库测试全量一致</div>
-              </div>
-              <div class="metric-card">
-                <div class="metric-number">65MB</div>
-                <div class="metric-label">常驻内存消耗</div>
-                <div class="metric-sub">不到传统工具的四分之一</div>
+                <div class="metric-label">外部修改到屏幕刷新</div>
+                <div class="metric-sub">git、iCloud 改完立刻可见，目标 100ms</div>
               </div>
             </div>
           </div>
@@ -2102,13 +2542,116 @@
                 <span class="tag-pill">#多媒体支持</span>
               </div>
               <div style="background:var(--code-bg); border-radius:var(--radius-sm); padding:12px; margin-bottom:12px; font-family:var(--font-mono); font-size:0.8rem; color:var(--accent);">
-                ![[架构示意图.png|450x200]]<br/>
-                ![[读书报告.pdf]]<br/>
-                ![](https://example.com/video.mp4)
+                ![[青山院·平面图.png|450x200]]<br/>
+                ![[苗木报价.pdf]]<br/>
+                ![[现场踏勘.mov]]
               </div>
               <p style="font-size:0.88rem; color:var(--text-muted); line-height:1.6;">
                 无需依赖系统弹窗。所有图片、PDF 文档以及视频均在应用内以独立原生标签页或行内嵌入优雅预览。
               </p>
+            </div>
+          </div>
+        </div>
+        <!-- Row 4: Rich content -->
+        <div class="feature-row reverse">
+          <div class="feature-text-block">
+            <span class="feature-tag">富内容</span>
+            <h3 class="feature-heading">表格、公式、图表，笔记里直接写</h3>
+            <p class="feature-paragraph">
+              表格渲染出来还是能改的表格，公式交给 KaTeX 排版，流程图交给 Mermaid。光标碰到哪一处，哪一处才展开源码，其余时候只看见结果。
+            </p>
+            <ul class="feature-points">
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>表格单元格直接编辑，Tab 横向换格，Enter 纵向换行</span>
+              </li>
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>行内与块级公式随写随渲染，阅读模式下始终排版</span>
+              </li>
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>本地视频与 YouTube 都在正文内播放，支持尺寸与起播时间</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="feature-visual-panel">
+            <div style="background:var(--bg); border:1px solid var(--border); border-radius:var(--radius-md); padding:20px;">
+              <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:8px;">
+                <span style="font-weight:700; font-size:0.92rem;">青山院 · 植物配置</span>
+                <span class="tag-pill">#造园</span>
+              </div>
+              <table class="mock-table">
+                <thead>
+                  <tr><th>植物</th><th>花期</th><th>冠幅</th><th>数量</th></tr>
+                </thead>
+                <tbody>
+                  <tr><td>鸡爪槭</td><td>4–5 月</td><td class="num">3.5 m</td><td class="num">2 株</td></tr>
+                  <tr><td>细叶麦冬</td><td>6–8 月</td><td class="num">0.4 m</td><td class="num">46 ㎡</td></tr>
+                </tbody>
+              </table>
+              <div class="math-block">
+                土方量 <em>Q</em> = <span class="math-frac"><span class="top">L × W × H</span><span>3</span></span> ≈ 18.6 m³
+              </div>
+              <div class="mermaid-demo" style="margin:6px 0 0;">
+                <div class="mermaid-node">乔灌定植</div>
+                <div class="mermaid-arrow"></div>
+                <div class="mermaid-node">铺装收边</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Row 5: Sync -->
+        <div class="feature-row">
+          <div class="feature-text-block">
+            <span class="feature-tag">同步</span>
+            <h3 class="feature-heading">两台 Mac，像一台那样写</h3>
+            <p class="feature-paragraph">
+              mote 自带同步服务。按文件增量传输，两台机器同时改同一篇，合并后两边的字都在。不想用就关掉，本地照常读写，一个字不少。
+            </p>
+            <ul class="feature-points">
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>同时编辑同一篇，合并后不丢字、不整篇覆盖</span>
+              </li>
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>逐文件增量，附件与笔记走同一条通道</span>
+              </li>
+              <li class="feature-point-item">
+                <svg class="feature-point-icon" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M20 6L9 17l-5-5"/></svg>
+                <span>可选功能：不开同步也能完整使用，笔记始终在本地</span>
+              </li>
+            </ul>
+          </div>
+
+          <div class="feature-visual-panel">
+            <div class="sync-visual">
+              <div class="device-row">
+                <div class="device-card">
+                  <div class="device-name">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="2" y="4" width="20" height="12" rx="2"/><line x1="2" y1="20" x2="22" y2="20"/></svg>
+                    MacBook Pro
+                  </div>
+                  <div class="device-meta">青山手记 · 412 篇</div>
+                  <div class="device-state">已同步 09:41</div>
+                </div>
+                <div class="sync-arrows">⇄</div>
+                <div class="device-card">
+                  <div class="device-name">
+                    <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="4" y="2" width="16" height="12" rx="2"/><line x1="8" y1="20" x2="16" y2="20"/><line x1="12" y1="14" x2="12" y2="20"/></svg>
+                    Mac mini
+                  </div>
+                  <div class="device-meta">青山手记 · 412 篇</div>
+                  <div class="device-state">已同步 09:41</div>
+                </div>
+              </div>
+              <div class="merge-card">
+                <span class="merge-tag">合并结果</span><br>
+                两台机器同时改了「施工节点」：一台写下「铺装前复测标高」，另一台补了「格栅尺寸」。合并后两段都在，没有一行被覆盖。
+              </div>
             </div>
           </div>
         </div>
@@ -2133,9 +2676,10 @@
 
             <div class="preset-btns-group">
               <span style="font-size:0.8rem; color:var(--text-subtle);">快速示例：</span>
-              <button class="preset-btn active" onclick="loadPlaygroundPreset('card')">知识卡片</button>
-              <button class="preset-btn" onclick="loadPlaygroundPreset('callout')">Callouts</button>
-              <button class="preset-btn" onclick="loadPlaygroundPreset('tasks')">待办计划</button>
+              <button class="preset-btn active" data-preset="card" onclick="loadPlaygroundPreset('card')">知识卡片</button>
+              <button class="preset-btn" data-preset="callout" onclick="loadPlaygroundPreset('callout')">Callouts</button>
+              <button class="preset-btn" data-preset="tasks" onclick="loadPlaygroundPreset('tasks')">待办计划</button>
+              <button class="preset-btn" data-preset="table" onclick="loadPlaygroundPreset('table')">表格与公式</button>
             </div>
           </div>
 
@@ -2185,17 +2729,17 @@
                 <td>
                   <span class="table-badge-winner">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                    0.28s 极速启动，常驻仅 ~65MB
+                    一万篇的库 839ms 打开，立刻可写
                   </span>
                 </td>
-                <td>依赖沉重沙盒与复杂插件层，启动迟缓 (~300MB+)</td>
+                <td>依赖沉重沙盒与复杂插件层，打开大库要等</td>
               </tr>
               <tr>
                 <td><strong>中文全文检索</strong></td>
                 <td>
                   <span class="table-badge-winner">
                     <svg width="14" height="14" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
-                    内存级纯文本子串匹配，12ms 定位，零漏词
+                    纯文本子串匹配，一万篇 53ms 定位，不漏词
                   </span>
                 </td>
                 <td>外部分词库易对专有中文词汇漏检或断词</td>
@@ -2261,16 +2805,32 @@
             <span class="key-badge">⌘ ⇧ D</span>
           </div>
           <div class="shortcut-card">
+            <span style="font-size:0.92rem; font-weight:600;">切换楷体/黑体</span>
+            <span class="key-badge">⌘ ⇧ K</span>
+          </div>
+          <div class="shortcut-card">
             <span style="font-size:0.92rem; font-weight:600;">收起/展开文件树</span>
             <span class="key-badge">⌘ \</span>
+          </div>
+          <div class="shortcut-card">
+            <span style="font-size:0.92rem; font-weight:600;">在侧栏定位当前笔记</span>
+            <span class="key-badge">⌘ ⇧ J</span>
           </div>
           <div class="shortcut-card">
             <span style="font-size:0.92rem; font-weight:600;">前后历史导航</span>
             <span class="key-badge">⌘ ⌥ ← / →</span>
           </div>
           <div class="shortcut-card">
-            <span style="font-size:0.92rem; font-weight:600;">关闭当前标签页</span>
-            <span class="key-badge">⌘ W</span>
+            <span style="font-size:0.92rem; font-weight:600;">显示下一个标签页</span>
+            <span class="key-badge">Ctrl Tab</span>
+          </div>
+          <div class="shortcut-card">
+            <span style="font-size:0.92rem; font-weight:600;">加粗 / 高亮</span>
+            <span class="key-badge">⌘ B / ⌘ ⇧ H</span>
+          </div>
+          <div class="shortcut-card">
+            <span style="font-size:0.92rem; font-weight:600;">插入链接</span>
+            <span class="key-badge">⌘ K</span>
           </div>
         </div>
       </div>
@@ -2282,7 +2842,7 @@
         <div class="section-header">
           <div class="section-eyebrow">Get Started Now</div>
           <h2 class="section-title">下载 mote for Mac</h2>
-          <p class="section-desc">当前稳定版本 v1.0.6 · 支持 macOS 12.0+ (Monterey, Ventura, Sonoma, Sequoia)</p>
+          <p class="section-desc">当前稳定版本 v1.0.10 · 支持 macOS 12.0+ (Monterey, Ventura, Sonoma, Sequoia)</p>
         </div>
 
         <div class="download-grid">
@@ -2296,7 +2856,7 @@
             </svg>
             <h3 class="download-arch-name">Apple Silicon</h3>
             <p class="download-arch-desc">专为 M1 / M2 / M3 / M4 芯片深度调优，瞬时冷启，极度省电。</p>
-            <a href="https://github.com/toywen/mote-mac/releases/download/v1.0.6/mote-1.0.6-arm64.dmg" class="btn-download-card">
+            <a href="https://github.com/toywen/mote-mac/releases/download/v1.0.10/mote-1.0.10-arm64.dmg" class="btn-download-card">
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
               <span>下载 .dmg (ARM64)</span>
             </a>
@@ -2311,7 +2871,7 @@
             </svg>
             <h3 class="download-arch-name">Intel 架构</h3>
             <p class="download-arch-desc">适配基于 Intel Core 处理器的旧款 Mac 机型，运行稳定流畅。</p>
-            <a href="https://github.com/toywen/mote-mac/releases/download/v1.0.6/mote-1.0.6.dmg" class="btn-download-card">
+            <a href="https://github.com/toywen/mote-mac/releases/download/v1.0.10/mote-1.0.10.dmg" class="btn-download-card">
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
               <span>下载 .dmg (x64)</span>
             </a>
@@ -2326,7 +2886,7 @@
             </svg>
             <h3 class="download-arch-name">Universal 通用包</h3>
             <p class="download-arch-desc">包含双架构原生二进制，跨设备迁移或分发的不二之选。</p>
-            <a href="https://github.com/toywen/mote-mac/releases/download/v1.0.6/mote-1.0.6-universal.dmg" class="btn-download-card">
+            <a href="https://github.com/toywen/mote-mac/releases/download/v1.0.10/mote-1.0.10-universal.dmg" class="btn-download-card">
               <svg width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4M7 10l5 5 5-5M12 15V3"/></svg>
               <span>下载 .dmg (Universal)</span>
             </a>
@@ -2366,7 +2926,7 @@
           <div>
             <div class="footer-col-title">产品</div>
             <ul class="footer-list">
-              <li><a href="#features">功能特性</a></li>
+              <li><a href="#all-features">功能特性</a></li>
               <li><a href="#philosophy">设计哲学</a></li>
               <li><a href="#comparison">深度对比</a></li>
               <li><a href="#download">下载 macOS 版</a></li>
@@ -2449,19 +3009,18 @@
     });
 
     const tabPanels = {
-      philosophy: document.getElementById('content-philosophy'),
-      architecture: document.getElementById('content-architecture'),
-      weekly: document.getElementById('content-weekly'),
-      daily: document.getElementById('content-daily'),
-      shortcuts: document.getElementById('content-shortcuts')
+      plants: document.getElementById('content-plants'),
+      yuanzhi: document.getElementById('content-yuanzhi'),
+      nodes: document.getElementById('content-nodes'),
+      journal: document.getElementById('content-journal')
     };
 
     function switchMockupTab(tabKey) {
-      // If panel doesn't exist, default to philosophy
-      const targetKey = tabPanels[tabKey] ? tabKey : 'philosophy';
+      // If panel doesn't exist, default to plants
+      const targetKey = tabPanels[tabKey] ? tabKey : 'plants';
 
       // Update tab buttons
-      ['philosophy', 'architecture', 'weekly', 'daily'].forEach(key => {
+      ['plants', 'yuanzhi', 'nodes', 'journal'].forEach(key => {
         const btn = document.getElementById('tab-btn-' + key);
         if (btn) btn.classList.toggle('active', key === targetKey);
       });
@@ -2506,31 +3065,41 @@
 
     // 4. Interactive Live Playground
     const playgroundPresets = {
-      card: `## 认知与知识复利
+      card: `## 造园的一点点心得
 
-在知识网络中，每一个观念都不应是一座孤岛。通过 [[双向链接]] 与灵活的反向索引，笔记可以像突触般自然生长。
+一座小院不必大，要紧的是让人愿意停下来。山石、水面、一株鸡爪槭，各就各位，院子就活了。
 
-- 保持最小概念卡片：一事一记
-- 沉浸式阅读与反思：==定期回溯反向链接==
-- 专注心流：不被冗长侧边栏分心
+- 先定视线，再定路径
+- 每一处转弯留一个 **想看的理由**
+- ==借来的景，比造出来的景更耐看==
 
-> “博观而约取，厚积而薄发。”`,
+> 虽由人作，宛自天开。 —— 计成《园冶》`,
 
-      callout: `[!note] 设计的不妥协
-mote 的所有代码均经过严格的基准回归测试，确保在成千上万篇笔记的大型库中依然保持 0 阻塞。
+      callout: `[!note] 借景的三种做法
+远借山、邻借树、仰借天光。宅院进深不够时，邻借最省力。
 
-[!tip] 快捷操作小窍门
-按下 \`Cmd + O\` 即可瞬间调出快速打开窗口，支持拼音与模糊匹配。
+[!tip] 一个小技巧
+秋分前后站在池东，向西看，太阳正好落进院墙的缺口。
 
-[!warning] 外部修改提醒
-即使第三方程序强行修改了正在编辑的文档，mote 也会立即锁死保存流并提示比对。`,
+[!warning] 容易返工的地方
+铺装前一定要复测标高，苔藓一旦铺下就很难再翻。`,
 
-      tasks: `### 今日专注计划
+      tasks: `### 今日工地清单
 
-- [x] 重构知识图谱的底层索引结构
-- [x] 测试 Markdown 表格行内编辑与即时对齐
-- [ ] 导出周报并整理反向链接网络
-- [ ] 享受无干扰的书写之夜`
+- [x] 复测现状标高
+- [x] 定植鸡爪槭两株
+- [ ] 铺装收边
+- [ ] 与木作师傅核对格栅尺寸`,
+
+      table: `## 苗木清单
+
+| 植物 | 花期 | 冠幅 | 数量 |
+| --- | --- | --- | --- |
+| 鸡爪槭 | 4–5 月 | 3.5 m | 2 株 |
+| 细叶麦冬 | 6–8 月 | 0.4 m | 46 ㎡ |
+| 苔藓 | — | — | 12 ㎡ |
+
+土方量按棱台估算：$Q = (L × W × H) ÷ 3 ≈ 18.6 m³$。`
     };
 
     const playgroundInput = document.getElementById('playground-input');
@@ -2542,6 +3111,34 @@ mote 的所有代码均经过严格的基准回归测试，确保在成千上万
         .replace(/&/g, '&amp;')
         .replace(/</g, '&lt;')
         .replace(/>/g, '&gt;');
+
+      // Tables: header row followed by a separator row
+      const lines = html.split('\n');
+      const withTables = [];
+      for (let i = 0; i < lines.length; i++) {
+        if (/^\s*\|.*\|\s*$/.test(lines[i]) && /^\s*\|[\s:|-]+\|\s*$/.test(lines[i + 1] || '')) {
+          const head = lines[i].trim().slice(1, -1).split('|').map(s => s.trim());
+          i += 2;
+          const rows = [];
+          while (i < lines.length && /^\s*\|.*\|\s*$/.test(lines[i])) {
+            rows.push(lines[i].trim().slice(1, -1).split('|').map(s => s.trim()));
+            i++;
+          }
+          i--;
+          withTables.push(
+            '<table class="mock-table"><thead><tr>' + head.map(h => '<th>' + h + '</th>').join('') +
+            '</tr></thead><tbody>' + rows.map(r => '<tr>' + r.map(c => '<td>' + c + '</td>').join('') + '</tr>').join('') +
+            '</tbody></table>'
+          );
+        } else {
+          withTables.push(lines[i]);
+        }
+      }
+      html = withTables.join('\n');
+
+      // Math: block then inline
+      html = html.replace(/\$\$([^$]+)\$\$/g, '<div class="math-block">$1</div>');
+      html = html.replace(/\$([^$\n]+)\$/g, '<span style="font-family:var(--font-mono); font-size:0.94em;">$1</span>');
 
       // Headings
       html = html.replace(/^### (.*$)/gim, '<h3 style="font-size:1.25rem; font-weight:700; margin:14px 0 8px;">$1</h3>');
@@ -2578,7 +3175,7 @@ mote 的所有代码均经过严格的基准回归测试，确保在成千上万
       html = html.split('\n\n').map(p => {
         p = p.trim();
         if (!p) return '';
-        if (p.startsWith('<h') || p.startsWith('<div') || p.startsWith('<blockquote') || p.startsWith('<li')) return p;
+        if (p.startsWith('<h') || p.startsWith('<div') || p.startsWith('<blockquote') || p.startsWith('<li') || p.startsWith('<table')) return p;
         return `<p style="margin-bottom:12px; line-height:1.75;">${p}</p>`;
       }).join('');
 
@@ -2595,10 +3192,7 @@ mote 的所有代码均经过严格的基准回归测试，确保在成千上万
       playgroundInput.value = playgroundPresets[key];
       updatePlayground();
       document.querySelectorAll('.preset-btns-group .preset-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.textContent.toLowerCase().includes(key) || 
-          (key === 'card' && btn.textContent.includes('卡片')) ||
-          (key === 'callout' && btn.textContent.includes('Callouts')) ||
-          (key === 'tasks' && btn.textContent.includes('待办')));
+        btn.classList.toggle('active', btn.dataset.preset === key);
       });
     }
 
