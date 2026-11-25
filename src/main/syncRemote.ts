@@ -45,7 +45,7 @@ export interface RemoteSocket {
 
 export type RemoteConfig = {
   serverUrl: string
-  /** The service's self-signed certificate. Required for https. */
+  /** Pins https to this one certificate. Without it https trusts the system's authorities. */
   certPem?: string
   token: string
   vaultId: string
@@ -71,13 +71,14 @@ export class RemoteError extends Error {
 export const HEARTBEAT_MS = 30_000
 const IDLE_TIMEOUT_MS = 60_000
 
-/** The sync service over HTTPS and a WebSocket, both pinned to `certPem`. `http://` is for local tests. */
+/** The sync service over HTTP or HTTPS and a WebSocket. https is pinned to `certPem` when one is given. */
 export function createRemote(config: RemoteConfig, heartbeatMs = HEARTBEAT_MS): Remote {
   const base = new URL(config.serverUrl)
   const secure = base.protocol === 'https:'
-  if (!secure && base.protocol !== 'http:') throw new Error('同步服务地址要以 https:// 开头')
-  if (secure && !config.certPem) throw new Error('https 同步服务需要证书')
-  const tls = secure ? pinned(config.certPem!) : {}
+  if (!secure && base.protocol !== 'http:') {
+    throw new Error('同步服务地址要以 http:// 或 https:// 开头')
+  }
+  const tls = secure && config.certPem ? pinned(config.certPem) : {}
   const agent = secure
     ? new https.Agent({ keepAlive: true, ...tls })
     : new http.Agent({ keepAlive: true })

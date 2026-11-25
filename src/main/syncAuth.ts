@@ -1,10 +1,9 @@
 import * as http from 'node:http'
 import * as https from 'node:https'
 import { parseLoginResponse, parseRegistration, type VaultId } from 'mote-sync-protocol'
-import { pinned } from './syncRemote'
 
-/** Where the account lives. The certificate is the pinned one, as for every other request. */
-export type AuthTarget = { serverUrl: string; certPem?: string }
+/** Where the account lives. */
+export type AuthTarget = { serverUrl: string }
 
 export type AuthCall =
   | { kind: 'register'; username: string; password: string }
@@ -87,9 +86,9 @@ function post(
 ): Promise<{ status: number; body: string }> {
   const base = new URL(target.serverUrl)
   const secure = base.protocol === 'https:'
-  if (!secure && base.protocol !== 'http:') throw new Error('同步服务地址要以 https:// 开头')
-  if (secure && !target.certPem) throw new Error('https 同步服务需要证书')
-  const tls = secure ? pinned(target.certPem!) : {}
+  if (!secure && base.protocol !== 'http:') {
+    throw new Error('同步服务地址要以 http:// 或 https:// 开头')
+  }
   const body = Buffer.from(JSON.stringify(value))
   const url = new URL(path, base)
   return new Promise((resolve, reject) => {
@@ -97,8 +96,7 @@ function post(
       url,
       {
         method: 'POST',
-        headers: { 'content-type': 'application/json', 'content-length': body.length },
-        ...tls
+        headers: { 'content-type': 'application/json', 'content-length': body.length }
       },
       (res) => {
         const chunks: Buffer[] = []

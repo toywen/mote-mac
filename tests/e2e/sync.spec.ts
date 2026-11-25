@@ -1,7 +1,7 @@
 import { test, expect } from '@playwright/test'
 import { execFile, execFileSync } from 'node:child_process'
 import { existsSync } from 'node:fs'
-import { mkdir, mkdtemp } from 'node:fs/promises'
+import { mkdir, mkdtemp, writeFile } from 'node:fs/promises'
 import { createServer } from 'node:net'
 import { tmpdir } from 'node:os'
 import { join, resolve } from 'node:path'
@@ -79,15 +79,18 @@ test('sign up, sign in, go offline and come back', async () => {
   const port = await freePort()
   let server = await startServer(data, port)
 
+  // The address is not typed in the window. settings.json names it.
+  const address = `http://127.0.0.1:${port}`
+  await mkdir(settings, { recursive: true })
+  await writeFile(join(settings, 'settings.json'), JSON.stringify({ syncServerUrl: address }))
+
   const app = await launch(settings)
   const window = await app.firstWindow()
   await openVault(app, window, vault)
 
-  // First run: there is no address yet, so 高级 is already open.
   await window.getByRole('button', { name: /打开同步设置/ }).click()
   const panel = window.getByRole('dialog', { name: '同步设置' })
-  const address = `http://127.0.0.1:${port}`
-  await panel.getByLabel('服务器地址').fill(address)
+  await expect(panel.locator('.sync-server')).toHaveText(`服务器：${address}`)
   await panel.getByLabel('用户名').fill('e2e-user')
   await panel.getByLabel('密码').fill('correct horse')
   await panel.getByRole('button', { name: '注册' }).click()

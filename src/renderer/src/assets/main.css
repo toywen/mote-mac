@@ -1766,20 +1766,6 @@ svg.lucide {
   border-color: var(--accent);
 }
 
-.sync-row {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  flex-wrap: wrap;
-}
-
-.sync-fingerprint {
-  font-family: var(--font-mono);
-  font-size: 11px;
-  color: var(--t3);
-  overflow-wrap: anywhere;
-}
-
 .sync-error {
   margin: 0;
   color: var(--danger);
@@ -1792,35 +1778,12 @@ svg.lucide {
   font-size: 12px;
 }
 
-.sync-advanced {
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-  border-top: 1px solid var(--border);
-  padding-top: 10px;
-}
-
-.sync-advanced summary {
-  cursor: pointer;
-  font-size: 12px;
+.sync-server {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 11px;
   color: var(--t3);
-  list-style: none;
-}
-
-.sync-advanced summary::-webkit-details-marker {
-  display: none;
-}
-
-.sync-advanced summary::before {
-  content: '▸ ';
-}
-
-.sync-advanced[open] summary::before {
-  content: '▾ ';
-}
-
-.sync-advanced[open] summary {
-  margin-bottom: 2px;
+  overflow-wrap: anywhere;
 }
 
 .sync-account {

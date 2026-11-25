@@ -39,4 +39,5 @@ ADR（Architecture Decision Record）是架构决策记录。每个文件记一�
 | [0026](0026-sync-storage-layout.md)                                       | 同步服务用 SQLite 存元数据，内容按哈希存磁盘              | 已接受                       |
 | [0027](0027-no-backup-in-v1.md)                                           | 同步第一版不做自动备份                                    | 已接受，替代 0022 的备份部分 |
 | [0028](0028-protocol-package-name.md)                                     | 协议包的 npm 名改用 mote-sync-protocol                    | 已接受，替代 0023 的包名部分 |
-| [0029](0029-public-registration-and-login.md)                             | 同步服务公开注册，用户用用户名和密码登录                  | 已接受，替代 0025 的登录部分 |
+| [0029](0029-public-registration-and-login.md)                             | 同步服务公开注册，用户用用户名和密码登录                  | 被 0030 替代（证书部分）     |
+| [0030](0030-plain-http-and-address-in-settings-file.md)                   | 现阶段同步走 HTTP，服务器地址放在配置文件                 | 已实现，替代 0029 的证书部分 |

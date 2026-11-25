@@ -87,9 +87,8 @@ export type FontMode = 'kai' | 'hei'
 
 // Sync settings as the window sees them. The device token stays in main, encrypted at rest.
 export type SyncSettingsView = {
+  /** From settings.json or the built-in default. Empty when the configured one is not valid. */
   serverUrl: string
-  certPem?: string
-  fingerprint: string | null
   /** The signed-in account's username. Absent before the first sign-in. */
   account?: string
   vaultId?: string
@@ -108,8 +107,6 @@ export type SyncStatusEvent = SyncStatusView & { dir: string }
 
 // A sign-in, a sign-up or a password reset. The window never sees the device token.
 export type SyncAuthInput = {
-  serverUrl: string
-  certPem?: string
   username: string
   password: string
   /** Only for a reset. */
@@ -213,7 +210,6 @@ export interface MoteApi {
   syncRegister(input: SyncAuthInput): Promise<SyncAuthResult>
   syncRecover(input: SyncAuthInput): Promise<SyncAuthResult>
   clearSyncSettings(): Promise<SyncSettingsView>
-  chooseSyncCert(): Promise<string | null>
   getSyncStatus(dir: string): Promise<SyncStatusView>
   confirmSyncDeletions(dir: string): Promise<void>
   onSyncStatus(callback: (status: SyncStatusEvent) => void): () => void
@@ -260,7 +256,6 @@ export const channels = {
   syncRegister: 'mote:sync-register',
   syncRecover: 'mote:sync-recover',
   clearSyncSettings: 'mote:clear-sync-settings',
-  chooseSyncCert: 'mote:choose-sync-cert',
   getSyncStatus: 'mote:get-sync-status',
   confirmSyncDeletions: 'mote:confirm-sync-deletions',
   syncStatus: 'mote:sync-status'

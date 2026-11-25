@@ -50,11 +50,11 @@
 | `src/main/fileProtocol.ts`   | `mote-file://` 的处理函数。只返回当前笔记库里的图片文件                                                                                                                           |
 | `src/main/notes.ts`          | 扫描文件和读取笔记。不引用 Electron，`tools/` 里的脚本也直接用它                                                                                                                  |
 | `src/main/sync.ts`           | 同步模块：上传、下载、合并、冲突文件、删除保护、断线重连。只经 `Vault` 读写笔记库。不引用 Electron，`tools/sync-sim.mjs` 直接跑它                                                 |
-| `src/main/syncRemote.ts`     | 同步服务的客户端：HTTPS 请求和 WebSocket，两处都做证书固定。`Remote` 接口让测试换成假的同步服务                                                                                   |
+| `src/main/syncRemote.ts`     | 同步服务的客户端：HTTP 或 HTTPS 请求和 WebSocket。给了证书时两处都做证书固定，现阶段应用不给（ADR 0030）。`Remote` 接口让测试换成假的同步服务                                     |
 | `src/main/syncState.ts`      | 同步状态表的读写。先写临时文件再改名，读不出或属于别的服务器时当作空表                                                                                                            |
 | `src/main/syncController.ts` | 管一个笔记库的 `Sync`：读设置启动、设置变了先停再起、把状态推给显示这个笔记库的窗口。写不进去时把问题写进状态行                                                                   |
-| `src/main/syncCert.ts`       | 服务器地址的校验、PEM 证书的指纹（SHA-256，和 openssl 一致）                                                                                                                      |
-| `src/main/syncAuth.ts`       | 注册、登录、用找回码改密码。和同步请求一样做证书固定，拿到的设备令牌交给主进程保存，不进窗口                                                                                       |                                                                                                                      |
+| `src/main/syncServer.ts`     | 同步服务的地址：内置的默认地址，`settings.json` 里 `syncServerUrl` 的读取和校验                                                                                                   |
+| `src/main/syncAuth.ts`       | 注册、登录、用找回码改密码。拿到的设备令牌交给主进程保存，不进窗口                                                                                                                |
 
 | `src/preload/` | 用 `contextBridge` 暴露 `window.mote` |
 | `src/renderer/src/workspace.ts` | 渲染进程的状态：当前笔记库、多标签页列表、打开的笔记和它的状态机 |

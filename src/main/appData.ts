@@ -6,9 +6,8 @@ import type { JournalHandler, RenameJournal } from './vault'
 
 const settingsFile = (): string => join(app.getPath('userData'), 'settings.json')
 
+/** The signed-in session. The server address is not part of it; see `syncServerUrl`. */
 export type SyncSettings = {
-  serverUrl: string
-  certPem?: string
   /** The device token, encrypted by the system keychain. Never stored in clear. */
   tokenCipher: string
   /** The signed-in account, for the panel to show who is connected. */
@@ -20,6 +19,8 @@ export type AppSettings = {
   lastVault?: string
   theme?: ThemeSource
   font?: FontMode
+  /** The sync service to use instead of the deployed one. Set by hand in settings.json. */
+  syncServerUrl?: string
   sync?: SyncSettings
 }
 

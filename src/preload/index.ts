@@ -81,7 +81,6 @@ const mote: MoteApi = {
   syncRegister: (input) => ipcRenderer.invoke(channels.syncRegister, input),
   syncRecover: (input) => ipcRenderer.invoke(channels.syncRecover, input),
   clearSyncSettings: () => ipcRenderer.invoke(channels.clearSyncSettings),
-  chooseSyncCert: () => ipcRenderer.invoke(channels.chooseSyncCert),
   getSyncStatus: (dir) => ipcRenderer.invoke(channels.getSyncStatus, dir),
   confirmSyncDeletions: (dir) => ipcRenderer.invoke(channels.confirmSyncDeletions, dir),
   onSyncStatus: (callback) => {

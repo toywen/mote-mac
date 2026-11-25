@@ -12,18 +12,15 @@ type Mode = 'login' | 'register' | 'recover'
 
 /**
  * The sync panel. A user types a username and a password, and that is the whole job: the device
- * token, the vault id and the certificate never come back to the window. The server address and
- * the certificate live under 高级, for the self-signed service that runs before the public one.
+ * token and the vault id never come back to the window. The server address is not typed here:
+ * main reads it from settings.json, or uses the deployed service.
  */
 export function SyncSettings({ dir, onClose }: Props): React.JSX.Element {
   const [view, setView] = useState<SyncSettingsView | null>(null)
-  const [serverUrl, setServerUrl] = useState('')
-  const [certPem, setCertPem] = useState('')
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [recoveryCode, setRecoveryCode] = useState('')
   const [mode, setMode] = useState<Mode>('login')
-  const [advanced, setAdvanced] = useState(false)
   const [issued, setIssued] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [busy, setBusy] = useState(false)
@@ -34,11 +31,7 @@ export function SyncSettings({ dir, onClose }: Props): React.JSX.Element {
     void window.mote?.getSyncSettings().then((settings) => {
       if (!live) return
       setView(settings)
-      setServerUrl(settings.serverUrl)
-      setCertPem(settings.certPem ?? '')
       setUsername(settings.account ?? '')
-      // Without an address there is nowhere to sign in, so show where it goes straight away.
-      setAdvanced(!settings.serverUrl)
     })
     void window.mote?.getSyncStatus(dir).then((next) => {
       if (live) setStatus(next)
@@ -57,8 +50,6 @@ export function SyncSettings({ dir, onClose }: Props): React.JSX.Element {
     setError(null)
     try {
       const input: SyncAuthInput = {
-        serverUrl,
-        certPem: certPem.trim() || undefined,
         username,
         password,
         recoveryCode: mode === 'recover' ? recoveryCode : undefined
@@ -98,50 +89,13 @@ export function SyncSettings({ dir, onClose }: Props): React.JSX.Element {
     }
   }
 
-  async function pickCert(): Promise<void> {
-    const pem = await window.mote!.chooseSyncCert()
-    if (pem) setCertPem(pem)
-  }
-
   const detail = syncStatusDetail(status)
   const signedIn = view?.hasToken === true
 
-  const advancedFields = (
-    <details
-      className="sync-advanced"
-      open={advanced}
-      onToggle={(event) => setAdvanced(event.currentTarget.open)}
-    >
-      <summary>高级</summary>
-      <label className="sync-field">
-        <span>服务器地址</span>
-        <input
-          value={serverUrl}
-          placeholder="https://1.2.3.4:8443"
-          onChange={(event) => setServerUrl(event.target.value)}
-        />
-      </label>
-      <label className="sync-field">
-        <span>证书（PEM）</span>
-        <textarea
-          value={certPem}
-          rows={4}
-          spellCheck={false}
-          placeholder="公共证书不用填，自签证书填在这里"
-          onChange={(event) => setCertPem(event.target.value)}
-        />
-      </label>
-      <div className="sync-row">
-        <button type="button" className="sync-button" onClick={() => void pickCert()}>
-          从文件选择证书
-        </button>
-        {view?.fingerprint && (
-          <code className="sync-fingerprint" title="证书的 SHA-256 指纹">
-            {view.fingerprint}
-          </code>
-        )}
-      </div>
-    </details>
+  const server = (
+    <p className="sync-server" title="在 settings.json 的 syncServerUrl 里改">
+      {view?.serverUrl ? `服务器：${view.serverUrl}` : 'settings.json 里的 syncServerUrl 不对'}
+    </p>
   )
 
   return (
@@ -171,7 +125,7 @@ export function SyncSettings({ dir, onClose }: Props): React.JSX.Element {
             <p className="sync-account">
               已登录：<strong>{view?.account ?? '本账户'}</strong>
             </p>
-            {advancedFields}
+            {server}
             <p className="sync-state" role="status">
               {syncStatusText(status)}
               {detail ? `，${detail}` : ''}
@@ -214,7 +168,7 @@ export function SyncSettings({ dir, onClose }: Props): React.JSX.Element {
                 }}
               />
             </label>
-            {advancedFields}
+            {server}
             {error && (
               <p className="sync-error" role="alert">
                 {error}

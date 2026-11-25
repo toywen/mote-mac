@@ -33,7 +33,7 @@ import { Vault } from './vault'
 import { getJournalHandler, openToken, readSettings, sealToken, writeSettings } from './appData'
 import type { SyncSettings } from './appData'
 import { SyncController } from './syncController'
-import { checkServerUrl, colonFingerprint, fingerprintOf, parseCert } from './syncCert'
+import { syncServerOf } from './syncServer'
 import { authenticate, type AuthSession } from './syncAuth'
 import { registerUpdaterIpc, Updater } from './updater'
 import { buildApplicationMenu } from './menu'
@@ -130,9 +130,16 @@ function syncControllerFor(dir: string): SyncController | null {
 async function applySyncSettings(dir: string): Promise<SyncStatusView> {
   const controller = syncControllerFor(dir)
   if (!controller) return { state: 'unset', pending: 0 }
-  const sync = (await readSettings()).sync
+  const settings = await readSettings()
+  const sync = settings.sync
   if (!sync) {
     await controller.apply(null)
+    return controller.status()
+  }
+  const server = syncServerOf(settings.syncServerUrl)
+  if (!server.ok) {
+    await controller.apply(null)
+    controller.fail(server.error)
     return controller.status()
   }
   const token = openToken(sync.tokenCipher)
@@ -142,32 +149,23 @@ async function applySyncSettings(dir: string): Promise<SyncStatusView> {
     return controller.status()
   }
   await controller.apply({
-    serverUrl: sync.serverUrl,
-    certPem: sync.certPem,
+    serverUrl: server.url,
     token,
     vaultId: sync.vaultId
   })
   return controller.status()
 }
 
-function syncView(sync?: SyncSettings): SyncSettingsView {
-  if (!sync) return { serverUrl: '', fingerprint: null, hasToken: false }
-  let fingerprint: string | null = null
-  if (sync.certPem) {
-    try {
-      fingerprint = colonFingerprint(fingerprintOf(sync.certPem))
-    } catch {
-      fingerprint = null
-    }
-  }
-  return {
-    serverUrl: sync.serverUrl,
-    certPem: sync.certPem,
-    fingerprint,
-    account: sync.account,
-    vaultId: sync.vaultId,
-    hasToken: true
-  }
+function syncView(serverUrl: string, sync?: SyncSettings): SyncSettingsView {
+  if (!sync) return { serverUrl, hasToken: false }
+  return { serverUrl, account: sync.account, vaultId: sync.vaultId, hasToken: true }
+}
+
+/** What the panel shows: the address in use, and who is signed in. */
+async function currentSyncView(): Promise<SyncSettingsView> {
+  const settings = await readSettings()
+  const server = syncServerOf(settings.syncServerUrl)
+  return syncView(server.ok ? server.url : '', settings.sync)
 }
 
 ipcMain.handle(channels.getVault, (event) => {
@@ -239,31 +237,12 @@ ipcMain.handle(channels.newWindow, async (event, dir?: string) => {
   await createWindow(targetDir)
 })
 
-ipcMain.handle(channels.getSyncSettings, async (): Promise<SyncSettingsView> => {
-  return syncView((await readSettings()).sync)
-})
-
-/** Checks the server address and certificate a sign-in carries, the same way a save did. */
-function checkAuthTarget(
-  input: SyncAuthInput
-): { ok: true; url: string; certPem?: string } | { ok: false; error: string } {
-  const url = checkServerUrl(input.serverUrl)
-  if (!url.ok) return url
-  const certPem = input.certPem?.trim() || undefined
-  if (url.url.startsWith('https:') && !certPem) {
-    return { ok: false, error: 'https 地址要填证书' }
-  }
-  if (certPem) {
-    const parsed = parseCert(certPem)
-    if (!parsed.ok) return parsed
-  }
-  return { ok: true, url: url.url, certPem }
-}
+ipcMain.handle(channels.getSyncSettings, currentSyncView)
 
 /** Saves the session the service issued, starts sync, and says what the window should show. */
 async function signIn(
   dir: string,
-  target: { url: string; certPem?: string },
+  serverUrl: string,
   session: AuthSession
 ): Promise<SyncAuthResult> {
   const controller = syncControllerFor(dir)
@@ -275,14 +254,11 @@ async function signIn(
     return { ok: false, error: error instanceof Error ? error.message : String(error) }
   }
   await controller.apply({
-    serverUrl: target.url,
-    certPem: target.certPem,
+    serverUrl,
     token: session.token,
     vaultId: session.vaultId
   })
   const next: SyncSettings = {
-    serverUrl: target.url,
-    certPem: target.certPem,
     tokenCipher,
     account: session.username,
     vaultId: controller.resolvedVaultId()
@@ -292,30 +268,26 @@ async function signIn(
   if (status.state === 'error') {
     return { ok: false, error: status.lastError ?? '连不上同步服务' }
   }
-  return { ok: true, settings: syncView(next), recoveryCode: session.recoveryCode }
+  return { ok: true, settings: syncView(serverUrl, next), recoveryCode: session.recoveryCode }
 }
 
-/** The part every sign-in shares: check the target, call the service, then connect. */
-function handleAuth(
+/** The part every sign-in shares: find the service, call it, then connect. */
+async function handleAuth(
   event: IpcMainInvokeEvent,
   input: SyncAuthInput,
-  call: (
-    target: { serverUrl: string; certPem?: string },
-    value: SyncAuthInput
-  ) => Promise<AuthSession>
+  call: (target: { serverUrl: string }, value: SyncAuthInput) => Promise<AuthSession>
 ): Promise<SyncAuthResult> {
   const dir = vaultDirByWebContentsId.get(event.sender.id)
-  if (!dir) return Promise.resolve({ ok: false, error: '先打开一个笔记库' })
-  const checked = checkAuthTarget(input)
-  if (!checked.ok) return Promise.resolve(checked)
-  if (!input.username.trim()) return Promise.resolve({ ok: false, error: '请填写用户名' })
-  if (!input.password) return Promise.resolve({ ok: false, error: '请填写密码' })
-  return call({ serverUrl: checked.url, certPem: checked.certPem }, input)
-    .then((session) => signIn(dir, { url: checked.url, certPem: checked.certPem }, session))
-    .catch((error: unknown) => ({
-      ok: false as const,
-      error: error instanceof Error ? error.message : String(error)
-    }))
+  if (!dir) return { ok: false, error: '先打开一个笔记库' }
+  const server = syncServerOf((await readSettings()).syncServerUrl)
+  if (!server.ok) return server
+  if (!input.username.trim()) return { ok: false, error: '请填写用户名' }
+  if (!input.password) return { ok: false, error: '请填写密码' }
+  try {
+    return await signIn(dir, server.url, await call({ serverUrl: server.url }, input))
+  } catch (error) {
+    return { ok: false, error: error instanceof Error ? error.message : String(error) }
+  }
 }
 
 ipcMain.handle(channels.syncLogin, (event, input: SyncAuthInput) =>
@@ -353,20 +325,7 @@ ipcMain.handle(channels.syncRecover, (event, input: SyncAuthInput) =>
 ipcMain.handle(channels.clearSyncSettings, async (): Promise<SyncSettingsView> => {
   await writeSettings({ sync: undefined })
   await Promise.all([...syncControllers.values()].map((controller) => controller.apply(null)))
-  return syncView(undefined)
-})
-
-ipcMain.handle(channels.chooseSyncCert, async (event): Promise<string | null> => {
-  const win = BrowserWindow.fromWebContents(event.sender) ?? BrowserWindow.getFocusedWindow()
-  if (!win) return null
-  const choice = await dialog.showOpenDialog(win, {
-    title: '选择同步服务的证书',
-    properties: ['openFile'],
-    filters: [{ name: '证书', extensions: ['pem', 'crt', 'cer'] }]
-  })
-  const file = choice.filePaths[0]
-  if (choice.canceled || !file) return null
-  return await readFile(file, 'utf8')
+  return currentSyncView()
 })
 
 ipcMain.handle(
