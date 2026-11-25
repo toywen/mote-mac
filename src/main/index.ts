@@ -18,6 +18,8 @@ import { fileScheme } from '../core/fileUrl'
 import {
   channels,
   type ContentHash,
+  fontModes,
+  nextFont,
   type FontMode,
   type SyncAuthInput,
   type SyncAuthResult,
@@ -455,7 +457,7 @@ ipcMain.handle(channels.setFont, async (_event, font: FontMode): Promise<FontMod
 })
 
 ipcMain.handle(channels.toggleFont, async (): Promise<FontMode> => {
-  currentFont = currentFont === 'kai' ? 'hei' : 'kai'
+  currentFont = nextFont(currentFont)
   await writeSettings({ font: currentFont })
   for (const win of windows) {
     if (!win.isDestroyed()) win.webContents.send(channels.fontChanged, currentFont)
@@ -593,7 +595,7 @@ app.whenReady().then(async () => {
     if (settings.theme === 'light' || settings.theme === 'dark' || settings.theme === 'system') {
       nativeTheme.themeSource = settings.theme
     }
-    if (settings.font === 'kai' || settings.font === 'hei') {
+    if (settings.font && fontModes.includes(settings.font)) {
       currentFont = settings.font
     }
   } catch {

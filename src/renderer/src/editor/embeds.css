@@ -1,7 +1,7 @@
 /* Embedded notes. Colors come from the variables in assets/main.css. */
 
 .mote-embed {
-  border-left: 3px solid var(--quote);
+  border-left: 2px solid var(--quote);
   padding: 2px 0 2px 12px;
   margin: 4px 0;
 }

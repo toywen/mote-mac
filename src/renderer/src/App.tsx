@@ -2,27 +2,22 @@ import {
   ArrowUpDown,
   BookOpen,
   Check,
-  ChevronDown,
-  ChevronUp,
   ExternalLink,
   FilePlus,
   FolderOpen,
   FolderPlus,
-  Link2,
   Locate,
-  Moon,
   PanelLeft,
   PencilLine,
   RefreshCw,
   Search,
-  Sun,
   X
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { EditorView } from '@codemirror/view'
 import { FileTree, type FileTreeHandle } from './FileTree'
 import { type SortOrder } from './tree'
-import { type FontMode } from '../../core/ipc'
+import { nextFont, type FontMode } from '../../core/ipc'
 import type { SyncStatusView } from '../../core/ipc'
 import { groupHits } from '../../core/hits'
 import { buildLinkIndex } from '../../core/resolve'
@@ -170,7 +165,7 @@ function App(): React.JSX.Element {
         if (window.mote?.toggleFont) {
           void window.mote.toggleFont()
         } else {
-          setFontMode((f) => (f === 'kai' ? 'hei' : 'kai'))
+          setFontMode(nextFont)
         }
       } else if (event.metaKey && !event.shiftKey && !event.altKey && event.code === 'KeyW') {
         event.preventDefault()
@@ -284,7 +279,7 @@ function App(): React.JSX.Element {
           if (window.mote?.toggleFont) {
             void window.mote.toggleFont()
           } else {
-            setFontMode((f) => (f === 'kai' ? 'hei' : 'kai'))
+            setFontMode(nextFont)
           }
           break
         case 'toggle-theme':
@@ -535,16 +530,10 @@ function App(): React.JSX.Element {
                 title={`反向链接 (${backlinks.hits.length})`}
                 aria-expanded={backlinksOpen}
               >
-                <Link2 size={12} strokeWidth={1.6} />
                 <span className="hit-count" role="status" aria-label="反向链接数">
                   {backlinks.hits.length}
                 </span>
                 <span>处引用</span>
-                {backlinksOpen ? (
-                  <ChevronUp size={11} strokeWidth={1.8} />
-                ) : (
-                  <ChevronDown size={11} strokeWidth={1.8} />
-                )}
               </button>
             )}
             {doc && (doc.kind === 'html' || doc.kind === 'image' || doc.kind === 'pdf') && (
@@ -573,15 +562,6 @@ function App(): React.JSX.Element {
                 )}
               </button>
             )}
-            <button
-              className="icon-button theme-toggle"
-              type="button"
-              title={isDark ? '切换到浅色外观（⌘⇧D）' : '切换到深色外观（⌘⇧D）'}
-              aria-label={isDark ? '切换到浅色外观' : '切换到深色外观'}
-              onClick={() => void window.mote?.toggleTheme?.()}
-            >
-              {isDark ? <Sun size={16} strokeWidth={1.5} /> : <Moon size={16} strokeWidth={1.5} />}
-            </button>
           </div>
         </header>
         <UpdateNotification />

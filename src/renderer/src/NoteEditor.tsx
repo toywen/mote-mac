@@ -7,7 +7,7 @@ import {
   Transaction,
   type Text
 } from '@codemirror/state'
-import { EditorView, keymap, drawSelection } from '@codemirror/view'
+import { EditorView, keymap, drawSelection, highlightActiveLine } from '@codemirror/view'
 import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { VaultInfo, VaultPath } from '../../core/ipc'
 import { sourceText, type LineFormat } from '../../core/text'
@@ -108,6 +108,7 @@ export function NoteEditor({
       extensions: [
         lineFormat,
         drawSelection(),
+        highlightActiveLine(),
         access.current.of([]),
         resolve.current.of([]),
         noteView(),

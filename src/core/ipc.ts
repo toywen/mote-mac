@@ -83,7 +83,14 @@ export type ThemeState = {
   shouldUseDarkColors: boolean
 }
 
-export type FontMode = 'kai' | 'hei'
+export type FontMode = 'kai' | 'song' | 'hei'
+
+// The body font cycles in this order. Kai is the default.
+export const fontModes: readonly FontMode[] = ['kai', 'song', 'hei']
+
+export function nextFont(font: FontMode): FontMode {
+  return fontModes[(fontModes.indexOf(font) + 1) % fontModes.length]
+}
 
 // Sync settings as the window sees them. The device token stays in main, encrypted at rest.
 export type SyncSettingsView = {

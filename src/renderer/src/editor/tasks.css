@@ -6,13 +6,40 @@
   vertical-align: baseline;
 }
 
+/* A small cell pressed into the paper. Checked, it fills with the accent and the tick is paper. */
 .mote-task-box input {
-  width: 1em;
-  height: 1em;
-  margin: 0 0.4em 0 0;
-  vertical-align: -0.12em;
-  accent-color: var(--accent);
+  appearance: none;
+  box-sizing: border-box;
+  width: 0.94em;
+  height: 0.94em;
+  margin: 0 0.46em 0 0;
+  vertical-align: -0.1em;
+  border: 1px solid var(--task-border);
+  border-radius: 2.5px;
+  background: var(--task-background);
+  box-shadow: var(--task-shadow);
   cursor: pointer;
+  transition:
+    background-color 140ms ease,
+    border-color 140ms ease;
+}
+
+.mote-task-box input:hover {
+  border-color: var(--muted);
+}
+
+.mote-task-box input:checked {
+  background: var(--accent) var(--task-check) center / 76% no-repeat;
+  border-color: color-mix(in srgb, var(--accent) 72%, black);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.2),
+    inset 0 -1px 1px rgba(31, 30, 28, 0.24),
+    0 1px 1px rgba(31, 30, 28, 0.08);
+}
+
+.mote-task-box input:focus-visible {
+  outline: 1.5px solid var(--accent);
+  outline-offset: 1px;
 }
 
 /* In a bullet list the checkbox takes the bullet's place: the bullet keeps its width but not
@@ -29,4 +56,5 @@
 .mote-task-done {
   color: var(--muted);
   text-decoration: line-through;
+  text-decoration-color: color-mix(in srgb, var(--text) 30%, transparent);
 }

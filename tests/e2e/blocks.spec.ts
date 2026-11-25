@@ -42,7 +42,7 @@ function changedBytes(a: Buffer, b: Buffer): { at: number; was: number; now: num
 test('callouts, tables and task checkboxes render, and a checkbox click changes one byte', async () => {
   const { app, window, vault } = await start()
   try {
-    // Callouts: the [!type] marks hide, the title shows, and each kind has Obsidian's color.
+    // Callouts: the [!type] marks hide, the title shows, and every kind has the accent color.
     const callouts = await openNote(window, 'callout')
     await expect.poll(() => callouts.innerText()).not.toContain('[!')
     const titles = ['笔记', '信息', '提示', '重要', '注意', '危险', '示例', '引言']
@@ -51,9 +51,7 @@ test('callouts, tables and task checkboxes render, and a checkbox click changes 
       await expect(line(callouts, title)).toHaveCount(1)
       border[title] = await style(line(callouts, title), 'border-left-color')
     }
-    expect(border['提示']).toBe(border['重要'])
-    expect(border['笔记']).toBe(border['信息'])
-    expect(new Set(Object.values(border)).size).toBe(6)
+    expect(new Set(Object.values(border)).size).toBe(1)
     expect(await style(line(callouts, '提示正文'), 'border-left-color')).toBe(border['提示'])
     expect(await style(line(callouts, '未知类型像笔记'), 'border-left-color')).toBe(border['笔记'])
     const quote = await style(line(callouts, '普通引用不是 callout。'), 'border-left-color')

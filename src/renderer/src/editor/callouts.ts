@@ -21,27 +21,25 @@ import { lineAt, type PreviewItem, type Renderer } from './preview'
 import { quoteRenderers } from './quotes'
 import './callouts.css'
 
-// callouts.css defines each color as --mote-callout-<color>, once for light and once for dark.
-type CalloutColor = 'blue' | 'cyan' | 'green' | 'orange' | 'red' | 'purple' | 'gray'
-
-type CalloutKind = { color: CalloutColor; icon: IconNode }
+// Every kind uses the accent color, as ink on paper does. Only the icon tells kinds apart.
+type CalloutKind = { icon: IconNode }
 
 // Ported from Obsidian 1.15.1 app.css: one .callout[data-callout=...] rule per kind, with its
-// --callout-color and --callout-icon. A rule's other names are aliases of its kind.
+// --callout-icon. A rule's other names are aliases of its kind.
 const kinds: [string[], CalloutKind][] = [
-  [['note'], { color: 'blue', icon: Pencil }],
-  [['abstract', 'summary', 'tldr'], { color: 'cyan', icon: ClipboardList }],
-  [['info'], { color: 'blue', icon: Info }],
-  [['todo'], { color: 'blue', icon: CircleCheck }],
-  [['tip', 'hint', 'important'], { color: 'cyan', icon: Flame }],
-  [['success', 'check', 'done'], { color: 'green', icon: Check }],
-  [['question', 'help', 'faq'], { color: 'orange', icon: CircleQuestionMark }],
-  [['warning', 'caution', 'attention'], { color: 'orange', icon: TriangleExclamationPoint }],
-  [['failure', 'fail', 'missing'], { color: 'red', icon: X }],
-  [['danger', 'error'], { color: 'red', icon: Zap }],
-  [['bug'], { color: 'red', icon: Bug }],
-  [['example'], { color: 'purple', icon: List }],
-  [['quote', 'cite'], { color: 'gray', icon: Quote }]
+  [['note'], { icon: Pencil }],
+  [['abstract', 'summary', 'tldr'], { icon: ClipboardList }],
+  [['info'], { icon: Info }],
+  [['todo'], { icon: CircleCheck }],
+  [['tip', 'hint', 'important'], { icon: Flame }],
+  [['success', 'check', 'done'], { icon: Check }],
+  [['question', 'help', 'faq'], { icon: CircleQuestionMark }],
+  [['warning', 'caution', 'attention'], { icon: TriangleExclamationPoint }],
+  [['failure', 'fail', 'missing'], { icon: X }],
+  [['danger', 'error'], { icon: Zap }],
+  [['bug'], { icon: Bug }],
+  [['example'], { icon: List }],
+  [['quote', 'cite'], { icon: Quote }]
 ]
 
 const kindOf = new Map(kinds.flatMap(([names, kind]) => names.map((name) => [name, kind] as const)))
@@ -74,15 +72,11 @@ class HeaderWidget extends WidgetType {
 
 const lines = new Map<string, Decoration>()
 
-function calloutLine(color: CalloutColor, edge: string): Decoration {
-  const key = `${color} ${edge}`
-  let line = lines.get(key)
+function calloutLine(edge: string): Decoration {
+  let line = lines.get(edge)
   if (!line) {
-    line = Decoration.line({
-      class: `mote-callout ${edge}`.trim(),
-      attributes: { style: `--mote-callout-color: var(--mote-callout-${color})` }
-    })
-    lines.set(key, line)
+    line = Decoration.line({ class: `mote-callout ${edge}`.trim() })
+    lines.set(edge, line)
   }
   return line
 }
@@ -104,9 +98,7 @@ const blockquote: Renderer = (node, cx) => {
   const item: PreviewItem = { reveal: first, always: [], concealed: [] }
   for (let n = start; n <= end; n++) {
     const edge = [n === start && 'mote-callout-title', n === end && 'mote-callout-last']
-    item.always.push(
-      calloutLine(kind.color, edge.filter(Boolean).join(' ')).range(doc.line(n).from)
-    )
+    item.always.push(calloutLine(edge.filter(Boolean).join(' ')).range(doc.line(n).from))
   }
   const titled = header.marks.to < first.to - node.from
   const widget = new HeaderWidget(kind, titled ? null : header.title)

@@ -3,9 +3,9 @@
 .editor-content .cm-tooltip.cm-tooltip-autocomplete {
   background: var(--background);
   color: var(--text);
-  border: 1px solid var(--border);
+  border: 1px solid var(--edge);
   border-radius: 6px;
-  box-shadow: 0 8px 24px rgb(0 0 0 / 0.2);
+  box-shadow: var(--float-shadow);
   overflow: hidden;
 }
 

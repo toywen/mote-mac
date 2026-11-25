@@ -102,7 +102,7 @@
 
 .fm-card-body {
   padding: 10px 14px;
-  border-top: 1px dashed var(--border);
+  border-top: 1px solid var(--border);
   background: var(--background);
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
@@ -125,10 +125,7 @@
   width: 72px;
   flex-shrink: 0;
   font-size: 11px;
-  color: var(--t3);
-  font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.02em;
+  color: var(--muted);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
