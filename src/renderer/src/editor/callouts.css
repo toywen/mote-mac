@@ -27,7 +27,7 @@
 .cm-content .cm-line.mote-callout {
   border-left: 3px solid var(--mote-callout-color);
   background: color-mix(in srgb, var(--mote-callout-color) 10%, transparent);
-  padding-left: 14px;
+  --mote-inset: 14px;
   padding-right: 12px;
 }
 .cm-content .cm-line.mote-callout-title {
@@ -41,7 +41,7 @@
 
 /* A plain quote inside a callout keeps the callout's border and draws its own bar inside. */
 .cm-content .cm-line.mote-callout.mote-quote {
-  padding-left: 28px;
+  --mote-inset: 28px;
   background:
     linear-gradient(var(--quote), var(--quote)) 14px 0 / 3px 100% no-repeat,
     color-mix(in srgb, var(--mote-callout-color) 10%, transparent);

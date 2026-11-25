@@ -98,7 +98,6 @@
 .cm-content .cm-line.mote-list {
   --mote-list-step: 1.4em;
   --mote-list-indent: calc(var(--mote-list-depth) * var(--mote-list-step));
-  padding-left: calc(6px + var(--mote-list-indent));
   text-indent: calc(-1 * var(--mote-list-indent));
 }
 .mote-list-prefix,
@@ -123,9 +122,9 @@
 }
 
 .cm-content .cm-line.mote-quote {
+  --mote-inset: 14px;
   border-left: 2.5px solid var(--quote);
   background: var(--hover);
-  padding-left: 14px;
   color: var(--text);
   border-radius: 0 6px 6px 0;
 }
@@ -168,4 +167,11 @@
   border-bottom: 1px solid var(--border);
   border-bottom-left-radius: 6px;
   border-bottom-right-radius: 6px;
+}
+
+/* The one left padding for list, quote and callout lines: the block's inset plus the list's
+   indent, so a list inside a quote or callout hangs inside its border. It comes after the code
+   block's rule, so a code block inside a quote keeps the quote's inset. */
+.cm-content .cm-line:is(.mote-list, .mote-quote, .mote-callout) {
+  padding-left: calc(var(--mote-inset, 6px) + var(--mote-list-indent, 0px));
 }
