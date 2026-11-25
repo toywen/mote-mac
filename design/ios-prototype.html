@@ -1,5 +1,5 @@
 <!doctype html>
-<html lang="zh-CN" data-theme="light" data-font="kai">
+<html lang="zh-CN" data-theme="light">
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
@@ -19,7 +19,7 @@
     --glass: rgba(252, 251, 248, 0.76);
     --page: #e6e2d8; --kb: #d3d0c9; --key: #ffffff; --key2: #b5b1a8;
     --font-kai: 'Kaiti SC', 'STKaiti', 'Songti SC', 'STSong', Georgia, serif;
-    --font-ui: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+    --font-ui: var(--font-kai);
     --mono: ui-monospace, 'SF Mono', Menlo, 'PingFang SC', monospace;
     --font-body: var(--font-kai); --font-heading: var(--font-kai);
     --fs: 16.5px;
@@ -38,7 +38,6 @@
     --glass: rgba(38, 37, 33, 0.74);
     --page: #0e0d0c; --kb: #2b2a27; --key: #5a5750; --key2: #3d3b36;
   }
-  html[data-font='hei'] { --font-body: var(--font-ui); --font-heading: var(--font-ui); }
 
   * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
   button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; }
@@ -80,7 +79,7 @@
 
   /* ---------- 屏幕和转场 ---------- */
   #screens { position: absolute; inset: 0; overflow: hidden; }
-  .screen { position: absolute; inset: 0; padding-top: 54px; display: flex; flex-direction: column; background: var(--sbg, var(--bg)); z-index: 2;
+  .screen { position: absolute; inset: 0; padding-top: 48px; display: flex; flex-direction: column; background: var(--sbg, var(--bg)); z-index: 2;
     transition: transform 0.36s var(--ease), opacity 0.3s; }
   .screen.from-right { transform: translateX(100%); }
   .screen.to-left, .screen.from-left { transform: translateX(-28%); opacity: 0.5; z-index: 1; }
@@ -94,40 +93,40 @@
   .scroll.editing { padding-bottom: 350px; }
 
   /* ---------- 顶部导航 ---------- */
-  .nav { flex: none; height: 44px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 8px; position: relative; background: var(--sbg, var(--bg)); z-index: 4; }
+  .nav { flex: none; height: 38px; display: grid; grid-template-columns: 1fr auto 1fr; align-items: center; padding: 0 8px; position: relative; background: var(--sbg, var(--bg)); z-index: 4; }
   .nav::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 1px; background: var(--line); opacity: 0; transition: opacity 0.2s; }
   .nav.scrolled::after { opacity: 1; }
   .nl { justify-self: start; display: flex; align-items: center; min-width: 0; }
   .nr { justify-self: end; display: flex; align-items: center; gap: 2px; }
-  .nc { max-width: 168px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; font-weight: 600; opacity: 0; transition: opacity 0.2s; }
+  .nc { max-width: 168px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font: 600 17px var(--font-heading); opacity: 0; transition: opacity 0.2s; }
   .nav.titled .nc, .nav.always .nc { opacity: 1; }
   .back { display: flex; align-items: center; color: var(--accent); font-size: 16px; padding: 6px 8px 6px 0; }
   .back span { max-width: 96px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .tbtn { font-size: 16px; color: var(--accent); padding: 6px 10px; border-radius: 99px; }
   .tbtn.strong { font-weight: 600; }
-  .ibtn { width: 38px; height: 38px; display: grid; place-items: center; color: var(--accent); border-radius: 50%; }
+  .ibtn { width: 36px; height: 36px; display: grid; place-items: center; color: var(--accent); border-radius: 50%; }
   .ibtn:active, .tbtn:active, .back:active { opacity: 0.5; }
-  .vault { display: flex; align-items: center; gap: 4px; margin-left: 6px; padding: 6px 9px 6px 12px; border-radius: 99px; background: var(--fill); font-size: 14px; font-weight: 600; }
+  .vault { display: flex; align-items: center; gap: 4px; margin-left: 6px; padding: 6px 9px 6px 12px; border-radius: 99px; background: var(--fill); font: 600 15px var(--font-heading); }
   .vault svg { color: var(--faint); }
-  .sync { display: flex; align-items: center; gap: 5px; padding-right: 10px; font-size: 12.5px; color: var(--faint); }
 
   /* ---------- 列表 ---------- */
-  .lt { font: 700 34px/1.2 var(--font-heading); padding: 4px 20px 2px; letter-spacing: 0.5px; }
-  .lsub { font-size: 13px; color: var(--faint); padding: 3px 21px 4px; }
-  .sec { font-size: 12.5px; font-weight: 600; letter-spacing: 0.6px; color: var(--faint); padding: 22px 21px 6px; }
+  .lsub { font-size: 13px; color: var(--faint); padding: 8px 20px 4px; }
+  .sec { font-size: 12.5px; font-weight: 600; letter-spacing: 0.6px; color: var(--faint); padding: 22px 20px 6px; }
+  .scroll > .sec:first-child { padding-top: 14px; }
   .row { position: relative; padding: 13px 20px; cursor: pointer; }
   .row::after { content: ''; position: absolute; left: 20px; right: 0; bottom: 0; height: 1px; background: var(--line); }
   .row:active { background: var(--hover); }
   .rt { font: 600 17.5px/1.35 var(--font-heading); }
-  .rs { font-size: 13.5px; line-height: 1.5; color: var(--muted); margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
+  .rs { font-family: var(--font-body); font-size: 14.5px; line-height: 1.5; color: var(--muted); margin-top: 3px; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; }
   .rm { font-size: 12px; color: var(--faint); margin-top: 6px; }
-  .row.f { display: flex; align-items: center; gap: 14px; min-height: 62px; padding: 9px 20px; }
+  .row.f { display: flex; align-items: center; gap: 14px; min-height: 58px; padding: 8px 20px; }
+  .row.f .fi { background: none; }
   .row.f::after { left: 70px; right: 20px; }
   .row.f:last-child::after, .row.f:has(+ :not(.row))::after { display: none; }
   .fi { flex: none; width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; background: var(--fill); color: var(--muted); }
-  .fi.dir { background: var(--folder-bg); color: var(--folder); }
-  .fn { flex: 1; min-width: 0; font-size: 16.5px; font-weight: 500; line-height: 1.3; letter-spacing: 0.1px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .fn small { display: block; font-size: 12.5px; font-weight: 400; color: var(--faint); margin-top: 3px; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; }
+  .fi.dir { background: none; color: var(--folder); }
+  .fn { flex: 1; min-width: 0; font: 600 17.5px/1.3 var(--font-heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .fn small { display: block; font: 400 12.5px var(--font-ui); color: var(--faint); margin-top: 3px; letter-spacing: 0; overflow: hidden; text-overflow: ellipsis; }
   .fx { flex: none; display: flex; align-items: center; font-size: 12.5px; color: var(--faint); font-variant-numeric: tabular-nums; }
   .fx svg { opacity: 0.7; margin-right: -4px; }
   .empty { padding: 56px 40px; text-align: center; font-size: 14px; line-height: 1.7; color: var(--faint); }
@@ -135,49 +134,54 @@
   mark { background: var(--hl); color: inherit; border-radius: 3px; padding: 0 1px; }
 
   /* ---------- 搜索 ---------- */
-  .sbox { display: flex; align-items: center; gap: 9px; margin: 10px 20px 12px; height: 42px; padding: 0 12px 0 13px; border-radius: 13px; background: var(--fill); color: var(--faint); }
+  .sbox { display: flex; align-items: center; gap: 9px; margin: 2px 20px 14px; height: 40px; padding: 0; border-bottom: 1px solid var(--line); color: var(--faint); }
   .sbox input { flex: 1; min-width: 0; font-size: 16px; color: var(--text); user-select: text; -webkit-user-select: text; }
   .sbox input::placeholder { color: var(--faint); }
-  .clr { width: 20px; height: 20px; border-radius: 50%; background: var(--faint); color: var(--bg); display: grid; place-items: center; }
+  .clr { width: 20px; height: 20px; border-radius: 50%; background: none; color: var(--faint); display: grid; place-items: center; }
   .clr[hidden] { display: none; }
   .seg { display: flex; padding: 2px; border-radius: 10px; background: var(--fill); }
   .seg button { flex: 1; height: 30px; border-radius: 8px; font-size: 13.5px; color: var(--muted); white-space: nowrap; padding: 0 10px; }
   .seg button.on { background: var(--card); color: var(--text); font-weight: 600; box-shadow: 0 1px 3px rgba(0, 0, 0, 0.13); }
   html[data-theme='dark'] .seg button.on { background: #55524b; }
-  .search .seg { margin: 0 20px; }
-  .search .seg button { height: 31px; font-size: 13px; }
   .hit { padding: 12px 20px 10px; position: relative; }
   .hit::after { content: ''; position: absolute; left: 20px; right: 0; bottom: 0; height: 1px; background: var(--line); }
   .hit-h { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
   .hit-h b { font: 600 17px var(--font-heading); }
   .hit-h span { font-size: 12px; color: var(--faint); flex: none; }
-  .hl { font-size: 14px; line-height: 1.55; color: var(--muted); padding: 6px 10px; margin: 6px -10px 0; border-radius: 10px; cursor: pointer; }
+  .hl { font-family: var(--font-body); font-size: 15px; line-height: 1.55; color: var(--muted); padding: 6px 10px; margin: 6px -10px 0; border-radius: 10px; cursor: pointer; }
   .hl:active { background: var(--hover); }
 
   /* ---------- 设置 ---------- */
   .gh { font-size: 12.5px; font-weight: 600; letter-spacing: 0.6px; color: var(--faint); padding: 26px 21px 8px; }
-  .grp { margin: 0 20px; border: 1px solid var(--line); border-radius: 18px; background: var(--card); overflow: hidden; }
-  .grp > * + * { border-top: 1px solid var(--line); }
-  .set { display: flex; align-items: center; gap: 13px; min-height: 56px; padding: 10px 16px; font-size: 16px; }
-  .set[data-act] { cursor: pointer; }
-  .set[data-act]:active { background: var(--hover); }
-  .set .grow { flex: 1; min-width: 0; line-height: 1.3; }
-  .set .grow b { font-weight: 600; }
-  .set small { display: block; font-size: 12.5px; color: var(--faint); margin-top: 3px; }
-  .set .v { flex: none; display: flex; align-items: center; gap: 6px; color: var(--faint); font-size: 14px; }
-  .set .v svg { opacity: 0.7; margin-right: -4px; }
-  .set .ok { width: 7px; height: 7px; border-radius: 50%; background: var(--tag); }
-  .set .seg { width: 156px; flex: none; }
-  .pick { padding: 14px 16px 15px; }
-  .pick-l { font-size: 16px; margin-bottom: 12px; }
-  .tiles { display: flex; gap: 12px; }
-  .tile { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 8px; font-size: 13px; color: var(--muted); }
-  .tile.on { color: var(--text); font-weight: 600; }
-  .pv { width: 100%; height: 60px; border-radius: 12px; border: 1px solid var(--line2); display: flex; flex-direction: column; justify-content: center; gap: 5px; padding: 0 13px; transition: box-shadow 0.15s; }
-  .tile.on .pv { box-shadow: 0 0 0 2px var(--card), 0 0 0 3.5px var(--ink); }
-  .pv i { display: block; height: 3px; border-radius: 2px; background: currentColor; opacity: 0.32; }
-  .pv i:first-child { height: 5px; width: 42%; opacity: 0.85; }
-  .pv.ch { align-items: center; background: var(--fill); border-color: transparent; font-size: 27px; color: var(--text); font-weight: 400; }
+  .scroll > .gh:first-child { padding-top: 12px; }
+  .srow { position: relative; display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 54px; margin: 0 20px; border-bottom: 1px solid var(--line); font-size: 16px; }
+  .srow:has(+ .gh), .srow:has(+ .foot) { border-bottom: 0; }
+  .fx .ok { width: 7px; height: 7px; border-radius: 50%; background: var(--tag); margin-right: 6px; }
+  .srow[data-act] { cursor: pointer; }
+  .srow[data-act]:not(.open):active { opacity: 0.55; }
+  .srow.open .v { color: var(--text); }
+  .menu { position: absolute; right: -6px; top: 46px; z-index: 8; min-width: 150px; padding: 5px; border-radius: 14px; background: var(--card);
+    box-shadow: 0 0 0 0.5px var(--line2), 0 12px 32px rgba(40, 30, 10, 0.18); transform-origin: top right; animation: pop 0.16s var(--ease); }
+  html[data-theme='dark'] .menu { background: #2f2d28; box-shadow: 0 0 0 0.5px var(--line2), 0 12px 32px rgba(0, 0, 0, 0.5); }
+  .menu button { display: flex; width: 100%; align-items: center; justify-content: space-between; height: 42px; padding: 0 10px 0 12px; border-radius: 10px; font-size: 16px; color: var(--text); }
+  .menu button.on { font-weight: 600; }
+  .menu button:active { background: var(--fill); }
+  @keyframes pop { from { opacity: 0; transform: scale(0.94); } }
+  @media (prefers-reduced-motion: reduce) { .menu { animation: none; } }
+  .srow .v { display: flex; align-items: center; gap: 4px; color: var(--faint); font-size: 15px; }
+  .srow .v svg { opacity: 0.7; margin-right: -4px; }
+  .srow .v .ok { width: 7px; height: 7px; border-radius: 50%; background: var(--tag); margin-right: 3px; }
+  .fn.ui { font: 500 16.5px/1.3 var(--font-ui); }
+  .scroll > .srow:first-child { margin-top: 6px; }
+  .lede { margin: 14px 20px 10px; font-size: 14.5px; line-height: 1.6; color: var(--muted); }
+  .field { display: block; width: calc(100% - 40px); margin: 0 20px; height: 54px; border-bottom: 1px solid var(--line); font-size: 16.5px; user-select: text; -webkit-user-select: text; }
+  .field::placeholder { color: var(--faint); }
+  .field:focus { border-bottom-color: var(--ink); }
+  .pbtn { display: block; width: calc(100% - 40px); margin: 26px 20px 0; height: 50px; border-radius: 14px; background: var(--ink); color: var(--on-ink); font-size: 16.5px; font-weight: 600; }
+  .pbtn:active { opacity: 0.8; }
+  .tlink { display: block; margin: 8px auto 0; padding: 12px 16px; font-size: 14.5px; color: var(--muted); }
+  .tlink.danger { margin-top: 22px; color: var(--danger); font-size: 16px; }
+  .foot { padding: 30px 20px 0; font-size: 12.5px; color: var(--faint); text-align: center; }
 
   /* ---------- 笔记 ---------- */
   .nt { font: 700 30px/1.25 var(--font-heading); padding: 6px 22px 0; }
@@ -205,10 +209,10 @@
   .num { flex: none; min-width: 21px; text-align: right; color: var(--faint); font: 0.9em/1.95 var(--font-ui); }
   .b-quote { border-left: 3px solid var(--line2); padding: 1px 0 1px 14px; color: var(--muted); }
   .b-callout { padding: 12px 14px; border-radius: 12px; background: var(--accent-soft); font-size: 0.95em; }
-  .ct { font: 600 0.88em var(--font-ui); color: var(--accent); margin-bottom: 3px; }
+  .ct { font: 600 0.95em var(--font-heading); color: var(--accent); margin-bottom: 3px; }
   .b-code pre { padding: 12px 14px; border-radius: 10px; background: var(--code); font: 13px/1.6 var(--mono); overflow-x: auto; }
   .tw { overflow-x: auto; border: 1px solid var(--line); border-radius: 10px; }
-  table { width: 100%; border-collapse: collapse; font: 14px var(--font-ui); }
+  table { width: 100%; border-collapse: collapse; font: 0.92em var(--font-body); }
   th, td { padding: 9px 12px; text-align: left; white-space: nowrap; border-bottom: 1px solid var(--line); }
   th { background: var(--bg2); color: var(--muted); font-weight: 600; }
   tr:last-child td { border-bottom: 0; }
@@ -264,7 +268,7 @@
   .sheet.on { transform: none; box-shadow: 0 -10px 40px rgba(0, 0, 0, 0.22); }
   .grab { width: 38px; height: 5px; border-radius: 3px; background: var(--line2); margin: 9px auto 0; flex: none; }
   .sh { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 12px 12px 8px 22px; }
-  .sh b { font-size: 17px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sh b { font: 600 18px var(--font-heading); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
   .sh button { flex: none; width: 32px; height: 32px; border-radius: 50%; background: var(--fill); color: var(--muted); display: grid; place-items: center; }
   .sb { overflow-y: auto; scrollbar-width: none; }
   .mi { display: flex; align-items: center; gap: 15px; padding: 14px 22px; font-size: 16.5px; cursor: pointer; }
@@ -279,7 +283,7 @@
   .bl:active { background: var(--hover); }
   .bl b { font: 600 16.5px var(--font-heading); color: var(--accent); }
   .bl i { font-style: normal; font-size: 12px; color: var(--faint); margin-left: 8px; }
-  .bl p { font-size: 14px; line-height: 1.55; color: var(--muted); margin-top: 4px; }
+  .bl p { font-family: var(--font-body); font-size: 15px; line-height: 1.55; color: var(--muted); margin-top: 4px; }
   .dwrap { position: absolute; inset: 0; z-index: 40; display: grid; place-items: center; background: rgba(0, 0, 0, 0.32); opacity: 0; pointer-events: none; transition: opacity 0.2s; }
   .dwrap.on { opacity: 1; pointer-events: auto; }
   .dlg { width: 286px; border-radius: 22px; background: var(--card); overflow: hidden; text-align: center; transform: scale(1.06); transition: transform 0.25s var(--ease); }
@@ -294,26 +298,26 @@
   .toast { position: absolute; left: 50%; bottom: 106px; z-index: 45; transform: translate(-50%, 12px); padding: 9px 16px; border-radius: 99px; background: rgba(34, 32, 28, 0.92); color: #fff; font-size: 13.5px; white-space: nowrap; opacity: 0; pointer-events: none; transition: opacity 0.22s, transform 0.22s; }
   .toast.on { opacity: 1; transform: translate(-50%, 0); }
   .phone.kb .toast { bottom: 330px; }
+  .status span { font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', sans-serif; }
 </style>
 </head>
 <body>
 <div class="page">
   <aside>
     <div class="brand">mote iOS 原型<span>第 2 版</span></div>
-    <p class="lead">底部有 4 个 tab 和一个新建按钮。手机里的每个地方都可以点。</p>
+    <p class="lead">底部有 3 个 tab 和一个新建按钮。手机里的每个地方都可以点。</p>
     <h4>跳到</h4>
     <div class="jumps">
       <button data-jump="recent">最近</button><button data-jump="files">文件</button><button data-jump="search">搜索</button><button data-jump="fulltext">全文搜索</button><button data-jump="settings">设置</button><button data-jump="note">笔记 · 阅读</button><button data-jump="edit">笔记 · 编辑</button><button data-jump="backlinks">反向链接</button>
     </div>
     <h4>外观</h4>
     <div class="seg" id="side-theme"></div>
-    <div class="seg" id="side-font"></div>
     <h4>可以试的操作</h4>
     <ul>
       <li>点笔记里的双链，跳到那篇笔记。橙色的双链指向还不存在的笔记，点它会新建。</li>
       <li>点「编辑」，再点任意一行。这一行显示 Markdown 源码，可以直接打字。</li>
       <li>长按（或右键）列表里的笔记：改名、移动、删除。改名会更新指向它的双链。</li>
-      <li>在「搜索」里切到「全文」，输入中文。点结果会跳到那一行。</li>
+      <li>点「最近」右上角的搜索按钮，输入中文。笔记名和正文一起找，点结果会跳到那一行。</li>
       <li>再点一次当前 tab，回到这个 tab 的第一页。</li>
     </ul>
   </aside>
@@ -331,7 +335,6 @@
         <div class="tabs">
           <button class="tab" data-act="tab" data-tab="recent"><i data-ic="clock"></i><span>最近</span></button>
           <button class="tab" data-act="tab" data-tab="files"><i data-ic="folder"></i><span>文件</span></button>
-          <button class="tab" data-act="tab" data-tab="search"><i data-ic="search"></i><span>搜索</span></button>
           <button class="tab" data-act="tab" data-tab="settings"><i data-ic="sliders"></i><span>设置</span></button>
         </div>
         <button class="fab" data-act="new" aria-label="新建笔记"><i data-ic="compose"></i></button>
@@ -372,11 +375,6 @@ tags: [英语, ios]
 | 听力 | 未开始 | 等音频切片 |
 ## 相关
 上一级见 [[项目索引]]。立项当天的想法记在 [[2026-10-18]]。
-</script>
-<script type="text/markdown" data-path="收件箱.md" data-when="今天 09:12" data-t="99">
-- [ ] 给 [[词库设计]] 补上例句字段
-- [ ] 周末整理 #读书 笔记
-- 想到一个点子：把复习提醒放到锁屏上
 </script>
 <script type="text/markdown" data-path="项目/单词本/词库设计.md" data-when="昨天 21:05" data-t="90">
 ---
@@ -470,7 +468,7 @@ const ICONS = {
   search: '<circle cx="11" cy="11" r="7"/><path d="m20 20-3.800-3.800"/>',
   sliders: '<path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.500"/><circle cx="8" cy="17" r="2.500"/>',
   compose: '<path d="M12 4H6a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-6"/><path d="M18.400 3.600a2 2 0 0 1 2.800 2.800L12 15.600l-3.500.900.900-3.500Z"/>',
-  chevR: '<path d="m9 6 6 6-6 6"/>', chevL: '<path d="m15 6-6 6 6 6"/>', chevD: '<path d="m6 9 6 6 6-6"/>', chevU: '<path d="m6 15 6-6 6 6"/>',
+  chevR: '<path d="m9 6 6 6-6 6"/>', chevL: '<path d="m15 6-6 6 6 6"/>', chevD: '<path d="m6 9 6 6 6-6"/>', chevU: '<path d="m6 15 6-6 6 6"/>', chevUD: '<path d="m8 9.5 4-4 4 4M8 14.500l4 4 4-4"/>',
   note: '<path d="M8 3.500h5.500L18.500 8.500V18A2.500 2.500 0 0 1 16 20.500H8A2.500 2.500 0 0 1 5.500 18V6A2.500 2.500 0 0 1 8 3.500Z"/><path d="M9.200 12.500h5.600M9.200 16h3.600"/>',
   folderFill: '<g fill="currentColor" stroke="none"><path opacity=".42" d="M3 7.500A2.500 2.500 0 0 1 5.500 5h3.300a2.500 2.500 0 0 1 1.900.900L11.800 7.200h6.700A2.500 2.500 0 0 1 21 9.700V11H3Z"/><rect x="3" y="9.200" width="18" height="10.300" rx="2.600"/></g>',
   link: '<path d="M10 14a4.500 4.500 0 0 0 6.400 0l3-3A4.500 4.500 0 0 0 13 4.600l-1 1"/><path d="M14 10a4.500 4.500 0 0 0-6.400 0l-3 3a4.500 4.500 0 0 0 6.400 6.400l1-1"/>',
@@ -588,16 +586,19 @@ function blockHtml(src, i, active) {
 }
 
 /* ================= 状态 ================= */
-const ROOT = { recent: () => ({ k: 'recent' }), files: () => ({ k: 'folder', path: '' }), search: () => ({ k: 'search' }), settings: () => ({ k: 'settings' }) };
+const ROOT = { recent: () => ({ k: 'recent' }), files: () => ({ k: 'folder', path: '' }), settings: () => ({ k: 'settings' }) };
 const S = {
-  tab: 'recent', stacks: { recent: [ROOT.recent()], files: [ROOT.files()], search: [ROOT.search()], settings: [ROOT.settings()] },
-  editing: false, active: -1, fmOpen: false, q: '', mode: 'name',
-  theme: 'light', font: 'kai', size: 'm', openMode: 'read',
+  tab: 'recent', stacks: { recent: [ROOT.recent()], files: [ROOT.files()], settings: [ROOT.settings()] },
+  editing: false, active: -1, fmOpen: false, q: '', searching: false, listY: 0, user: null, signup: false,
+  theme: 'auto', size: 'm', openMode: 'read', menu: null,
 };
 const topE = () => { const s = S.stacks[S.tab]; return s[s.length - 1]; };
 const cur = () => (topE().k === 'note' ? byId(topE().id) : null);
-const screenTitle = (e) => (e.k === 'recent' ? '最近' : e.k === 'folder' ? (e.path ? e.path.split('/').pop() : '文件') : e.k === 'search' ? '搜索' : e.k === 'settings' ? '设置' : title(byId(e.id)));
-const seg = (key, opts) => `<div class="seg">${opts.map(([v, l]) => `<button data-act="seg" data-key="${key}" data-val="${v}" class="${S[key] === v ? 'on' : ''}">${l}</button>`).join('')}</div>`;
+const screenTitle = (e) => (e.k === 'recent' ? '最近' : e.k === 'folder' ? (e.path ? e.path.split('/').pop() : '文件') : e.k === 'settings' ? '设置' : e.k === 'account' ? (S.user ? '账号' : S.signup ? '注册' : '登录') : title(byId(e.id)));
+
+const OPENS = [['read', '阅读'], ['edit', '编辑']];
+const THEMES = [['auto', '自动'], ['light', '浅色'], ['dark', '深色']];
+const drop = (key, label, opts) => `<div class="srow${S.menu === key ? ' open' : ''}" data-act="dd" data-key="${key}"><span>${label}</span><span class="v">${opts.find((o) => o[0] === S[key])[1]}${ic('chevUD', 15, 2)}</span>${S.menu === key ? `<div class="menu">${opts.map(([v, l]) => `<button data-act="pick" data-key="${key}" data-val="${v}" class="${S[key] === v ? 'on' : ''}">${l}${S[key] === v ? ic('check', 17, 2.4) : ''}</button>`).join('')}</div>` : ''}</div>`;
 
 /* ================= 各个屏幕 ================= */
 function nav(e, right = '') {
@@ -605,16 +606,21 @@ function nav(e, right = '') {
   const left = root
     ? (e.k === 'recent' || e.k === 'folder' ? `<button class="vault" data-act="vaults">${VAULT}${ic('chevD', 14, 2.4)}</button>` : '')
     : `<button class="back" data-act="back">${ic('chevL', 24, 2.2)}<span>${esc(screenTitle(st[st.length - 2]))}</span></button>`;
-  return `<div class="nav${!root && e.k === 'folder' ? ' always' : ''}"><div class="nl">${left}</div><div class="nc">${esc(screenTitle(e))}</div><div class="nr">${right}</div></div>`;
+  return `<div class="nav${!root && e.k !== 'note' ? ' always' : ''}"><div class="nl">${left}</div><div class="nc">${esc(screenTitle(e))}</div><div class="nr">${right}</div></div>`;
 }
 const shortWhen = (n) => n.when.replace(/^(今天|昨天) /, '');
 const noteRow = (n) => `<div class="row" data-act="open" data-id="${n.id}"><div class="rt">${esc(title(n))}</div>${snippet(n) ? `<div class="rs">${esc(snippet(n))}</div>` : ''}<div class="rm">${dir(n) ? esc(nicePath(dir(n))) + ' · ' : ''}${shortWhen(n)}</div></div>`;
 
+const searchPane = () => `<div class="scroll search">
+  <div class="sbox">${ic('search', 17, 2)}<input id="q" placeholder="搜索笔记" value="${esc(S.q)}" autocomplete="off" autocapitalize="off"><button class="clr" data-act="clear" ${S.q ? '' : 'hidden'}>${ic('x', 12, 3)}</button></div>
+  <div id="results">${results()}</div></div>`;
+
 const VIEWS = {
   recent() {
+    if (S.searching) return `<div class="nav"><div class="nl"></div><div class="nc"></div><div class="nr"><button class="tbtn" data-act="closesearch">取消</button></div></div>` + searchPane();
     const groups = [['今天', []], ['昨天', []], ['更早', []]];
     [...NOTES].sort((a, b) => b.t - a.t).forEach((n) => groups[/^(今天|刚刚)/.test(n.when) ? 0 : n.when.startsWith('昨天') ? 1 : 2][1].push(n));
-    return nav({ k: 'recent' }, `<span class="sync">${ic('cloud', 18)}已同步</span>`) + `<div class="scroll"><h1 class="lt">最近</h1>`
+    return nav({ k: 'recent' }, `<button class="ibtn" data-act="startsearch" aria-label="搜索笔记">${ic('search', 22, 2)}</button>`) + `<div class="scroll">`
       + groups.filter((g) => g[1].length).map(([g, ns]) => `<div class="sec">${g}</div>` + ns.map(noteRow).join('')).join('') + '</div>';
   },
   folder(e) {
@@ -624,37 +630,38 @@ const VIEWS = {
     const count = (f) => NOTES.filter((n) => n.path.startsWith(f + '/')).length;
     const both = subs.length && files.length;
     const rows = (both ? '<div class="sec">文件夹</div>' : '')
-      + subs.map((s) => `<div class="row f" data-act="folder" data-path="${esc(pre + s)}"><span class="fi dir">${ic('folderFill', 23)}</span><span class="fn">${esc(s)}<small>${count(pre + s)} 篇笔记</small></span><span class="fx">${ic('chevR', 15, 2.2)}</span></div>`).join('')
+      + subs.map((s) => `<div class="row f" data-act="folder" data-path="${esc(pre + s)}"><span class="fi dir">${ic('folder', 23, 1.7)}</span><span class="fn">${esc(s)}<small>${count(pre + s)} 篇笔记</small></span><span class="fx">${ic('chevR', 15, 2.2)}</span></div>`).join('')
       + (both ? '<div class="sec">笔记</div>' : '')
       + files.map((n) => `<div class="row f" data-act="open" data-id="${n.id}"><span class="fi">${ic('note', 20, 1.7)}</span><span class="fn">${esc(title(n))}<small>${n.when}</small></span></div>`).join('');
     return nav(e, `<button class="ibtn" data-act="newfolder" aria-label="新建文件夹">${ic('folderPlus', 23)}</button>`)
-      + `<div class="scroll">${p ? '' : `<h1 class="lt">文件</h1><div class="lsub">${subs.length} 个文件夹 · ${NOTES.length} 篇笔记</div>`}${rows || '<div class="empty">这个文件夹是空的。<br>点右下角的按钮，在这里新建笔记。</div>'}</div>`;
-  },
-  search() {
-    return nav({ k: 'search' }) + `<div class="scroll search"><h1 class="lt">搜索</h1>
-      <div class="sbox">${ic('search', 18, 2.1)}<input id="q" placeholder="${S.mode === 'name' ? '按笔记名找' : '找笔记里的文字'}" value="${esc(S.q)}" autocomplete="off" autocapitalize="off"><button class="clr" data-act="clear" ${S.q ? '' : 'hidden'}>${ic('x', 12, 3)}</button></div>
-      ${seg('mode', [['name', '笔记名'], ['text', '全文']])}<div id="results">${results()}</div></div>`;
+      + `<div class="scroll">${p ? '' : `<div class="lsub">${subs.length} 个文件夹，${NOTES.length} 篇笔记</div>`}${rows || '<div class="empty">这个文件夹是空的。<br>点右下角的按钮，在这里新建笔记。</div>'}</div>`;
   },
   settings() {
-    const tile = (key, val, label, pv) => `<button class="tile${S[key] === val ? ' on' : ''}" data-act="seg" data-key="${key}" data-val="${val}">${pv}${label}</button>`;
-    const page = (st) => `<span class="pv" style="${st}"><i></i><i style="width:78%"></i><i style="width:56%"></i></span>`;
-    const A = (px) => `<span style="font-size:${px}px">A</span>`;
-    return nav({ k: 'settings' }) + `<div class="scroll"><h1 class="lt">设置</h1>
-      <div class="gh">笔记库</div><div class="grp">
-        <div class="set" data-act="vaults"><span class="fi dir">${ic('folderFill', 23)}</span><div class="grow"><b>${VAULT}</b><small>${NOTES.length} 篇笔记 · ${allFolders().length} 个文件夹</small></div><span class="v">切换${ic('chevR', 15, 2.2)}</span></div>
-        <div class="set"><span class="fi">${ic('cloud', 21, 1.7)}</span><div class="grow">同步<small>改动会自动传到 Mac</small></div><span class="v"><i class="ok"></i>刚刚</span></div></div>
-      <div class="gh">外观</div><div class="grp">
-        <div class="pick"><div class="pick-l">主题</div><div class="tiles">
-          ${tile('theme', 'auto', '自动', page('background:linear-gradient(115deg,#fcfbf8 50%,#1c1b18 50%);color:#8d897e'))}
-          ${tile('theme', 'light', '浅色', page('background:#fcfbf8;color:#22201c'))}
-          ${tile('theme', 'dark', '深色', page('background:#1c1b18;color:#e9e6de'))}</div></div>
-        <div class="pick"><div class="pick-l">正文字体</div><div class="tiles">
-          ${tile('font', 'kai', '楷体', '<span class="pv ch" style="font-family:var(--font-kai)">永</span>')}
-          ${tile('font', 'hei', '黑体', '<span class="pv ch" style="font-family:var(--font-ui)">永</span>')}</div></div>
-        <div class="set"><div class="grow">字号</div>${seg('size', [['s', A(13)], ['m', A(16)], ['l', A(19)]])}</div></div>
-      <div class="gh">笔记</div><div class="grp">
-        <div class="set"><div class="grow">打开笔记时</div>${seg('openMode', [['read', '阅读'], ['edit', '编辑']])}</div></div>
-      <div class="gh">关于</div><div class="grp"><div class="set"><div class="grow">版本</div><span class="v">原型 第 2 版</span></div></div></div>`;
+    const chev = ic('chevR', 15, 2.2);
+    const sync = S.user
+      ? `<div class="row f" data-act="goto" data-k="account"><span class="fi">${ic('cloud', 21, 1.7)}</span><span class="fn">${esc(S.user)}<small>已同步，刚刚</small></span><span class="fx"><i class="ok"></i>${chev}</span></div>`
+      : `<div class="row f" data-act="goto" data-k="account"><span class="fi">${ic('cloud', 21, 1.7)}</span><span class="fn ui">登录以同步<small>登录后，改动会自动传到 Mac</small></span><span class="fx">${chev}</span></div>`;
+    return nav({ k: 'settings' }) + `<div class="scroll">
+      <div class="gh">同步</div>${sync}
+      <div class="gh">笔记库</div>
+      <div class="row f" data-act="vaults"><span class="fi dir">${ic('folder', 23, 1.7)}</span><span class="fn">${VAULT}<small>${NOTES.length} 篇笔记，${allFolders().length} 个文件夹</small></span><span class="fx">切换${chev}</span></div>
+      <div class="gh">偏好</div>
+      ${drop('theme', '主题', THEMES)}
+      ${drop('openMode', '打开笔记时', OPENS)}
+      <div class="foot">mote 原型，第 2 版</div></div>`;
+  },
+  account(e) {
+    if (S.user) return nav(e) + `<div class="scroll">
+      <div class="srow"><span>用户名</span><span class="v">${esc(S.user)}</span></div>
+      <div class="srow"><span>上次同步</span><span class="v"><i class="ok"></i>刚刚</span></div>
+      <div class="srow"><span>同步的笔记库</span><span class="v">${VAULT}</span></div>
+      <button class="tlink danger" data-act="logout">退出登录</button></div>`;
+    return nav(e) + `<div class="scroll">
+      <p class="lede">${S.signup ? '注册一个账号，用它在 iPhone 和 Mac 之间同步笔记。' : '用 Mac 上的同一个账号登录。登录后，改动会自动传到 Mac。'}</p>
+      <input class="field" id="acc-u" placeholder="用户名" autocomplete="off" autocapitalize="off">
+      <input class="field" id="acc-p" type="password" placeholder="密码" autocomplete="off">
+      <button class="pbtn" data-act="login">${S.signup ? '注册' : '登录'}</button>
+      <button class="tlink" data-act="signup">${S.signup ? '已有账号，去登录' : '没有账号，去注册'}</button></div>`;
   },
   note(e) {
     const n = byId(e.id), bl = backlinks(n);
@@ -678,26 +685,26 @@ function hl(text, q) {
 }
 function results() {
   const q = S.q.trim(), ql = q.toLowerCase();
-  const nameRow = (n) => `<div class="row f" data-act="open" data-id="${n.id}"><span class="fi">${ic('note', 20, 1.7)}</span><span class="fn">${hl(title(n), q)}<small>${dir(n) ? hl(nicePath(dir(n)), q) : '笔记库根目录'}</small></span><span class="fx">${n.when.replace(/^今天 /, '').replace(/^昨天 .*/, '昨天')}</span></div>`;
-  if (S.mode === 'name') {
-    if (!q) return '<div class="sec">最近打开</div>' + [...NOTES].sort((a, b) => b.t - a.t).slice(0, 6).map(nameRow).join('');
-    const r = NOTES.filter((n) => n.path.toLowerCase().includes(ql));
-    return r.length ? r.map(nameRow).join('') : `<div class="empty">没有名字里带「${esc(q)}」的笔记。<button data-act="new" data-name="${esc(q)}">新建「${esc(q)}」</button></div>`;
-  }
-  if (!q) return '<div class="empty">输入要找的文字。<br>中文按原样匹配，不用分词。</div>';
-  let total = 0;
-  const out = NOTES.map((n) => {
+  if (!q) return '<div class="empty">输入文字，笔记名和正文一起找。<br>中文按原样匹配，不用分词。</div>';
+  const rs = [];
+  NOTES.forEach((n) => {
+    const nameHit = n.path.toLowerCase().includes(ql);
     const hits = [];
     n.blocks.forEach((src, i) => { const p = plain(src), k = p.toLowerCase().indexOf(ql); if (k >= 0) hits.push({ i, text: (k > 14 ? '…' : '') + p.slice(Math.max(0, k - 14), k + q.length + 34) }); });
-    if (!hits.length) return '';
-    total += hits.length;
-    return `<div class="hit"><div class="hit-h"><b>${esc(title(n))}</b><span>${hits.length} 处</span></div>${hits.slice(0, 3).map((h) => `<div class="hl" data-act="open" data-id="${n.id}" data-blk="${h.i}">${hl(h.text, q)}</div>`).join('')}</div>`;
+    if (nameHit || hits.length) rs.push({ n, nameHit, hits });
+  });
+  if (!rs.length) return `<div class="empty">没有笔记包含「${esc(q)}」。<button data-act="new" data-name="${esc(q)}">新建「${esc(q)}」</button></div>`;
+  rs.sort((a, b) => (b.nameHit - a.nameHit) || (b.n.t - a.n.t));
+  const total = rs.reduce((s, r) => s + r.hits.length, 0);
+  return `<div class="sec">${rs.length} 篇笔记${total ? ` · ${total} 处正文` : ''}</div>` + rs.map(({ n, nameHit, hits }) => {
+    const sub = nameHit ? `<div class="hl" data-act="open" data-id="${n.id}">${hl(nicePath(dir(n)), q) || '笔记库根目录'}</div>` : '';
+    return `<div class="hit"><div class="hit-h"><b>${hl(title(n), q)}</b><span>${hits.length ? hits.length + ' 处' : ''}</span></div>${sub}${hits.slice(0, 3).map((h) => `<div class="hl" data-act="open" data-id="${n.id}" data-blk="${h.i}">${hl(h.text, q)}</div>`).join('')}</div>`;
   }).join('');
-  return total ? `<div class="sec">${total} 处匹配</div>` + out : `<div class="empty">没有笔记包含「${esc(q)}」。</div>`;
 }
 
 /* ================= 显示和转场 ================= */
 function show(dir = 'none') {
+  if (dir !== 'none') S.menu = null;
   if (dir === 'none' && S.editing) commit();
   const e = topE(), html = VIEWS[e.k](e), cls = 'screen' + (e.k === 'settings' ? ' grouped' : '');
   const old = host.lastElementChild;
@@ -869,10 +876,9 @@ function noteMenu(id) {
 function applyLook() {
   const t = S.theme === 'auto' ? (matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light') : S.theme;
   const r = document.documentElement;
-  r.dataset.theme = t; r.dataset.font = S.font;
+  r.dataset.theme = t;
   r.style.setProperty('--fs', { s: '15px', m: '16.5px', l: '18.5px' }[S.size]);
-  $('#side-theme').innerHTML = [['light', '浅色'], ['dark', '深色']].map(([v, l]) => `<button data-set="theme" data-val="${v}" class="${t === v ? 'on' : ''}">${l}</button>`).join('');
-  $('#side-font').innerHTML = [['kai', '楷体'], ['hei', '黑体']].map(([v, l]) => `<button data-set="font" data-val="${v}" class="${S.font === v ? 'on' : ''}">${l}</button>`).join('');
+  $('#side-theme').innerHTML = THEMES.map(([v, l]) => `<button data-set="theme" data-val="${v}" class="${S.theme === v ? 'on' : ''}">${l}</button>`).join('');
 }
 
 /* ================= 操作 ================= */
@@ -882,11 +888,15 @@ const ACT = {
     if (S.editing) finish(false);
     if (t !== S.tab) { S.tab = t; show('tab'); return; }
     const st = S.stacks[t];
-    if (st.length > 1) { st.length = 1; show('pop'); } else Q('.scroll').scrollTo({ top: 0, behavior: 'smooth' });
+    if (st.length > 1) { st.length = 1; S.searching = false; show('pop'); return; }
+    if (t === 'recent' && S.searching) { ACT.closesearch(); return; }
+    Q('.scroll').scrollTo({ top: 0, behavior: 'smooth' });
   },
   back() { if (S.editing) finish(false); S.stacks[S.tab].pop(); show('pop'); },
   open(a) { openNote(+a.dataset.id, a.dataset.blk); },
   folder(a) { push({ k: 'folder', path: a.dataset.path }); },
+  startsearch() { const sc = Q('.scroll'); S.listY = sc ? sc.scrollTop : 0; S.searching = true; S.q = ''; show('none'); const n = Q('.scroll'); if (n) n.scrollTop = 0; const i = Q('#q'); if (i) i.focus({ preventScroll: true }); },
+  closesearch() { S.searching = false; S.q = ''; show('none'); const sc = Q('.scroll'); if (sc) sc.scrollTop = S.listY || 0; },
   link(a) {
     const n = resolve(a.dataset.to);
     if (n) return openNote(n.id);
@@ -948,16 +958,22 @@ const ACT = {
     dialog({ ttl: '新建文件夹', input: '新文件夹', ok: '新建', onOk(v) { v = v.trim().replaceAll('/', ''); if (!v) return false; FOLDERS.add((p ? p + '/' : '') + v); show('none'); } });
   },
   vaults() {
-    openSheet('笔记库', `<div class="mi cur" data-act="sheet-x">${ic('folder', 22)}<div>${VAULT}<small>${NOTES.length} 篇笔记 · 已同步</small></div><span>${ic('check', 18, 2.4)}</span></div>
+    openSheet('笔记库', `<div class="mi cur" data-act="sheet-x">${ic('folder', 22)}<div>${VAULT}<small>${NOTES.length} 篇笔记${S.user ? '，已同步' : '，未同步'}</small></div><span>${ic('check', 18, 2.4)}</span></div>
       <div class="mi" data-act="vault">${ic('folder', 22)}<div>Pesemic<small>上次打开：11-19</small></div></div>
       <div class="mi" data-act="vault">${ic('folderPlus', 22)}连接其他笔记库…</div>`);
   },
-  vault() { closeSheet(); toast('原型里只有一个笔记库'); },
-  seg(a) {
-    S[a.dataset.key] = a.dataset.val; applyLook();
-    show('none');
-    if (a.dataset.key === 'mode') { const i = Q('#q'); i.focus({ preventScroll: true }); i.setSelectionRange(i.value.length, i.value.length); }
+  goto(a) { S.signup = false; push({ k: a.dataset.k }); },
+  signup() { S.signup = !S.signup; show('none'); },
+  login() {
+    const u = Q('#acc-u').value.trim(), p = Q('#acc-p').value;
+    if (!u) { toast('输入用户名'); Q('#acc-u').focus({ preventScroll: true }); return; }
+    if (!p) { toast('输入密码'); Q('#acc-p').focus({ preventScroll: true }); return; }
+    const was = S.signup; S.user = u; S.signup = false; S.stacks[S.tab].pop(); show('pop'); toast(was ? '已注册，开始同步' : '已登录，开始同步');
   },
+  logout() { S.user = null; S.stacks[S.tab].pop(); show('pop'); toast('已退出登录'); },
+  vault() { closeSheet(); toast('原型里只有一个笔记库'); },
+  dd(a) { S.menu = S.menu === a.dataset.key ? null : a.dataset.key; show('none'); },
+  pick(a) { S[a.dataset.key] = a.dataset.val; S.menu = null; applyLook(); show('none'); },
   clear() { S.q = ''; show('none'); Q('#q').focus({ preventScroll: true }); },
   fmt(a) { fmt(a.dataset.k); },
   key(a) { key(a.dataset.k); },
@@ -969,6 +985,7 @@ const ACT = {
 let lp = null, suppress = false;
 phone.addEventListener('click', (ev) => {
   if (suppress) { suppress = false; return; }
+  if (S.menu && !ev.target.closest('.menu')) { S.menu = null; show('none'); return; }
   const a = ev.target.closest('[data-act]');
   const blk = ev.target.closest('#body .blk');
   if (S.editing && blk && !(a && a.dataset.act === 'task')) { if (!blk.classList.contains('active')) activate(+blk.dataset.i); return; }
@@ -998,10 +1015,11 @@ phone.addEventListener('keydown', (ev) => {
 function jump(k) {
   if (S.editing) finish(false);
   closeSheet(); closeDlg();
-  if (ROOT[k]) { S.tab = k; S.stacks[k] = [ROOT[k]()]; if (k === 'search') { S.q = ''; S.mode = 'name'; } return show('tab'); }
-  if (k === 'fulltext') { S.tab = 'search'; S.stacks.search = [ROOT.search()]; S.q = '复习'; S.mode = 'text'; return show('tab'); }
+  if (k === 'search') { S.tab = 'recent'; S.stacks.recent = [ROOT.recent()]; S.searching = true; S.q = ''; S.listY = 0; show('tab'); const i = Q('#q'); if (i) i.focus({ preventScroll: true }); return; }
+  if (k === 'fulltext') { S.tab = 'recent'; S.stacks.recent = [ROOT.recent()]; S.searching = true; S.q = '复习'; S.listY = 0; show('tab'); const j = Q('#q'); if (j) j.focus({ preventScroll: true }); return; }
+  if (ROOT[k]) { S.tab = k; S.stacks[k] = [ROOT[k]()]; return show('tab'); }
   const n = resolve('README') || NOTES[0];
-  S.tab = 'recent'; S.stacks.recent = [ROOT.recent(), { k: 'note', id: n.id }]; S.fmOpen = false;
+  S.tab = 'recent'; S.stacks.recent = [ROOT.recent(), { k: 'note', id: n.id }]; S.fmOpen = false; S.searching = false;
   S.editing = k === 'edit'; S.active = S.editing ? Math.max(0, n.blocks.findIndex((b) => blockType(b) === 'task')) : -1;
   show('tab');
   if (k === 'backlinks') ACT.backlinks();
