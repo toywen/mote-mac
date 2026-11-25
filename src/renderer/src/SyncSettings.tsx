@@ -27,6 +27,14 @@ export function SyncSettings({ dir, onClose }: Props): React.JSX.Element {
   const [status, setStatus] = useState<SyncStatusView>({ state: 'unset', pending: 0 })
 
   useEffect(() => {
+    const onKeyDown = (event: KeyboardEvent): void => {
+      if (event.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', onKeyDown)
+    return () => window.removeEventListener('keydown', onKeyDown)
+  }, [onClose])
+
+  useEffect(() => {
     let live = true
     void window.mote?.getSyncSettings().then((settings) => {
       if (!live) return

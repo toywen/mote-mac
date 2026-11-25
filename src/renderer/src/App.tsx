@@ -18,7 +18,7 @@ import {
   Sun,
   X
 } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
+import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { EditorView } from '@codemirror/view'
 import { FileTree, type FileTreeHandle } from './FileTree'
 import { type SortOrder } from './tree'
@@ -30,6 +30,7 @@ import { isHtmlPath } from '../../core/fileUrl'
 import { HitList } from './HitList'
 import { HtmlViewer } from './HtmlViewer'
 import { ImageViewer } from './ImageViewer'
+import { MenuLayer } from './MenuLayer'
 import { NoteEditor } from './NoteEditor'
 import { PdfViewer } from './PdfViewer'
 import { QuickOpen } from './QuickOpen'
@@ -96,18 +97,7 @@ function App(): React.JSX.Element {
   const [sortMenuPos, setSortMenuPos] = useState<{ top: number; left: number } | null>(null)
   const fileTreeRef = useRef<FileTreeHandle>(null)
 
-  useEffect(() => {
-    if (!sortMenuPos) return
-    function handleKeyDown(e: KeyboardEvent): void {
-      if (e.key === 'Escape') {
-        e.preventDefault()
-        setSortMenuPos(null)
-      }
-    }
-    window.addEventListener('keydown', handleKeyDown, true)
-    return () => window.removeEventListener('keydown', handleKeyDown, true)
-  }, [sortMenuPos])
-
+  const closeSortMenu = useCallback(() => setSortMenuPos(null), [])
   const handleSortChange = (order: SortOrder): void => {
     setSortOrder(order)
     localStorage.setItem('mote.sort-order', order)
@@ -423,15 +413,7 @@ function App(): React.JSX.Element {
               </div>
             </div>
             {sortMenuPos && (
-              <>
-                <div
-                  className="context-menu-backdrop"
-                  onClick={() => setSortMenuPos(null)}
-                  onContextMenu={(e) => {
-                    e.preventDefault()
-                    setSortMenuPos(null)
-                  }}
-                />
+              <MenuLayer onClose={closeSortMenu}>
                 <ul
                   className="context-menu"
                   style={{
@@ -479,7 +461,7 @@ function App(): React.JSX.Element {
                     </button>
                   </li>
                 </ul>
-              </>
+              </MenuLayer>
             )}
             <nav
               className="tree-scroll"

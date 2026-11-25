@@ -16,11 +16,13 @@ import {
   useRef,
   useState,
   useEffect,
+  useCallback,
   type KeyboardEvent
 } from 'react'
 import { parseVaultPath, type VaultInfo, type VaultPath } from '../../core/ipc'
 import { isHtmlPath, isImagePath, isPdfPath } from '../../core/fileUrl'
 import { buildTree, type SortOrder, type TreeNode } from './tree'
+import { MenuLayer } from './MenuLayer'
 import { workspace } from './workspace'
 import { createPortal } from 'react-dom'
 
@@ -87,6 +89,7 @@ export const FileTree = forwardRef<
     y: number
     node?: TreeNode
   } | null>(null)
+  const closeContextMenu = useCallback(() => setContextMenu(null), [])
   const [confirmLinkUpdate, setConfirmLinkUpdate] = useState<{
     oldPath: VaultPath
     newPath: VaultPath
@@ -365,15 +368,7 @@ export const FileTree = forwardRef<
       </ul>
 
       {contextMenu && (
-        <>
-          <div
-            className="context-menu-backdrop"
-            onClick={() => setContextMenu(null)}
-            onContextMenu={(e) => {
-              e.preventDefault()
-              setContextMenu(null)
-            }}
-          />
+        <MenuLayer onClose={closeContextMenu}>
           <ul
             className="context-menu"
             style={{
@@ -483,7 +478,7 @@ export const FileTree = forwardRef<
               </>
             )}
           </ul>
-        </>
+        </MenuLayer>
       )}
 
       {confirmLinkUpdate &&

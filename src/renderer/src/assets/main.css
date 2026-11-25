@@ -691,10 +691,13 @@ svg.lucide {
   outline: none;
 }
 
+/* no-drag: a drag region under the backdrop would take the click before the page sees it. */
 .context-menu-backdrop {
   position: fixed;
   inset: 0;
   z-index: 1000;
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
 }
 
 .context-menu {

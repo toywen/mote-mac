@@ -8,7 +8,7 @@ import {
   type Text
 } from '@codemirror/state'
 import { EditorView, keymap, drawSelection } from '@codemirror/view'
-import { useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
+import { useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react'
 import type { VaultInfo, VaultPath } from '../../core/ipc'
 import { sourceText, type LineFormat } from '../../core/text'
 import { completeContext, linkCompletion } from './editor/complete'
@@ -31,6 +31,7 @@ import {
   toggleTaskList
 } from './editor/formatting'
 import { attachmentContext, imagePasteAndDrop } from './editor/attachments'
+import { MenuLayer } from './MenuLayer'
 import { workspace, type Selection } from './workspace'
 
 const replaceFormat = StateEffect.define<LineFormat>()
@@ -248,17 +249,11 @@ export function NoteEditor({
 
   useEffect(() => {
     if (!contextMenu) return
-    const onKeyDown = (e: KeyboardEvent): void => {
-      if (e.key === 'Escape') setContextMenu(null)
-    }
     const onScroll = (): void => setContextMenu(null)
-    window.addEventListener('keydown', onKeyDown)
     window.addEventListener('scroll', onScroll, true)
-    return () => {
-      window.removeEventListener('keydown', onKeyDown)
-      window.removeEventListener('scroll', onScroll, true)
-    }
+    return () => window.removeEventListener('scroll', onScroll, true)
   }, [contextMenu])
+  const closeContextMenu = useCallback(() => setContextMenu(null), [])
 
   const handleContextMenu = (e: React.MouseEvent): void => {
     e.preventDefault()
@@ -361,15 +356,7 @@ export function NoteEditor({
         onContextMenu={handleContextMenu}
       />
       {contextMenu && (
-        <>
-          <div
-            className="context-menu-backdrop"
-            onClick={() => setContextMenu(null)}
-            onContextMenu={(e) => {
-              e.preventDefault()
-              setContextMenu(null)
-            }}
-          />
+        <MenuLayer onClose={closeContextMenu}>
           <ul
             className="context-menu editor-context-menu"
             role="menu"
@@ -563,7 +550,7 @@ export function NoteEditor({
               </button>
             </li>
           </ul>
-        </>
+        </MenuLayer>
       )}
     </>
   )
