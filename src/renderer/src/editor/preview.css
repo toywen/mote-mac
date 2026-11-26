@@ -31,13 +31,31 @@
   padding: 0.1em 0.25em;
 }
 
-/* A tag is quiet ink with an accent #. */
+/* A tag is a quiet stamp badge with cinnabar #. */
 .mote-tag {
-  color: var(--muted);
+  color: var(--tag-text);
+  background: var(--code-background);
+  border: 1px solid color-mix(in srgb, var(--accent) 22%, transparent);
+  border-radius: 3px;
+  padding: 0.05em 0.35em;
+  font-size: 0.9em;
+  line-height: 1.4;
+  vertical-align: baseline;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  transition: border-color 0.12s ease, background-color 0.12s ease;
+  cursor: pointer;
+}
+
+.mote-tag:hover {
+  border-color: var(--accent);
+  background: var(--accent-bg);
 }
 
 .mote-tag-hash {
-  color: var(--accent);
+  color: var(--danger);
+  font-weight: 600;
+  margin-right: 1px;
 }
 
 /* A link is ink text over an accent underline; the text takes the accent under the pointer. */
