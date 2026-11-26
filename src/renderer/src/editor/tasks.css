@@ -6,40 +6,73 @@
   vertical-align: baseline;
 }
 
-/* A small cell pressed into the paper. Checked, it fills with the accent and the tick is paper. */
+/* Apple Reminders / Craft 风格圆环：未勾选为清透流线圆环，悬停微显对勾，勾选时充盈饱满伴随轻盈弹动 */
 .mote-task-box input {
   appearance: none;
   box-sizing: border-box;
-  width: 0.94em;
-  height: 0.94em;
-  margin: 0 0.46em 0 0;
-  vertical-align: -0.1em;
-  border: 1px solid var(--task-border);
-  border-radius: 2.5px;
+  width: 1.02em;
+  height: 1.02em;
+  margin: 0 0.38em 0 0;
+  vertical-align: -0.12em;
+  border: 1.4px solid var(--task-border);
+  border-radius: 50%;
   background: var(--task-background);
-  box-shadow: var(--task-shadow);
   cursor: pointer;
+  flex-shrink: 0;
   transition:
-    background-color 140ms ease,
-    border-color 140ms ease;
+    transform 120ms cubic-bezier(0.16, 1, 0.3, 1),
+    background-color 160ms ease,
+    border-color 160ms ease,
+    box-shadow 160ms ease;
 }
 
-.mote-task-box input:hover {
-  border-color: var(--muted);
+.mote-task-box input:not(:checked):hover {
+  border-color: var(--accent);
+  background-image: var(--task-ghost-check);
+  background-position: center;
+  background-size: 68%;
+  background-repeat: no-repeat;
+}
+
+.mote-task-box input:checked:hover {
+  filter: brightness(1.08);
+}
+
+.mote-task-box input:active {
+  transform: scale(0.9);
 }
 
 .mote-task-box input:checked {
-  background: var(--accent) var(--task-check) center / 76% no-repeat;
-  border-color: color-mix(in srgb, var(--accent) 72%, black);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    inset 0 -1px 1px rgba(31, 30, 28, 0.24),
-    0 1px 1px rgba(31, 30, 28, 0.08);
+  background: var(--task-checked-bg, var(--accent)) var(--task-check) center / 70% no-repeat;
+  border-color: var(--task-checked-border, var(--accent));
+  box-shadow: var(--task-checked-shadow, 0 1px 3px rgba(37, 68, 56, 0.22));
+  animation: moteTaskPop 220ms cubic-bezier(0.175, 0.885, 0.32, 1.35);
 }
 
 .mote-task-box input:focus-visible {
   outline: 1.5px solid var(--accent);
-  outline-offset: 1px;
+  outline-offset: 2px;
+}
+
+@keyframes moteTaskPop {
+  0% {
+    transform: scale(0.86);
+  }
+  60% {
+    transform: scale(1.06);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mote-task-box input {
+    transition: none;
+  }
+  .mote-task-box input:checked {
+    animation: none;
+  }
 }
 
 /* In a bullet list the checkbox takes the bullet's place: the bullet keeps its width but not

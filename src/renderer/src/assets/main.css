@@ -37,12 +37,14 @@
   --edge: rgba(31, 30, 28, 0.12);
   --float-shadow: 0 4px 16px rgba(31, 30, 28, 0.06);
   --backdrop: rgba(31, 30, 28, 0.18);
-  --task-background: #fffdf8;
-  --task-border: rgba(31, 30, 28, 0.38);
-  --task-shadow:
-    inset 0 1px 2px rgba(31, 30, 28, 0.08), inset 0 -1px 0 rgba(255, 255, 255, 0.95),
-    0 1px 0 rgba(255, 255, 255, 0.65), 0 1px 1px rgba(31, 30, 28, 0.06);
-  --task-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fcfaf4' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.4l4.6 4.6L19 7.4'/%3E%3C/svg%3E");
+  --task-background: transparent;
+  --task-border: rgba(31, 30, 28, 0.28);
+  --task-shadow: none;
+  --task-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fbfaf6' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+  --task-ghost-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232d4a3e' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round' opacity='0.3'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+  --task-checked-bg: var(--accent);
+  --task-checked-border: var(--accent);
+  --task-checked-shadow: 0 1px 3px rgba(37, 68, 56, 0.22);
   /* Latin fonts come first, so Latin and Chinese each keep their own letterforms. */
   --font-kai: 'Iowan Old Style', 'Kai', 'Kaiti SC', 'STKaiti', 'Songti SC', 'STSong', Georgia, serif;
   --font-song:
@@ -106,10 +108,14 @@ html[data-font='hei'] {
     --edge: rgba(255, 245, 225, 0.1);
     --float-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
     --backdrop: rgba(0, 0, 0, 0.4);
-    --task-background: rgba(255, 245, 225, 0.04);
-    --task-border: rgba(255, 245, 225, 0.3);
-    --task-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
-    --task-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231c1b18' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.4l4.6 4.6L19 7.4'/%3E%3C/svg%3E");
+    --task-background: transparent;
+    --task-border: rgba(255, 245, 225, 0.28);
+    --task-shadow: none;
+    --task-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fbfaf6' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+    --task-ghost-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238fc7b3' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round' opacity='0.3'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+    --task-checked-bg: #385f4e;
+    --task-checked-border: #385f4e;
+    --task-checked-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
   }
 }
 
@@ -138,10 +144,14 @@ html[data-theme='dark'] {
   --edge: rgba(255, 245, 225, 0.1);
   --float-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
   --backdrop: rgba(0, 0, 0, 0.4);
-  --task-background: rgba(255, 245, 225, 0.04);
-  --task-border: rgba(255, 245, 225, 0.3);
-  --task-shadow: inset 0 1px 2px rgba(0, 0, 0, 0.3);
-  --task-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%231c1b18' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.4l4.6 4.6L19 7.4'/%3E%3C/svg%3E");
+  --task-background: transparent;
+  --task-border: rgba(255, 245, 225, 0.28);
+  --task-shadow: none;
+  --task-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fbfaf6' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+  --task-ghost-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238fc7b3' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round' opacity='0.3'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+  --task-checked-bg: #385f4e;
+  --task-checked-border: #385f4e;
+  --task-checked-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
 }
 
 html[data-theme='light'] {
@@ -169,12 +179,14 @@ html[data-theme='light'] {
   --edge: rgba(31, 30, 28, 0.12);
   --float-shadow: 0 4px 16px rgba(31, 30, 28, 0.06);
   --backdrop: rgba(31, 30, 28, 0.18);
-  --task-background: #fffdf8;
-  --task-border: rgba(31, 30, 28, 0.38);
-  --task-shadow:
-    inset 0 1px 2px rgba(31, 30, 28, 0.08), inset 0 -1px 0 rgba(255, 255, 255, 0.95),
-    0 1px 0 rgba(255, 255, 255, 0.65), 0 1px 1px rgba(31, 30, 28, 0.06);
-  --task-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fcfaf4' stroke-width='4' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.4l4.6 4.6L19 7.4'/%3E%3C/svg%3E");
+  --task-background: transparent;
+  --task-border: rgba(31, 30, 28, 0.28);
+  --task-shadow: none;
+  --task-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fbfaf6' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+  --task-ghost-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232d4a3e' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round' opacity='0.3'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+  --task-checked-bg: var(--accent);
+  --task-checked-border: var(--accent);
+  --task-checked-shadow: 0 1px 3px rgba(37, 68, 56, 0.22);
 }
 
 html,
