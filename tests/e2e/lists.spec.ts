@@ -100,3 +100,26 @@ test('Cmd+Enter turns a line into a task, checks it, then turns it back into tex
     await app.close()
   }
 })
+
+test('Tab indents a task or bullet item into a nested list and Shift+Tab outdents it', async () => {
+  const { app, window, editor, note } = await start()
+  try {
+    const taskRow = editor.locator('.cm-line').filter({ hasText: '待办项' })
+    await taskRow.click()
+    await window.keyboard.press('Tab')
+    await expect.poll(note).toContain('\n  - [ ] 待办项\n')
+
+    await window.keyboard.press('Shift+Tab')
+    await expect.poll(note).toContain('\n- [ ] 待办项\n')
+
+    const bulletRow = editor.locator('.cm-line').filter({ hasText: '无序项' })
+    await bulletRow.click()
+    await window.keyboard.press('Tab')
+    await expect.poll(note).toContain('\n  - 无序项\n')
+
+    await window.keyboard.press('Shift+Tab')
+    await expect.poll(note).toContain('\n- 无序项\n')
+  } finally {
+    await app.close()
+  }
+})

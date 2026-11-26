@@ -1,4 +1,4 @@
-import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
+import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
 import {
   Compartment,
   EditorState,
@@ -126,6 +126,7 @@ export function NoteEditor({
             }
           },
           ...formatKeymap,
+          indentWithTab,
           ...defaultKeymap,
           ...historyKeymap
         ]),

@@ -1,6 +1,14 @@
-import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
+import {
+  EditorSelection,
+  EditorState,
+  type Extension,
+  type TransactionSpec
+} from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import { describe, expect, it } from 'vitest'
+import { markdown } from './markdown'
+import { markdownKeymap } from '@codemirror/lang-markdown'
+import { indentMore, indentLess, indentWithTab } from '@codemirror/commands'
 import {
   type FormatTarget,
   insertCodeBlock,
@@ -288,6 +296,78 @@ describe('Markdown formatting commands', () => {
       expect(target.state.doc.toString()).toBe('- [x] Task 1\n- [x] Task 2')
       toggleTaskList(target)
       expect(target.state.doc.toString()).toBe('Task 1\nTask 2')
+    })
+  })
+
+  describe('indentWithTab and list nesting', () => {
+    function createView(
+      doc: string,
+      selectionFrom: number,
+      extensions: Extension[] = []
+    ): EditorView {
+      const target = {
+        state: EditorState.create({
+          doc,
+          selection: EditorSelection.cursor(selectionFrom),
+          extensions: [EditorView.editable.of(true), ...extensions]
+        }),
+        dispatch(spec: TransactionSpec) {
+          target.state = target.state.update(spec).state
+        }
+      }
+      return target as unknown as EditorView
+    }
+
+    it('indents task item to second level with indentWithTab and outdents with shift', () => {
+      const view = createView('- [ ] Task 1', 12)
+
+      // Tab / indentWithTab.run
+      const tabHandled = indentWithTab.run?.(view)
+      expect(tabHandled).toBe(true)
+      expect(view.state.doc.toString()).toBe('  - [ ] Task 1')
+
+      // Another Tab -> third level
+      indentWithTab.run?.(view)
+      expect(view.state.doc.toString()).toBe('    - [ ] Task 1')
+
+      // Shift-Tab / indentWithTab.shift -> second level
+      const shiftTabHandled = indentWithTab.shift?.(view)
+      expect(shiftTabHandled).toBe(true)
+      expect(view.state.doc.toString()).toBe('  - [ ] Task 1')
+
+      // Shift-Tab / indentWithTab.shift -> first level
+      indentWithTab.shift?.(view)
+      expect(view.state.doc.toString()).toBe('- [ ] Task 1')
+    })
+
+    it('indents bullet item to second level with indentMore and outdents with indentLess', () => {
+      const view = createView('- Bullet 1', 10)
+
+      indentMore(view)
+      expect(view.state.doc.toString()).toBe('  - Bullet 1')
+
+      indentLess(view)
+      expect(view.state.doc.toString()).toBe('- Bullet 1')
+    })
+
+    it('continues indentation and task marker on Enter', () => {
+      const enterCmd = markdownKeymap.find((k) => k.key === 'Enter')?.run
+      expect(enterCmd).toBeDefined()
+
+      const view = createView('- [ ] Level 1\n  - [ ] Level 2', 29, [markdown])
+      const handled = enterCmd!(view)
+      expect(handled).toBe(true)
+      expect(view.state.doc.toString()).toBe('- [ ] Level 1\n  - [ ] Level 2\n  - [ ] ')
+    })
+
+    it('clears empty indented task on Backspace', () => {
+      const backspaceCmd = markdownKeymap.find((k) => k.key === 'Backspace')?.run
+      expect(backspaceCmd).toBeDefined()
+
+      const view = createView('- [ ] Level 1\n  - [ ] ', 22, [markdown])
+      const handled = backspaceCmd!(view)
+      expect(handled).toBe(true)
+      expect(view.state.doc.toString()).toBe('- [ ] Level 1\n  ')
     })
   })
 })
