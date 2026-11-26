@@ -1,0 +1,899 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>mote 标签页右键菜单原型 (Tab Context Menu Prototype)</title>
+<style>
+  :root {
+    /* 纸墨设计系统变量 (与 mote main.css 保持严格一致) */
+    --background: #fcfbf8;
+    --sidebar: #f5f3ec;
+    --border: #ebe7db;
+    --text: #22201c;
+    --muted: #656157;
+    --t3: #9b978b;
+    --accent: #2c447c;
+    --hover: rgba(70, 55, 30, 0.055);
+    --edge: rgba(70, 55, 30, 0.12);
+    --tab-shelf-bg: rgba(70, 55, 30, 0.055);
+    --tab-active-bg: #ffffff;
+    --tab-active-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
+    --menu-bg: #ffffff;
+    --menu-border: rgba(70, 55, 30, 0.15);
+    --menu-shadow: 0 8px 24px rgba(0, 0, 0, 0.12), 0 2px 6px rgba(0, 0, 0, 0.06);
+    --font-hei: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'PingFang SC', 'Hiragino Sans GB', 'Segoe UI', Roboto, sans-serif;
+    --danger: #cf4338;
+  }
+
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --background: #1c1b18;
+      --sidebar: #161513;
+      --border: #2b2925;
+      --text: #e9e6de;
+      --muted: #9d998d;
+      --t3: #656259;
+      --accent: #9fb0e8;
+      --hover: rgba(255, 245, 225, 0.065);
+      --edge: rgba(255, 245, 225, 0.12);
+      --tab-shelf-bg: rgba(255, 245, 225, 0.065);
+      --tab-active-bg: #2b2925;
+      --tab-active-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+      --menu-bg: #23221e;
+      --menu-border: rgba(255, 255, 255, 0.12);
+      --menu-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    }
+  }
+
+  html[data-theme="dark"] {
+    --background: #1c1b18;
+    --sidebar: #161513;
+    --border: #2b2925;
+    --text: #e9e6de;
+    --muted: #9d998d;
+    --t3: #656259;
+    --accent: #9fb0e8;
+    --hover: rgba(255, 245, 225, 0.065);
+    --edge: rgba(255, 245, 225, 0.12);
+    --tab-shelf-bg: rgba(255, 245, 225, 0.065);
+    --tab-active-bg: #2b2925;
+    --tab-active-shadow: 0 1px 3px rgba(0, 0, 0, 0.3), 0 0 0 0.5px rgba(255, 255, 255, 0.08);
+    --menu-bg: #23221e;
+    --menu-border: rgba(255, 255, 255, 0.12);
+    --menu-shadow: 0 10px 30px rgba(0, 0, 0, 0.45), 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: var(--font-hei);
+    background: #eae7df;
+    color: var(--text);
+    padding: 32px 20px 60px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 24px;
+    -webkit-font-smoothing: antialiased;
+    user-select: none;
+  }
+
+  /* 顶栏说明与工具栏 */
+  .header-card {
+    max-width: 820px;
+    width: 100%;
+    background: #ffffff;
+    border-radius: 14px;
+    padding: 20px 24px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.05), 0 0 0 1px rgba(0, 0, 0, 0.03);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+
+  .header-titles h1 {
+    font-size: 19px;
+    font-weight: 700;
+    color: #1a1917;
+    margin-bottom: 4px;
+  }
+  .header-titles p {
+    font-size: 13px;
+    color: #6a665d;
+  }
+
+  .toolbar-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .pill-group {
+    display: flex;
+    background: #f0ece3;
+    padding: 3px;
+    border-radius: 20px;
+    gap: 2px;
+  }
+
+  .pill-btn {
+    border: none;
+    background: transparent;
+    padding: 5px 12px;
+    border-radius: 16px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+
+  .pill-btn.active {
+    background: #ffffff;
+    color: #111;
+    font-weight: 600;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+  }
+
+  .action-btn {
+    border: 1px solid #ddd7cb;
+    background: #faf8f5;
+    padding: 5px 14px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    color: #444;
+    cursor: pointer;
+    transition: all 120ms ease;
+  }
+  .action-btn:hover {
+    background: #f0ece3;
+  }
+
+  /* 窗口模拟器 */
+  .window-frame {
+    max-width: 820px;
+    width: 100%;
+    height: 480px;
+    background: var(--background);
+    border-radius: 12px;
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.12), 0 0 0 1px var(--edge);
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+    position: relative;
+    transition: background 150ms ease;
+  }
+
+  /* 顶栏窗口条：红绿灯 + 标签栏 */
+  .window-topbar {
+    height: 42px;
+    background: var(--sidebar);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    padding: 0 12px;
+    gap: 12px;
+    flex-shrink: 0;
+  }
+
+  .traffic-lights {
+    display: flex;
+    gap: 7px;
+    margin-right: 4px;
+  }
+  .tl {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+  }
+  .tl-red { background: #ff5f56; }
+  .tl-yellow { background: #ffbd2e; }
+  .tl-green { background: #27c93f; }
+
+  /* 标签页导航栏 (与 mote 实际样式完全对应) */
+  .tab-bar {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    flex: 1;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .tab-scroll {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 0;
+    max-width: calc(100% - 36px);
+    height: 32px;
+    padding: 3px;
+    border-radius: 8px;
+    background: var(--tab-shelf-bg);
+    overflow-x: auto;
+    overflow-y: hidden;
+    scrollbar-width: none;
+  }
+  .tab-scroll::-webkit-scrollbar { display: none; }
+
+  .tab-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    height: 26px;
+    padding: 0 6px 0 9px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: var(--muted);
+    cursor: pointer;
+    white-space: nowrap;
+    max-width: 165px;
+    min-width: 72px;
+    border: none;
+    background: transparent;
+    transition: background 120ms ease, color 120ms ease, box-shadow 120ms ease;
+    position: relative;
+  }
+
+  .tab-item:hover:not(.active) {
+    background: var(--hover);
+    color: var(--text);
+  }
+
+  .tab-item.active {
+    background: var(--tab-active-bg);
+    color: var(--text);
+    font-weight: 500;
+    box-shadow: var(--tab-active-shadow);
+  }
+
+  /* 右键菜单激活时的微高亮指示 */
+  .tab-item.menu-target {
+    outline: 1.5px solid var(--accent);
+    outline-offset: -1px;
+  }
+
+  .tab-icon {
+    width: 13px;
+    height: 13px;
+    flex-shrink: 0;
+    opacity: 0.75;
+  }
+
+  .tab-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    font-weight: inherit;
+    flex: 1;
+  }
+
+  .tab-close {
+    width: 16px;
+    height: 16px;
+    border-radius: 4px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin-left: 2px;
+    opacity: 0.6;
+    transition: all 100ms ease;
+  }
+  .tab-close:hover {
+    background: var(--hover);
+    color: var(--text);
+    opacity: 1;
+  }
+
+  .tab-add {
+    width: 26px;
+    height: 26px;
+    border-radius: 6px;
+    border: none;
+    background: transparent;
+    color: var(--muted);
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 120ms ease;
+  }
+  .tab-add:hover {
+    background: var(--hover);
+    color: var(--text);
+  }
+
+  /* 视区内容 */
+  .window-body {
+    flex: 1;
+    display: flex;
+    background: var(--background);
+    position: relative;
+  }
+
+  .sidebar {
+    width: 190px;
+    background: var(--sidebar);
+    border-right: 1px solid var(--border);
+    padding: 14px 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+  .sidebar-header {
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--t3);
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    padding-left: 6px;
+  }
+  .sidebar-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 5px 8px;
+    border-radius: 6px;
+    cursor: pointer;
+    color: var(--text);
+  }
+  .sidebar-item.selected {
+    background: var(--hover);
+    color: var(--accent);
+    font-weight: 500;
+  }
+
+  .editor-mock {
+    flex: 1;
+    padding: 32px 40px;
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+  }
+  .mock-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: var(--text);
+    padding-bottom: 8px;
+    border-bottom: 1px solid var(--border);
+  }
+  .mock-p {
+    font-size: 14px;
+    line-height: 1.8;
+    color: var(--text);
+  }
+  .mock-empty {
+    margin: auto;
+    text-align: center;
+    color: var(--muted);
+    font-size: 14px;
+  }
+
+  /* 右键菜单层 (Context Menu) */
+  .context-menu-backdrop {
+    position: absolute;
+    inset: 0;
+    z-index: 99;
+  }
+
+  .context-menu {
+    position: absolute;
+    z-index: 100;
+    min-width: 180px;
+    background: var(--menu-bg);
+    border: 1px solid var(--menu-border);
+    border-radius: 8px;
+    box-shadow: var(--menu-shadow);
+    padding: 4px;
+    list-style: none;
+    animation: menu-pop 100ms cubic-bezier(0.16, 1, 0.3, 1);
+    transform-origin: top left;
+  }
+
+  @keyframes menu-pop {
+    from { opacity: 0; transform: scale(0.96) translateY(-2px); }
+    to { opacity: 1; transform: scale(1) translateY(0); }
+  }
+
+  .context-menu-item {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    width: 100%;
+    padding: 5px 10px;
+    font-size: 12.5px;
+    color: var(--text);
+    background: transparent;
+    border: none;
+    border-radius: 5px;
+    text-align: left;
+    cursor: pointer;
+    transition: background 80ms ease;
+  }
+
+  .context-menu-item:hover {
+    background: var(--hover);
+  }
+
+  .context-menu-item:disabled {
+    opacity: 0.38;
+    cursor: not-allowed;
+    pointer-events: none;
+  }
+
+  .context-menu-label {
+    flex: 1;
+    white-space: nowrap;
+  }
+
+  .context-menu-shortcut {
+    font-size: 11px;
+    color: var(--muted);
+    margin-left: 16px;
+    font-family: var(--font-hei);
+    letter-spacing: 0.5px;
+  }
+
+  .context-menu-separator {
+    height: 1px;
+    background: var(--border);
+    margin: 4px 6px;
+  }
+
+  .context-menu-item.danger {
+    color: var(--danger);
+  }
+
+  /* 提示 Toast */
+  .toast {
+    position: absolute;
+    bottom: 20px;
+    right: 20px;
+    background: var(--text);
+    color: var(--background);
+    font-size: 12px;
+    padding: 7px 14px;
+    border-radius: 6px;
+    box-shadow: 0 4px 14px rgba(0,0,0,0.2);
+    opacity: 0;
+    transform: translateY(6px);
+    transition: all 180ms ease;
+    pointer-events: none;
+    z-index: 200;
+  }
+  .toast.show {
+    opacity: 1;
+    transform: translateY(0);
+  }
+
+  /* 底部设计亮点说明 */
+  .feature-explainer {
+    max-width: 820px;
+    width: 100%;
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+
+  .feature-box {
+    background: #ffffff;
+    border-radius: 10px;
+    padding: 16px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.04);
+  }
+  .feature-box h3 {
+    font-size: 14px;
+    font-weight: 600;
+    color: #222;
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .feature-box p {
+    font-size: 12.5px;
+    color: #666;
+    line-height: 1.5;
+  }
+</style>
+</head>
+<body>
+
+  <!-- 控制与说明卡片 -->
+  <div class="header-card">
+    <div class="header-titles">
+      <h1>mote 标签页右键菜单原型设计</h1>
+      <p>💡 请在下方窗口的<b>标签页上右键单击</b>，体验完整的关闭逻辑与右键交互</p>
+    </div>
+    <div class="toolbar-actions">
+      <div class="pill-group">
+        <button class="pill-btn active" id="btn-theme-light" onclick="setTheme('light')">宣纸浅色</button>
+        <button class="pill-btn" id="btn-theme-dark" onclick="setTheme('dark')">端砚深色</button>
+      </div>
+      <button class="action-btn" onclick="resetTabs()">重置标签页</button>
+    </div>
+  </div>
+
+  <!-- 模拟 Mac 窗口 -->
+  <div class="window-frame" id="window-frame">
+    <!-- 顶部状态栏与标签栏 -->
+    <div class="window-topbar">
+      <div class="traffic-lights">
+        <span class="tl tl-red"></span>
+        <span class="tl tl-yellow"></span>
+        <span class="tl tl-green"></span>
+      </div>
+
+      <!-- 标签栏 -->
+      <div class="tab-bar" id="tab-bar-container">
+        <div class="tab-scroll" id="tab-scroll">
+          <!-- 动态渲染标签 -->
+        </div>
+        <button class="tab-add" title="新面板" onclick="addTab()">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 5v14M5 12h14"/></svg>
+        </button>
+      </div>
+    </div>
+
+    <!-- 窗口主区 -->
+    <div class="window-body">
+      <!-- 简易左侧文件树示意 -->
+      <div class="sidebar">
+        <div class="sidebar-header">笔记库</div>
+        <div class="sidebar-item" id="nav-daily"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> 日记 / 2026-11</div>
+        <div class="sidebar-item" id="nav-arch"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> 架构设计.md</div>
+        <div class="sidebar-item" id="nav-plan"><svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline></svg> 实施计划.md</div>
+      </div>
+
+      <!-- 编辑器区域内容模拟 -->
+      <div class="editor-mock" id="editor-content">
+        <!-- 动态更新 -->
+      </div>
+
+      <!-- 弹出菜单遮罩与菜单实体 -->
+      <div id="menu-layer" style="display: none;">
+        <div class="context-menu-backdrop" onclick="closeContextMenu()" oncontextmenu="event.preventDefault(); closeContextMenu();"></div>
+        <ul class="context-menu" id="tab-context-menu" role="menu">
+          <!-- 动态渲染菜单项 -->
+        </ul>
+      </div>
+
+      <!-- 动作反馈 Toast -->
+      <div class="toast" id="toast">已复制相对路径</div>
+    </div>
+  </div>
+
+  <!-- 设计亮点与规则说明 -->
+  <div class="feature-explainer">
+    <div class="feature-box">
+      <h3>1. 批量关闭逻辑</h3>
+      <p>• <b>关闭其他</b>：仅保留目标标签，自动保存其余脏笔记。<br>• <b>关闭右侧</b>：清理向后延伸的历史标签，末尾项自动置灰。<br>• <b>全部关闭</b>：无缝退回「空面板」状态。</p>
+    </div>
+    <div class="feature-box">
+      <h3>2. macOS 视觉与纸墨规范</h3>
+      <p>• 严格承袭 mote 现有的 <b>Safari 分段凹槽栏</b>。<br>• 右键呼出时对触发标签增加 <code>--accent</code> 聚焦框。<br>• 菜单支持深浅色无缝自适应与 ⌘W 快捷键映射。</p>
+    </div>
+    <div class="feature-box">
+      <h3>3. 智能定位与保护</h3>
+      <p>• 菜单超出视区右侧时自动反向贴齐。<br>• 菜单提供「在访达中显示」与「在文件树中定位」。<br>• 闭合过程联动 <code>workspace.ts</code> 的打开会话与状态留存。</p>
+    </div>
+  </div>
+
+<script>
+  // 初始模拟标签数据
+  const initialTabs = [
+    { id: 't1', title: '2026-11-26 需求梳理.md', path: '日记/2026-11-26 需求梳理.md', isDirty: false },
+    { id: 't2', title: '架构设计与状态机.md', path: 'docs/架构设计与状态机.md', isDirty: true },
+    { id: 't3', title: '实施计划 step-11.md', path: 'docs/plans/实施计划 step-11.md', isDirty: false },
+    { id: 't4', title: '参考界面截图.png', path: 'assets/参考界面截图.png', isDirty: false, isImage: true }
+  ];
+
+  let tabs = JSON.parse(JSON.stringify(initialTabs));
+  let activeTabId = 't2';
+  let contextTargetTabId = null;
+
+  function setTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    document.getElementById('btn-theme-light').classList.toggle('active', theme === 'light');
+    document.getElementById('btn-theme-dark').classList.toggle('active', theme === 'dark');
+  }
+
+  function showToast(text) {
+    const toast = document.getElementById('toast');
+    toast.textContent = text;
+    toast.classList.add('show');
+    setTimeout(() => toast.classList.remove('show'), 1600);
+  }
+
+  function render() {
+    const scroll = document.getElementById('tab-scroll');
+    scroll.innerHTML = '';
+
+    tabs.forEach((tab, index) => {
+      const item = document.createElement('div');
+      item.className = 'tab-item' + 
+        (tab.id === activeTabId ? ' active' : '') +
+        (tab.id === contextTargetTabId ? ' menu-target' : '');
+      item.title = tab.path;
+
+      // 图标
+      const iconSvg = tab.isImage
+        ? `<svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>`
+        : `<svg class="tab-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line></svg>`;
+
+      item.innerHTML = `
+        ${iconSvg}
+        <span class="tab-name">${tab.title}</span>
+        <button type="button" class="tab-close" title="关闭 (⌘W)" onclick="event.stopPropagation(); closeTab('${tab.id}')">
+          <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2"><line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line></svg>
+        </button>
+      `;
+
+      // 左键点击切换
+      item.onclick = () => {
+        activeTabId = tab.id;
+        closeContextMenu();
+        render();
+      };
+
+      // 中键关闭
+      item.onauxclick = (e) => {
+        if (e.button === 1) {
+          e.preventDefault();
+          closeTab(tab.id);
+        }
+      };
+
+      // 右键菜单
+      item.oncontextmenu = (e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        openContextMenu(tab.id, e.clientX, e.clientY);
+      };
+
+      scroll.appendChild(item);
+    });
+
+    renderEditor();
+  }
+
+  function renderEditor() {
+    const editor = document.getElementById('editor-content');
+    const active = tabs.find(t => t.id === activeTabId);
+
+    if (!active) {
+      editor.innerHTML = `
+        <div class="mock-empty">
+          <p>选择一篇笔记，或按 <b>⌘O</b> 快速打开</p>
+        </div>
+      `;
+      return;
+    }
+
+    if (active.isImage) {
+      editor.innerHTML = `
+        <div class="mock-title">${active.title}</div>
+        <div style="margin: auto; text-align: center; color: var(--muted); padding: 40px;">
+          <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><circle cx="8.5" cy="8.5" r="1.5"></circle><polyline points="21 15 16 10 5 21"></polyline></svg>
+          <div style="margin-top: 8px; font-size: 13px;">图片已在独立标签页预览 (1:1 自适应)</div>
+        </div>
+      `;
+      return;
+    }
+
+    editor.innerHTML = `
+      <div class="mock-title">${active.title.replace(/\.md$/, '')}</div>
+      <p class="mock-p">路径：<code>${active.path}</code></p>
+      <p class="mock-p">这是 mote 的真实文档编辑视区。当右键点击顶部标签页时，用户可快速触发关闭操作或在访达中定位。</p>
+      <div style="background: var(--hover); padding: 12px 16px; border-radius: 8px; font-size: 13px; line-height: 1.6; color: var(--muted);">
+        <b>操作提示：</b><br>
+        1. 右键任一标签，弹出包含「关闭」、「关闭其他」、「关闭右侧」、「全部关闭」等标准动作的操作菜单。<br>
+        2. 当前操作目标标签会高亮聚焦框，帮助准确定位。
+      </div>
+    `;
+  }
+
+  function openContextMenu(tabId, clientX, clientY) {
+    contextTargetTabId = tabId;
+    const targetIndex = tabs.findIndex(t => t.id === tabId);
+    const targetTab = tabs[targetIndex];
+    if (!targetTab) return;
+
+    const menuLayer = document.getElementById('menu-layer');
+    const menu = document.getElementById('tab-context-menu');
+    menuLayer.style.display = 'block';
+
+    const hasRight = targetIndex < tabs.length - 1;
+    const hasOther = tabs.length > 1;
+
+    menu.innerHTML = `
+      <li role="none">
+        <button type="button" class="context-menu-item" onclick="closeTab('${tabId}')">
+          <span class="context-menu-label">关闭标签页</span>
+          <span class="context-menu-shortcut">⌘W</span>
+        </button>
+      </li>
+      <li role="none">
+        <button type="button" class="context-menu-item" ${!hasOther ? 'disabled' : ''} onclick="closeOtherTabs('${tabId}')">
+          <span class="context-menu-label">关闭其他标签页</span>
+          <span class="context-menu-shortcut">⌥⌘T</span>
+        </button>
+      </li>
+      <li role="none">
+        <button type="button" class="context-menu-item" ${!hasRight ? 'disabled' : ''} onclick="closeRightTabs('${tabId}')">
+          <span class="context-menu-label">关闭右侧标签页</span>
+        </button>
+      </li>
+      <li role="none">
+        <button type="button" class="context-menu-item" onclick="closeAllTabs()">
+          <span class="context-menu-label">全部关闭</span>
+        </button>
+      </li>
+      <li class="context-menu-separator" role="separator"></li>
+      <li role="none">
+        <button type="button" class="context-menu-item" onclick="copyPath('${targetTab.path}')">
+          <span class="context-menu-label">复制相对路径</span>
+        </button>
+      </li>
+      <li role="none">
+        <button type="button" class="context-menu-item" onclick="revealInFinder('${targetTab.path}')">
+          <span class="context-menu-label">在访达中显示</span>
+        </button>
+      </li>
+      <li role="none">
+        <button type="button" class="context-menu-item" onclick="revealInTree('${targetTab.path}')">
+          <span class="context-menu-label">在文件树中定位</span>
+        </button>
+      </li>
+      <li class="context-menu-separator" role="separator"></li>
+      <li role="none">
+        <button type="button" class="context-menu-item" onclick="openInNewWindow('${targetTab.path}')">
+          <span class="context-menu-label">在新窗口打开</span>
+          <span class="context-menu-shortcut">⇧⌘N</span>
+        </button>
+      </li>
+    `;
+
+    // 相对 window-frame 的坐标计算
+    const frameRect = document.getElementById('window-frame').getBoundingClientRect();
+    let x = clientX ? (clientX - frameRect.left) : 220;
+    let y = clientY ? (clientY - frameRect.top) : 40;
+
+    // 防止右侧与下部超出屏幕
+    const menuWidth = 190;
+    const menuHeight = 260;
+    if (x + menuWidth > frameRect.width - 8) {
+      x = frameRect.width - menuWidth - 8;
+    }
+    if (y + menuHeight > frameRect.height - 8) {
+      y = frameRect.height - menuHeight - 8;
+    }
+
+    menu.style.left = `${Math.max(8, x)}px`;
+    menu.style.top = `${Math.max(8, y)}px`;
+
+    render();
+  }
+
+  function closeContextMenu() {
+    contextTargetTabId = null;
+    document.getElementById('menu-layer').style.display = 'none';
+    render();
+  }
+
+  function closeTab(tabId) {
+    closeContextMenu();
+    const idx = tabs.findIndex(t => t.id === tabId);
+    if (idx === -1) return;
+
+    tabs.splice(idx, 1);
+    if (activeTabId === tabId) {
+      if (tabs.length === 0) {
+        activeTabId = null;
+      } else {
+        const nextIdx = Math.min(idx, tabs.length - 1);
+        activeTabId = tabs[nextIdx].id;
+      }
+    }
+    showToast('已关闭标签页');
+    render();
+  }
+
+  function closeOtherTabs(targetId) {
+    closeContextMenu();
+    tabs = tabs.filter(t => t.id === targetId);
+    activeTabId = targetId;
+    showToast('已关闭其他标签页');
+    render();
+  }
+
+  function closeRightTabs(targetId) {
+    closeContextMenu();
+    const idx = tabs.findIndex(t => t.id === targetId);
+    if (idx === -1) return;
+    tabs = tabs.slice(0, idx + 1);
+    if (!tabs.some(t => t.id === activeTabId)) {
+      activeTabId = targetId;
+    }
+    showToast('已关闭右侧标签页');
+    render();
+  }
+
+  function closeAllTabs() {
+    closeContextMenu();
+    tabs = [];
+    activeTabId = null;
+    showToast('已关闭全部标签页（进入空面板）');
+    render();
+  }
+
+  function copyPath(path) {
+    closeContextMenu();
+    showToast(`已复制: ${path}`);
+  }
+
+  function revealInFinder(path) {
+    closeContextMenu();
+    showToast(`在访达中显示: ${path}`);
+  }
+
+  function revealInTree(path) {
+    closeContextMenu();
+    showToast(`已在文件树中高亮定位`);
+  }
+
+  function openInNewWindow(path) {
+    closeContextMenu();
+    showToast(`在新窗口打开: ${path}`);
+  }
+
+  function addTab() {
+    const newId = 't' + (Date.now());
+    const count = tabs.length + 1;
+    tabs.push({
+      id: newId,
+      title: `未命名笔记 ${count}.md`,
+      path: `未命名笔记 ${count}.md`,
+      isDirty: false
+    });
+    activeTabId = newId;
+    render();
+  }
+
+  function resetTabs() {
+    tabs = JSON.parse(JSON.stringify(initialTabs));
+    activeTabId = 't2';
+    closeContextMenu();
+    showToast('标签页已重置');
+    render();
+  }
+
+  // 初始化
+  const isDarkDefault = window.matchMedia('(prefers-color-scheme: dark)').matches;
+  setTheme(isDarkDefault ? 'dark' : 'light');
+  render();
+  // 默认展开右键菜单，方便直观预览
+  setTimeout(() => {
+    const tabEl = document.querySelectorAll('.tab-item')[1];
+    if (tabEl) {
+      const rect = tabEl.getBoundingClientRect();
+      openContextMenu('t2', rect.left + 40, rect.bottom + 4);
+    }
+  }, 50);
+
+  // Esc 键关闭菜单
+  window.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape') closeContextMenu();
+  });
+</script>
+</body>
+</html>

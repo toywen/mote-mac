@@ -128,3 +128,62 @@ test('header blank area to the right of tabs is draggable', async () => {
     await app.close()
   }
 })
+
+test('tab context menu provides close other, close to right, close all and file actions', async () => {
+  const { app, window } = await start()
+  try {
+    const tabBar = window.getByRole('tablist', { name: '标签页' })
+
+    // Open three notes
+    await window.getByRole('treeitem', { name: '图表', exact: true }).click()
+    await window.getByRole('treeitem', { name: '表格', exact: true }).click()
+    await window.getByRole('treeitem', { name: '任务', exact: true }).click()
+
+    const tabs = tabBar.getByRole('tab')
+    await expect(tabs).toHaveCount(3)
+
+    // 1. Right click on first tab '图表'
+    await tabs.nth(0).click({ button: 'right' })
+    const menu = window.getByRole('menu', { name: '标签页操作菜单' })
+    await expect(menu).toBeVisible()
+
+    await expect(menu.getByRole('menuitem', { name: /关闭标签页/ })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: /关闭其他标签页/ })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: /关闭右侧标签页/ })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: /全部关闭/ })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: /复制相对路径/ })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: /在访达中显示/ })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: /在文件树中定位/ })).toBeVisible()
+    await expect(menu.getByRole('menuitem', { name: /在新窗口打开/ })).toBeVisible()
+
+    // 2. Click '关闭右侧标签页'
+    await menu.getByRole('menuitem', { name: /关闭右侧标签页/ }).click()
+    await expect(menu).not.toBeVisible()
+    await expect(tabs).toHaveCount(1)
+    await expect(tabs.first()).toContainText('图表')
+
+    // Open another note '表格' again
+    await window.getByRole('treeitem', { name: '表格', exact: true }).click()
+    await expect(tabs).toHaveCount(2)
+
+    // 3. Right click on '表格', click '关闭其他标签页'
+    await tabs.nth(1).click({ button: 'right' })
+    await window
+      .getByRole('menu', { name: '标签页操作菜单' })
+      .getByRole('menuitem', { name: /关闭其他标签页/ })
+      .click()
+    await expect(tabs).toHaveCount(1)
+    await expect(tabs.first()).toContainText('表格')
+
+    // 4. Right click on '表格', click '全部关闭'
+    await tabs.first().click({ button: 'right' })
+    await window
+      .getByRole('menu', { name: '标签页操作菜单' })
+      .getByRole('menuitem', { name: /全部关闭/ })
+      .click()
+    await expect(tabs).toHaveCount(0)
+    await expect(window.locator('.empty')).toContainText('选择一篇笔记')
+  } finally {
+    await app.close()
+  }
+})

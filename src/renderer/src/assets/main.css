@@ -440,6 +440,11 @@ html[data-theme='dark'] .tab-item:hover:not(.active) {
   box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 0 0 0.5px rgba(0, 0, 0, 0.04);
 }
 
+.tab-item.menu-target {
+  outline: 1.5px solid var(--accent);
+  outline-offset: -1px;
+}
+
 @media (prefers-color-scheme: dark) {
   .tab-item.active {
     background: #282622;

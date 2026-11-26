@@ -170,6 +170,9 @@ function App(): React.JSX.Element {
       } else if (event.metaKey && !event.shiftKey && !event.altKey && event.code === 'KeyW') {
         event.preventDefault()
         void workspace.closeActiveTab()
+      } else if (event.metaKey && event.altKey && !event.shiftKey && event.code === 'KeyT') {
+        event.preventDefault()
+        if (doc?.path) void workspace.closeOtherTabs(doc.path)
       } else if (event.ctrlKey && !event.metaKey && !event.altKey && event.code === 'Tab') {
         event.preventDefault()
         workspace.cycleTab(event.shiftKey ? -1 : 1)
@@ -516,6 +519,11 @@ function App(): React.JSX.Element {
                 tabs={tabs}
                 activePath={doc?.path}
                 onNewPanel={() => void workspace.newPanel()}
+                onLocate={(path) => {
+                  setSidebarOpen(true)
+                  setSidebarView('files')
+                  fileTreeRef.current?.reveal(path)
+                }}
               />
             ) : (
               <h1>mote</h1>

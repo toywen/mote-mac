@@ -348,6 +348,53 @@ export class Workspace {
     return Promise.resolve()
   }
 
+  async closeOtherTabs(path: VaultPath): Promise<void> {
+    const { tabs, doc, busy } = this.state
+    if (!tabs.includes(path) || busy) return
+    for (const t of tabs) {
+      if (t !== path) this.cursors.delete(t)
+    }
+    if (doc?.path === path) {
+      this.set({ tabs: [path] })
+      return
+    }
+    await this.show(path, this.cursors.get(path), null, [path])
+  }
+
+  async closeTabsToTheRight(path: VaultPath): Promise<void> {
+    const { tabs, doc, busy } = this.state
+    const index = tabs.indexOf(path)
+    if (index === -1 || index === tabs.length - 1 || busy) return
+    const keptTabs = tabs.slice(0, index + 1)
+    const closedTabs = tabs.slice(index + 1)
+    for (const t of closedTabs) this.cursors.delete(t)
+    if (doc && closedTabs.includes(doc.path)) {
+      await this.show(path, this.cursors.get(path), null, keptTabs)
+    } else {
+      this.set({ tabs: keptTabs })
+    }
+  }
+
+  async closeAllTabs(): Promise<void> {
+    const { tabs, doc, busy } = this.state
+    if (tabs.length === 0 || busy) return
+    if (!doc) {
+      this.cursors.clear()
+      this.set({ tabs: [] })
+      return
+    }
+    this.set({ busy: true, error: '' })
+    try {
+      if (!(await this.flush())) return
+      this.cursors.clear()
+      this.set({ tabs: [], doc: null, backlinks: null, selection: null })
+    } catch (error) {
+      this.fail(error)
+    } finally {
+      this.set({ busy: false })
+    }
+  }
+
   // Opens an empty panel: no note is open, so the main area shows 选择一篇笔记 and the tabs stay.
   // A dirty note saves first, as when its tab closes.
   async newPanel(): Promise<void> {
