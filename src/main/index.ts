@@ -17,6 +17,10 @@ import { optimizer, is } from '@electron-toolkit/utils'
 import { fileScheme } from '../core/fileUrl'
 import {
   channels,
+  parseVaultPath,
+  type AiAskInput,
+  type AiEvent,
+  type AiSettingsView,
   type ContentHash,
   fontModes,
   nextFont,
@@ -39,6 +43,8 @@ import { syncServerOf } from './syncServer'
 import { authenticate, type AuthSession } from './syncAuth'
 import { registerUpdaterIpc, Updater } from './updater'
 import { buildApplicationMenu } from './menu'
+import { aiBaseUrlOf, buildMessages, MAX_SOURCE_CHARS, streamChat, type Source } from './ai'
+import { dailyNotesIn, localDate } from '../core/ai'
 
 app.setName('mote')
 
@@ -339,6 +345,86 @@ ipcMain.handle(
 ipcMain.handle(channels.confirmSyncDeletions, (_event, dir: string) => {
   syncControllers.get(dir)?.confirmDeletions()
 })
+
+const aiView = async (): Promise<AiSettingsView> => ({
+  hasKey: Boolean((await readSettings()).ai?.keyCipher)
+})
+
+ipcMain.handle(channels.getAiSettings, aiView)
+
+ipcMain.handle(channels.setAiKey, async (_event, key: string): Promise<AiSettingsView> => {
+  const clean = String(key).trim()
+  if (!clean) return aiView()
+  await writeSettings({ ai: { keyCipher: sealToken(clean) } })
+  return aiView()
+})
+
+ipcMain.handle(channels.clearAiKey, async (): Promise<AiSettingsView> => {
+  await writeSettings({ ai: undefined })
+  return aiView()
+})
+
+// Answers being streamed, by the id the window chose, so the window can stop one.
+const aiRuns = new Map<string, AbortController>()
+
+// Every outcome, failures included, reaches the window as an event, so it has one path to show.
+ipcMain.handle(channels.aiAsk, async (event, input: AiAskInput): Promise<void> => {
+  const { sender } = event
+  const id = String(input.id)
+  const emit = (next: AiEvent): void => {
+    if (!sender.isDestroyed()) sender.send(channels.aiEvent, next)
+  }
+  const fail = (message: string): void => emit({ id, kind: 'error', message })
+
+  const settings = await readSettings()
+  const key = settings.ai ? openToken(settings.ai.keyCipher) : null
+  if (!key) return fail('先填写 DeepSeek 的 API key')
+  const base = aiBaseUrlOf(settings.aiBaseUrl)
+  if (!base.ok) return fail(base.error)
+
+  let sources: Source[]
+  const { scope } = input
+  if (scope.kind === 'note') {
+    sources = [{ path: parseVaultPath(scope.path), text: String(scope.text) }]
+  } else {
+    const vault = currentVault(input.dir)
+    const { entries, config } = vault.info()
+    const notes = entries.filter((e) => e.kind === 'note').map((e) => e.path)
+    sources = vault.noteTexts(
+      dailyNotesIn(notes, config.daily.folder, String(scope.from), String(scope.to))
+    )
+    if (!sources.length) return fail('这段时间没有日记')
+  }
+  const chars = sources.reduce((sum, s) => sum + s.text.length, 0)
+  if (chars > MAX_SOURCE_CHARS) {
+    return fail(`选中的笔记共 ${chars.toLocaleString('en-US')} 字，超过上限，缩小范围再试`)
+  }
+
+  const controller = new AbortController()
+  aiRuns.set(id, controller)
+  sender.once('destroyed', () => controller.abort())
+  emit({
+    id,
+    kind: 'sources',
+    sources: sources.map((s) => ({ path: s.path, chars: s.text.length }))
+  })
+  streamChat({
+    baseUrl: base.url,
+    key,
+    messages: buildMessages(sources, input.messages, localDate(new Date())),
+    signal: controller.signal,
+    onDelta: (text) => emit({ id, kind: 'delta', text })
+  })
+    .then(() => emit({ id, kind: 'done' }))
+    .catch((error: unknown) => {
+      // A stop keeps what arrived so far.
+      if (controller.signal.aborted) emit({ id, kind: 'done' })
+      else fail(error instanceof Error ? error.message : String(error))
+    })
+    .finally(() => aiRuns.delete(id))
+})
+
+ipcMain.on(channels.aiCancel, (_event, id: string) => aiRuns.get(String(id))?.abort())
 
 ipcMain.handle(channels.readNote, (_event, dir: string, path: VaultPath) =>
   currentVault(dir).readNote(path)

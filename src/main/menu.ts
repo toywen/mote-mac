@@ -248,6 +248,11 @@ export function buildApplicationMenu(onCreateWindow?: (win?: BaseWindow | null) 
           accelerator: 'CmdOrCtrl+Shift+J',
           click: (_item, win) => sendAction('reveal-active-file', win)
         },
+        {
+          label: '显示/隐藏助手',
+          accelerator: 'CmdOrCtrl+Shift+A',
+          click: (_item, win) => sendAction('toggle-assistant', win)
+        },
         { type: 'separator' as const },
         {
           label: '切换正文字体（楷体/宋体/黑体）',

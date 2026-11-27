@@ -47,6 +47,7 @@ const throughSymlink: Record<keyof Vault, DiskCall | 'takes no path to the disk'
   close: 'takes no path to the disk',
   search: 'takes no path to the disk',
   backlinks: 'takes no path to the disk',
+  noteTexts: 'takes no path to the disk',
   countInboundLinks: 'takes no path to the disk',
   subscribe: 'takes no path to the disk',
   listFiles: 'takes no path to the disk',
