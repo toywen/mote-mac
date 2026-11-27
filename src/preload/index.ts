@@ -92,6 +92,7 @@ const mote: MoteApi = {
   getAiSettings: () => ipcRenderer.invoke(channels.getAiSettings),
   setAiKey: (key) => ipcRenderer.invoke(channels.setAiKey, key),
   clearAiKey: () => ipcRenderer.invoke(channels.clearAiKey),
+  listTags: (dir) => ipcRenderer.invoke(channels.listTags, dir),
   aiAsk: (input) => ipcRenderer.invoke(channels.aiAsk, input),
   aiCancel: (id) => ipcRenderer.send(channels.aiCancel, id),
   onAiEvent: (callback) => {

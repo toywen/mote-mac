@@ -301,42 +301,255 @@
   margin-top: 10px;
 }
 
-/* The composer: scope, then the question. */
+/* The composer: context chips, @ picker, then the question. */
 .assistant-composer {
+  position: relative;
   flex-shrink: 0;
   padding: 10px 12px 14px;
   border-top: 1px solid var(--border);
 }
 
-.assistant-scope {
+.assistant-context-bar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 5px;
+  margin-bottom: 7px;
+}
+
+.assistant-chip {
   display: inline-flex;
   align-items: center;
-  gap: 4px;
-  max-width: 100%;
-  height: 22px;
-  margin: 0 0 6px;
-  padding: 0 6px 0 8px;
-  border: 0;
-  border-radius: 5px;
-  background: transparent;
-  color: var(--t3);
+  gap: 5px;
+  max-width: 196px;
+  height: 23px;
+  padding: 0 5px 0 7px;
+  border-radius: 6px;
+  background: var(--accent-bg);
+  color: var(--accent);
   font-size: 11.5px;
-  cursor: pointer;
-  transition:
-    background 120ms ease,
-    color 120ms ease;
+  animation: assistant-chip-in 150ms cubic-bezier(0.23, 1, 0.32, 1) both;
 }
 
-.assistant-scope:hover,
-.assistant-scope[aria-expanded='true'] {
-  background: var(--hover);
-  color: var(--text);
+@keyframes assistant-chip-in {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
 }
 
-.assistant-scope-text {
+.assistant-chip-icon {
+  width: 12px;
+  height: 12px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  opacity: 0.9;
+}
+
+.assistant-chip-name {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+}
+
+.assistant-chip-remove {
+  width: 15px;
+  height: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 4px;
+  background: transparent;
+  color: inherit;
+  opacity: 0.65;
+  cursor: pointer;
+  padding: 0;
+  margin-left: 1px;
+  transition:
+    opacity 120ms ease,
+    background 120ms ease;
+}
+
+.assistant-chip-remove:hover {
+  opacity: 1;
+  background: var(--hover);
+}
+
+.assistant-add-ref {
+  height: 23px;
+  padding: 0 8px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-family: var(--font-hei);
+  font-size: 11.5px;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition:
+    border-color 120ms ease,
+    color 120ms ease,
+    background 120ms ease;
+}
+
+.assistant-add-ref:hover,
+.assistant-add-ref[aria-expanded='true'] {
+  border-color: var(--muted);
+  color: var(--text);
+  background: var(--hover);
+}
+
+.assistant-default-hint {
+  font-size: 11px;
+  color: var(--t3);
+  padding: 0 3px;
+}
+
+.assistant-picker {
+  position: absolute;
+  left: 12px;
+  right: 12px;
+  bottom: calc(100% + 6px);
+  background: var(--background);
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  box-shadow: var(--float-shadow);
+  padding: 5px;
+  z-index: 40;
+  transform-origin: bottom left;
+  animation: assistant-picker-in 150ms cubic-bezier(0.23, 1, 0.32, 1) both;
+}
+
+@keyframes assistant-picker-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px) scale(0.97);
+  }
+}
+
+.assistant-picker-search {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 4px 8px 7px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--border);
+  color: var(--t3);
+}
+
+.assistant-picker-search input {
+  flex: 1;
+  min-width: 0;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-hei);
+  font-size: 12.5px;
+  outline: none;
+}
+
+.assistant-picker-search input::placeholder {
+  color: var(--t3);
+}
+
+.assistant-picker-list {
+  max-height: 240px;
+  overflow-y: auto;
+  padding-right: 2px;
+}
+
+.assistant-picker-section {
+  padding: 5px 8px 3px;
+  font-size: 10.5px;
+  color: var(--t3);
+  letter-spacing: 0.04em;
+}
+
+.assistant-picker-empty {
+  padding: 12px 8px;
+  font-size: 12px;
+  color: var(--t3);
+  text-align: center;
+}
+
+.assistant-picker-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 8px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-hei);
+  font-size: 12.5px;
+  text-align: left;
+  cursor: pointer;
+  transition: background 100ms ease;
+}
+
+.assistant-picker-item:hover,
+.assistant-picker-item[data-focused='true'] {
+  background: var(--hover);
+}
+
+.assistant-picker-item[data-active='true'] {
+  background: var(--accent-bg);
+  color: var(--accent);
+  font-weight: 500;
+}
+
+.assistant-picker-icon {
+  width: 15px;
+  height: 15px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--muted);
+}
+
+.assistant-picker-item[data-active='true'] .assistant-picker-icon {
+  color: var(--accent);
+}
+
+.assistant-picker-label {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assistant-picker-hint {
+  font-size: 11px;
+  color: var(--t3);
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+}
+
+.assistant-picker-item[data-active='true'] .assistant-picker-hint {
+  color: var(--accent);
+}
+
+.assistant-picker-foot {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 6px 8px 2px;
+  margin-top: 4px;
+  border-top: 1px solid var(--border);
+  font-size: 10.5px;
+  color: var(--t3);
 }
 
 .assistant-menu {
@@ -363,28 +576,6 @@
     opacity: 0;
     transform: scale(0.97);
   }
-}
-
-.assistant-range {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-  padding: 4px 8px 6px 33px;
-  font-size: 11.5px;
-  color: var(--t3);
-}
-
-.assistant-range input {
-  flex: 1;
-  min-width: 0;
-  height: 26px;
-  padding: 0 6px;
-  border: 1px solid var(--edge);
-  border-radius: 6px;
-  background: var(--background);
-  color: var(--text);
-  font-family: var(--font-hei);
-  font-size: 11.5px;
 }
 
 .assistant-ask {
@@ -451,7 +642,9 @@
 
 @media (prefers-reduced-motion: reduce) {
   .assistant-wait,
-  .assistant-menu {
+  .assistant-menu,
+  .assistant-chip,
+  .assistant-picker {
     animation: none;
   }
 }

@@ -368,3 +368,61 @@ export function extractLinks(text: string): LinkRef[] {
   })
   return links
 }
+
+function normalizeTag(raw: string): string | null {
+  const clean = raw.trim().replace(/^#+/, '')
+  if (!clean || /^\d+$/.test(clean) || /\s/.test(clean)) return null
+  return `#${clean}`
+}
+
+function frontmatterTags(block: string): string[] {
+  const body = block.slice(block.indexOf('\n') + 1, block.lastIndexOf('\n'))
+  let data: unknown
+  try {
+    data = parseYaml(body)
+  } catch {
+    return []
+  }
+  if (!data || typeof data !== 'object' || Array.isArray(data)) return []
+  const record = data as Record<string, unknown>
+  const raw = record.tags ?? record.tag
+  const items: string[] = []
+  if (typeof raw === 'string') {
+    for (const part of raw.split(/[\s,]+/)) {
+      const tag = normalizeTag(part)
+      if (tag) items.push(tag)
+    }
+  } else if (Array.isArray(raw)) {
+    for (const entry of raw) {
+      if (typeof entry !== 'string') continue
+      const tag = normalizeTag(entry)
+      if (tag) items.push(tag)
+    }
+  }
+  return items
+}
+
+export function extractTags(text: string): string[] {
+  const seen = new Set<string>()
+  const tags: string[] = []
+  const push = (tag: string): void => {
+    const key = tag.toLowerCase()
+    if (seen.has(key)) return
+    seen.add(key)
+    tags.push(tag)
+  }
+  markdownParser.parse(text).iterate({
+    enter(node) {
+      if (node.name === 'Tag') {
+        push(text.slice(node.from, node.to))
+        return false
+      }
+      if (node.name === 'Frontmatter') {
+        for (const t of frontmatterTags(text.slice(node.from, node.to))) push(t)
+        return false
+      }
+      return undefined
+    }
+  })
+  return tags
+}

@@ -44,7 +44,7 @@ import { authenticate, type AuthSession } from './syncAuth'
 import { registerUpdaterIpc, Updater } from './updater'
 import { buildApplicationMenu } from './menu'
 import { aiBaseUrlOf, buildMessages, envKey, MAX_SOURCE_CHARS, streamChat, type Source } from './ai'
-import { dailyNotesIn, localDate } from '../core/ai'
+import { dailyNotesIn, localDate, resolveScopePaths } from '../core/ai'
 
 app.setName('mote')
 
@@ -371,6 +371,8 @@ ipcMain.handle(channels.clearAiKey, async (): Promise<AiSettingsView> => {
   return aiView()
 })
 
+ipcMain.handle(channels.listTags, (_event, dir: string) => currentVault(dir).listTags())
+
 // Answers being streamed, by the id the window chose, so the window can stop one.
 const aiRuns = new Map<string, AbortController>()
 
@@ -393,7 +395,7 @@ ipcMain.handle(channels.aiAsk, async (event, input: AiAskInput): Promise<void> =
   const { scope } = input
   if (scope.kind === 'note') {
     sources = [{ path: parseVaultPath(scope.path), text: String(scope.text) }]
-  } else {
+  } else if (scope.kind === 'daily') {
     const vault = currentVault(input.dir)
     const { entries, config } = vault.info()
     const notes = entries.filter((e) => e.kind === 'note').map((e) => e.path)
@@ -401,6 +403,29 @@ ipcMain.handle(channels.aiAsk, async (event, input: AiAskInput): Promise<void> =
       dailyNotesIn(notes, config.daily.folder, String(scope.from), String(scope.to))
     )
     if (!sources.length) return fail('这段时间没有日记')
+  } else {
+    const vault = currentVault(input.dir)
+    const { entries, config } = vault.info()
+    const notes = entries.filter((e) => e.kind === 'note').map((e) => e.path)
+    const items = scope.items.map((item) => {
+      if (item.kind === 'note' || item.kind === 'folder') {
+        return { ...item, path: parseVaultPath(item.path) }
+      }
+      return item
+    })
+    const paths = resolveScopePaths({
+      items,
+      notes,
+      dailyFolder: config.daily.folder,
+      notesWithTag: (tag) => vault.notesWithTag(String(tag))
+    })
+    const live = scope.openNote
+      ? { path: parseVaultPath(scope.openNote.path), text: String(scope.openNote.text) }
+      : null
+    sources = vault
+      .noteTexts(paths)
+      .map((s) => (live && s.path === live.path ? { path: s.path, text: live.text } : s))
+    if (!sources.length) return fail('所选范围内没有笔记')
   }
   const chars = sources.reduce((sum, s) => sum + s.text.length, 0)
   if (chars > MAX_SOURCE_CHARS) {

@@ -3,6 +3,7 @@ import { lstat, readFile, realpath, stat } from 'node:fs/promises'
 import { join, resolve } from 'node:path'
 import {
   parseVaultPath,
+  type AiTagSummary,
   type ContentHash,
   type Hit,
   type SearchResult,
@@ -240,6 +241,14 @@ export class Vault {
     return this.index
       .backlinks(parseVaultPath(path))
       .sort((a, b) => (a.path < b.path ? -1 : a.path > b.path ? 1 : a.from - b.from))
+  }
+
+  listTags(): AiTagSummary[] {
+    return this.index.listTags()
+  }
+
+  notesWithTag(tag: string): VaultPath[] {
+    return this.index.notesWithTag(tag)
   }
 
   private schedule(name: string | null): void {

@@ -129,10 +129,23 @@ export type SyncAuthResult =
     }
   | { ok: false; error: string }
 
-// What the assistant reads. A note is sent with the editor's text, since the disk may be behind.
-// Daily notes are picked by main from the dates, both ends included, as YYYY-MM-DD.
+// One unit in a composable assistant selection: a note, a folder, a tag, a daily range, or
+// the whole vault.
+export type AiScopeItem =
+  | { kind: 'note'; path: VaultPath }
+  | { kind: 'folder'; path: VaultPath }
+  | { kind: 'tag'; tag: string }
+  | { kind: 'daily'; from: string; to: string }
+  | { kind: 'vault' }
+
+// What the assistant reads. An open note's live editor text can be attached so main uses it
+// instead of stale disk text when that note is part of the scope.
 export type AiScope =
-  { kind: 'note'; path: VaultPath; text: string } | { kind: 'daily'; from: string; to: string }
+  | { kind: 'note'; path: VaultPath; text: string }
+  | { kind: 'daily'; from: string; to: string }
+  | { kind: 'pick'; items: AiScopeItem[]; openNote?: { path: VaultPath; text: string } }
+
+export type AiTagSummary = { tag: string; count: number }
 
 export type AiMessage = { role: 'user' | 'assistant'; content: string }
 
@@ -251,6 +264,7 @@ export interface MoteApi {
   getAiSettings(): Promise<AiSettingsView>
   setAiKey(key: string): Promise<AiSettingsView>
   clearAiKey(): Promise<AiSettingsView>
+  listTags(dir: string): Promise<AiTagSummary[]>
   // Resolves once the answer has started; the answer itself arrives through onAiEvent.
   aiAsk(input: AiAskInput): Promise<void>
   aiCancel(id: string): void
@@ -304,6 +318,7 @@ export const channels = {
   getAiSettings: 'mote:get-ai-settings',
   setAiKey: 'mote:set-ai-key',
   clearAiKey: 'mote:clear-ai-key',
+  listTags: 'mote:list-tags',
   aiAsk: 'mote:ai-ask',
   aiCancel: 'mote:ai-cancel',
   aiEvent: 'mote:ai-event'

@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import type { VaultPath } from './ipc.ts'
-import { dailyDate, dailyNotesIn, thisWeek } from './ai.ts'
+import { dailyDate, dailyNotesIn, resolveScopePaths, thisWeek } from './ai.ts'
 
 const p = (path: string): VaultPath => path as VaultPath
 
@@ -37,5 +37,41 @@ describe('thisWeek', () => {
     expect(thisWeek(new Date(2026, 10, 27))).toEqual({ from: '2026-11-23', to: '2026-11-27' })
     expect(thisWeek(new Date(2026, 10, 23))).toEqual({ from: '2026-11-23', to: '2026-11-23' })
     expect(thisWeek(new Date(2026, 10, 29))).toEqual({ from: '2026-11-23', to: '2026-11-29' })
+  })
+})
+
+describe('resolveScopePaths', () => {
+  const all = [
+    p('项目/架构.md'),
+    p('项目/同步.md'),
+    p('项目归档/旧.md'),
+    p('阅读/读书.md'),
+    p('日记/2026-11-27.md')
+  ]
+
+  it('mixes folders, notes, tags, daily ranges and deduplicates in order', () => {
+    const out = resolveScopePaths({
+      items: [
+        { kind: 'folder', path: p('项目') },
+        { kind: 'note', path: p('项目/架构.md') },
+        { kind: 'tag', tag: '#读书' },
+        { kind: 'daily', from: '2026-11-23', to: '2026-11-27' }
+      ],
+      notes: all,
+      dailyFolder: '日记',
+      notesWithTag: (tag) => (tag === '#读书' ? [p('阅读/读书.md'), p('项目/同步.md')] : [])
+    })
+    expect(out).toEqual(['项目/架构.md', '项目/同步.md', '阅读/读书.md', '日记/2026-11-27.md'])
+    expect(out).not.toContain('项目归档/旧.md')
+  })
+
+  it('includes every note for the whole vault', () => {
+    const out = resolveScopePaths({
+      items: [{ kind: 'vault' }],
+      notes: all,
+      dailyFolder: '日记',
+      notesWithTag: () => []
+    })
+    expect(out).toHaveLength(5)
   })
 })

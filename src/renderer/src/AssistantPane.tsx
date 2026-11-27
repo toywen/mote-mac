@@ -1,8 +1,38 @@
-import { ArrowUp, Check, ChevronDown, History, KeyRound, Plus, Square, X } from 'lucide-react'
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import {
+  ArrowUp,
+  AtSign,
+  Calendar,
+  Check,
+  FileText,
+  Folder,
+  Hash,
+  History,
+  KeyRound,
+  Library,
+  Plus,
+  Search,
+  Square,
+  X
+} from 'lucide-react'
+import {
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+  type KeyboardEvent as ReactKeyboardEvent
+} from 'react'
 import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
-import type { AiMessage, AiScope, AiSettingsView, VaultInfo, VaultPath } from '../../core/ipc'
+import type {
+  AiMessage,
+  AiScope,
+  AiScopeItem,
+  AiSettingsView,
+  AiTagSummary,
+  VaultInfo,
+  VaultPath
+} from '../../core/ipc'
 import type { LinkIndex } from '../../core/resolve'
 import { dailyNotesIn, thisWeek } from '../../core/ai'
 import { editorMode, linkContext } from './editor/livePreview'
@@ -13,7 +43,20 @@ import type { Doc } from './workspace'
 import { workspace } from './workspace'
 import './assistant.css'
 
-type ScopeKind = 'note' | 'week' | 'range'
+type Pin =
+  | { kind: 'note'; path: VaultPath; label: string }
+  | { kind: 'folder'; path: VaultPath; label: string }
+  | { kind: 'tag'; tag: string; label: string }
+  | { kind: 'week'; label: string }
+  | { kind: 'vault'; label: string }
+
+type Candidate = {
+  id: string
+  section: '常用范围' | '文件夹' | '标签' | '笔记'
+  pin: Pin
+  hint: string
+  searchText: string
+}
 
 // One question and its answer.
 type Turn = {
@@ -34,19 +77,51 @@ const newChat = (): Chat => ({ id: crypto.randomUUID(), startedAt: Date.now(), t
 const clock = (time: number): string =>
   new Date(time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
 
-type MenuAt = { kind: 'scope' | 'history'; rect: DOMRect }
-
 type Links = { index: LinkIndex; config: VaultInfo['config'] } | null
 
+const collator = new Intl.Collator('zh-CN', { numeric: true, sensitivity: 'base' })
 const noteName = (path: VaultPath): string =>
   path.slice(path.lastIndexOf('/') + 1).replace(/\.md$/, '')
-const shortDate = (date: string): string => date.slice(5)
+const parentFolder = (path: VaultPath): string => {
+  const slash = path.lastIndexOf('/')
+  return slash < 0 ? '根目录' : path.slice(0, slash)
+}
 const hasText = (doc: Doc | null): doc is Doc & { text: string } => !!doc && 'text' in doc
 
 // The main editor, not a nested view or an answer: it is the one directly in .editor-content.
 function mainEditor(): EditorView | null {
   const el = document.querySelector('.editor-content > .cm-editor')
   return el ? EditorView.findFromDOM(el as HTMLElement) : null
+}
+
+function samePin(a: Pin, b: Pin): boolean {
+  if (a.kind !== b.kind) return false
+  switch (a.kind) {
+    case 'note':
+      return a.path === (b as typeof a).path
+    case 'folder':
+      return a.path === (b as typeof a).path
+    case 'tag':
+      return a.tag.toLowerCase() === (b as typeof a).tag.toLowerCase()
+    case 'week':
+    case 'vault':
+      return true
+  }
+}
+
+function PinIcon({ kind, size = 13 }: { kind: Pin['kind']; size?: number }): React.JSX.Element {
+  switch (kind) {
+    case 'folder':
+      return <Folder size={size} strokeWidth={1.75} />
+    case 'tag':
+      return <Hash size={size} strokeWidth={1.75} />
+    case 'week':
+      return <Calendar size={size} strokeWidth={1.75} />
+    case 'vault':
+      return <Library size={size} strokeWidth={1.75} />
+    case 'note':
+      return <FileText size={size} strokeWidth={1.75} />
+  }
 }
 
 export function AssistantPane(props: {
@@ -65,20 +140,45 @@ export function AssistantPane(props: {
   const chatNow = chats.find((c) => c.id === chatId) ?? chats[0]
   const turns = chatNow.turns
   const [question, setQuestion] = useState('')
-  const [menu, setMenu] = useState<MenuAt | null>(null)
-  const closeMenu = useCallback(() => setMenu(null), [])
+  const [pins, setPins] = useState<Pin[]>([])
+  const [tags, setTags] = useState<AiTagSummary[]>([])
+  const [pickerMode, setPickerMode] = useState<'button' | 'at' | null>(null)
+  const [query, setQuery] = useState('')
+  const [focusIdx, setFocusIdx] = useState(0)
+  const [focusNonce, setFocusNonce] = useState(0)
+  const [historyRect, setHistoryRect] = useState<DOMRect | null>(null)
+  const closeHistory = useCallback(() => setHistoryRect(null), [])
+
   const noteOpen = hasText(doc)
-  // Null until you pick one: then it reads the open note, or this week when no note is open.
-  const [scopeKind, setScopeKind] = useState<ScopeKind | null>(null)
   const week = useMemo(() => thisWeek(new Date()), [])
-  const [range, setRange] = useState(week)
   const chat = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
+  const searchInput = useRef<HTMLInputElement>(null)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  const addRefBtn = useRef<HTMLButtonElement>(null)
+  const listRef = useRef<HTMLDivElement>(null)
   const streaming = chats.flatMap((c) => c.turns).find((t) => t.state === 'streaming')
 
   useEffect(() => {
     void window.mote.getAiSettings().then(setSettings)
   }, [])
+
+  useEffect(() => {
+    let alive = true
+    const refreshTags = (): void => {
+      void window.mote.listTags(vault.dir).then((next) => {
+        if (alive) setTags(next)
+      })
+    }
+    refreshTags()
+    const off = window.mote.onVaultChanged((change) => {
+      if (change.dir === vault.dir) refreshTags()
+    })
+    return () => {
+      alive = false
+      off()
+    }
+  }, [vault.dir])
 
   useEffect(
     () =>
@@ -96,48 +196,182 @@ export function AssistantPane(props: {
               return { ...turn, state: 'error', error: event.message }
           }
         }
-        setChats((all) => all.map((chat) => ({ ...chat, turns: chat.turns.map(apply) })))
+        setChats((all) => all.map((c) => ({ ...c, turns: c.turns.map(apply) })))
       }),
     []
   )
 
+  // Close the @ popover on outside click.
+  useEffect(() => {
+    if (!pickerMode) return
+    const onDown = (e: MouseEvent): void => {
+      const target = e.target as Node
+      if (pickerRef.current?.contains(target) || addRefBtn.current?.contains(target)) return
+      setPickerMode(null)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [pickerMode])
+
   // Follows the answer down while it streams, unless you scrolled up to read.
-  const pinned = useRef(true)
+  const pinnedScroll = useRef(true)
   useEffect(() => {
     const el = chat.current
-    if (el && pinned.current) el.scrollTop = el.scrollHeight
+    if (el && pinnedScroll.current) el.scrollTop = el.scrollHeight
   }, [turns])
 
   const notes = useMemo(
-    () => vault.entries.filter((e) => e.kind === 'note').map((e) => e.path),
+    () =>
+      vault.entries
+        .filter((e) => e.kind === 'note' && !e.path.startsWith('.'))
+        .map((e) => e.path)
+        .sort((a, b) => collator.compare(a, b)),
     [vault.entries]
   )
-  const kind: ScopeKind =
-    scopeKind === null || (scopeKind === 'note' && !noteOpen)
-      ? noteOpen
-        ? 'note'
-        : 'week'
-      : scopeKind
-  const dates = kind === 'range' ? range : week
-  const dailyCount = useMemo(
-    () => dailyNotesIn(notes, vault.config.daily.folder, dates.from, dates.to).length,
-    [notes, vault.config.daily.folder, dates.from, dates.to]
+  const folders = useMemo(
+    () =>
+      vault.entries
+        .filter((e) => e.kind === 'folder' && !e.path.startsWith('.'))
+        .map((e) => e.path)
+        .sort((a, b) => collator.compare(a, b)),
+    [vault.entries]
   )
-  const scopeLabel =
-    kind === 'note' && noteOpen
-      ? `这篇笔记 · ${noteName(doc.path)}`
-      : `${kind === 'week' ? '本周日记' : `${shortDate(dates.from)} → ${shortDate(dates.to)}`} · ${dailyCount} 篇`
+  const dailyCount = useMemo(
+    () => dailyNotesIn(notes, vault.config.daily.folder, week.from, week.to).length,
+    [notes, vault.config.daily.folder, week.from, week.to]
+  )
 
-  function scopeFor(target: ScopeKind): AiScope | null {
-    if (target === 'note')
-      return hasText(doc) ? { kind: 'note', path: doc.path, text: doc.text } : null
-    const { from, to } = target === 'range' ? range : week
-    return { kind: 'daily', from, to }
+  const openPath = noteOpen ? doc.path : null
+  const candidates = useMemo<Candidate[]>(() => {
+    const all: Candidate[] = []
+    if (openPath) {
+      const title = noteName(openPath)
+      all.push({
+        id: `quick-note:${openPath}`,
+        section: '常用范围',
+        pin: { kind: 'note', path: openPath, label: title },
+        hint: '这篇笔记',
+        searchText: `这篇笔记 当前笔记 ${title} ${openPath}`.toLowerCase()
+      })
+    }
+    all.push({
+      id: 'quick-vault',
+      section: '常用范围',
+      pin: { kind: 'vault', label: '整个笔记库' },
+      hint: `${notes.length} 篇`,
+      searchText: `整个笔记库 全库 all vault`.toLowerCase()
+    })
+    all.push({
+      id: 'quick-week',
+      section: '常用范围',
+      pin: { kind: 'week', label: '本周日记' },
+      hint: `${dailyCount} 篇`,
+      searchText: `本周日记 日记 daily week`.toLowerCase()
+    })
+
+    for (const folder of folders) {
+      const prefix = `${folder}/`
+      const count = notes.filter((n) => n.startsWith(prefix)).length
+      all.push({
+        id: `folder:${folder}`,
+        section: '文件夹',
+        pin: { kind: 'folder', path: folder, label: prefix },
+        hint: `${count} 篇`,
+        searchText: `${folder} ${prefix} 文件夹 folder`.toLowerCase()
+      })
+    }
+
+    for (const t of tags) {
+      all.push({
+        id: `tag:${t.tag.toLowerCase()}`,
+        section: '标签',
+        pin: { kind: 'tag', tag: t.tag, label: t.tag.slice(1) },
+        hint: `${t.count} 篇`,
+        searchText: `${t.tag} ${t.tag.slice(1)} 标签 tag`.toLowerCase()
+      })
+    }
+
+    for (const path of notes) {
+      const title = noteName(path)
+      const folder = parentFolder(path)
+      all.push({
+        id: `note:${path}`,
+        section: '笔记',
+        pin: { kind: 'note', path, label: title },
+        hint: folder,
+        searchText: `${title} ${path} ${folder}`.toLowerCase()
+      })
+    }
+
+    const q = query
+      .trim()
+      .replace(/^[#@]+/, '')
+      .toLowerCase()
+    if (!q) return all
+    return all.filter((c) => c.searchText.includes(q))
+  }, [openPath, notes, folders, tags, dailyCount, query])
+
+  const groupedCandidates = useMemo(() => {
+    const groups: {
+      title: Candidate['section']
+      items: { candidate: Candidate; idx: number }[]
+    }[] = []
+    const bySection = new Map<Candidate['section'], { candidate: Candidate; idx: number }[]>()
+    candidates.forEach((candidate, idx) => {
+      const bucket = bySection.get(candidate.section)
+      if (bucket) bucket.push({ candidate, idx })
+      else {
+        const created = [{ candidate, idx }]
+        bySection.set(candidate.section, created)
+        groups.push({ title: candidate.section, items: created })
+      }
+    })
+    return groups
+  }, [candidates])
+
+  const activeFocusIdx = candidates.length ? Math.min(focusIdx, candidates.length - 1) : 0
+
+  useEffect(() => {
+    if (!pickerMode) return
+    const active = listRef.current?.querySelector<HTMLElement>('[data-focused="true"]')
+    active?.scrollIntoView({ block: 'nearest' })
+  }, [activeFocusIdx, pickerMode])
+
+  useEffect(() => {
+    if (focusNonce > 0) input.current?.focus()
+  }, [focusNonce])
+
+  function scopeFor(override?: AiScope): AiScope | null {
+    if (override) return override
+    if (pins.length > 0) {
+      const items: AiScopeItem[] = pins.map((pin) => {
+        switch (pin.kind) {
+          case 'note':
+            return { kind: 'note', path: pin.path }
+          case 'folder':
+            return { kind: 'folder', path: pin.path }
+          case 'tag':
+            return { kind: 'tag', tag: pin.tag }
+          case 'week':
+            return { kind: 'daily', from: week.from, to: week.to }
+          case 'vault':
+            return { kind: 'vault' }
+        }
+      })
+      return {
+        kind: 'pick',
+        items,
+        openNote: noteOpen ? { path: doc.path, text: doc.text } : undefined
+      }
+    }
+    if (noteOpen) return { kind: 'note', path: doc.path, text: doc.text }
+    if (!notes.length) return null
+    return { kind: 'pick', items: [{ kind: 'vault' }] }
   }
 
-  function ask(text: string, target: ScopeKind = kind): void {
+  function ask(text: string, override?: AiScope): void {
     const q = text.trim()
-    const scope = scopeFor(target)
+    const scope = scopeFor(override)
     if (!q || !scope || streaming) return
     const history: AiMessage[] = turns
       .filter((t) => t.state === 'done' && t.answer)
@@ -148,15 +382,46 @@ export function AssistantPane(props: {
     const id = crypto.randomUUID()
     const turn: Turn = { id, question: q, sources: null, answer: '', state: 'streaming' }
     setChats((all) =>
-      all.map((chat) => (chat.id === chatNow.id ? { ...chat, turns: [...chat.turns, turn] } : chat))
+      all.map((c) => (c.id === chatNow.id ? { ...c, turns: [...c.turns, turn] } : c))
     )
     setQuestion('')
-    pinned.current = true
+    setPickerMode(null)
+    setQuery('')
+    if (input.current) input.current.style.height = 'auto'
+    pinnedScroll.current = true
     void window.mote.aiAsk({
       id,
       dir: vault.dir,
       scope,
       messages: [...history, { role: 'user', content: q }]
+    })
+  }
+
+  const pickCandidate = useCallback(
+    (candidate: Candidate | undefined): void => {
+      if (!candidate) return
+      setPins((prev) => {
+        const exists = prev.some((p) => samePin(p, candidate.pin))
+        return exists ? prev.filter((p) => !samePin(p, candidate.pin)) : [...prev, candidate.pin]
+      })
+      if (pickerMode === 'at') {
+        setQuestion((prev) =>
+          prev.replace(/(?:^|\s)@[^\s@]*$/, (m) => (m.startsWith(' ') ? ' ' : ''))
+        )
+      }
+      setPickerMode(null)
+      setQuery('')
+      setFocusIdx(0)
+      setFocusNonce((n) => n + 1)
+    },
+    [pickerMode]
+  )
+
+  function moveFocus(step: number): void {
+    if (!candidates.length) return
+    setFocusIdx((idx) => {
+      const base = Math.min(idx, candidates.length - 1)
+      return (base + step + candidates.length) % candidates.length
     })
   }
 
@@ -200,9 +465,83 @@ export function AssistantPane(props: {
     input.current?.focus()
   }
 
-  const openMenu = (kind: MenuAt['kind'], el: HTMLElement): void =>
-    setMenu({ kind, rect: el.getBoundingClientRect() })
+  function openPickerFromButton(): void {
+    if (pickerMode) {
+      setPickerMode(null)
+      return
+    }
+    setPickerMode('button')
+    setQuery('')
+    setFocusIdx(0)
+    requestAnimationFrame(() => searchInput.current?.focus())
+  }
+
+  function handleSearchKeyDown(e: ReactKeyboardEvent<HTMLInputElement>): void {
+    if (e.nativeEvent.isComposing) return
+    if (e.key === 'ArrowDown') {
+      e.preventDefault()
+      moveFocus(1)
+    } else if (e.key === 'ArrowUp') {
+      e.preventDefault()
+      moveFocus(-1)
+    } else if (e.key === 'Enter') {
+      e.preventDefault()
+      pickCandidate(candidates[activeFocusIdx])
+    } else if (e.key === 'Escape') {
+      e.preventDefault()
+      setPickerMode(null)
+      input.current?.focus()
+    }
+  }
+
+  function handleInputKeyDown(e: ReactKeyboardEvent<HTMLTextAreaElement>): void {
+    if (e.nativeEvent.isComposing) return
+    if (pickerMode) {
+      if (e.key === 'ArrowDown') {
+        e.preventDefault()
+        moveFocus(1)
+        return
+      }
+      if (e.key === 'ArrowUp') {
+        e.preventDefault()
+        moveFocus(-1)
+        return
+      }
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault()
+        pickCandidate(candidates[activeFocusIdx])
+        return
+      }
+      if (e.key === 'Escape') {
+        e.preventDefault()
+        setPickerMode(null)
+        return
+      }
+    }
+    if (e.key === 'Backspace' && !question && pins.length > 0) {
+      setPins((prev) => prev.slice(0, -1))
+      return
+    }
+    // Enter that confirms a Chinese input method's candidate is not a send.
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      ask(question)
+    }
+  }
+
   const past = chats.filter((c) => c.turns.length).reverse()
+  const fallbackHint = noteOpen
+    ? `未固定 · 默认读这篇笔记`
+    : notes.length
+      ? `未固定 · 默认读整个笔记库`
+      : `笔记库还没有笔记`
+
+  const placeholder =
+    pins.length > 0
+      ? '针对已选内容提问，或输入 @ 继续添加…'
+      : noteOpen
+        ? '问这篇笔记，或输入 @ 引用文件夹、笔记、标签…'
+        : '问整个笔记库，或输入 @ 引用文件夹、笔记、标签…'
 
   return (
     <aside className="pane assistant" aria-label="助手" hidden={hidden}>
@@ -216,9 +555,9 @@ export function AssistantPane(props: {
               type="button"
               title="对话历史"
               aria-label="对话历史"
-              aria-expanded={menu?.kind === 'history'}
+              aria-expanded={!!historyRect}
               disabled={!past.length}
-              onClick={(e) => openMenu('history', e.currentTarget)}
+              onClick={(e) => setHistoryRect(e.currentTarget.getBoundingClientRect())}
             >
               <History size={14} />
             </button>
@@ -300,23 +639,67 @@ export function AssistantPane(props: {
             ref={chat}
             onScroll={(e) => {
               const el = e.currentTarget
-              pinned.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24
+              pinnedScroll.current = el.scrollHeight - el.scrollTop - el.clientHeight < 24
             }}
           >
             {!turns.length && (
               <div className="assistant-empty">
                 <p>问问你的笔记。</p>
-                {noteOpen && (
-                  <button type="button" onClick={() => ask('总结这篇笔记', 'note')}>
-                    总结这篇笔记
-                  </button>
+                {pins.length > 0 ? (
+                  <>
+                    <button type="button" onClick={() => ask('总结已选范围的核心要点')}>
+                      总结已选范围的核心要点
+                    </button>
+                    <button type="button" onClick={() => ask('已选内容里还有哪些没做完的事？')}>
+                      已选内容里还有哪些没做完的事？
+                    </button>
+                  </>
+                ) : noteOpen ? (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        ask('总结这篇笔记', { kind: 'note', path: doc.path, text: doc.text })
+                      }
+                    >
+                      总结这篇笔记
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        ask('这篇笔记里还有哪些没做完的事？', {
+                          kind: 'note',
+                          path: doc.path,
+                          text: doc.text
+                        })
+                      }
+                    >
+                      这篇笔记里还有哪些没做完的事？
+                    </button>
+                  </>
+                ) : (
+                  <>
+                    {notes.length > 0 && (
+                      <button type="button" onClick={() => ask('笔记库里还有哪些没做完的事？')}>
+                        笔记库里还有哪些没做完的事？
+                      </button>
+                    )}
+                    {dailyCount > 0 && (
+                      <button
+                        type="button"
+                        onClick={() =>
+                          ask('这一周我都做了什么？', {
+                            kind: 'daily',
+                            from: week.from,
+                            to: week.to
+                          })
+                        }
+                      >
+                        这一周我都做了什么？
+                      </button>
+                    )}
+                  </>
                 )}
-                <button type="button" onClick={() => ask('这一周我都做了什么？', 'week')}>
-                  这一周我都做了什么？
-                </button>
-                <button type="button" onClick={() => ask('这一周还有哪些没做完的事？', 'week')}>
-                  这一周还有哪些没做完的事？
-                </button>
               </div>
             )}
             {turns.map((turn) => (
@@ -350,39 +733,125 @@ export function AssistantPane(props: {
           </div>
 
           <footer className="assistant-composer">
-            <button
-              type="button"
-              className="assistant-scope"
-              aria-label={`范围：${scopeLabel}`}
-              aria-expanded={menu?.kind === 'scope'}
-              onClick={(e) => openMenu('scope', e.currentTarget)}
-            >
-              <span className="assistant-scope-text">{scopeLabel}</span>
-              <ChevronDown size={12} />
-            </button>
+            {pickerMode && (
+              <div
+                ref={pickerRef}
+                className="assistant-picker"
+                role="listbox"
+                aria-label="引用笔记、文件夹或标签"
+              >
+                {pickerMode === 'button' && (
+                  <div className="assistant-picker-search">
+                    <Search size={13} strokeWidth={1.75} />
+                    <input
+                      ref={searchInput}
+                      type="text"
+                      placeholder="筛选文件夹、笔记或标签…"
+                      value={query}
+                      onChange={(e) => {
+                        setQuery(e.target.value)
+                        setFocusIdx(0)
+                      }}
+                      onKeyDown={handleSearchKeyDown}
+                    />
+                  </div>
+                )}
+                <div className="assistant-picker-list" ref={listRef}>
+                  {groupedCandidates.length ? (
+                    groupedCandidates.map((group) => (
+                      <div key={group.title}>
+                        <div className="assistant-picker-section">{group.title}</div>
+                        {group.items.map(({ candidate, idx }) => {
+                          const selected = pins.some((p) => samePin(p, candidate.pin))
+                          return (
+                            <button
+                              key={candidate.id}
+                              type="button"
+                              role="option"
+                              aria-selected={selected}
+                              data-active={selected}
+                              data-focused={idx === activeFocusIdx}
+                              className="assistant-picker-item"
+                              onMouseMove={() => setFocusIdx(idx)}
+                              onClick={() => pickCandidate(candidate)}
+                            >
+                              <span className="assistant-picker-icon">
+                                <PinIcon kind={candidate.pin.kind} size={13} />
+                              </span>
+                              <span className="assistant-picker-label">{candidate.pin.label}</span>
+                              <span className="assistant-picker-hint">
+                                {selected ? <Check size={13} strokeWidth={2} /> : candidate.hint}
+                              </span>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    ))
+                  ) : (
+                    <div className="assistant-picker-empty">没有匹配的笔记、文件夹或标签</div>
+                  )}
+                </div>
+                <div className="assistant-picker-foot">
+                  <span>↑↓ 选择 · ↩ 添加 · Esc 关闭</span>
+                  <span>{candidates.length} 项</span>
+                </div>
+              </div>
+            )}
+
+            <div className="assistant-context-bar">
+              {pins.map((pin, idx) => (
+                <span className="assistant-chip" key={`${pin.kind}:${pin.label}:${idx}`}>
+                  <span className="assistant-chip-icon">
+                    <PinIcon kind={pin.kind} size={12} />
+                  </span>
+                  <span className="assistant-chip-name">{pin.label}</span>
+                  <button
+                    type="button"
+                    className="assistant-chip-remove"
+                    aria-label={`移除 ${pin.label}`}
+                    onClick={() => setPins((prev) => prev.filter((_, i) => i !== idx))}
+                  >
+                    <X size={10} strokeWidth={2} />
+                  </button>
+                </span>
+              ))}
+              <button
+                ref={addRefBtn}
+                type="button"
+                className="assistant-add-ref"
+                aria-label="引用笔记、文件夹或标签"
+                aria-expanded={!!pickerMode}
+                onClick={openPickerFromButton}
+              >
+                <AtSign size={12} strokeWidth={1.85} />
+                <span>引用</span>
+              </button>
+              {pins.length === 0 && <span className="assistant-default-hint">{fallbackHint}</span>}
+            </div>
+
             <div className="assistant-ask">
               <textarea
                 ref={input}
                 rows={1}
                 aria-label="问助手"
-                placeholder={
-                  kind === 'note'
-                    ? '问这篇笔记，或说「总结一下」'
-                    : '问这几天的日记，或说「总结一下」'
-                }
+                placeholder={placeholder}
                 value={question}
                 onChange={(e) => {
-                  setQuestion(e.target.value)
+                  const val = e.target.value
+                  setQuestion(val)
                   e.target.style.height = 'auto'
                   e.target.style.height = Math.min(e.target.scrollHeight, 120) + 'px'
-                }}
-                onKeyDown={(e) => {
-                  // Enter that confirms a Chinese input method's candidate is not a send.
-                  if (e.key === 'Enter' && !e.shiftKey && !e.nativeEvent.isComposing) {
-                    e.preventDefault()
-                    ask(question)
+                  const match = /(?:^|\s)@([^\s@]*)$/.exec(val)
+                  if (match) {
+                    setPickerMode('at')
+                    setQuery(match[1])
+                    setFocusIdx(0)
+                  } else if (pickerMode === 'at') {
+                    setPickerMode(null)
+                    setQuery('')
                   }
                 }}
+                onKeyDown={handleInputKeyDown}
               />
               {streaming ? (
                 <button
@@ -400,10 +869,7 @@ export function AssistantPane(props: {
                   type="button"
                   title="发送（↩）"
                   aria-label="发送"
-                  disabled={
-                    !question.trim() ||
-                    (kind === 'week' || kind === 'range' ? dailyCount === 0 : false)
-                  }
+                  disabled={!question.trim() || (!noteOpen && !pins.length && !notes.length)}
                   onClick={() => ask(question)}
                 >
                   <ArrowUp size={14} strokeWidth={2} />
@@ -414,81 +880,34 @@ export function AssistantPane(props: {
         </>
       )}
 
-      {menu?.kind === 'scope' && (
-        <MenuLayer onClose={closeMenu}>
-          <div
-            className="context-menu assistant-menu"
-            role="menu"
-            aria-label="范围"
-            style={{ left: menu.rect.left, bottom: window.innerHeight - menu.rect.top + 6 }}
-          >
-            {noteOpen && (
-              <ScopeItem
-                on={kind === 'note'}
-                label="这篇笔记"
-                hint={noteName(doc.path)}
-                onClick={() => {
-                  setScopeKind('note')
-                  closeMenu()
-                }}
-              />
-            )}
-            <ScopeItem
-              on={kind === 'week'}
-              label="本周日记"
-              hint={`${shortDate(week.from)} → ${shortDate(week.to)}`}
-              onClick={() => {
-                setScopeKind('week')
-                closeMenu()
-              }}
-            />
-            <ScopeItem on={kind === 'range'} label="选日期" onClick={() => setScopeKind('range')} />
-            {kind === 'range' && (
-              <div className="assistant-range">
-                <input
-                  type="date"
-                  aria-label="开始日期"
-                  value={range.from}
-                  max={range.to}
-                  onChange={(e) =>
-                    e.target.value && setRange((r) => ({ ...r, from: e.target.value }))
-                  }
-                />
-                <span>→</span>
-                <input
-                  type="date"
-                  aria-label="结束日期"
-                  value={range.to}
-                  min={range.from}
-                  onChange={(e) =>
-                    e.target.value && setRange((r) => ({ ...r, to: e.target.value }))
-                  }
-                />
-              </div>
-            )}
-          </div>
-        </MenuLayer>
-      )}
-
-      {menu?.kind === 'history' && (
-        <MenuLayer onClose={closeMenu}>
+      {historyRect && (
+        <MenuLayer onClose={closeHistory}>
           <div
             className="context-menu assistant-menu assistant-history"
             role="menu"
             aria-label="对话历史"
-            style={{ top: menu.rect.bottom + 4, right: window.innerWidth - menu.rect.right }}
+            style={{ top: historyRect.bottom + 4, right: window.innerWidth - historyRect.right }}
           >
-            {past.map((chat) => (
-              <ScopeItem
-                key={chat.id}
-                on={chat.id === chatNow.id}
-                label={chat.turns[0].question}
-                hint={clock(chat.startedAt)}
+            {past.map((c) => (
+              <button
+                key={c.id}
+                type="button"
+                role="menuitemradio"
+                aria-checked={c.id === chatNow.id}
+                className="context-menu-item"
                 onClick={() => {
-                  setChatId(chat.id)
-                  closeMenu()
+                  setChatId(c.id)
+                  closeHistory()
                 }}
-              />
+              >
+                <Check
+                  size={13}
+                  strokeWidth={2}
+                  style={{ visibility: c.id === chatNow.id ? 'visible' : 'hidden' }}
+                />
+                <span className="context-menu-label">{c.turns[0].question}</span>
+                <span className="context-menu-shortcut">{clock(c.startedAt)}</span>
+              </button>
             ))}
           </div>
         </MenuLayer>
@@ -497,36 +916,12 @@ export function AssistantPane(props: {
   )
 }
 
-function ScopeItem(props: {
-  on: boolean
-  label: string
-  hint?: string
-  onClick: () => void
-}): React.JSX.Element {
-  return (
-    <button
-      type="button"
-      role="menuitemradio"
-      aria-checked={props.on}
-      className="context-menu-item"
-      onClick={props.onClick}
-    >
-      <Check size={13} strokeWidth={2} style={{ visibility: props.on ? 'visible' : 'hidden' }} />
-      <span className="context-menu-label">{props.label}</span>
-      {props.hint && <span className="context-menu-shortcut">{props.hint}</span>}
-    </button>
-  )
-}
-
 // What the answer read: a count you can open into the list of notes.
 function Sources({ turn }: { turn: Turn }): React.JSX.Element | null {
   if (!turn.sources) return null
-  const chars = turn.sources.reduce((sum, s) => sum + s.chars, 0)
   return (
     <details className="assistant-sources">
-      <summary>
-        读了 {turn.sources.length} 篇 · {chars.toLocaleString('en-US')} 字
-      </summary>
+      <summary>读了 {turn.sources.length} 篇</summary>
       <ul>
         {turn.sources.map((s) => (
           <li key={s.path}>

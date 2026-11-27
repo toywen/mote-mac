@@ -70,19 +70,18 @@ test('the assistant reads this week, streams an answer and inserts it into the n
     const saved = await readFile(join(settings, 'settings.json'), 'utf8')
     expect(saved).not.toContain('sk-test-123')
 
-    // With a note open the scope starts on it; the menu switches it to this week's daily notes.
-    const scope = pane.getByRole('button', { name: /^范围：/ })
-    await expect(scope).toHaveText('这篇笔记 · 周记')
-    await scope.click()
-    await window.getByRole('menuitemradio', { name: /本周日记/ }).click()
-    await expect(scope).toHaveText('本周日记 · 1 篇')
+    // With a note open the scope defaults to it; @ 引用 lets the user switch to this week's daily notes.
+    await expect(pane.locator('.assistant-default-hint')).toHaveText('未固定 · 默认读这篇笔记')
+    await pane.getByRole('button', { name: '引用笔记、文件夹或标签' }).click()
+    await pane.getByRole('option', { name: /本周日记/ }).click()
+    await expect(pane.locator('.assistant-chip')).toContainText('本周日记')
     await pane.getByRole('textbox', { name: '问助手' }).fill('这一周我都做了什么？')
     await pane.getByRole('textbox', { name: '问助手' }).press('Enter')
 
     await expect(pane.locator('.assistant-answer')).toContainText(
       '这一周只做了一件事：修好同步断线'
     )
-    await expect(pane.locator('.assistant-sources summary')).toHaveText('读了 1 篇 · 9 字')
+    await expect(pane.locator('.assistant-sources summary')).toHaveText('读了 1 篇')
 
     // Main sent the key and only this week's daily note.
     expect(fake.seen).toHaveLength(1)
@@ -147,6 +146,55 @@ test('the assistant uses DEEPSEEK_API_KEY from the environment without asking fo
     await pane.getByRole('button', { name: '总结这篇笔记' }).click()
     await expect(pane.locator('.assistant-answer')).toContainText('讲的是良质。')
     expect(fake.seen[0].auth).toBe('Bearer sk-from-env')
+  } finally {
+    await app.close()
+    fake.server.close()
+  }
+})
+
+test('the assistant defaults to the whole vault with no note open and supports @ folder and tag pins', async () => {
+  const info = test.info()
+  const vault = info.outputPath('vault')
+  const settings = info.outputPath('settings')
+  await mkdir(join(vault, '项目'), { recursive: true })
+  await mkdir(join(vault, '阅读'), { recursive: true })
+  await mkdir(join(vault, 'Daily'), { recursive: true })
+  await writeFile(join(vault, '项目', '架构.md'), '主进程管索引。\n')
+  await writeFile(join(vault, '阅读', '随笔.md'), '卡片笔记复利。 #读书\n')
+  await writeFile(join(vault, 'Daily', '2026-11-27.md'), '今日日记。\n')
+
+  const fake = await fakeDeepSeek(['已汇总 [[架构]] 与 [[随笔]]。'])
+  await mkdir(settings, { recursive: true })
+  await writeFile(join(settings, 'settings.json'), JSON.stringify({ aiBaseUrl: fake.url }))
+
+  const app = await launch(settings, { DEEPSEEK_API_KEY: 'sk-from-env' })
+  const window = await app.firstWindow()
+  try {
+    await openVault(app, window, vault)
+    await window.getByRole('button', { name: '打开助手' }).click()
+    const pane = window.getByRole('complementary', { name: '助手' })
+
+    await expect(pane.locator('.assistant-default-hint')).toHaveText('未固定 · 默认读整个笔记库')
+
+    const box = pane.getByRole('textbox', { name: '问助手' })
+    await box.fill('@项目')
+    await expect(pane.getByRole('listbox', { name: '引用笔记、文件夹或标签' })).toBeVisible()
+    await box.press('Enter')
+    await expect(pane.locator('.assistant-chip')).toContainText('项目/')
+
+    await pane.getByRole('button', { name: '引用笔记、文件夹或标签' }).click()
+    await pane.getByRole('option', { name: /读书/ }).click()
+    await expect(pane.locator('.assistant-chip')).toHaveCount(2)
+
+    await box.fill('总结架构和读书')
+    await box.press('Enter')
+    await expect(pane.locator('.assistant-answer')).toContainText('已汇总')
+    await expect(pane.locator('.assistant-sources summary')).toHaveText('读了 2 篇')
+
+    const system = fake.seen[0].body.messages[0].content
+    expect(system).toContain('主进程管索引。')
+    expect(system).toContain('卡片笔记复利。')
+    expect(system).not.toContain('今日日记。')
   } finally {
     await app.close()
     fake.server.close()

@@ -32,6 +32,22 @@ describe('NoteIndex', () => {
     index.delete(p('b.md'))
     expect(index.backlinks(p('新.md'))).toEqual([])
   })
+
+  test('listTags and notesWithTag match exact or nested tags case-insensitively', () => {
+    const index = new NoteIndex()
+    index.setFiles([p('a.md'), p('b.md'), p('c.md')])
+    index.set(p('a.md'), '---\ntags: [架构, AI]\n---\n正文 #AI/助手\n')
+    index.set(p('b.md'), '笔记 #架构 #待办\n')
+    index.set(p('c.md'), '纯文本无标签\n')
+    expect(index.listTags()).toEqual([
+      { tag: '#架构', count: 2 },
+      { tag: '#待办', count: 1 },
+      { tag: '#AI', count: 1 },
+      { tag: '#AI/助手', count: 1 }
+    ])
+    expect(index.notesWithTag('#ai')).toEqual(['a.md'])
+    expect(index.notesWithTag('#架构')).toEqual(['a.md', 'b.md'])
+  })
 })
 
 test('preview cuts long lines around the match', () => {

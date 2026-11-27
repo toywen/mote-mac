@@ -41,4 +41,5 @@ ADR（Architecture Decision Record）是架构决策记录。每个文件记一�
 | [0028](0028-protocol-package-name.md)                                     | 协议包的 npm 名改用 mote-sync-protocol                    | 已接受，替代 0023 的包名部分 |
 | [0029](0029-public-registration-and-login.md)                             | 同步服务公开注册，用户用用户名和密码登录                  | 被 0030 替代（证书部分）     |
 | [0030](0030-plain-http-and-address-in-settings-file.md)                   | 现阶段同步走 HTTP，服务器地址放在配置文件                 | 已实现，替代 0029 的证书部分 |
-| [0031](0031-assistant-uses-deepseek-from-main.md)                         | 助手用 DeepSeek，只在主进程里联网                         | 已实现                       |
+| [0031](0031-assistant-uses-deepseek-from-main.md)                         | 助手用 DeepSeek，只在主进程里联网                         | 被 0032 替代（范围选择部分） |
+| [0032](0032-assistant-at-mentions-and-vault-scope.md)                     | 助手支持 @ 随打随引与全库默认范围                         | 已实现，替代 0031 的范围部分 |

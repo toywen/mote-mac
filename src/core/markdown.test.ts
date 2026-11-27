@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest'
 import {
   calloutHeader,
   extractLinks,
+  extractTags,
   linkTarget,
   markdownParser,
   type CalloutHeader,
@@ -343,5 +344,12 @@ describe('calloutHeader', () => {
     const nested = callouts('> [!tip] 外层\n> > [!warning] 内层\n> > 正文')
     expect(nested.map((h) => h?.type)).toEqual(['tip', 'warning'])
     expect(callouts('> > [!note] 只在内层').map((h) => h?.type ?? null)).toEqual([null, 'note'])
+  })
+})
+
+describe('extractTags', () => {
+  it('extracts frontmatter and inline tags once each, ignoring code and headings', () => {
+    const text = '---\ntags:\n  - 架构\n  - AI\n---\n# 标题\n正文 #架构 #待办 `#忽略`\n'
+    expect(extractTags(text)).toEqual(['#架构', '#AI', '#待办'])
   })
 })

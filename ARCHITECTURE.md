@@ -30,7 +30,7 @@
 | `src/core/`                  | 纯 TypeScript，主进程和渲染进程共用。不能引用 Electron                                                                                                                            |
 | `src/core/ipc.ts`            | 库内路径、笔记库配置、`MoteApi` 接口和 IPC 通道名。IPC 的唯一定义                                                                                                                 |
 | `src/core/text.ts`           | 规范化文本：去掉 BOM，换行统一成 `\n`。链接位置都指向规范化文本                                                                                                                   |
-| `src/core/markdown.ts`       | 唯一的解析器配置（`@lezer/markdown` 加双链、嵌入、属性块），从笔记里提取链接。`calloutHeader` 判断一个引用是不是 callout，读出类型和标题                                          |
+| `src/core/markdown.ts`       | 唯一的解析器配置（`@lezer/markdown` 加双链、嵌入、属性块），从笔记里提取链接和标签。`calloutHeader` 判断一个引用是不是 callout，读出类型和标题                                          |
 | `src/core/resolve.ts`        | 链接解析，照搬 Obsidian 的 `getLinkpathDest`                                                                                                                                      |
 | `src/core/linkText.ts`       | 新链接的文字，照搬 Obsidian 的 `fileToLinktext` 和它 `[[` 列表插入的文字。按笔记库配置选双链或 Markdown 链接，以及最短、相对、绝对路径                                            |
 | `src/core/linkDest.ts`       | 链接去向：一个链接点击后去哪里。上色和点击都读它。不存在的笔记的新建路径照搬 Obsidian 的 `openLinkText`。外部网址的白名单也在这里                                                 |
@@ -40,7 +40,7 @@
 | `src/core/search.ts`         | 全文搜索：分词、引号短语、不分大小写的子串匹配、按文件名排序                                                                                                                      |
 | `src/core/updaterTypes.ts`   | 语义化版本解析、对比与更新状态机类型                                                                                                                                              |
 | `src/core/hits.ts`           | 命中位置的预览行和按笔记分组                                                                                                                                                      |
-| `src/core/noteIndex.ts`      | 笔记索引：每篇笔记的规范化文本和链接，反向链接查询。不缓存反向链接，每次查询重新解析                                                                                              |
+| `src/core/noteIndex.ts`      | 笔记索引：每篇笔记的规范化文本、链接和标签，反向链接和按标签查询。不缓存反向链接，每次查询重新解析                                                                                |
 | `src/core/autosave.ts`       | 自动保存的两个时间常量。渲染进程和 verify-mote 的脚本都从这里读                                                                                                                   |
 | `src/main/index.ts`          | 窗口、IPC 处理                                                                                                                                                                    |
 | `src/main/updater.ts`        | GitHub Releases 检查、流式下载、平滑更新替换脚本生成与 IPC 处理                                                                                                                   |
@@ -55,7 +55,7 @@
 | `src/main/syncController.ts` | 管一个笔记库的 `Sync`：读设置启动、设置变了先停再起、把状态推给显示这个笔记库的窗口。写不进去时把问题写进状态行                                                                   |
 | `src/main/syncServer.ts`     | 同步服务的地址：内置的默认地址，`settings.json` 里 `syncServerUrl` 的读取和校验                                                                                                   |
 | `src/main/ai.ts`             | 助手的 DeepSeek 客户端：拼提示词、发请求、读流式回答。`settings.json` 里的 `aiBaseUrl` 换掉地址，测试用它接假服务                                                                 |
-| `src/core/ai.ts`             | 助手范围里的日期：哪些笔记是日记、本周从哪天起。主进程挑笔记和窗口显示篇数都用它                                                                                                  |
+| `src/core/ai.ts`             | 助手范围解析和日期工具：哪些笔记是日记、本周从哪天起，以及把 `@` 混选范围解析成去重的笔记路径列表。主进程和窗口都用它                                                              |
 | `src/main/syncAuth.ts`       | 注册、登录、用找回码改密码。拿到的设备令牌交给主进程保存，不进窗口                                                                                                                |
 
 | `src/preload/` | 用 `contextBridge` 暴露 `window.mote` |

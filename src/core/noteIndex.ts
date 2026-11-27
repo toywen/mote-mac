@@ -1,11 +1,15 @@
-import type { Hit, VaultPath } from './ipc.ts'
-import { extractLinks } from './markdown.ts'
+import type { AiTagSummary, Hit, VaultPath } from './ipc.ts'
+import { extractLinks, extractTags } from './markdown.ts'
 import type { LinkRef } from './model.ts'
 import { buildLinkIndex, resolveLink, type LinkIndex } from './resolve.ts'
 import { preview } from './hits.ts'
 import { sourceText } from './text.ts'
 
-export type IndexedNote = { readonly text: string; readonly links: LinkRef[] }
+export type IndexedNote = {
+  readonly text: string
+  readonly links: LinkRef[]
+  readonly tags: string[]
+}
 
 export class NoteIndex {
   private readonly notes = new Map<VaultPath, IndexedNote>()
@@ -21,12 +25,19 @@ export class NoteIndex {
 
   set(path: VaultPath, raw: string, links?: LinkRef[]): void {
     const { text } = sourceText(raw)
-    let cached: LinkRef[] | null = links ?? null
+    let cachedLinks: LinkRef[] | null = links ?? null
+    let cachedTags: string[] | null = null
     this.notes.set(path, {
       text,
       get links(): LinkRef[] {
-        if (!cached) cached = extractLinks(text)
-        return cached
+        if (!cachedLinks) cachedLinks = extractLinks(text)
+        return cachedLinks
+      },
+      get tags(): string[] {
+        if (!cachedTags) {
+          cachedTags = text.includes('#') || text.startsWith('---\n') ? extractTags(text) : []
+        }
+        return cachedTags
       }
     })
   }
@@ -65,5 +76,39 @@ export class NoteIndex {
       }
     }
     return hits
+  }
+
+  // Unique tags across the vault with the number of notes carrying each, most used first.
+  listTags(): AiTagSummary[] {
+    const counts = new Map<string, { tag: string; count: number }>()
+    for (const [, note] of this.notes) {
+      for (const tag of note.tags) {
+        const key = tag.toLowerCase()
+        const entry = counts.get(key)
+        if (entry) entry.count += 1
+        else counts.set(key, { tag, count: 1 })
+      }
+    }
+    return [...counts.values()].sort(
+      (a, b) => b.count - a.count || a.tag.localeCompare(b.tag, 'zh-CN')
+    )
+  }
+
+  // Notes carrying `tag` or a nested subtag (`#tag/...`), matched case-insensitively.
+  notesWithTag(tag: string): VaultPath[] {
+    const needle = tag.trim().toLowerCase()
+    const prefix = `${needle}/`
+    const matched: VaultPath[] = []
+    for (const [path, note] of this.notes) {
+      if (
+        note.tags.some((t) => {
+          const lower = t.toLowerCase()
+          return lower === needle || lower.startsWith(prefix)
+        })
+      ) {
+        matched.push(path)
+      }
+    }
+    return matched.sort((a, b) => a.localeCompare(b, 'zh-CN'))
   }
 }
