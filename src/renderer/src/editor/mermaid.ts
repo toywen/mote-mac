@@ -13,7 +13,49 @@ const PLACEHOLDER_HEIGHT = 160
 const CACHE_LIMIT = 64
 
 const darkScheme = matchMedia('(prefers-color-scheme: dark)')
-const currentScheme = (): Scheme => (darkScheme.matches ? 'dark' : 'light')
+const currentScheme = (): Scheme => {
+  const theme = document.documentElement.dataset.theme
+  if (theme === 'dark' || theme === 'light') return theme
+  return darkScheme.matches ? 'dark' : 'light'
+}
+
+const DIAGRAM_FONT =
+  "-apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', sans-serif"
+
+function themeVariables(scheme: Scheme): Record<string, string | boolean> {
+  if (scheme === 'dark') {
+    return {
+      darkMode: true,
+      background: 'transparent',
+      fontFamily: DIAGRAM_FONT,
+      primaryColor: '#25231f',
+      primaryTextColor: '#e9e6de',
+      primaryBorderColor: '#4a473f',
+      lineColor: '#9d998d',
+      secondaryColor: '#2f271c',
+      tertiaryColor: '#1c1b18',
+      clusterBkg: '#211f1b',
+      clusterBorder: '#3b3831',
+      edgeLabelBackground: '#1c1b18',
+      nodeTextColor: '#e9e6de'
+    }
+  }
+  return {
+    darkMode: false,
+    background: 'transparent',
+    fontFamily: DIAGRAM_FONT,
+    primaryColor: '#f5f3ec',
+    primaryTextColor: '#1f1e1c',
+    primaryBorderColor: '#c9c4b8',
+    lineColor: '#6e6a63',
+    secondaryColor: '#faf3e8',
+    tertiaryColor: '#fcfbf8',
+    clusterBkg: '#f7f5ef',
+    clusterBorder: '#d5d0c5',
+    edgeLabelBackground: '#fcfbf8',
+    nodeTextColor: '#1f1e1c'
+  }
+}
 
 // The library loads the first time a diagram is drawn, so a note without one never fetches it.
 let library: Promise<Mermaid> | undefined
@@ -32,7 +74,8 @@ async function render(code: string, scheme: Scheme): Promise<Drawing> {
       startOnLoad: false,
       securityLevel: 'strict',
       suppressErrorRendering: true,
-      theme: scheme === 'dark' ? 'dark' : 'default'
+      theme: 'base',
+      themeVariables: themeVariables(scheme)
     })
     return { svg: (await mermaid.render(id, code)).svg }
   } catch (error) {
@@ -112,13 +155,20 @@ class MermaidWidget extends WidgetType {
     }
     show()
     darkScheme.addEventListener('change', show)
-    schemeListeners.set(box, show)
+    const observer = new MutationObserver(show)
+    observer.observe(document.documentElement, {
+      attributes: true,
+      attributeFilter: ['data-theme']
+    })
+    schemeListeners.set(box, () => {
+      darkScheme.removeEventListener('change', show)
+      observer.disconnect()
+    })
     return box
   }
 
   destroy(dom: HTMLElement): void {
-    const show = schemeListeners.get(dom)
-    if (show) darkScheme.removeEventListener('change', show)
+    schemeListeners.get(dom)?.()
   }
 
   // A click puts the cursor at the block, which shows its source in live preview.

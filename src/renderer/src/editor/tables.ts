@@ -302,9 +302,9 @@ const table: Renderer = (node, cx) => {
   const widget = new TableWidget(node.node, from, doc.sliceString(from, to), cx.links, rows)
   return [
     {
-      // A table keeps its widget in both modes: its cells are edited in place. A range no
-      // selection can touch, because 0:0 matched a caret at the top of the note.
-      reveal: { from: -1, to: -1 },
+      // A table keeps its widget in both modes: its cells are edited in place.
+      reveal: { from, to },
+      neverReveal: true,
       always: [],
       concealed: [Decoration.replace({ widget, block }).range(from, to)],
       block: true

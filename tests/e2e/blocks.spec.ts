@@ -184,3 +184,20 @@ test('a selection dragged across quote lines stays inside the quote', async () =
     await app.close()
   }
 })
+
+test('tables render after earlier block widgets', async () => {
+  const { app, window } = await start()
+  try {
+    const editor = await openNote(window, '表格')
+    await editor.click()
+    await window.keyboard.press('Meta+A')
+    await window.keyboard.insertText(
+      '---\ntitle: test\n---\n\n```js\nconst a = 1\n```\n\n| 节 | 回答的问题 |\n|---|---|\n| 第一节 | 为什么 |\n'
+    )
+    await expect(editor.getByRole('table')).toHaveCount(1)
+    await expect(editor.getByRole('columnheader')).toHaveText(['节', '回答的问题'])
+    await expect(editor.getByRole('cell')).toHaveText(['第一节', '为什么'])
+  } finally {
+    await app.close()
+  }
+})

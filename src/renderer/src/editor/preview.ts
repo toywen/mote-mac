@@ -10,6 +10,8 @@ export type EditorMode = 'live' | 'reading'
 export type PreviewItem = {
   // The element shows its source while a selection touches this range.
   reveal: { from: number; to: number }
+  // When set, the element never reveals its source (e.g. a table edited in place).
+  neverReveal?: true
   // Applies whether or not the source shows, such as a font style.
   always: Range<Decoration>[]
   // Applies only while the source is hidden: hidden marks, or a widget in their place.

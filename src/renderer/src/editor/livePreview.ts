@@ -54,7 +54,8 @@ function reveal(state: EditorState, items: PreviewItem[], held?: Set<string>): n
   if (state.facet(editorMode) === 'reading' || !state.field(focused)) return []
   const ranges = state.selection.ranges
   const shown: number[] = []
-  items.forEach(({ reveal }, i) => {
+  items.forEach(({ reveal, neverReveal }, i) => {
+    if (neverReveal) return
     if (
       ranges.some((range) => range.from <= reveal.to && range.to >= reveal.from) ||
       held?.has(rangeKey(reveal.from, reveal.to))

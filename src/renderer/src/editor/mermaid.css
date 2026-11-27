@@ -12,6 +12,10 @@
   height: auto;
 }
 
+.mote-mermaid svg .cluster-label foreignObject {
+  overflow: visible;
+}
+
 .mote-mermaid-pending {
   background: var(--code-background);
   border-radius: 5px;
