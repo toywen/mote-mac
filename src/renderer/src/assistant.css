@@ -1,0 +1,457 @@
+/* The assistant sits right of the editor, on the same paper, with a hairline between them. */
+.pane.assistant {
+  width: 340px;
+  min-width: 340px;
+  height: 100%;
+  border-left: 1px solid var(--border);
+  background: var(--background);
+  font-family: var(--font-hei);
+}
+
+.pane.assistant[hidden] {
+  display: none;
+}
+
+.assistant-header {
+  height: 44px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 10px 0 16px;
+  -webkit-app-region: drag;
+  app-region: drag;
+}
+
+.assistant-header button {
+  -webkit-app-region: no-drag;
+  app-region: no-drag;
+}
+
+.assistant-header h2 {
+  margin: 0;
+  font-family: var(--font-heading);
+  font-size: 13.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  color: var(--text);
+}
+
+.assistant-grow {
+  flex: 1;
+}
+
+.assistant .icon-button:disabled {
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* The key form, shown until a key is saved. */
+.assistant-key {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 18px 18px 0;
+  font-size: 12.5px;
+  color: var(--muted);
+}
+
+.assistant-key-lead {
+  margin: 0 0 6px;
+  font-family: var(--font-text);
+  font-size: 14.5px;
+  line-height: 1.7;
+  color: var(--text);
+}
+
+.assistant-key label {
+  font-size: 11px;
+  letter-spacing: 0.06em;
+  color: var(--t3);
+}
+
+.assistant-key input {
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--edge);
+  border-radius: 7px;
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  outline: none;
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.assistant-key input:focus {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.assistant-primary {
+  align-self: flex-start;
+  height: 30px;
+  padding: 0 16px;
+  border: 0;
+  border-radius: 7px;
+  background: var(--accent);
+  color: var(--background);
+  font-size: 12.5px;
+  font-weight: 500;
+  cursor: pointer;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.assistant-primary:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.assistant-primary:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.assistant-note {
+  margin: 8px 0 0;
+  line-height: 1.6;
+  color: var(--t3);
+  font-size: 11.5px;
+}
+
+.assistant-link {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--link);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.assistant-link:hover {
+  text-decoration: underline;
+}
+
+/* The conversation. */
+.assistant-chat {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 10px 16px 12px;
+}
+
+.assistant-empty {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+  padding-top: 8px;
+}
+
+.assistant-empty p {
+  margin: 0 0 6px;
+  font-family: var(--font-text);
+  font-size: 14px;
+  color: var(--muted);
+}
+
+.assistant-empty button,
+.assistant-actions button {
+  height: 26px;
+  padding: 0 10px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  background: transparent;
+  color: var(--muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease,
+    transform 120ms ease;
+}
+
+.assistant-empty button:hover,
+.assistant-actions button:hover:not(:disabled) {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.assistant-empty button:active,
+.assistant-actions button:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+.assistant-actions button:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.assistant-turn {
+  margin-bottom: 22px;
+}
+
+.assistant-question {
+  width: fit-content;
+  max-width: 85%;
+  margin: 0 0 10px auto;
+  padding: 6px 12px;
+  border-radius: 10px 10px 3px 10px;
+  background: var(--accent-bg);
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.assistant-sources {
+  margin-bottom: 6px;
+  font-size: 11px;
+  color: var(--t3);
+}
+
+.assistant-sources summary {
+  width: fit-content;
+  cursor: pointer;
+  list-style: none;
+  letter-spacing: 0.03em;
+}
+
+.assistant-sources summary::-webkit-details-marker {
+  display: none;
+}
+
+.assistant-sources summary:hover {
+  color: var(--muted);
+}
+
+.assistant-sources ul {
+  margin: 6px 0 4px;
+  padding: 0;
+  list-style: none;
+}
+
+.assistant-sources li button {
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--link);
+  font-size: 11.5px;
+  cursor: pointer;
+}
+
+.assistant-sources li button:hover {
+  text-decoration: underline;
+}
+
+.assistant-wait {
+  font-size: 12px;
+  color: var(--t3);
+  animation: assistant-breathe 1.4s ease-in-out infinite;
+}
+
+@keyframes assistant-breathe {
+  50% {
+    opacity: 0.45;
+  }
+}
+
+/* The answer is a read-only note view; this undoes the editor's page layout around it. */
+.assistant-answer .cm-editor {
+  background: transparent;
+  outline: none;
+}
+
+.assistant-answer .cm-scroller {
+  font-family: var(--font-text);
+  overflow: visible;
+}
+
+.assistant-answer .cm-content {
+  padding: 0;
+  font-size: 14.5px;
+  line-height: 1.8;
+  caret-color: transparent;
+}
+
+.assistant-answer .cm-line {
+  padding: 0;
+}
+
+.assistant-answer .cm-cursor {
+  display: none !important;
+}
+
+.assistant-error {
+  margin: 4px 0 0;
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--danger);
+}
+
+.assistant-actions {
+  display: flex;
+  gap: 6px;
+  margin-top: 10px;
+}
+
+/* The composer: scope, then the question. */
+.assistant-composer {
+  flex-shrink: 0;
+  padding: 10px 12px 14px;
+  border-top: 1px solid var(--border);
+}
+
+.assistant-scope {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  max-width: 100%;
+  height: 22px;
+  margin: 0 0 6px;
+  padding: 0 6px 0 8px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--t3);
+  font-size: 11.5px;
+  cursor: pointer;
+  transition:
+    background 120ms ease,
+    color 120ms ease;
+}
+
+.assistant-scope:hover,
+.assistant-scope[aria-expanded='true'] {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.assistant-scope-text {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.assistant-menu {
+  min-width: 220px;
+  font-family: var(--font-hei);
+  animation: assistant-menu-in 140ms cubic-bezier(0.23, 1, 0.32, 1);
+}
+
+.assistant-history {
+  width: 280px;
+  max-height: 360px;
+  overflow-y: auto;
+}
+
+.assistant-menu .context-menu-label {
+  min-width: 0;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+@keyframes assistant-menu-in {
+  from {
+    opacity: 0;
+    transform: scale(0.97);
+  }
+}
+
+.assistant-range {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 8px 6px 33px;
+  font-size: 11.5px;
+  color: var(--t3);
+}
+
+.assistant-range input {
+  flex: 1;
+  min-width: 0;
+  height: 26px;
+  padding: 0 6px;
+  border: 1px solid var(--edge);
+  border-radius: 6px;
+  background: var(--background);
+  color: var(--text);
+  font-family: var(--font-hei);
+  font-size: 11.5px;
+}
+
+.assistant-ask {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  padding: 6px 6px 6px 10px;
+  border: 1px solid var(--edge);
+  border-radius: 10px;
+  background: var(--background);
+  transition:
+    border-color 140ms ease,
+    box-shadow 140ms ease;
+}
+
+.assistant-ask:focus-within {
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px var(--accent-bg);
+}
+
+.assistant-ask textarea {
+  flex: 1;
+  max-height: 120px;
+  padding: 4px 0;
+  border: 0;
+  outline: 0;
+  resize: none;
+  background: transparent;
+  color: var(--text);
+  font-family: var(--font-text);
+  font-size: 14px;
+  line-height: 1.6;
+}
+
+.assistant-ask textarea::placeholder {
+  color: var(--t3);
+}
+
+.assistant-send {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 0;
+  border-radius: 8px;
+  background: var(--accent);
+  color: var(--background);
+  cursor: pointer;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease;
+}
+
+.assistant-send:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.assistant-send:active:not(:disabled) {
+  transform: scale(0.94);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .assistant-wait,
+  .assistant-menu {
+    animation: none;
+  }
+}

@@ -227,6 +227,15 @@ export class Vault {
     return search(this.index.entries(), String(query), Math.max(1, Math.floor(Number(limit) || 50)))
   }
 
+  // The indexed text of each note that is in the index, in the order asked. The assistant reads
+  // daily notes from here, so a question never waits on the disk.
+  noteTexts(paths: readonly VaultPath[]): { path: VaultPath; text: string }[] {
+    return paths.flatMap((path) => {
+      const note = this.index.get(path)
+      return note ? [{ path, text: note.text }] : []
+    })
+  }
+
   backlinks(path: VaultPath): Hit[] {
     return this.index
       .backlinks(parseVaultPath(path))

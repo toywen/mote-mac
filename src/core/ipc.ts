@@ -129,6 +129,33 @@ export type SyncAuthResult =
     }
   | { ok: false; error: string }
 
+// What the assistant reads. A note is sent with the editor's text, since the disk may be behind.
+// Daily notes are picked by main from the dates, both ends included, as YYYY-MM-DD.
+export type AiScope =
+  { kind: 'note'; path: VaultPath; text: string } | { kind: 'daily'; from: string; to: string }
+
+export type AiMessage = { role: 'user' | 'assistant'; content: string }
+
+export type AiAskInput = {
+  /** Chosen by the window. Every event of this answer carries it. */
+  id: string
+  dir: string
+  scope: AiScope
+  /** The conversation so far, ending with the new question. */
+  messages: AiMessage[]
+}
+
+// One answer streams as sources, then deltas, then done or error.
+export type AiEvent =
+  | { id: string; kind: 'sources'; sources: { path: VaultPath; chars: number }[] }
+  | { id: string; kind: 'delta'; text: string }
+  | { id: string; kind: 'done' }
+  | { id: string; kind: 'error'; message: string }
+
+// The API key stays in main. The window only learns where it comes from: the DEEPSEEK_API_KEY
+// environment variable, a key saved in the pane and encrypted at rest, or nowhere yet.
+export type AiSettingsView = { keySource: 'env' | 'saved' | null }
+
 export type SavedAttachment = {
   path: VaultPath
   embedText: string
@@ -162,6 +189,7 @@ export type MenuAction =
   | 'format-quote'
   | 'format-task'
   | 'format-bullet'
+  | 'toggle-assistant'
 
 export interface MoteApi {
   getVault(): Promise<VaultInfo | null>
@@ -220,6 +248,13 @@ export interface MoteApi {
   getSyncStatus(dir: string): Promise<SyncStatusView>
   confirmSyncDeletions(dir: string): Promise<void>
   onSyncStatus(callback: (status: SyncStatusEvent) => void): () => void
+  getAiSettings(): Promise<AiSettingsView>
+  setAiKey(key: string): Promise<AiSettingsView>
+  clearAiKey(): Promise<AiSettingsView>
+  // Resolves once the answer has started; the answer itself arrives through onAiEvent.
+  aiAsk(input: AiAskInput): Promise<void>
+  aiCancel(id: string): void
+  onAiEvent(callback: (event: AiEvent) => void): () => void
 }
 
 export const channels = {
@@ -265,5 +300,11 @@ export const channels = {
   clearSyncSettings: 'mote:clear-sync-settings',
   getSyncStatus: 'mote:get-sync-status',
   confirmSyncDeletions: 'mote:confirm-sync-deletions',
-  syncStatus: 'mote:sync-status'
+  syncStatus: 'mote:sync-status',
+  getAiSettings: 'mote:get-ai-settings',
+  setAiKey: 'mote:set-ai-key',
+  clearAiKey: 'mote:clear-ai-key',
+  aiAsk: 'mote:ai-ask',
+  aiCancel: 'mote:ai-cancel',
+  aiEvent: 'mote:ai-event'
 } as const

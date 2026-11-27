@@ -11,10 +11,12 @@ import {
   PencilLine,
   RefreshCw,
   Search,
+  Sparkles,
   X
 } from 'lucide-react'
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react'
 import { EditorView } from '@codemirror/view'
+import { AssistantPane } from './AssistantPane'
 import { FileTree, type FileTreeHandle } from './FileTree'
 import { type SortOrder } from './tree'
 import { nextFont, type FontMode } from '../../core/ipc'
@@ -59,6 +61,13 @@ function App(): React.JSX.Element {
   const [searchFocus, setSearchFocus] = useState(0)
   const [backlinksOpen, setBacklinksOpen] = useState(false)
   const [settingsOpen, setSettingsOpen] = useState(false)
+  // The pane stays mounted once opened, so closing it keeps the conversation for this window.
+  const [assistantOpen, setAssistantOpen] = useState(false)
+  const [assistantMounted, setAssistantMounted] = useState(false)
+  const toggleAssistant = useCallback(() => {
+    setAssistantMounted(true)
+    setAssistantOpen((open) => !open)
+  }, [])
   const [syncStatus, setSyncStatus] = useState<SyncStatusView | null>(null)
   const [deletionDismissed, setDeletionDismissed] = useState(false)
   // The status belongs to the open vault, so a window never shows another vault's state.
@@ -291,6 +300,9 @@ function App(): React.JSX.Element {
         case 'open-settings':
           setSettingsOpen(true)
           break
+        case 'toggle-assistant':
+          if (vault) toggleAssistant()
+          break
         case 'format-bold':
         case 'format-italic':
         case 'format-strike':
@@ -306,7 +318,7 @@ function App(): React.JSX.Element {
       }
     })
     return () => offMenu()
-  }, [doc, vault, mode, busy])
+  }, [doc, vault, mode, busy, toggleAssistant])
 
   return (
     <div className={sidebarOpen ? 'layout' : 'layout sidebar-hidden'}>
@@ -530,6 +542,18 @@ function App(): React.JSX.Element {
             )}
           </div>
           <div className="editor-actions">
+            {vault && (
+              <button
+                className={`icon-button ${assistantOpen ? 'is-active' : ''}`}
+                type="button"
+                title={assistantOpen ? '关闭助手（⇧⌘A）' : '打开助手（⇧⌘A）'}
+                aria-label={assistantOpen ? '关闭助手' : '打开助手'}
+                aria-expanded={assistantOpen}
+                onClick={toggleAssistant}
+              >
+                <Sparkles size={15} strokeWidth={1.5} />
+              </button>
+            )}
             {doc && backlinks?.path === doc.path && backlinks.hits.length > 0 && (
               <button
                 type="button"
@@ -640,6 +664,16 @@ function App(): React.JSX.Element {
           </div>
         )}
       </main>
+      {vault && assistantMounted && (
+        <AssistantPane
+          key={vault.dir}
+          vault={vault}
+          doc={doc}
+          links={links && { index: links.index, config: links.config }}
+          hidden={!assistantOpen}
+          onClose={() => setAssistantOpen(false)}
+        />
+      )}
       {backlinksOpen && doc && backlinks?.path === doc.path && (
         <aside
           className="pane backlinks relation-popover"

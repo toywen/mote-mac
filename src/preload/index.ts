@@ -1,6 +1,7 @@
 import { contextBridge, ipcRenderer, type IpcRendererEvent } from 'electron'
 import {
   channels,
+  type AiEvent,
   type FontMode,
   type MenuAction,
   type MoteApi,
@@ -87,6 +88,16 @@ const mote: MoteApi = {
     const listener = (_event: IpcRendererEvent, status: SyncStatusEvent): void => callback(status)
     ipcRenderer.on(channels.syncStatus, listener)
     return () => ipcRenderer.off(channels.syncStatus, listener)
+  },
+  getAiSettings: () => ipcRenderer.invoke(channels.getAiSettings),
+  setAiKey: (key) => ipcRenderer.invoke(channels.setAiKey, key),
+  clearAiKey: () => ipcRenderer.invoke(channels.clearAiKey),
+  aiAsk: (input) => ipcRenderer.invoke(channels.aiAsk, input),
+  aiCancel: (id) => ipcRenderer.send(channels.aiCancel, id),
+  onAiEvent: (callback) => {
+    const listener = (_event: IpcRendererEvent, event: AiEvent): void => callback(event)
+    ipcRenderer.on(channels.aiEvent, listener)
+    return () => ipcRenderer.off(channels.aiEvent, listener)
   }
 }
 

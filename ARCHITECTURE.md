@@ -54,6 +54,8 @@
 | `src/main/syncState.ts`      | 同步状态表的读写。先写临时文件再改名，读不出或属于别的服务器时当作空表                                                                                                            |
 | `src/main/syncController.ts` | 管一个笔记库的 `Sync`：读设置启动、设置变了先停再起、把状态推给显示这个笔记库的窗口。写不进去时把问题写进状态行                                                                   |
 | `src/main/syncServer.ts`     | 同步服务的地址：内置的默认地址，`settings.json` 里 `syncServerUrl` 的读取和校验                                                                                                   |
+| `src/main/ai.ts`             | 助手的 DeepSeek 客户端：拼提示词、发请求、读流式回答。`settings.json` 里的 `aiBaseUrl` 换掉地址，测试用它接假服务                                                                 |
+| `src/core/ai.ts`             | 助手范围里的日期：哪些笔记是日记、本周从哪天起。主进程挑笔记和窗口显示篇数都用它                                                                                                  |
 | `src/main/syncAuth.ts`       | 注册、登录、用找回码改密码。拿到的设备令牌交给主进程保存，不进窗口                                                                                                                |
 
 | `src/preload/` | 用 `contextBridge` 暴露 `window.mote` |
@@ -78,6 +80,7 @@
 | `src/renderer/src/QuickOpen.tsx`、`quickOpenMatch.ts` | 快速打开窗口和照搬 Obsidian 的匹配打分 |
 | `src/renderer/src/HitList.tsx` | 按笔记分组列出命中位置，点一处打开笔记并选中。反向链接面板和搜索共用 |
 | `src/renderer/src/SearchPanel.tsx` | 左侧栏的搜索视图 |
+| `src/renderer/src/AssistantPane.tsx`、`assistant.css` | 右侧助手栏：填 API key、选范围、提问、显示回答和来源、把回答插入笔记。回答用 `noteView()` 的只读视图画 |
 | `src/renderer/src/UpdateNotification.tsx` | 应用更新提示横幅与下载/重启更新交互组件 |
 | `tools/` | 审计笔记库、哈希对比、性能测量等命令行工具 |
 | `tests/e2e/` | Playwright 的 Electron 测试 |
@@ -100,6 +103,8 @@
 - 编辑器模式归渲染进程的 `workspace`。整个窗口一个值，切换笔记时不变。编辑器只读它。
 - 导航历史归渲染进程的 `workspace`。整个窗口一个列表和一个位置。用任何方式打开另一篇笔记都加一项。编辑器只报告光标，后退和前进时 `workspace` 把光标放回去。
 - 渲染进程用笔记路径列表的副本建链接解析用的索引。它是算出来的结果，不是新的状态。
+- 助手的对话归渲染进程的 `AssistantPane`，只在内存里，关窗口就没了。不写笔记库，也不写 mote 目录。
+- 助手的 API key 归主进程：先读环境变量 `DEEPSEEK_API_KEY`，没有时用加密存在 `settings.json` 的。窗口只拿到 key 从哪来。
 
 ## 一篇打开的笔记的状态
 
@@ -170,4 +175,6 @@
 - `mote-file://` 的每个响应都带 `Content-Security-Policy: default-src 'none'; style-src 'unsafe-inline'; sandbox` 和 `nosniff`。SVG 是文档，这样它即使被当成页面打开，里面的脚本也不运行。
 - 窗口只显示 mote 自己的页面。主进程拦下所有去别的地址的跳转，因为跳到的页面会拿到 `window.mote`。`window.open` 也只把白名单里的网址交给系统。
 - 点击链接时，主进程只把 `http`、`https` 和 `mailto` 网址交给系统。主进程是边界，所以它自己再查一遍白名单。
+- 助手只在主进程里联网。回答插入笔记时走编辑器，笔记变 dirty 后照常保存，不绕过基准哈希。
+- 提问时只发助手范围里的笔记。超过 40 万字直接拒绝，不偷偷截断。
 - Mermaid 的 `securityLevel` 是 `strict`，图里的文字过一遍 DOMPurify，点击回调不生效。Mermaid 不需要放宽内容安全策略。

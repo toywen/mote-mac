@@ -1,9 +1,14 @@
 import { _electron as electron, type ElectronApplication, type Page } from '@playwright/test'
 
-// Starts mote with its own settings dir, so tests never touch the real one.
-export function launch(settings: string): Promise<ElectronApplication> {
-  const env = { ...process.env }
+// Starts mote with its own settings dir, so tests never touch the real one. The DeepSeek key
+// in your shell never reaches a test; one that needs a key passes it in extra.
+export function launch(
+  settings: string,
+  extra: Record<string, string> = {}
+): Promise<ElectronApplication> {
+  const env = { ...process.env, ...extra }
   delete env.ELECTRON_RUN_AS_NODE
+  if (!extra.DEEPSEEK_API_KEY) delete env.DEEPSEEK_API_KEY
   return electron.launch({ args: ['.', `--user-data-dir=${settings}`], env })
 }
 

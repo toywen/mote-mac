@@ -22,6 +22,10 @@ export type AppSettings = {
   /** The sync service to use instead of the deployed one. Set by hand in settings.json. */
   syncServerUrl?: string
   sync?: SyncSettings
+  /** The assistant's API address instead of DeepSeek's. Set by hand in settings.json. */
+  aiBaseUrl?: string
+  /** The DeepSeek API key, encrypted by the system keychain like the device token. */
+  ai?: { keyCipher: string }
 }
 
 /** The token is readable by no one but this user's login. */
