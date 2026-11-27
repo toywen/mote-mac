@@ -1,5 +1,5 @@
-import { ArrowUp, KeyRound, Plus, Square, X } from 'lucide-react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+import { ArrowUp, Check, ChevronDown, History, KeyRound, Plus, Square, X } from 'lucide-react'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import { EditorState } from '@codemirror/state'
 import { EditorView } from '@codemirror/view'
 import type { AiMessage, AiScope, AiSettingsView, VaultInfo, VaultPath } from '../../core/ipc'
@@ -8,23 +8,33 @@ import { dailyNotesIn, thisWeek } from '../../core/ai'
 import { editorMode, linkContext } from './editor/livePreview'
 import { noteView } from './editor/noteView'
 import { editorLocked } from './editor/tasks'
+import { MenuLayer } from './MenuLayer'
 import type { Doc } from './workspace'
 import { workspace } from './workspace'
 import './assistant.css'
 
 type ScopeKind = 'note' | 'week' | 'range'
 
-// One question and its answer. The conversation lives here, in the window, and is gone when the
-// window closes; nothing about it is written anywhere.
+// One question and its answer.
 type Turn = {
   id: string
   question: string
-  scope: string
   sources: { path: VaultPath; chars: number }[] | null
   answer: string
   state: 'streaming' | 'done' | 'error'
   error?: string
 }
+
+// The conversations live here, in the window, and are gone when the window closes; nothing about
+// them is written anywhere. A new one leaves the others in the history.
+type Chat = { id: string; startedAt: number; turns: Turn[] }
+
+const newChat = (): Chat => ({ id: crypto.randomUUID(), startedAt: Date.now(), turns: [] })
+
+const clock = (time: number): string =>
+  new Date(time).toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
+
+type MenuAt = { kind: 'scope' | 'history'; rect: DOMRect }
 
 type Links = { index: LinkIndex; config: VaultInfo['config'] } | null
 
@@ -50,15 +60,21 @@ export function AssistantPane(props: {
   const [settings, setSettings] = useState<AiSettingsView | null>(null)
   const [keyDraft, setKeyDraft] = useState('')
   const [keyError, setKeyError] = useState('')
-  const [turns, setTurns] = useState<Turn[]>([])
+  const [chats, setChats] = useState<Chat[]>(() => [newChat()])
+  const [chatId, setChatId] = useState(() => chats[0].id)
+  const chatNow = chats.find((c) => c.id === chatId) ?? chats[0]
+  const turns = chatNow.turns
   const [question, setQuestion] = useState('')
+  const [menu, setMenu] = useState<MenuAt | null>(null)
+  const closeMenu = useCallback(() => setMenu(null), [])
   const noteOpen = hasText(doc)
-  const [scopeKind, setScopeKind] = useState<ScopeKind>(noteOpen ? 'note' : 'week')
+  // Null until you pick one: then it reads the open note, or this week when no note is open.
+  const [scopeKind, setScopeKind] = useState<ScopeKind | null>(null)
   const week = useMemo(() => thisWeek(new Date()), [])
   const [range, setRange] = useState(week)
   const chat = useRef<HTMLDivElement>(null)
   const input = useRef<HTMLTextAreaElement>(null)
-  const streaming = turns.find((t) => t.state === 'streaming')
+  const streaming = chats.flatMap((c) => c.turns).find((t) => t.state === 'streaming')
 
   useEffect(() => {
     void window.mote.getAiSettings().then(setSettings)
@@ -67,21 +83,20 @@ export function AssistantPane(props: {
   useEffect(
     () =>
       window.mote.onAiEvent((event) => {
-        setTurns((all) =>
-          all.map((turn) => {
-            if (turn.id !== event.id) return turn
-            switch (event.kind) {
-              case 'sources':
-                return { ...turn, sources: event.sources }
-              case 'delta':
-                return { ...turn, answer: turn.answer + event.text }
-              case 'done':
-                return { ...turn, state: 'done' }
-              case 'error':
-                return { ...turn, state: 'error', error: event.message }
-            }
-          })
-        )
+        const apply = (turn: Turn): Turn => {
+          if (turn.id !== event.id) return turn
+          switch (event.kind) {
+            case 'sources':
+              return { ...turn, sources: event.sources }
+            case 'delta':
+              return { ...turn, answer: turn.answer + event.text }
+            case 'done':
+              return { ...turn, state: 'done' }
+            case 'error':
+              return { ...turn, state: 'error', error: event.message }
+          }
+        }
+        setChats((all) => all.map((chat) => ({ ...chat, turns: chat.turns.map(apply) })))
       }),
     []
   )
@@ -97,16 +112,21 @@ export function AssistantPane(props: {
     () => vault.entries.filter((e) => e.kind === 'note').map((e) => e.path),
     [vault.entries]
   )
-  const dates = scopeKind === 'range' ? range : week
+  const kind: ScopeKind =
+    scopeKind === null || (scopeKind === 'note' && !noteOpen)
+      ? noteOpen
+        ? 'note'
+        : 'week'
+      : scopeKind
+  const dates = kind === 'range' ? range : week
   const dailyCount = useMemo(
     () => dailyNotesIn(notes, vault.config.daily.folder, dates.from, dates.to).length,
     [notes, vault.config.daily.folder, dates.from, dates.to]
   )
-  const kind: ScopeKind = scopeKind === 'note' && !noteOpen ? 'week' : scopeKind
   const scopeLabel =
     kind === 'note' && noteOpen
-      ? `当前笔记 · ${noteName(doc.path)}`
-      : `日记 · ${shortDate(dates.from)} → ${shortDate(dates.to)} · ${dailyCount} 篇`
+      ? `这篇笔记 · ${noteName(doc.path)}`
+      : `${kind === 'week' ? '本周日记' : `${shortDate(dates.from)} → ${shortDate(dates.to)}`} · ${dailyCount} 篇`
 
   function scopeFor(target: ScopeKind): AiScope | null {
     if (target === 'note')
@@ -126,10 +146,10 @@ export function AssistantPane(props: {
         { role: 'assistant' as const, content: t.answer }
       ])
     const id = crypto.randomUUID()
-    setTurns((all) => [
-      ...all,
-      { id, question: q, scope: scopeLabel, sources: null, answer: '', state: 'streaming' }
-    ])
+    const turn: Turn = { id, question: q, sources: null, answer: '', state: 'streaming' }
+    setChats((all) =>
+      all.map((chat) => (chat.id === chatNow.id ? { ...chat, turns: [...chat.turns, turn] } : chat))
+    )
     setQuestion('')
     pinned.current = true
     void window.mote.aiAsk({
@@ -171,6 +191,19 @@ export function AssistantPane(props: {
 
   const canInsert = noteOpen && doc.kind !== 'conflict'
 
+  // An empty conversation is reused, so the history holds only ones with a question in them.
+  function startChat(): void {
+    if (!turns.length) return
+    const next = newChat()
+    setChats((all) => [...all.filter((c) => c.turns.length), next])
+    setChatId(next.id)
+    input.current?.focus()
+  }
+
+  const openMenu = (kind: MenuAt['kind'], el: HTMLElement): void =>
+    setMenu({ kind, rect: el.getBoundingClientRect() })
+  const past = chats.filter((c) => c.turns.length).reverse()
+
   return (
     <aside className="pane assistant" aria-label="助手" hidden={hidden}>
       <header className="assistant-header">
@@ -181,10 +214,21 @@ export function AssistantPane(props: {
             <button
               className="icon-button"
               type="button"
+              title="对话历史"
+              aria-label="对话历史"
+              aria-expanded={menu?.kind === 'history'}
+              disabled={!past.length}
+              onClick={(e) => openMenu('history', e.currentTarget)}
+            >
+              <History size={14} />
+            </button>
+            <button
+              className="icon-button"
+              type="button"
               title="新的对话"
               aria-label="新的对话"
-              disabled={!turns.length || !!streaming}
-              onClick={() => setTurns([])}
+              disabled={!turns.length}
+              onClick={startChat}
             >
               <Plus size={15} />
             </button>
@@ -256,7 +300,7 @@ export function AssistantPane(props: {
           >
             {!turns.length && (
               <div className="assistant-empty">
-                <p>问问你的笔记。范围在下面选。</p>
+                <p>问问你的笔记。</p>
                 {noteOpen && (
                   <button type="button" onClick={() => ask('总结这篇笔记', 'note')}>
                     总结这篇笔记
@@ -301,54 +345,16 @@ export function AssistantPane(props: {
           </div>
 
           <footer className="assistant-composer">
-            <div className="assistant-scope" aria-label="范围">
-              <button
-                type="button"
-                aria-pressed={kind === 'note'}
-                disabled={!noteOpen}
-                onClick={() => setScopeKind('note')}
-              >
-                这篇笔记
-              </button>
-              <button
-                type="button"
-                aria-pressed={kind === 'week'}
-                onClick={() => setScopeKind('week')}
-              >
-                本周日记
-              </button>
-              <button
-                type="button"
-                aria-pressed={kind === 'range'}
-                onClick={() => setScopeKind('range')}
-              >
-                选日期
-              </button>
-            </div>
-            {kind === 'range' && (
-              <div className="assistant-range">
-                <input
-                  type="date"
-                  aria-label="开始日期"
-                  value={range.from}
-                  max={range.to}
-                  onChange={(e) =>
-                    e.target.value && setRange((r) => ({ ...r, from: e.target.value }))
-                  }
-                />
-                <span>→</span>
-                <input
-                  type="date"
-                  aria-label="结束日期"
-                  value={range.to}
-                  min={range.from}
-                  onChange={(e) =>
-                    e.target.value && setRange((r) => ({ ...r, to: e.target.value }))
-                  }
-                />
-              </div>
-            )}
-            <div className="assistant-scope-label">{scopeLabel}</div>
+            <button
+              type="button"
+              className="assistant-scope"
+              aria-label={`范围：${scopeLabel}`}
+              aria-expanded={menu?.kind === 'scope'}
+              onClick={(e) => openMenu('scope', e.currentTarget)}
+            >
+              <span className="assistant-scope-text">{scopeLabel}</span>
+              <ChevronDown size={12} />
+            </button>
             <div className="assistant-ask">
               <textarea
                 ref={input}
@@ -402,7 +408,108 @@ export function AssistantPane(props: {
           </footer>
         </>
       )}
+
+      {menu?.kind === 'scope' && (
+        <MenuLayer onClose={closeMenu}>
+          <div
+            className="context-menu assistant-menu"
+            role="menu"
+            aria-label="范围"
+            style={{ left: menu.rect.left, bottom: window.innerHeight - menu.rect.top + 6 }}
+          >
+            {noteOpen && (
+              <ScopeItem
+                on={kind === 'note'}
+                label="这篇笔记"
+                hint={noteName(doc.path)}
+                onClick={() => {
+                  setScopeKind('note')
+                  closeMenu()
+                }}
+              />
+            )}
+            <ScopeItem
+              on={kind === 'week'}
+              label="本周日记"
+              hint={`${shortDate(week.from)} → ${shortDate(week.to)}`}
+              onClick={() => {
+                setScopeKind('week')
+                closeMenu()
+              }}
+            />
+            <ScopeItem on={kind === 'range'} label="选日期" onClick={() => setScopeKind('range')} />
+            {kind === 'range' && (
+              <div className="assistant-range">
+                <input
+                  type="date"
+                  aria-label="开始日期"
+                  value={range.from}
+                  max={range.to}
+                  onChange={(e) =>
+                    e.target.value && setRange((r) => ({ ...r, from: e.target.value }))
+                  }
+                />
+                <span>→</span>
+                <input
+                  type="date"
+                  aria-label="结束日期"
+                  value={range.to}
+                  min={range.from}
+                  onChange={(e) =>
+                    e.target.value && setRange((r) => ({ ...r, to: e.target.value }))
+                  }
+                />
+              </div>
+            )}
+          </div>
+        </MenuLayer>
+      )}
+
+      {menu?.kind === 'history' && (
+        <MenuLayer onClose={closeMenu}>
+          <div
+            className="context-menu assistant-menu assistant-history"
+            role="menu"
+            aria-label="对话历史"
+            style={{ top: menu.rect.bottom + 4, right: window.innerWidth - menu.rect.right }}
+          >
+            {past.map((chat) => (
+              <ScopeItem
+                key={chat.id}
+                on={chat.id === chatNow.id}
+                label={chat.turns[0].question}
+                hint={clock(chat.startedAt)}
+                onClick={() => {
+                  setChatId(chat.id)
+                  closeMenu()
+                }}
+              />
+            ))}
+          </div>
+        </MenuLayer>
+      )}
     </aside>
+  )
+}
+
+function ScopeItem(props: {
+  on: boolean
+  label: string
+  hint?: string
+  onClick: () => void
+}): React.JSX.Element {
+  return (
+    <button
+      type="button"
+      role="menuitemradio"
+      aria-checked={props.on}
+      className="context-menu-item"
+      onClick={props.onClick}
+    >
+      <Check size={13} strokeWidth={2} style={{ visibility: props.on ? 'visible' : 'hidden' }} />
+      <span className="context-menu-label">{props.label}</span>
+      {props.hint && <span className="context-menu-shortcut">{props.hint}</span>}
+    </button>
   )
 }
 

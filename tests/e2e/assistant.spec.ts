@@ -70,8 +70,12 @@ test('the assistant reads this week, streams an answer and inserts it into the n
     const saved = await readFile(join(settings, 'settings.json'), 'utf8')
     expect(saved).not.toContain('sk-test-123')
 
-    await pane.getByRole('button', { name: '本周日记' }).click()
-    await expect(pane.locator('.assistant-scope-label')).toContainText('1 篇')
+    // With a note open the scope starts on it; the menu switches it to this week's daily notes.
+    const scope = pane.getByRole('button', { name: /^范围：/ })
+    await expect(scope).toHaveText('这篇笔记 · 周记')
+    await scope.click()
+    await window.getByRole('menuitemradio', { name: /本周日记/ }).click()
+    await expect(scope).toHaveText('本周日记 · 1 篇')
     await pane.getByRole('textbox', { name: '问助手' }).fill('这一周我都做了什么？')
     await pane.getByRole('textbox', { name: '问助手' }).press('Enter')
 
@@ -102,6 +106,18 @@ test('the assistant reads this week, streams an answer and inserts it into the n
     await expect
       .poll(() => readFile(join(vault, '周记.md'), 'utf8'), { timeout: 10_000 })
       .toBe(`# 周记\n\n这一周只做了一件事：修好同步断线，见 [[${date}]]。\n`)
+
+    // A new conversation keeps the old one in the history.
+    await pane.getByRole('button', { name: '新的对话' }).click()
+    await expect(pane.locator('.assistant-turn')).toHaveCount(0)
+    await pane.getByRole('textbox', { name: '问助手' }).fill('还有什么没做完？')
+    await pane.getByRole('textbox', { name: '问助手' }).press('Enter')
+    await expect(pane.getByRole('button', { name: '插入到笔记' })).toBeVisible()
+    await pane.getByRole('button', { name: '对话历史' }).click()
+    const history = window.getByRole('menu', { name: '对话历史' })
+    await expect(history.getByRole('menuitemradio')).toHaveCount(2)
+    await history.getByRole('menuitemradio', { name: /这一周我都做了什么/ }).click()
+    await expect(pane.locator('.assistant-question')).toHaveText('这一周我都做了什么？')
     expect(errors).toEqual([])
   } finally {
     await app.close()
