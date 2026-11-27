@@ -118,12 +118,18 @@
   color: var(--muted);
 }
 /* An empty line between paragraphs is shorter than a line of text, and shorter still under a
-   heading. */
+   heading — except while the cursor is on it in edit mode, so the caret stays clear of the
+   heading above. */
 .cm-content .cm-line:not(.mote-codeblock):has(> br:only-child) {
   line-height: 1.2em;
 }
 .cm-content .cm-line.mote-h + .cm-line:not(.mote-codeblock):has(> br:only-child) {
   line-height: 0.5em;
+}
+.editor-content:not([data-mode='reading'])
+  .cm-content
+  .cm-line.cm-activeLine:not(.mote-codeblock):has(> br:only-child) {
+  line-height: 1.75;
 }
 
 /* A list line hangs: the marker fills the indent, and wrapped lines start under the text.

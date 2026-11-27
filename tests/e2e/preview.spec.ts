@@ -55,6 +55,28 @@ test('cursor height scales with heading font size', async () => {
   }
 })
 
+test('cursor on an empty line after a heading does not overlap the heading', async () => {
+  const { app, window } = await start('行内')
+  try {
+    const editor = await openNote(window, '行内')
+    await editor.click()
+    await window.keyboard.press('Meta+A')
+    await window.keyboard.type('### 生活')
+    await window.keyboard.press('Enter')
+    await expect(editor.locator('.cm-line')).toHaveCount(2)
+    const gap = (): Promise<number> =>
+      window.evaluate(() => {
+        const cursor = document.querySelector('.cm-cursor')
+        const heading = document.querySelector('.cm-line.mote-h3')
+        if (!cursor || !heading) return -1
+        return cursor.getBoundingClientRect().top - heading.getBoundingClientRect().bottom
+      })
+    await expect.poll(gap).toBeGreaterThanOrEqual(0)
+  } finally {
+    await app.close()
+  }
+})
+
 test('live preview hides syntax away from the selection and shows it at the selection', async () => {
   const { app, window, vault } = await start('行内')
   try {
