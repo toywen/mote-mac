@@ -1,4 +1,28 @@
+import { execFile } from 'node:child_process'
 import type { AiMessage, VaultPath } from '../core/ipc.ts'
+
+export const KEY_VARIABLE = 'DEEPSEEK_API_KEY'
+
+// The key from the environment. A Mac app opened from the Finder or the Dock does not get the
+// variables your shell profile sets, so a packaged app asks an interactive login shell once.
+// Run from a terminal, as in development and tests, the process already has them.
+let shellKey: Promise<string> | null = null
+
+export function envKey(env: NodeJS.ProcessEnv, askShell: boolean): Promise<string> {
+  const own = env[KEY_VARIABLE]?.trim()
+  if (own || !askShell) return Promise.resolve(own ?? '')
+  shellKey ??= new Promise((resolve) => {
+    // The markers keep out whatever the profile itself prints.
+    const script = `printf '\\036%s\\036' "$${KEY_VARIABLE}"`
+    execFile(
+      env.SHELL || '/bin/zsh',
+      ['-ilc', script],
+      { timeout: 5000, env: { ...env, TERM: 'dumb' } },
+      (_error, stdout) => resolve(String(stdout).split('\x1e')[1]?.trim() ?? '')
+    )
+  })
+  return shellKey
+}
 
 // The assistant talks to DeepSeek's OpenAI-style API. `aiBaseUrl` in settings.json replaces the
 // address, so tests can point it at a local fake. See ADR 0031.

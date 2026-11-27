@@ -152,8 +152,9 @@ export type AiEvent =
   | { id: string; kind: 'done' }
   | { id: string; kind: 'error'; message: string }
 
-// The API key stays in main, encrypted at rest. The window only learns whether one is set.
-export type AiSettingsView = { hasKey: boolean }
+// The API key stays in main. The window only learns where it comes from: the DEEPSEEK_API_KEY
+// environment variable, a key saved in the pane and encrypted at rest, or nowhere yet.
+export type AiSettingsView = { keySource: 'env' | 'saved' | null }
 
 export type SavedAttachment = {
   path: VaultPath

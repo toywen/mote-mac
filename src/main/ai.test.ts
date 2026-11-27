@@ -1,6 +1,9 @@
+import { mkdtemp, writeFile } from 'node:fs/promises'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { VaultPath } from '../core/ipc.ts'
-import { aiBaseUrlOf, buildMessages, streamChat } from './ai.ts'
+import { aiBaseUrlOf, buildMessages, envKey, streamChat } from './ai.ts'
 
 // A response whose body arrives in the given pieces, split wherever the network splits it.
 function streamed(pieces: string[], status = 200): typeof fetch {
@@ -85,5 +88,18 @@ describe('aiBaseUrlOf', () => {
     expect(aiBaseUrlOf(undefined)).toEqual({ ok: true, url: 'https://api.deepseek.com' })
     expect(aiBaseUrlOf('http://127.0.0.1:9/')).toEqual({ ok: true, url: 'http://127.0.0.1:9' })
     expect(aiBaseUrlOf('ftp://x').ok).toBe(false)
+  })
+})
+
+describe('envKey', () => {
+  it('reads DEEPSEEK_API_KEY from the process first', async () => {
+    expect(await envKey({ DEEPSEEK_API_KEY: ' sk-own ' }, true)).toBe('sk-own')
+    expect(await envKey({}, false)).toBe('')
+  })
+
+  it('asks an interactive login shell, ignoring what the profile prints', async () => {
+    const zdot = await mkdtemp(join(tmpdir(), 'mote-zdot-'))
+    await writeFile(join(zdot, '.zshrc'), 'echo welcome\nexport DEEPSEEK_API_KEY=sk-shell\n')
+    expect(await envKey({ SHELL: '/bin/zsh', ZDOTDIR: zdot, HOME: zdot }, true)).toBe('sk-shell')
   })
 })

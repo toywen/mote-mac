@@ -12,7 +12,8 @@
 - 主进程调 DeepSeek 的 OpenAI 格式接口 `https://api.deepseek.com/chat/completions`，用 `fetch` 读流式回答，不装 SDK。
 - 模型用 `deepseek-flash`，关掉思考模式。总结用不上思考，开着第一个字要等很久。2026-11-27 查官方文档，`deepseek-flash` 上下文 1M。
 - `settings.json` 里的 `aiBaseUrl` 能换地址。端到端测试用它接本机的假服务。
-- API key 用系统钥匙串加密后存在 `settings.json`，和同步的设备令牌一样。窗口只知道有没有 key。
+- API key 先读环境变量 `DEEPSEEK_API_KEY`。从访达或程序坞打开的 .app 拿不到 shell 配置里的变量，所以打包后的应用开一次交互式登录 shell 去读。
+- 没有环境变量时，用助手栏里填的 key。它用系统钥匙串加密后存在 `settings.json`，和同步的设备令牌一样。窗口只知道 key 从哪来，看不到 key。
 - 范围由窗口选，笔记由主进程读。当前笔记带上编辑器里的文字，因为磁盘可能比编辑器旧。日记由主进程从笔记索引里按日期挑。
 - 日记是文件名 `YYYY-MM-DD.md` 的笔记。笔记库配置了日记文件夹时，只算那个文件夹里的。日记-2 决定不按 `daily-notes.json` 的完整格式管日记，这里也只读文件夹。
 - 选中的笔记超过 40 万字时拒绝提问，不截断。截断后的回答看起来完整，其实漏了笔记。

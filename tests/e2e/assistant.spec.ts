@@ -124,3 +124,31 @@ test('the assistant reads this week, streams an answer and inserts it into the n
     fake.server.close()
   }
 })
+
+test('the assistant uses DEEPSEEK_API_KEY from the environment without asking for a key', async () => {
+  const info = test.info()
+  const vault = info.outputPath('vault')
+  const settings = info.outputPath('settings')
+  await mkdir(vault, { recursive: true })
+  await writeFile(join(vault, '读书.md'), '《禅与摩托车维修艺术》读到良质。\n')
+  const fake = await fakeDeepSeek(['讲的是良质。'])
+  await mkdir(settings, { recursive: true })
+  await writeFile(join(settings, 'settings.json'), JSON.stringify({ aiBaseUrl: fake.url }))
+
+  const app = await launch(settings, { DEEPSEEK_API_KEY: 'sk-from-env' })
+  const window = await app.firstWindow()
+  try {
+    await openVault(app, window, vault)
+    await window.getByRole('treeitem', { name: '读书', exact: true }).click()
+    await window.getByRole('button', { name: '打开助手' }).click()
+    const pane = window.getByRole('complementary', { name: '助手' })
+    await expect(pane.getByLabel('DeepSeek API key')).toHaveCount(0)
+    await expect(pane.getByRole('button', { name: '更换 API key' })).toHaveCount(0)
+    await pane.getByRole('button', { name: '总结这篇笔记' }).click()
+    await expect(pane.locator('.assistant-answer')).toContainText('讲的是良质。')
+    expect(fake.seen[0].auth).toBe('Bearer sk-from-env')
+  } finally {
+    await app.close()
+    fake.server.close()
+  }
+})

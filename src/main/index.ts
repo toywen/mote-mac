@@ -43,7 +43,7 @@ import { syncServerOf } from './syncServer'
 import { authenticate, type AuthSession } from './syncAuth'
 import { registerUpdaterIpc, Updater } from './updater'
 import { buildApplicationMenu } from './menu'
-import { aiBaseUrlOf, buildMessages, MAX_SOURCE_CHARS, streamChat, type Source } from './ai'
+import { aiBaseUrlOf, buildMessages, envKey, MAX_SOURCE_CHARS, streamChat, type Source } from './ai'
 import { dailyNotesIn, localDate } from '../core/ai'
 
 app.setName('mote')
@@ -346,9 +346,16 @@ ipcMain.handle(channels.confirmSyncDeletions, (_event, dir: string) => {
   syncControllers.get(dir)?.confirmDeletions()
 })
 
-const aiView = async (): Promise<AiSettingsView> => ({
-  hasKey: Boolean((await readSettings()).ai?.keyCipher)
-})
+// DEEPSEEK_API_KEY wins over a key saved in the pane.
+async function aiKey(): Promise<{ key: string | null; view: AiSettingsView }> {
+  const fromEnv = await envKey(process.env, app.isPackaged)
+  if (fromEnv) return { key: fromEnv, view: { keySource: 'env' } }
+  const cipher = (await readSettings()).ai?.keyCipher
+  const saved = cipher ? openToken(cipher) : null
+  return { key: saved, view: { keySource: saved ? 'saved' : null } }
+}
+
+const aiView = async (): Promise<AiSettingsView> => (await aiKey()).view
 
 ipcMain.handle(channels.getAiSettings, aiView)
 
@@ -377,8 +384,8 @@ ipcMain.handle(channels.aiAsk, async (event, input: AiAskInput): Promise<void> =
   const fail = (message: string): void => emit({ id, kind: 'error', message })
 
   const settings = await readSettings()
-  const key = settings.ai ? openToken(settings.ai.keyCipher) : null
-  if (!key) return fail('先填写 DeepSeek 的 API key')
+  const { key } = await aiKey()
+  if (!key) return fail('先设置环境变量 DEEPSEEK_API_KEY，或填写 DeepSeek 的 API key')
   const base = aiBaseUrlOf(settings.aiBaseUrl)
   if (!base.ok) return fail(base.error)
 

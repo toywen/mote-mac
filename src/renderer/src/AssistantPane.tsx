@@ -209,7 +209,7 @@ export function AssistantPane(props: {
       <header className="assistant-header">
         <h2>助手</h2>
         <span className="assistant-grow" />
-        {settings?.hasKey && (
+        {settings?.keySource && (
           <>
             <button
               className="icon-button"
@@ -232,15 +232,17 @@ export function AssistantPane(props: {
             >
               <Plus size={15} />
             </button>
-            <button
-              className="icon-button"
-              type="button"
-              title="更换 API key"
-              aria-label="更换 API key"
-              onClick={() => void window.mote.clearAiKey().then(setSettings)}
-            >
-              <KeyRound size={14} />
-            </button>
+            {settings.keySource === 'saved' && (
+              <button
+                className="icon-button"
+                type="button"
+                title="更换 API key"
+                aria-label="更换 API key"
+                onClick={() => void window.mote.clearAiKey().then(setSettings)}
+              >
+                <KeyRound size={14} />
+              </button>
+            )}
           </>
         )}
         <button
@@ -254,7 +256,7 @@ export function AssistantPane(props: {
         </button>
       </header>
 
-      {settings && !settings.hasKey ? (
+      {settings && !settings.keySource ? (
         <form
           className="assistant-key"
           onSubmit={(e) => {
@@ -262,7 +264,10 @@ export function AssistantPane(props: {
             void saveKey()
           }}
         >
-          <p className="assistant-key-lead">助手用 DeepSeek 读你的笔记。先填一个 API key。</p>
+          <p className="assistant-key-lead">
+            助手用 DeepSeek 读你的笔记。在 shell 配置里设好环境变量 DEEPSEEK_API_KEY 后重开
+            mote，或者在这里填一个 API key。
+          </p>
           <label htmlFor="assistant-key-input">DeepSeek API key</label>
           <input
             id="assistant-key-input"
