@@ -1,5 +1,21 @@
 import { Decoration, WidgetType } from '@codemirror/view'
+import type { SyntaxNode } from '@lezer/common'
 import { lineAt, type Renderer } from './preview'
+
+export const MAX_LIST_DEPTH = 3
+
+/** Count enclosing BulletList / OrderedList ancestors for a node inside a list. */
+export function listDepth(node: SyntaxNode | null): number {
+  let depth = 0
+  for (let cur = node; cur; cur = cur.parent) {
+    if (cur.name === 'BulletList' || cur.name === 'OrderedList') depth++
+  }
+  return depth
+}
+
+export function clampListDepth(depth: number): number {
+  return Math.min(Math.max(depth, 1), MAX_LIST_DEPTH)
+}
 
 class MarkerWidget extends WidgetType {
   constructor(
@@ -29,7 +45,10 @@ const depthLines: Decoration[] = []
 function depthLine(depth: number): Decoration {
   return (depthLines[depth] ??= Decoration.line({
     class: 'mote-list',
-    attributes: { style: `--mote-list-depth: ${depth}` }
+    attributes: {
+      style: `--mote-list-depth: ${depth}`,
+      'data-list-depth': String(depth)
+    }
   }))
 }
 
@@ -39,9 +58,7 @@ function depthLine(depth: number): Decoration {
 const listMark: Renderer = (node, cx) => {
   const { doc } = cx.state
   const line = lineAt(cx, node.from)
-  let depth = 0
-  for (let parent = node.node.parent; parent; parent = parent.parent)
-    if (parent.name === 'BulletList' || parent.name === 'OrderedList') depth++
+  const depth = clampListDepth(listDepth(node.node.parent))
   const before = doc.sliceString(line.from, node.from)
   const quoted = /^(?:[ \t]*>[ \t]?)*/.exec(before)![0].length
   const from = /^[ \t]*$/.test(before.slice(quoted)) ? line.from + quoted : node.from

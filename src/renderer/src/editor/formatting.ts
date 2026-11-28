@@ -1,5 +1,9 @@
+import { indentWithTab } from '@codemirror/commands'
+import { ensureSyntaxTree, syntaxTree } from '@codemirror/language'
 import { EditorSelection, EditorState, type TransactionSpec } from '@codemirror/state'
 import { EditorView, type KeyBinding } from '@codemirror/view'
+import type { SyntaxNode } from '@lezer/common'
+import { listDepth, MAX_LIST_DEPTH } from './lists'
 
 export type FormatTarget = {
   state: EditorState
@@ -492,6 +496,91 @@ export const toggleTaskList: FormatCommand = (target) => {
 
   target.dispatch({ changes, scrollIntoView: true })
   return true
+}
+
+const LIST_LINE_RE = /^((?:[ \t]*>[ \t]?)*)([ \t]*)(?:[-*+]|\d+[.)])(?:[ \t]|$)/
+const QUOTE_PREFIX_RE = /^(?:[ \t]*>[ \t]?)*/
+
+function findListMarkOnLine(
+  tree: ReturnType<typeof syntaxTree>,
+  lineFrom: number,
+  lineTo: number,
+  markerPos: number
+): SyntaxNode | null {
+  let node: SyntaxNode | null = tree.resolveInner(markerPos, 1)
+  while (node && node.name !== 'ListMark' && node.name !== 'ListItem') {
+    node = node.parent
+  }
+  if (node?.name === 'ListItem') {
+    node = node.getChild('ListMark')
+  }
+  if (!node || node.name !== 'ListMark' || node.from < lineFrom || node.to > lineTo) return null
+  return node
+}
+
+function hasPrevListItem(listItem: SyntaxNode | null): boolean {
+  for (let p = listItem?.prevSibling ?? null; p; p = p.prevSibling) {
+    if (p.name === 'ListItem') return true
+  }
+  return false
+}
+
+function isListIndentBlocked(state: EditorState): boolean {
+  const { doc, selection } = state
+  const maxTo = Math.max(...selection.ranges.map((r) => doc.lineAt(r.to).to))
+  const tree = ensureSyntaxTree(state, maxTo, 50) ?? syntaxTree(state)
+  const seen = new Set<number>()
+
+  for (const range of selection.ranges) {
+    const startLine = doc.lineAt(range.from).number
+    const endLine = doc.lineAt(range.to).number
+    for (let n = startLine; n <= endLine; n++) {
+      if (seen.has(n)) continue
+      seen.add(n)
+      const line = doc.line(n)
+      const match = LIST_LINE_RE.exec(line.text)
+      if (!match) continue
+      const markerPos = line.from + match[1].length + match[2].length
+      const mark = findListMarkOnLine(tree, line.from, line.to, markerPos)
+      if (!mark) continue
+
+      if (listDepth(mark) >= MAX_LIST_DEPTH) return true
+
+      // A siblingless item cannot nest deeper; stop before extra spaces turn it into a code block.
+      const listItem = mark.parent
+      if (!hasPrevListItem(listItem)) {
+        const outerItem = listItem?.parent?.parent
+        let outerBase = 0
+        if (outerItem?.name === 'ListItem') {
+          const outerMark = outerItem.getChild('ListMark')
+          if (outerMark) {
+            const outerLine = doc.lineAt(outerMark.from)
+            const outerQuote = QUOTE_PREFIX_RE.exec(outerLine.text)?.[0].length ?? 0
+            outerBase = Math.max(0, outerMark.to - outerLine.from - outerQuote + 1)
+          }
+        }
+        if (match[2].length - outerBase >= 2) return true
+      }
+    }
+  }
+  return false
+}
+
+/** Tab indent that caps list nesting at MAX_LIST_DEPTH (3 levels). */
+export function indentListMore(view: EditorView): boolean {
+  if (view.state.facet(EditorView.editable) === false || view.state.readOnly) {
+    return false
+  }
+  if (isListIndentBlocked(view.state)) {
+    return true
+  }
+  return indentWithTab.run ? indentWithTab.run(view) : false
+}
+
+export const listIndentWithTab: KeyBinding = {
+  key: 'Tab',
+  run: indentListMore,
+  shift: indentWithTab.shift
 }
 
 export const formatKeymap: KeyBinding[] = [

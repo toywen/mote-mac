@@ -168,7 +168,7 @@
   text-align: right;
   color: var(--muted);
 }
-/* The bullet is a small ink dot. The • glyph keeps its place but is not painted. */
+/* Bullet 3 级阶梯：1级实心墨点 -> 2级空心圆环 -> 3级柔灰小方点。• 占位保留以保持基线对齐。 */
 .mote-list-marker-bullet {
   position: relative;
   padding-right: 0.4em;
@@ -177,6 +177,7 @@
 .mote-list-marker-bullet::before {
   content: '';
   position: absolute;
+  box-sizing: border-box;
   right: 0.62em;
   top: 50%;
   width: 0.26em;
@@ -184,6 +185,22 @@
   margin-top: -0.13em;
   border-radius: 50%;
   background: var(--muted);
+}
+.cm-line.mote-list[data-list-depth='2'] .mote-list-marker-bullet::before {
+  right: 0.59em;
+  width: 0.33em;
+  height: 0.33em;
+  margin-top: -0.165em;
+  background: transparent;
+  border: 1.25px solid var(--muted);
+}
+.cm-line.mote-list[data-list-depth='3'] .mote-list-marker-bullet::before {
+  right: 0.625em;
+  width: 0.25em;
+  height: 0.25em;
+  margin-top: -0.125em;
+  border-radius: 1px;
+  background: var(--t3);
 }
 
 /* A quote is one thin rule and quieter ink, in Kai as printed books set quotations. */

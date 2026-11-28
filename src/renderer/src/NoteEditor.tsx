@@ -1,4 +1,4 @@
-import { defaultKeymap, history, historyKeymap, indentWithTab } from '@codemirror/commands'
+import { defaultKeymap, history, historyKeymap } from '@codemirror/commands'
 import {
   Compartment,
   EditorState,
@@ -18,6 +18,7 @@ import type { EditorMode, LinkContext } from './editor/preview'
 import { editorLocked } from './editor/tasks'
 import {
   formatKeymap,
+  listIndentWithTab,
   type FormatCommand,
   insertCodeBlock,
   insertQuote,
@@ -126,7 +127,7 @@ export function NoteEditor({
             }
           },
           ...formatKeymap,
-          indentWithTab,
+          listIndentWithTab,
           ...defaultKeymap,
           ...historyKeymap
         ]),

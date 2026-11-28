@@ -1,5 +1,6 @@
 import { Facet, type EditorState } from '@codemirror/state'
 import { Decoration, EditorView, WidgetType } from '@codemirror/view'
+import { clampListDepth, listDepth } from './lists'
 import { lineAt, type Renderer } from './preview'
 import './tasks.css'
 
@@ -27,18 +28,22 @@ const isMarker = (state: EditorState, from: number): boolean =>
 class CheckboxWidget extends WidgetType {
   constructor(
     readonly checked: boolean,
-    readonly label: string
+    readonly label: string,
+    readonly depth: number
   ) {
     super()
   }
 
   eq(other: CheckboxWidget): boolean {
-    return other.checked === this.checked && other.label === this.label
+    return (
+      other.checked === this.checked && other.label === this.label && other.depth === this.depth
+    )
   }
 
   toDOM(view: EditorView): HTMLElement {
     const box = document.createElement('span')
     box.className = 'mote-task-box'
+    box.dataset.depth = String(this.depth)
     const input = box.appendChild(document.createElement('input'))
     input.type = 'checkbox'
     input.checked = this.checked
@@ -68,7 +73,8 @@ const taskMarker: Renderer = (node, cx) => {
   const end = /[ \t]/.test(doc.sliceString(node.to, node.to + 1)) ? node.to + 1 : node.to
   const label = doc.sliceString(end, line.to).trim()
   const bullet = task?.parent?.parent?.name === 'BulletList'
-  const widget = Decoration.replace({ widget: new CheckboxWidget(checked, label) })
+  const depth = clampListDepth(listDepth(task))
+  const widget = Decoration.replace({ widget: new CheckboxWidget(checked, label, depth) })
   const always = [(bullet ? bulletTask : orderedTask).range(line.from)]
   if (checked && task && task.to > end) always.push(done.range(end, task.to))
   return [{ reveal: { from: -1, to: -1 }, always, concealed: [widget.range(node.from, end)] }]

@@ -54,6 +54,45 @@
   outline-offset: 2px;
 }
 
+/* 二级子任务：稍小圆角方框，与一级圆环主干区分；勾选为柔和墨绿 */
+.mote-task-box[data-depth='2'] input {
+  width: 0.9em;
+  height: 0.9em;
+  vertical-align: -0.09em;
+  border: 1.3px solid var(--task-border-l2, var(--task-border));
+  border-radius: 4px;
+}
+
+.mote-task-box[data-depth='2'] input:checked {
+  background: var(--task-checked-l2-bg, var(--accent))
+    var(--task-check-l2, var(--task-check)) center / 68% no-repeat;
+  border-color: var(--task-checked-l2-border, var(--accent));
+  box-shadow: none;
+}
+
+/* 三级微步骤：轻盈虚线微圆，勾选为浅底墨绿勾 */
+.mote-task-box[data-depth='3'] input {
+  width: 0.82em;
+  height: 0.82em;
+  vertical-align: -0.07em;
+  border: 1.25px dashed var(--task-border-l3, var(--task-border));
+  border-radius: 50%;
+}
+
+.mote-task-box[data-depth='3'] input:checked {
+  background: var(--accent-bg) var(--task-check-accent, var(--task-check)) center / 68% no-repeat;
+  border: 1.25px solid var(--accent);
+  box-shadow: none;
+}
+
+.cm-line.mote-task-bullet .mote-task-box[data-depth='2'] input {
+  margin: 0 0.44em 0 0.06em;
+}
+
+.cm-line.mote-task-bullet .mote-task-box[data-depth='3'] input {
+  margin: 0 0.48em 0 0.1em;
+}
+
 @keyframes moteTaskPop {
   0% {
     transform: scale(0.86);

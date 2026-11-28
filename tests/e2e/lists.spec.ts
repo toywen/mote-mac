@@ -123,3 +123,52 @@ test('Tab indents a task or bullet item into a nested list and Shift+Tab outdent
     await app.close()
   }
 })
+
+test('nested tasks and bullets render distinct 3-level icons and cap Tab indentation at level 3', async () => {
+  const { app, window, editor, note } = await start()
+  try {
+    const bulletOuter = editor.locator('.cm-line').filter({ hasText: '普通外' })
+    const bulletInner = editor.locator('.cm-line').filter({ hasText: '普通内' })
+    await expect(bulletOuter).toHaveAttribute('data-list-depth', '1')
+    await expect(bulletInner).toHaveAttribute('data-list-depth', '2')
+
+    await bulletInner.click()
+    await window.keyboard.press('End')
+    await window.keyboard.press('Enter')
+    await window.keyboard.insertText('普通三')
+    await window.keyboard.press('Tab')
+    await expect.poll(note).toContain('\n    - 普通三\n')
+
+    const bulletThird = editor.locator('.cm-line').filter({ hasText: '普通三' })
+    await expect(bulletThird).toHaveAttribute('data-list-depth', '3')
+
+    // Pressing Tab at level 3 keeps it at level 3 without adding 4th-level indentation
+    await window.keyboard.press('Tab')
+    await expect.poll(note).toContain('\n    - 普通三\n')
+    await expect.poll(note).not.toContain('\n      - 普通三\n')
+
+    // Nested tasks carry per-level depth attributes (1 -> 2 -> 3)
+    const taskOuter = editor.locator('.cm-line').filter({ hasText: '待办项' })
+    await taskOuter.click()
+    await window.keyboard.press('End')
+    await window.keyboard.press('Enter')
+    await window.keyboard.insertText('子待办')
+    await window.keyboard.press('Tab')
+    await window.keyboard.press('Enter')
+    await window.keyboard.insertText('微步骤')
+    await window.keyboard.press('Tab')
+    await expect.poll(note).toContain('- [ ] 待办项\n  - [ ] 子待办\n    - [ ] 微步骤')
+
+    const taskSecond = editor.locator('.cm-line').filter({ hasText: '子待办' })
+    const taskThird = editor.locator('.cm-line').filter({ hasText: '微步骤' })
+    await expect(taskOuter.locator('.mote-task-box')).toHaveAttribute('data-depth', '1')
+    await expect(taskSecond.locator('.mote-task-box')).toHaveAttribute('data-depth', '2')
+    await expect(taskThird.locator('.mote-task-box')).toHaveAttribute('data-depth', '3')
+
+    // Tab at level 3 task does not indent to level 4
+    await window.keyboard.press('Tab')
+    await expect.poll(note).not.toContain('      - [ ] 微步骤')
+  } finally {
+    await app.close()
+  }
+})

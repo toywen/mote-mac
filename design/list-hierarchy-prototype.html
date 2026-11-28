@@ -1,0 +1,1169 @@
+<!doctype html>
+<html lang="zh-CN" data-theme="light" data-font="kai" data-scheme="a">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>mote · 列表与待办 3 级层级原型</title>
+    <style>
+      @font-face {
+        font-family: 'Kai';
+        font-weight: 400;
+        src: local('STKaitiSC-Regular'), local('Kaiti SC'), local('STKaiti'), serif;
+        size-adjust: 108%;
+      }
+      @font-face {
+        font-family: 'Kai';
+        font-weight: 600 700;
+        src: local('STKaitiSC-Bold'), local('Kaiti SC Bold'), serif;
+        size-adjust: 108%;
+      }
+
+      :root {
+        --background: #fcfbf8;
+        --sidebar: #f5f3ec;
+        --panel: #f8f6f0;
+        --border: rgba(31, 30, 28, 0.085);
+        --edge: rgba(31, 30, 28, 0.14);
+        --text: #1f1e1c;
+        --muted: #6e6a63;
+        --t3: #9b978b;
+        --hover: rgba(70, 55, 30, 0.055);
+        --selected: rgba(70, 55, 30, 0.095);
+        --accent: #2d4a3e;
+        --accent-soft: #4e6e60;
+        --accent-bg: rgba(45, 74, 62, 0.09);
+        --tag-text: #2d4a3e;
+        --tag-background: rgba(45, 74, 62, 0.08);
+        --tag-border: rgba(45, 74, 62, 0.22);
+        --task-border: rgba(31, 30, 28, 0.30);
+        --task-border-l2: rgba(31, 30, 28, 0.28);
+        --task-border-l3: rgba(31, 30, 28, 0.32);
+        --task-checked-bg: #2d4a3e;
+        --task-checked-l2-bg: #466859;
+        --task-checked-shadow: 0 1px 3px rgba(37, 68, 56, 0.22);
+        --task-check-light: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fbfaf6' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+        --task-check-accent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232d4a3e' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+        --task-ghost-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232d4a3e' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round' opacity='0.34'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+        --notice-bg: #faf3e8;
+        --notice-text: #735118;
+
+        --font-kai: 'Iowan Old Style', 'Kai', 'Kaiti SC', 'STKaiti', 'Songti SC', Georgia, serif;
+        --font-song: 'Iowan Old Style', 'Songti SC', 'Noto Serif SC', 'STSong', Georgia, serif;
+        --font-hei: -apple-system, BlinkMacSystemFont, 'PingFang SC', 'Hiragino Sans GB', sans-serif;
+        --font-mono: ui-monospace, 'SF Mono', Menlo, monospace;
+        --font-text: var(--font-kai);
+        --font-heading: var(--font-song);
+        --text-size: 16px;
+      }
+
+      html[data-theme='dark'] {
+        --background: #1c1b18;
+        --sidebar: #161513;
+        --panel: #22201c;
+        --border: #2d2b26;
+        --edge: rgba(255, 245, 225, 0.14);
+        --text: #e9e6de;
+        --muted: #9d998d;
+        --t3: #6b685e;
+        --hover: rgba(255, 245, 225, 0.065);
+        --selected: rgba(255, 245, 225, 0.12);
+        --accent: #8fc7b3;
+        --accent-soft: #75a896;
+        --accent-bg: rgba(143, 199, 179, 0.14);
+        --tag-text: #7ec4a8;
+        --tag-background: rgba(126, 196, 168, 0.12);
+        --tag-border: rgba(126, 196, 168, 0.24);
+        --task-border: rgba(255, 245, 225, 0.30);
+        --task-border-l2: rgba(255, 245, 225, 0.28);
+        --task-border-l3: rgba(255, 245, 225, 0.32);
+        --task-checked-bg: #385f4e;
+        --task-checked-l2-bg: rgba(126, 196, 168, 0.24);
+        --task-checked-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+        --task-check-accent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238fc7b3' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+        --task-ghost-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238fc7b3' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round' opacity='0.34'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+        --notice-bg: #2f271c;
+        --notice-text: #f0cb8d;
+      }
+
+      html[data-font='kai'] {
+        --font-text: var(--font-kai);
+        --font-heading: var(--font-song);
+        --text-size: 16px;
+      }
+      html[data-font='song'] {
+        --font-text: var(--font-song);
+        --font-heading: var(--font-song);
+        --text-size: 16.5px;
+      }
+      html[data-font='hei'] {
+        --font-text: var(--font-hei);
+        --font-heading: var(--font-hei);
+        --text-size: 15.5px;
+      }
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: var(--background);
+        color: var(--text);
+        font-family: var(--font-hei);
+        -webkit-font-smoothing: antialiased;
+        line-height: 1.5;
+      }
+
+      .page {
+        max-width: 1120px;
+        margin: 0 auto;
+        padding: 28px 28px 56px;
+      }
+
+      /* Top Header & Controls */
+      .topbar {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: flex-end;
+        justify-content: space-between;
+        gap: 16px;
+        padding-bottom: 18px;
+        border-bottom: 1px solid var(--border);
+        margin-bottom: 22px;
+      }
+
+      .title-wrap h1 {
+        margin: 0;
+        font-family: var(--font-heading);
+        font-size: 22px;
+        font-weight: 600;
+        letter-spacing: -0.01em;
+      }
+
+      .title-wrap p {
+        margin: 4px 0 0;
+        font-size: 13px;
+        color: var(--muted);
+      }
+
+      .controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .seg {
+        display: inline-flex;
+        padding: 3px;
+        border-radius: 8px;
+        background: var(--sidebar);
+        border: 1px solid var(--border);
+        gap: 2px;
+      }
+
+      .seg button {
+        appearance: none;
+        border: none;
+        background: transparent;
+        color: var(--muted);
+        font-family: var(--font-hei);
+        font-size: 12px;
+        font-weight: 500;
+        padding: 5px 10px;
+        border-radius: 6px;
+        cursor: pointer;
+        transition: background 140ms ease, color 140ms ease;
+      }
+
+      .seg button:hover {
+        color: var(--text);
+      }
+
+      .seg button.active {
+        background: var(--background);
+        color: var(--text);
+        box-shadow: 0 1px 2px rgba(31, 30, 28, 0.08);
+      }
+
+      /* Scheme selector banner */
+      .scheme-grid {
+        display: grid;
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+        gap: 12px;
+        margin-bottom: 22px;
+      }
+
+      .scheme-card {
+        text-align: left;
+        padding: 13px 15px;
+        border-radius: 10px;
+        background: var(--sidebar);
+        border: 1px solid var(--border);
+        color: var(--text);
+        cursor: pointer;
+        transition: border-color 150ms ease, background 150ms ease, box-shadow 150ms ease;
+        position: relative;
+      }
+
+      .scheme-card:hover {
+        border-color: var(--edge);
+      }
+
+      .scheme-card.active {
+        background: var(--background);
+        border-color: var(--accent);
+        box-shadow: 0 2px 10px rgba(45, 74, 62, 0.08);
+      }
+
+      .scheme-head {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 8px;
+        margin-bottom: 5px;
+      }
+
+      .scheme-name {
+        font-size: 13.5px;
+        font-weight: 600;
+      }
+
+      .badge {
+        font-size: 10.5px;
+        font-weight: 600;
+        padding: 1px 7px;
+        border-radius: 99px;
+        background: var(--tag-background);
+        color: var(--tag-text);
+        border: 1px solid var(--tag-border);
+      }
+
+      .scheme-desc {
+        font-size: 12px;
+        color: var(--muted);
+        line-height: 1.45;
+      }
+
+      /* Main 2-column canvas */
+      .layout {
+        display: grid;
+        grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.85fr);
+        gap: 20px;
+        align-items: start;
+      }
+
+      @media (max-width: 900px) {
+        .scheme-grid,
+        .layout {
+          grid-template-columns: 1fr;
+        }
+      }
+
+      .editor-shell {
+        background: var(--background);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 4px 20px rgba(31, 30, 28, 0.04);
+      }
+
+      .editor-bar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 10px 16px;
+        background: var(--sidebar);
+        border-bottom: 1px solid var(--border);
+        font-size: 12px;
+        color: var(--muted);
+      }
+
+      .editor-bar .hint {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .kbd {
+        font-family: var(--font-mono);
+        font-size: 11px;
+        padding: 1px 5px;
+        border-radius: 4px;
+        background: var(--background);
+        border: 1px solid var(--edge);
+        color: var(--text);
+      }
+
+      .editor-paper {
+        padding: 26px 34px 32px;
+        font-family: var(--font-text);
+        font-size: var(--text-size);
+        line-height: 1.78;
+      }
+
+      .sec-label {
+        font-family: var(--font-hei);
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.06em;
+        text-transform: uppercase;
+        color: var(--t3);
+        margin: 0 0 10px;
+      }
+
+      .sec-label.spaced {
+        margin-top: 26px;
+        padding-top: 20px;
+        border-top: 1px dashed var(--border);
+      }
+
+      /* Tag stamp matching mote-mac */
+      .mote-tag {
+        display: inline-flex;
+        align-items: center;
+        font-family: var(--font-mono);
+        font-size: 0.78em;
+        line-height: 1.45;
+        padding: 0 0.42em;
+        margin-left: 0.3em;
+        border-radius: 4px;
+        color: var(--tag-text);
+        background: var(--tag-background);
+        border: 1px solid var(--tag-border);
+        vertical-align: 0.06em;
+      }
+
+      /* List Row Mechanics (mirrors preview.css + lists.ts + tasks.css) */
+      .list-row {
+        --depth: 1;
+        --step: 1.45em;
+        display: flex;
+        align-items: baseline;
+        padding-left: calc((var(--depth) - 1) * var(--step));
+        border-radius: 6px;
+        padding-right: 6px;
+        padding-top: 1px;
+        padding-bottom: 1px;
+        position: relative;
+        transition: background 120ms ease, padding-left 140ms cubic-bezier(0.16, 1, 0.3, 1);
+      }
+
+      .list-row[data-depth='1'] { --depth: 1; }
+      .list-row[data-depth='2'] { --depth: 2; }
+      .list-row[data-depth='3'] { --depth: 3; }
+
+      .list-row:hover {
+        background: var(--hover);
+      }
+
+      .list-row.focused {
+        background: var(--selected);
+      }
+
+      .list-row.shake {
+        animation: maxDepthShake 240ms ease;
+      }
+
+      @keyframes maxDepthShake {
+        0%, 100% { transform: translateX(0); }
+        25% { transform: translateX(4px); }
+        70% { transform: translateX(-2px); }
+      }
+
+      /* Optional subtle indent guide when scheme C or toggle enabled */
+      .show-guides .list-row[data-depth='2']::before,
+      .show-guides .list-row[data-depth='3']::before {
+        content: '';
+        position: absolute;
+        left: 0.65em;
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: var(--border);
+      }
+      .show-guides .list-row[data-depth='3']::after {
+        content: '';
+        position: absolute;
+        left: calc(0.65em + var(--step));
+        top: 0;
+        bottom: 0;
+        width: 1px;
+        background: var(--border);
+      }
+
+      .marker-slot {
+        width: 1.45em;
+        flex: 0 0 1.45em;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        align-self: flex-start;
+        height: 1.7em;
+        position: relative;
+      }
+
+      .row-text {
+        flex: 1;
+        min-width: 0;
+        cursor: text;
+      }
+
+      .row-actions {
+        opacity: 0;
+        display: inline-flex;
+        align-items: center;
+        gap: 3px;
+        margin-left: 8px;
+        align-self: center;
+        font-family: var(--font-hei);
+        transition: opacity 120ms ease;
+      }
+
+      .list-row:hover .row-actions,
+      .list-row.focused .row-actions {
+        opacity: 1;
+      }
+
+      .lvl-pill {
+        font-family: var(--font-mono);
+        font-size: 10px;
+        color: var(--t3);
+        padding: 0 4px;
+      }
+
+      .mini-btn {
+        appearance: none;
+        border: 1px solid var(--border);
+        background: var(--background);
+        color: var(--muted);
+        border-radius: 4px;
+        font-size: 11px;
+        line-height: 1;
+        padding: 3px 5px;
+        cursor: pointer;
+      }
+
+      .mini-btn:hover:not(:disabled) {
+        color: var(--text);
+        border-color: var(--edge);
+      }
+
+      .mini-btn:disabled {
+        opacity: 0.35;
+        cursor: not-allowed;
+      }
+
+      /* =================== TODO CHECKBOX STYLES =================== */
+      .todo-box {
+        appearance: none;
+        box-sizing: border-box;
+        margin: 0;
+        background: transparent;
+        cursor: pointer;
+        transition:
+          transform 120ms cubic-bezier(0.16, 1, 0.3, 1),
+          background-color 150ms ease,
+          border-color 150ms ease,
+          box-shadow 150ms ease;
+      }
+
+      .todo-box:active {
+        transform: scale(0.9);
+      }
+
+      .todo-box:not(:checked):hover {
+        border-color: var(--accent) !important;
+        background-image: var(--task-ghost-check);
+        background-position: center;
+        background-size: 68%;
+        background-repeat: no-repeat;
+      }
+
+      .todo-box:checked {
+        animation: pop 210ms cubic-bezier(0.175, 0.885, 0.32, 1.35);
+      }
+
+      @keyframes pop {
+        0% { transform: scale(0.86); }
+        60% { transform: scale(1.06); }
+        100% { transform: scale(1); }
+      }
+
+      .done-text {
+        color: var(--muted);
+        text-decoration: line-through;
+        text-decoration-color: color-mix(in srgb, var(--text) 30%, transparent);
+      }
+
+      /* Level 1 (shared baseline across schemes: existing mote circle) */
+      .list-row[data-depth='1'] .todo-box {
+        width: 1.02em;
+        height: 1.02em;
+        border: 1.45px solid var(--task-border);
+        border-radius: 50%;
+      }
+      .list-row[data-depth='1'] .todo-box:checked {
+        background: var(--task-checked-bg) var(--task-check-light) center / 70% no-repeat;
+        border-color: var(--task-checked-bg);
+        box-shadow: var(--task-checked-shadow);
+      }
+
+      /* --- Scheme A (推荐): 形意渐进 · Circle -> Squircle -> Dashed Micro Box --- */
+      html[data-scheme='a'] .list-row[data-depth='2'] .todo-box {
+        width: 0.90em;
+        height: 0.90em;
+        border: 1.3px solid var(--task-border-l2);
+        border-radius: 4px;
+      }
+      html[data-scheme='a'] .list-row[data-depth='2'] .todo-box:checked {
+        background: var(--task-checked-l2-bg) var(--task-check-light) center / 68% no-repeat;
+        border-color: var(--accent-soft);
+      }
+      html[data-theme='dark'][data-scheme='a'] .list-row[data-depth='2'] .todo-box:checked {
+        background: var(--task-checked-l2-bg) var(--task-check-accent) center / 68% no-repeat;
+        border-color: var(--accent);
+      }
+
+      html[data-scheme='a'] .list-row[data-depth='3'] .todo-box {
+        width: 0.82em;
+        height: 0.82em;
+        border: 1.25px dashed var(--task-border-l3);
+        border-radius: 50%;
+      }
+      html[data-scheme='a'] .list-row[data-depth='3'] .todo-box:checked {
+        background: var(--accent-bg) var(--task-check-accent) center / 68% no-repeat;
+        border: 1.25px solid var(--accent);
+      }
+
+      /* --- Scheme B: 纯圆环三阶 · Full Circle Scale + Stroke --- */
+      html[data-scheme='b'] .list-row[data-depth='2'] .todo-box {
+        width: 0.88em;
+        height: 0.88em;
+        border: 1.25px solid var(--task-border-l2);
+        border-radius: 50%;
+      }
+      html[data-scheme='b'] .list-row[data-depth='2'] .todo-box:checked {
+        background: var(--accent-bg) var(--task-check-accent) center / 68% no-repeat;
+        border-color: var(--accent);
+      }
+      html[data-scheme='b'] .list-row[data-depth='3'] .todo-box {
+        width: 0.80em;
+        height: 0.80em;
+        border: 1.2px dashed var(--task-border-l3);
+        border-radius: 50%;
+      }
+      html[data-scheme='b'] .list-row[data-depth='3'] .todo-box:checked {
+        background: transparent var(--task-check-accent) center / 72% no-repeat;
+        border: 1.2px dotted var(--accent);
+      }
+
+      /* --- Scheme C: 几何方圆 + 菱形角标 --- */
+      html[data-scheme='c'] .list-row[data-depth='2'] .todo-box {
+        width: 0.90em;
+        height: 0.90em;
+        border: 1.3px solid var(--task-border-l2);
+        border-radius: 4.5px;
+      }
+      html[data-scheme='c'] .list-row[data-depth='2'] .todo-box:checked {
+        background: var(--task-checked-bg) var(--task-check-light) center / 68% no-repeat;
+        border-color: var(--task-checked-bg);
+      }
+      html[data-scheme='c'] .list-row[data-depth='3'] .todo-box {
+        width: 0.76em;
+        height: 0.76em;
+        border: 1.25px solid var(--task-border-l3);
+        border-radius: 2.5px;
+        transform: rotate(45deg);
+      }
+      html[data-scheme='c'] .list-row[data-depth='3'] .todo-box:checked {
+        background: var(--accent-bg) var(--task-check-accent) center / 72% no-repeat;
+        border-color: var(--accent);
+        transform: rotate(0deg);
+        border-radius: 3px;
+      }
+
+      /* =================== BULLET MARKER STYLES =================== */
+      .bullet-dot {
+        display: inline-block;
+        position: relative;
+      }
+
+      /* Depth 1 shared: solid ink dot */
+      .list-row[data-depth='1'] .bullet-dot {
+        width: 0.30em;
+        height: 0.30em;
+        border-radius: 50%;
+        background: var(--muted);
+      }
+
+      /* Scheme A & B bullets: ● -> ○ -> ▪ (or – in C) */
+      html[data-scheme='a'] .list-row[data-depth='2'] .bullet-dot,
+      html[data-scheme='b'] .list-row[data-depth='2'] .bullet-dot {
+        width: 0.34em;
+        height: 0.34em;
+        border-radius: 50%;
+        border: 1.25px solid var(--muted);
+        background: transparent;
+      }
+
+      html[data-scheme='a'] .list-row[data-depth='3'] .bullet-dot {
+        width: 0.25em;
+        height: 0.25em;
+        border-radius: 1px;
+        background: var(--t3);
+      }
+
+      html[data-scheme='b'] .list-row[data-depth='3'] .bullet-dot {
+        width: 0.46em;
+        height: 1.4px;
+        border-radius: 1px;
+        background: var(--t3);
+      }
+
+      html[data-scheme='c'] .list-row[data-depth='2'] .bullet-dot {
+        width: 0.44em;
+        height: 1.4px;
+        border-radius: 1px;
+        background: var(--muted);
+      }
+      html[data-scheme='c'] .list-row[data-depth='3'] .bullet-dot {
+        width: 0.24em;
+        height: 0.24em;
+        border-radius: 1px;
+        transform: rotate(45deg);
+        background: var(--t3);
+      }
+
+      /* Toast inside editor bar */
+      .limit-toast {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 3px 9px;
+        border-radius: 99px;
+        background: var(--notice-bg);
+        color: var(--notice-text);
+        font-size: 11.5px;
+        font-weight: 500;
+        opacity: 0;
+        transform: translateY(2px);
+        transition: opacity 160ms ease, transform 160ms ease;
+      }
+      .limit-toast.show {
+        opacity: 1;
+        transform: translateY(0);
+      }
+
+      /* Right Spec Panel */
+      .spec-col {
+        display: flex;
+        flex-direction: column;
+        gap: 14px;
+      }
+
+      .spec-card {
+        background: var(--sidebar);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 16px 18px;
+      }
+
+      .spec-card h2 {
+        margin: 0 0 12px;
+        font-size: 13.5px;
+        font-weight: 600;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+      }
+
+      .matrix {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 12.5px;
+      }
+
+      .matrix th {
+        text-align: left;
+        font-weight: 500;
+        color: var(--muted);
+        padding: 0 6px 8px 0;
+        border-bottom: 1px solid var(--border);
+      }
+
+      .matrix td {
+        padding: 9px 6px 9px 0;
+        border-bottom: 1px solid var(--border);
+        vertical-align: middle;
+      }
+
+      .matrix tr:last-child td {
+        border-bottom: none;
+        padding-bottom: 0;
+      }
+
+      .preview-cell {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        font-family: var(--font-text);
+        font-size: 15px;
+      }
+
+      .rule-list {
+        margin: 0;
+        padding-left: 16px;
+        font-size: 12.5px;
+        color: var(--muted);
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+
+      .rule-list strong {
+        color: var(--text);
+        font-weight: 600;
+      }
+
+      .clamp-demo {
+        margin-top: 10px;
+        padding: 10px 12px;
+        border-radius: 8px;
+        background: var(--background);
+        border: 1px solid var(--border);
+        font-family: var(--font-mono);
+        font-size: 11.5px;
+        color: var(--muted);
+        line-height: 1.65;
+      }
+
+      .clamp-demo span {
+        color: var(--accent);
+        font-weight: 600;
+      }
+
+      .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        font-size: 12.5px;
+        color: var(--muted);
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid var(--border);
+      }
+
+      .switch {
+        appearance: none;
+        width: 32px;
+        height: 18px;
+        border-radius: 99px;
+        background: var(--edge);
+        position: relative;
+        cursor: pointer;
+        transition: background 150ms ease;
+      }
+
+      .switch::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        left: 2px;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: var(--background);
+        transition: transform 150ms ease;
+      }
+
+      .switch:checked {
+        background: var(--accent);
+      }
+
+      .switch:checked::after {
+        transform: translateX(14px);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="page">
+      <header class="topbar">
+        <div class="title-wrap">
+          <h1>Todo 与无序列表 · 3 级视觉阶梯原型</h1>
+          <p>复刻你的真实笔记内容，对比 1 / 2 / 3 级 Todo 复选框、Bullet 符号及「最多 3 级」交互限制。</p>
+        </div>
+
+        <div class="controls">
+          <div class="seg" role="group" aria-label="外观模式">
+            <button type="button" class="active" data-set-theme="light">宣纸亮色</button>
+            <button type="button" data-set-theme="dark">端砚暗色</button>
+          </div>
+          <div class="seg" role="group" aria-label="字体">
+            <button type="button" class="active" data-set-font="kai">楷体</button>
+            <button type="button" data-set-font="song">宋体</button>
+            <button type="button" data-set-font="hei">黑体</button>
+          </div>
+        </div>
+      </header>
+
+      <section class="scheme-grid" aria-label="设计方案选择">
+        <button type="button" class="scheme-card active" data-set-scheme="a">
+          <div class="scheme-head">
+            <span class="scheme-name">方案 A · 形意渐进</span>
+            <span class="badge">推荐</span>
+          </div>
+          <div class="scheme-desc">
+            Todo：圆环 → 小圆角方框 → 虚线微圆；勾选色阶递减。<br />
+            Bullet：实心墨点 ● → 空心圆环 ○ → 柔灰小方点 ▪
+          </div>
+        </button>
+
+        <button type="button" class="scheme-card" data-set-scheme="b">
+          <div class="scheme-head">
+            <span class="scheme-name">方案 B · 圆环三阶</span>
+          </div>
+          <div class="scheme-desc">
+            Todo：全圆环但尺寸、线框与勾选填充递减（实心 → 浅底 → 轻框）。<br />
+            Bullet：实心墨点 ● → 空心圆环 ○ → 柔灰短横 –
+          </div>
+        </button>
+
+        <button type="button" class="scheme-card" data-set-scheme="c">
+          <div class="scheme-head">
+            <span class="scheme-name">方案 C · 纸墨几何</span>
+          </div>
+          <div class="scheme-desc">
+            Todo：圆环 → 圆角方 → 45° 小菱框，几何辨识度最强。<br />
+            Bullet：实心墨点 ● → 细短横 – → 柔灰微菱 ♦
+          </div>
+        </button>
+      </section>
+
+      <main class="layout">
+        <section class="editor-shell">
+          <div class="editor-bar">
+            <div class="hint">
+              <span>点击任意行选中，按</span>
+              <span class="kbd">Tab</span>
+              <span>/</span>
+              <span class="kbd">Shift+Tab</span>
+              <span>或右侧</span>
+              <span class="kbd">-</span>
+              <span class="kbd">+</span>
+              <span>测试 3 级上限</span>
+            </div>
+            <div id="limit-toast" class="limit-toast">已达最大 3 级缩进</div>
+          </div>
+
+          <div id="editor-paper" class="editor-paper">
+            <div class="sec-label">TODO · 待办列表（对应你截图中的真实上下文）</div>
+            <div id="todo-list"></div>
+
+            <div class="sec-label spaced">BULLET · 无序列表（同源 3 级符号体系）</div>
+            <div id="bullet-list"></div>
+          </div>
+        </section>
+
+        <aside class="spec-col">
+          <div class="spec-card">
+            <h2>
+              <span>当前方案层级对照</span>
+              <span id="scheme-tag" class="badge">方案 A</span>
+            </h2>
+            <table class="matrix">
+              <thead>
+                <tr>
+                  <th>层级</th>
+                  <th>Todo 未选 / 已选</th>
+                  <th>Bullet 符号</th>
+                </tr>
+              </thead>
+              <tbody id="spec-matrix-body"></tbody>
+            </table>
+
+            <label class="toggle-row">
+              <span>预览可选「极浅树形引导线」</span>
+              <input id="guide-toggle" type="checkbox" class="switch" />
+            </label>
+          </div>
+
+          <div class="spec-card">
+            <h2>限制最多 3 级的交互规则</h2>
+            <ul class="rule-list">
+              <li>
+                <strong>编辑期拦截（Tab / Enter）</strong>：当前行处于第 3 级时，按
+                <code>Tab</code> 不再增加缩进（保持 4 空格，即最多 2 次缩进），按
+                <code>Enter</code> 继续新建同为第 3 级的列表项。
+              </li>
+              <li>
+                <strong>已有深缩进文件保护（只读兼容）</strong>：mote 不私自修改磁盘上的原生 Markdown。若外部文件已有 4 级以上缩进：
+              </li>
+            </ul>
+            <div class="clamp-demo">
+              <code>- [ ] 一级</code> → <span>深度 1</span><br />
+              <code>&nbsp;&nbsp;- [ ] 二级</code> → <span>深度 2</span><br />
+              <code>&nbsp;&nbsp;&nbsp;&nbsp;- [ ] 三级</code> → <span>深度 3</span><br />
+              <code>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;- [ ] 外部 4 级</code> → <span>视觉钳位为深度 3</span>（不破坏原文）
+            </div>
+          </div>
+        </aside>
+      </main>
+    </div>
+
+    <script>
+      const todoItems = [
+        { id: 't1', depth: 1, checked: true, text: 'Action --> Pipeline 的调度设计实现', tag: '#pxsemic' },
+        { id: 't2', depth: 1, checked: false, text: 'Episode 2720 所有单词掌握，这是底线，必须完成' },
+        { id: 't3', depth: 1, checked: true, text: '再次更新落地页：补充 Mac 与 iPhone 双端联动演示' },
+        { id: 't4', depth: 1, checked: false, text: 'cheeky app' },
+        { id: 't5', depth: 2, checked: false, text: '优化 translate' },
+        { id: 't6', depth: 3, checked: false, text: '长句断句前保留专有名词词库' },
+        { id: 't7', depth: 3, checked: true, text: '缓存已翻译段落避免重复请求' },
+        { id: 't8', depth: 2, checked: false, text: '听 podcast 的时候，底部控制 bar 可以自动退出' },
+        { id: 't9', depth: 2, checked: true, text: '修复锁屏状态下播放进度不同步' }
+      ];
+
+      const bulletItems = [
+        { id: 'b1', depth: 1, text: 'Paper & Ink 排版系统约束' },
+        { id: 'b2', depth: 2, text: '列表最多支持 3 个视觉层级，防止深层嵌套挤压阅读版心' },
+        { id: 'b3', depth: 3, text: '1 级锚定主干任务或论点' },
+        { id: 'b4', depth: 3, text: '2 级拆解子步骤，视觉权重略收轻' },
+        { id: 'b5', depth: 3, text: '3 级作为补充细节，不再向下分裂' },
+        { id: 'b6', depth: 2, text: '快捷键 Tab 缩进到第 3 级后停止，Shift+Tab 逐级回退' },
+        { id: 'b7', depth: 1, text: '纯文本兼容：外部 4 级以上文件在渲染层钳位显示，不改写磁盘字节' }
+      ];
+
+      const schemeSpecs = {
+        a: {
+          tag: '方案 A · 推荐',
+          rows: [
+            { level: '1 级', todoDesc: '16px 圆环 / 实心绿勾', bulletDesc: '实心墨点' },
+            { level: '2 级', todoDesc: '14.5px 圆角方 / 柔绿勾', bulletDesc: '空心圆环' },
+            { level: '3 级', todoDesc: '13px 虚线圆 / 浅底绿勾', bulletDesc: '柔灰小方' }
+          ]
+        },
+        b: {
+          tag: '方案 B',
+          rows: [
+            { level: '1 级', todoDesc: '16px 圆环 / 实心绿勾', bulletDesc: '实心墨点' },
+            { level: '2 级', todoDesc: '14px 细圆环 / 浅底绿勾', bulletDesc: '空心圆环' },
+            { level: '3 级', todoDesc: '12.8px 虚环 / 轻框绿勾', bulletDesc: '柔灰短横' }
+          ]
+        },
+        c: {
+          tag: '方案 C',
+          rows: [
+            { level: '1 级', todoDesc: '16px 圆环 / 实心绿勾', bulletDesc: '实心墨点' },
+            { level: '2 级', todoDesc: '14.5px 圆角方 / 实心绿勾', bulletDesc: '中灰短横' },
+            { level: '3 级', todoDesc: '12px 45°菱框 / 浅底绿勾', bulletDesc: '柔灰微菱' }
+          ]
+        }
+      };
+
+      let focusedId = 't5';
+      let toastTimer = null;
+
+      function showLimitToast(rowEl) {
+        const toast = document.getElementById('limit-toast');
+        toast.classList.add('show');
+        clearTimeout(toastTimer);
+        toastTimer = setTimeout(() => toast.classList.remove('show'), 1400);
+        if (rowEl) {
+          rowEl.classList.remove('shake');
+          void rowEl.offsetWidth;
+          rowEl.classList.add('shake');
+        }
+      }
+
+      function adjustDepth(list, id, delta) {
+        const item = list.find((x) => x.id === id);
+        if (!item) return;
+        const next = item.depth + delta;
+        if (next > 3) {
+          const el = document.querySelector(`[data-id="${id}"]`);
+          showLimitToast(el);
+          return;
+        }
+        if (next < 1) return;
+        item.depth = next;
+        renderLists();
+      }
+
+      function renderLists() {
+        const todoRoot = document.getElementById('todo-list');
+        todoRoot.innerHTML = '';
+        for (const item of todoItems) {
+          const row = document.createElement('div');
+          row.className = 'list-row' + (focusedId === item.id ? ' focused' : '');
+          row.dataset.id = item.id;
+          row.dataset.depth = String(item.depth);
+
+          const slot = document.createElement('span');
+          slot.className = 'marker-slot';
+          const cb = document.createElement('input');
+          cb.type = 'checkbox';
+          cb.className = 'todo-box';
+          cb.checked = item.checked;
+          cb.setAttribute('aria-label', item.text);
+          cb.addEventListener('click', (e) => {
+            e.stopPropagation();
+            item.checked = cb.checked;
+            focusedId = item.id;
+            renderLists();
+          });
+          slot.appendChild(cb);
+
+          const text = document.createElement('span');
+          text.className = 'row-text' + (item.checked ? ' done-text' : '');
+          text.textContent = item.text;
+          if (item.tag) {
+            const tag = document.createElement('span');
+            tag.className = 'mote-tag';
+            tag.textContent = item.tag;
+            text.appendChild(tag);
+          }
+
+          const actions = makeActions(todoItems, item);
+          row.append(slot, text, actions);
+          row.addEventListener('click', () => {
+            focusedId = item.id;
+            renderLists();
+          });
+          todoRoot.appendChild(row);
+        }
+
+        const bulletRoot = document.getElementById('bullet-list');
+        bulletRoot.innerHTML = '';
+        for (const item of bulletItems) {
+          const row = document.createElement('div');
+          row.className = 'list-row' + (focusedId === item.id ? ' focused' : '');
+          row.dataset.id = item.id;
+          row.dataset.depth = String(item.depth);
+
+          const slot = document.createElement('span');
+          slot.className = 'marker-slot';
+          const dot = document.createElement('span');
+          dot.className = 'bullet-dot';
+          slot.appendChild(dot);
+
+          const text = document.createElement('span');
+          text.className = 'row-text';
+          text.textContent = item.text;
+
+          const actions = makeActions(bulletItems, item);
+          row.append(slot, text, actions);
+          row.addEventListener('click', () => {
+            focusedId = item.id;
+            renderLists();
+          });
+          bulletRoot.appendChild(row);
+        }
+      }
+
+      function makeActions(list, item) {
+        const actions = document.createElement('span');
+        actions.className = 'row-actions';
+        const pill = document.createElement('span');
+        pill.className = 'lvl-pill';
+        pill.textContent = `L${item.depth}`;
+
+        const outBtn = document.createElement('button');
+        outBtn.type = 'button';
+        outBtn.className = 'mini-btn';
+        outBtn.textContent = '-';
+        outBtn.title = '减少缩进 (Shift+Tab)';
+        outBtn.disabled = item.depth <= 1;
+        outBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          focusedId = item.id;
+          adjustDepth(list, item.id, -1);
+        });
+
+        const inBtn = document.createElement('button');
+        inBtn.type = 'button';
+        inBtn.className = 'mini-btn';
+        inBtn.textContent = '+';
+        inBtn.title = '增加缩进 (Tab，最多 3 级)';
+        inBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          focusedId = item.id;
+          adjustDepth(list, item.id, 1);
+        });
+
+        actions.append(pill, outBtn, inBtn);
+        return actions;
+      }
+
+      function renderSpecMatrix() {
+        const scheme = document.documentElement.dataset.scheme || 'a';
+        const spec = schemeSpecs[scheme];
+        document.getElementById('scheme-tag').textContent = spec.tag;
+        const tbody = document.getElementById('spec-matrix-body');
+        tbody.innerHTML = '';
+
+        spec.rows.forEach((r, idx) => {
+          const depth = idx + 1;
+          const tr = document.createElement('tr');
+          tr.innerHTML = `
+            <td><strong>${r.level}</strong></td>
+            <td>
+              <span class="preview-cell list-row" data-depth="${depth}" style="padding:0;background:none;">
+                <input type="checkbox" class="todo-box" aria-label="${r.level} 未选" />
+                <input type="checkbox" class="todo-box" checked aria-label="${r.level} 已选" />
+              </span>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px;">${r.todoDesc}</div>
+            </td>
+            <td>
+              <span class="preview-cell list-row" data-depth="${depth}" style="padding:0;background:none;">
+                <span class="marker-slot" style="width:1.1em;flex-basis:1.1em;"><span class="bullet-dot"></span></span>
+                <span style="font-family:var(--font-hei);font-size:12px;color:var(--muted);">${r.bulletDesc}</span>
+              </span>
+            </td>
+          `;
+          tbody.appendChild(tr);
+        });
+      }
+
+      document.querySelectorAll('[data-set-theme]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('[data-set-theme]').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          document.documentElement.dataset.theme = btn.dataset.setTheme;
+        });
+      });
+
+      document.querySelectorAll('[data-set-font]').forEach((btn) => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('[data-set-font]').forEach((b) => b.classList.remove('active'));
+          btn.classList.add('active');
+          document.documentElement.dataset.font = btn.dataset.setFont;
+        });
+      });
+
+      document.querySelectorAll('[data-set-scheme]').forEach((card) => {
+        card.addEventListener('click', () => {
+          document.querySelectorAll('[data-set-scheme]').forEach((c) => c.classList.remove('active'));
+          card.classList.add('active');
+          document.documentElement.dataset.scheme = card.dataset.setScheme;
+          renderSpecMatrix();
+        });
+      });
+
+      document.getElementById('guide-toggle').addEventListener('change', (e) => {
+        document.getElementById('editor-paper').classList.toggle('show-guides', e.target.checked);
+      });
+
+      document.addEventListener('keydown', (e) => {
+        if (e.key !== 'Tab') return;
+        const list = todoItems.some((x) => x.id === focusedId) ? todoItems : bulletItems;
+        if (!list.some((x) => x.id === focusedId)) return;
+        e.preventDefault();
+        adjustDepth(list, focusedId, e.shiftKey ? -1 : 1);
+      });
+
+      renderLists();
+      renderSpecMatrix();
+    </script>
+  </body>
+</html>

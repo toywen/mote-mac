@@ -13,6 +13,7 @@ import {
   type FormatTarget,
   insertCodeBlock,
   insertQuote,
+  listIndentWithTab,
   toggleBold,
   toggleBulletList,
   toggleHighlight,
@@ -22,6 +23,7 @@ import {
   toggleStrikethrough,
   toggleTaskList
 } from './formatting'
+import { clampListDepth } from './lists'
 
 function createTarget(
   doc: string,
@@ -368,6 +370,41 @@ describe('Markdown formatting commands', () => {
       const handled = backspaceCmd!(view)
       expect(handled).toBe(true)
       expect(view.state.doc.toString()).toBe('- [ ] Level 1\n  ')
+    })
+
+    it('caps Tab list indentation at 3 levels while allowing Shift+Tab outdent', () => {
+      const doc = '- [ ] L1\n  - [ ] L2\n  - [ ] L3'
+      const view = createView(doc, doc.length, [markdown])
+
+      // Level 2 sibling indents to Level 3
+      expect(listIndentWithTab.run?.(view)).toBe(true)
+      expect(view.state.doc.toString()).toBe('- [ ] L1\n  - [ ] L2\n    - [ ] L3')
+
+      // At Level 3, pressing Tab again is handled (keeps focus) without adding Level 4 indent
+      expect(listIndentWithTab.run?.(view)).toBe(true)
+      expect(view.state.doc.toString()).toBe('- [ ] L1\n  - [ ] L2\n    - [ ] L3')
+
+      // Shift+Tab outdents back to Level 2
+      expect(listIndentWithTab.shift?.(view)).toBe(true)
+      expect(view.state.doc.toString()).toBe('- [ ] L1\n  - [ ] L2\n  - [ ] L3')
+    })
+
+    it('caps Tab indentation inside blockquotes at 3 levels and stops siblingless items from becoming code blocks', () => {
+      const quoted = '> - Q1\n>   - Q2\n>     - Q3'
+      const qView = createView(quoted, quoted.length, [markdown])
+      expect(listIndentWithTab.run?.(qView)).toBe(true)
+      expect(qView.state.doc.toString()).toBe(quoted)
+
+      const single = '- Solo'
+      const sView = createView(single, single.length, [markdown])
+      expect(listIndentWithTab.run?.(sView)).toBe(true)
+      expect(sView.state.doc.toString()).toBe('  - Solo')
+      expect(listIndentWithTab.run?.(sView)).toBe(true)
+      expect(sView.state.doc.toString()).toBe('  - Solo')
+
+      expect(clampListDepth(0)).toBe(1)
+      expect(clampListDepth(3)).toBe(3)
+      expect(clampListDepth(5)).toBe(3)
     })
   })
 })

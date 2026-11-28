@@ -39,12 +39,18 @@
   --backdrop: rgba(31, 30, 28, 0.18);
   --task-background: transparent;
   --task-border: rgba(31, 30, 28, 0.28);
+  --task-border-l2: rgba(31, 30, 28, 0.28);
+  --task-border-l3: rgba(31, 30, 28, 0.32);
   --task-shadow: none;
   --task-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fbfaf6' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+  --task-check-accent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232d4a3e' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
   --task-ghost-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232d4a3e' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round' opacity='0.3'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
   --task-checked-bg: var(--accent);
   --task-checked-border: var(--accent);
   --task-checked-shadow: 0 1px 3px rgba(37, 68, 56, 0.22);
+  --task-checked-l2-bg: #466859;
+  --task-checked-l2-border: #466859;
+  --task-check-l2: var(--task-check);
   /* Latin fonts come first, so Latin and Chinese each keep their own letterforms. */
   --font-kai: 'Iowan Old Style', 'Kai', 'Kaiti SC', 'STKaiti', 'Songti SC', 'STSong', Georgia, serif;
   --font-song:
@@ -110,12 +116,18 @@ html[data-font='hei'] {
     --backdrop: rgba(0, 0, 0, 0.4);
     --task-background: transparent;
     --task-border: rgba(255, 245, 225, 0.28);
+    --task-border-l2: rgba(255, 245, 225, 0.28);
+    --task-border-l3: rgba(255, 245, 225, 0.32);
     --task-shadow: none;
     --task-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fbfaf6' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+    --task-check-accent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238fc7b3' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
     --task-ghost-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238fc7b3' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round' opacity='0.3'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
     --task-checked-bg: #385f4e;
     --task-checked-border: #385f4e;
     --task-checked-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+    --task-checked-l2-bg: rgba(126, 196, 168, 0.24);
+    --task-checked-l2-border: var(--accent);
+    --task-check-l2: var(--task-check-accent);
   }
 }
 
@@ -146,12 +158,18 @@ html[data-theme='dark'] {
   --backdrop: rgba(0, 0, 0, 0.4);
   --task-background: transparent;
   --task-border: rgba(255, 245, 225, 0.28);
+  --task-border-l2: rgba(255, 245, 225, 0.28);
+  --task-border-l3: rgba(255, 245, 225, 0.32);
   --task-shadow: none;
   --task-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fbfaf6' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+  --task-check-accent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238fc7b3' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
   --task-ghost-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%238fc7b3' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round' opacity='0.3'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
   --task-checked-bg: #385f4e;
   --task-checked-border: #385f4e;
   --task-checked-shadow: 0 1px 3px rgba(0, 0, 0, 0.35);
+  --task-checked-l2-bg: rgba(126, 196, 168, 0.24);
+  --task-checked-l2-border: var(--accent);
+  --task-check-l2: var(--task-check-accent);
 }
 
 html[data-theme='light'] {
@@ -181,12 +199,18 @@ html[data-theme='light'] {
   --backdrop: rgba(31, 30, 28, 0.18);
   --task-background: transparent;
   --task-border: rgba(31, 30, 28, 0.28);
+  --task-border-l2: rgba(31, 30, 28, 0.28);
+  --task-border-l3: rgba(31, 30, 28, 0.32);
   --task-shadow: none;
   --task-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%23fbfaf6' stroke-width='2.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
+  --task-check-accent: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232d4a3e' stroke-width='2.3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
   --task-ghost-check: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16' fill='none' stroke='%232d4a3e' stroke-width='2.1' stroke-linecap='round' stroke-linejoin='round' opacity='0.3'%3E%3Cpath d='M3.6 8.2l3 3.1 5.8-6.2'/%3E%3C/svg%3E");
   --task-checked-bg: var(--accent);
   --task-checked-border: var(--accent);
   --task-checked-shadow: 0 1px 3px rgba(37, 68, 56, 0.22);
+  --task-checked-l2-bg: #466859;
+  --task-checked-l2-border: #466859;
+  --task-check-l2: var(--task-check);
 }
 
 html,
