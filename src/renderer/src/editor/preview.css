@@ -125,6 +125,10 @@
   font-size: 1em;
   color: var(--muted);
 }
+/* A heading that opens the note sits flush under the content padding instead of stacking its own top gap on top of it. */
+.cm-content > .cm-line.mote-h:first-child {
+  padding-top: 0;
+}
 /* An empty line between paragraphs is shorter than a line of text, and shorter still under a
    heading — except while the cursor is on it in edit mode, so the caret stays clear of the
    heading above. */
