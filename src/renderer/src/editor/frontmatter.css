@@ -80,6 +80,7 @@
 .fm-chip-tag {
   background: var(--tag-background);
   color: var(--tag-text);
+  border: 1px solid color-mix(in srgb, var(--tag-text) 24%, transparent);
 }
 
 .fm-chip-status {
